@@ -1,43 +1,68 @@
-name: Bug report / 버그 신고
-description: Something doesn't work as expected / 기대대로 동작하지 않음
-labels: [bug]
+name: 버그 리포트 (Bug report)
+description: 동작이 기대와 다른 경우
+labels: ["type: fix"]
+type: Bug
 body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: 영역
+      options:
+        - 맥락 엔진 (crates/lantern-context)
+        - 에이전트·모델·도구 (app/src-tauri)
+        - 편집기·작업·채팅 화면 (app/src)
+        - 코드 지도·영향 반경·기억 지도
+        - 맥락 평가 (eval)
+        - 설치·업데이트·CI
+        - 잘 모르겠음
+    validations:
+      required: true
+
   - type: textarea
     id: what
     attributes:
-      label: What happened? / 무슨 일이 있었나요?
-      description: What you did, what you expected, what happened instead. / 무엇을 했고, 무엇을 기대했고, 실제로 어떻게 됐나요?
+      label: 무슨 일이 일어나는가
+      description: 관측한 동작을 씁니다. 스크린샷이 있으면 함께 첨부해 주세요.
     validations:
       required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대한 동작
+    validations:
+      required: true
+
   - type: textarea
     id: steps
     attributes:
-      label: Steps to reproduce / 재현 방법
+      label: 재현 절차
       placeholder: |
-        1. Open a project with ...
-        2. Ask the agent to ...
+        1. 프로젝트를 연다 (규모·언어: ...)
+        2. 코드 작성 에이전트에게 "..."를 맡긴다
+        3. ...
+    validations:
+      required: true
+
   - type: input
     id: version
     attributes:
-      label: Lantern version / 버전
-      placeholder: "0.1.0 (Help → About)"
+      label: Lantern 버전
+      placeholder: "0.1.0 (도움말 → Lantern 정보)"
     validations:
       required: true
+
   - type: input
-    id: os
+    id: env
     attributes:
-      label: OS / 운영체제
-      placeholder: Windows 11 23H2
+      label: 환경
+      placeholder: "Windows 11 23H2 / 모델: claude-sonnet-5, Ollama qwen2.5-coder:14b ..."
     validations:
       required: true
-  - type: input
-    id: model
-    attributes:
-      label: Model / provider / 모델
-      placeholder: "claude-sonnet-5 / Ollama qwen2.5-coder:14b / ..."
+
   - type: textarea
     id: report
     attributes:
-      label: Problem report (optional) / 문제 보고 내용 (선택)
-      description: "Help → Report Issue… collects logs with API keys masked. Check it before pasting. / 도움말 → 문제 보고…에서 모은 로그(API 키는 가려짐)를 확인한 뒤 붙여 넣으세요."
+      label: 문제 보고 내용 (선택)
+      description: 도움말 → 문제 보고…에서 모은 로그입니다. API 키는 가려져 있지만, 붙여 넣기 전에 한 번 확인해 주세요.
       render: text

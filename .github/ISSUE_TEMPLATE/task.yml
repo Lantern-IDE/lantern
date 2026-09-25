@@ -1,0 +1,32 @@
+name: 작업 / 리팩터링 (Task)
+description: 구조 개선, 정리, 인프라·릴리스 작업
+labels: ["type: refactor"]
+type: Task
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: 배경
+      description: 지금 무엇이 문제인지, 왜 지금 손대야 하는지
+    validations:
+      required: true
+
+  - type: textarea
+    id: plan
+    attributes:
+      label: 작업 내용
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk
+    attributes:
+      label: 회귀 위험
+      description: 동작이 바뀔 수 있는 지점과 확인 방법
+
+  - type: textarea
+    id: done
+    attributes:
+      label: 완료 조건
+      placeholder: |
+        - [ ] ...

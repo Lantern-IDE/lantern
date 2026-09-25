@@ -1,19 +1,47 @@
-name: Feature request / 기능 제안
-description: Suggest an idea / 아이디어 제안
-labels: [enhancement]
+name: 기능 제안 (Feature request)
+description: 새 화면, 새 동작, 새 도구
+labels: ["type: feat"]
+type: Feature
 body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: 영역
+      options:
+        - 맥락 엔진 (crates/lantern-context)
+        - 에이전트·모델·도구 (app/src-tauri)
+        - 편집기·작업·채팅 화면 (app/src)
+        - 코드 지도·영향 반경·기억 지도
+        - 맥락 평가 (eval)
+        - 설치·업데이트·CI
+        - 잘 모르겠음
+    validations:
+      required: true
+
   - type: textarea
     id: problem
     attributes:
-      label: What problem are you trying to solve? / 어떤 문제를 풀고 싶나요?
-      description: Describe the situation, not only the solution. / 해결책보다 상황을 먼저 알려 주세요.
+      label: 어떤 문제를 푸는가
+      description: 해결하려는 문제를 씁니다. 해법이 아니라 문제를 씁니다.
     validations:
       required: true
+
   - type: textarea
-    id: idea
+    id: proposal
     attributes:
-      label: What would you like to happen? / 어떻게 되면 좋을까요?
+      label: 제안
+    validations:
+      required: true
+
   - type: textarea
-    id: alternatives
+    id: today
     attributes:
-      label: What do you do today instead? / 지금은 어떻게 하고 있나요?
+      label: 지금은 어떻게 하고 있나
+      description: 다른 도구나 우회 방법이 있다면
+
+  - type: textarea
+    id: done
+    attributes:
+      label: 완료 조건
+      placeholder: |
+        - [ ] ...
