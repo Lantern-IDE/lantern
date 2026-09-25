@@ -141,7 +141,7 @@ async function launch() {
       LANTERN_DATA_DIR: DIRS.data,
       LANTERN_WEBVIEW_DATA_DIR: DIRS.wv,
       LANTERN_INDEX_DIR: DIRS.index,
-      WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${cdpPort}`,
+      LANTERN_E2E_CDP_PORT: String(cdpPort),
     },
     stdio: "ignore",
   });

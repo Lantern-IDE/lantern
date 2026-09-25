@@ -810,6 +810,15 @@ fn main() {
             if let Some(dir) = std::env::var_os("LANTERN_WEBVIEW_DATA_DIR") {
                 builder = builder.data_directory(dir.into());
             }
+            // E2E 전용: 원격 디버깅 포트를 연다. WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS 환경변수는
+            // WebView2 런타임 버전에 따라 Tauri가 넘기는 인자에 밀려 무시돼서(CI) 인자로 직접 준다.
+            // Tauri 기본 인자를 대신하므로 그 값(--disable-features=...)도 함께 넘긴다.
+            #[cfg(windows)]
+            if let Some(port) = std::env::var("LANTERN_E2E_CDP_PORT").ok().filter(|p| p.parse::<u16>().is_ok()) {
+                builder = builder.additional_browser_args(&format!(
+                    "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --remote-debugging-port={port}"
+                ));
+            }
             builder.build()?;
             Ok(())
         })
