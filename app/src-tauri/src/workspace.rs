@@ -131,15 +131,6 @@ pub fn search_text(root: &Path, query: &str, case_sensitive: bool) -> Vec<FileMa
     out
 }
 
-/// `.git/HEAD`를 직접 읽어 현재 브랜치 이름 (분리된 HEAD면 커밋 앞 7자리)
-pub fn git_branch(root: &Path) -> Option<String> {
-    let head = std::fs::read_to_string(root.join(".git").join("HEAD")).ok()?;
-    let head = head.trim();
-    match head.strip_prefix("ref: refs/heads/") {
-        Some(b) => Some(b.to_string()),
-        None => Some(head.chars().take(7).collect()),
-    }
-}
 
 // ── 파일 작업 (탐색기) ─────────────────────────────────
 
@@ -290,10 +281,5 @@ mod tests {
         rename(&root.join("src/new.rs"), &root.join("src/renamed.rs")).unwrap();
         assert!(root.join("src/renamed.rs").exists() && !root.join("src/new.rs").exists());
         assert!(rename(&root.join("src/renamed.rs"), &root.join("src/a.rs")).is_err(), "덮어쓰지 않음");
-
-        assert_eq!(git_branch(root), None);
-        std::fs::create_dir_all(root.join(".git")).unwrap();
-        std::fs::write(root.join(".git/HEAD"), "ref: refs/heads/feature/x\n").unwrap();
-        assert_eq!(git_branch(root).as_deref(), Some("feature/x"));
     }
 }
