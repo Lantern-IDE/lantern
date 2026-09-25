@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lantern</title>
+  </head>
+  <body>
+    <!--
+      THESIS: VS Code의 배치와 조작을 그대로 쓰되, "맥락 엔진이 무엇을 왜 보냈는지"를 화면에서 증명하는 IDE. 로고만 바꾼 복제품과 게이밍·네온 AI 도구를 거부한다.
+      OWN-WORLD: 남색 기운의 무채색(#16171c/#1b1c22, 라이트 #f2f3f7/#fff), 남색 #5b62e6 = 사용자 동작·포커스, 청록 #2cc6e0 = 맥락 엔진이 한 일. Pretendard UI, Cascadia 코드, Codicons, 육각형 표시(브랜드 그라데이션은 로고에만).
+      STORY: 개발자는 익숙한 조작으로 편집하고, 질문하면 답변 위 "Lantern이 본 코드"에서 붙인 파일·심볼·이유를 확인하고, 변경은 Diff로 승인한다.
+      FIRST VIEWPORT: 제목 표시줄(메뉴·명령 센터) / 액티비티 바 / 탐색기 / 편집기(첫 실행은 "시작하기" 탭: 모델 연결 → 폴더 → 사용법) / 채팅 보조 사이드바 / 상태 표시줄 왼쪽의 청록 "맥락" 항목. 주 동작은 채팅 입력창의 남색 보내기.
+      FORM: 기존 VS Code식 워크벤치를 확장(refinement + 브랜드 확장). 방향 추첨(seed) 없음: 2026-09-24 사용자 답변 "VS Code식 + Lantern 정체성 (추천)"과 "기획서의 육각형 로고와 청록→남색 계열 확정 (추천)"으로 방향이 지정됨. 시그니처 인터랙션: 맥락 카드. 모션: AI 작업 중 육각형 윤곽 추적 하나.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+    -->
+    <!-- 브랜드 그라데이션 (육각형 표시가 참조) -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <linearGradient id="lantern-brand" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22d3ee" />
+          <stop offset="1" stop-color="#6366f1" />
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <div id="app">
+      <header id="titlebar" data-tauri-drag-region>
+        <div class="tb-left">
+          <div class="app-mark" data-tauri-drag-region data-hex="brand"></div>
+          <nav id="menubar" aria-label="메뉴"></nav>
+        </div>
+        <div class="tb-center" data-tauri-drag-region>
+          <div id="canvas-switch" class="canvas-switch" role="tablist" aria-label="가운데 화면">
+            <button data-canvas="editor" class="on" role="tab" aria-selected="true" title="편집기"><i class="codicon codicon-code"></i><span>편집기</span></button>
+            <button data-canvas="map" role="tab" aria-selected="false" title="코드 지도 (Ctrl+Alt+M)"><i class="codicon codicon-type-hierarchy"></i><span>지도</span></button>
+          </div>
+          <button id="command-center" title="파일로 이동 (Ctrl+P) · 명령 (Ctrl+Shift+P)">
+            <i class="codicon codicon-search"></i><span id="cc-label">Lantern</span>
+          </button>
+        </div>
+        <div class="tb-right">
+          <button class="tb-btn" id="toggle-sidebar" title="기본 사이드바 전환 (Ctrl+B)" aria-label="기본 사이드바 전환"><i class="codicon codicon-layout-sidebar-left"></i></button>
+          <button class="tb-btn" id="toggle-panel" title="패널 전환 (Ctrl+J)" aria-label="패널 전환"><i class="codicon codicon-layout-panel"></i></button>
+          <button class="tb-btn" id="toggle-auxbar" title="채팅 사이드바 전환 (Ctrl+Alt+B)" aria-label="채팅 사이드바 전환"><i class="codicon codicon-layout-sidebar-right"></i></button>
+          <div class="win-controls">
+            <button id="win-min" title="최소화" aria-label="최소화"><i class="codicon codicon-chrome-minimize"></i></button>
+            <button id="win-max" title="최대화" aria-label="최대화"><i class="codicon codicon-chrome-maximize"></i></button>
+            <button id="win-close" class="close" title="닫기" aria-label="닫기"><i class="codicon codicon-chrome-close"></i></button>
+          </div>
+        </div>
+      </header>
+
+      <div id="workbench">
+        <nav id="activitybar" aria-label="보기">
+          <div class="ab-top">
+            <button class="ab-item" data-view="tasks" title="작업 (Ctrl+Alt+T)" aria-label="작업"><i class="codicon codicon-tasklist"></i><span class="ab-badge hidden" id="task-badge"></span></button>
+            <button class="ab-item" data-view="memory" title="프로젝트 기억" aria-label="프로젝트 기억"><i class="codicon codicon-book"></i></button>
+            <div class="ab-sep" role="separator"></div>
+            <button class="ab-item" data-view="explorer" title="탐색기 (Ctrl+Shift+E)" aria-label="탐색기"><i class="codicon codicon-files"></i></button>
+            <button class="ab-item" data-view="search" title="검색 (Ctrl+Shift+F)" aria-label="검색"><i class="codicon codicon-search"></i></button>
+            <button class="ab-item" data-view="scm" title="소스 제어 (Ctrl+Shift+G)" aria-label="소스 제어"><i class="codicon codicon-source-control"></i><span class="ab-badge hidden" id="scm-badge"></span></button>
+          </div>
+          <div class="ab-bottom">
+            <button class="ab-item" id="ab-settings" title="설정 (Ctrl+,)" aria-label="설정"><i class="codicon codicon-settings-gear"></i></button>
+          </div>
+        </nav>
+
+        <aside id="sidebar">
+          <section class="view" id="view-tasks">
+            <div class="view-title">
+              <span>작업</span>
+              <div class="actions">
+                <button class="icon-btn" id="btn-new-task" title="새 작업" aria-label="새 작업"><i class="codicon codicon-add"></i></button>
+              </div>
+            </div>
+            <div id="task-list" class="scroll" role="listbox" aria-label="작업 목록"></div>
+          </section>
+          <section class="view" id="view-memory">
+            <div class="view-title">
+              <span>프로젝트 기억 <span class="muted" id="memory-count"></span></span>
+              <div class="actions">
+                <button class="icon-btn" id="btn-memory-map" title="기억과 연결된 코드를 지도에서 보기" aria-label="기억 지도"><i class="codicon codicon-type-hierarchy"></i></button>
+                <button class="icon-btn" id="btn-memory-refresh" title="새로 고침" aria-label="기억 새로 고침"><i class="codicon codicon-refresh"></i></button>
+              </div>
+            </div>
+            <div id="memory-body" class="scroll"></div>
+            <div class="memory-add">
+              <input id="memory-topic" placeholder="주제 (예: conventions)" spellcheck="false" aria-label="기억 주제" />
+              <textarea id="memory-input" rows="2" placeholder="AI가 늘 알아야 할 규칙·결정 (Ctrl+Enter)" aria-label="새 기억"></textarea>
+              <button class="btn btn-secondary block" id="memory-add"><i class="codicon codicon-add"></i>기억에 더하기</button>
+            </div>
+          </section>
+          <section class="view" id="view-explorer">
+            <div class="view-title">
+              <span>탐색기</span>
+              <div class="actions">
+                <button class="icon-btn" id="btn-new-file" title="새 파일" aria-label="새 파일"><i class="codicon codicon-new-file"></i></button>
+                <button class="icon-btn" id="btn-new-folder" title="새 폴더" aria-label="새 폴더"><i class="codicon codicon-new-folder"></i></button>
+                <button class="icon-btn" id="btn-refresh-tree" title="새로 고침" aria-label="탐색기 새로 고침"><i class="codicon codicon-refresh"></i></button>
+                <button class="icon-btn" id="btn-collapse-tree" title="모두 축소" aria-label="모두 축소"><i class="codicon codicon-collapse-all"></i></button>
+              </div>
+            </div>
+            <div class="section-header" id="project-header" tabindex="0"><i class="codicon codicon-chevron-down"></i><span id="project-name">열린 폴더 없음</span></div>
+            <div id="tree" class="scroll" tabindex="0" aria-label="파일"></div>
+            <div id="no-folder" class="empty-view">
+              <p>아직 폴더를 열지 않았습니다. 폴더를 열면 Lantern이 코드를 인덱싱해 AI 질문에 맥락으로 씁니다.</p>
+              <button class="btn btn-primary block" id="btn-open-side">폴더 열기</button>
+            </div>
+          </section>
+          <section class="view" id="view-scm">
+            <div class="view-title">
+              <span>소스 제어 <span class="muted" id="scm-branch"></span></span>
+              <div class="actions">
+                <button class="icon-btn" id="btn-scm-refresh" title="새로 고침" aria-label="소스 제어 새로 고침"><i class="codicon codicon-refresh"></i></button>
+              </div>
+            </div>
+            <div id="scm-commit" class="scm-commit hidden">
+              <textarea id="scm-message" rows="2" placeholder="커밋 메시지 (Ctrl+Enter로 커밋)" aria-label="커밋 메시지"></textarea>
+              <button class="btn btn-primary block" id="scm-commit-btn"><i class="codicon codicon-check"></i>커밋</button>
+            </div>
+            <div id="scm-body" class="scroll"></div>
+          </section>
+          <section class="view" id="view-search">
+            <div class="view-title"><span>검색</span></div>
+            <div class="search-box">
+              <button class="icon-btn search-expand" id="search-expand" title="바꾸기 열기/닫기" aria-label="바꾸기 열기/닫기" aria-expanded="false"><i class="codicon codicon-chevron-right"></i></button>
+              <div class="search-fields">
+                <div class="input-wrap">
+                  <input id="search-input" placeholder="검색" spellcheck="false" aria-label="프로젝트에서 검색" />
+                  <button class="toggle" id="search-case" title="대/소문자 구분 (Alt+C)" aria-label="대/소문자 구분" aria-pressed="false"><i class="codicon codicon-case-sensitive"></i></button>
+                </div>
+                <div class="input-wrap replace-row hidden" id="replace-row">
+                  <input id="replace-input" placeholder="바꿀 내용" spellcheck="false" aria-label="바꿀 내용" />
+                  <button class="toggle" id="replace-all" title="모두 바꾸기 (Ctrl+Alt+Enter)" aria-label="모두 바꾸기" disabled><i class="codicon codicon-replace-all"></i></button>
+                </div>
+                <div id="search-summary" class="muted small"></div>
+              </div>
+            </div>
+            <div id="search-results" class="scroll"></div>
+          </section>
+        </aside>
+        <div class="sash" data-target="sidebar" data-var="--sidebar-w" data-dir="1"></div>
+
+        <main id="editor-area">
+          <section id="map-view" class="hidden" aria-label="코드 지도">
+            <div class="map-bar">
+              <div id="map-crumb" class="map-crumb"></div>
+              <div class="map-search-wrap">
+                <i class="codicon codicon-search"></i>
+                <input id="map-search" placeholder="코드로 이동 (함수, 파일)" spellcheck="false" aria-label="지도에서 찾기" autocomplete="off" />
+                <div id="map-results" class="map-results hidden" role="listbox"></div>
+              </div>
+              <div class="spacer"></div>
+              <div id="map-overlays" class="map-overlays" role="group" aria-label="겹쳐 보기">
+                <button data-overlay="footprint" class="ov" title="지금 작업에서 에이전트가 맥락으로 보내고, 읽고, 수정한 곳"><i class="sw context"></i><span>발자취</span></button>
+                <button data-overlay="memory" class="ov" title="프로젝트 기억과 기억이 가리키는 코드"><i class="sw memory"></i><span>기억</span></button>
+              </div>
+              <button class="icon-btn" id="map-fit" title="화면에 맞추기" aria-label="화면에 맞추기"><i class="codicon codicon-screen-full"></i></button>
+              <button class="icon-btn" id="map-close" title="편집기로 (Ctrl+Alt+M)" aria-label="편집기로"><i class="codicon codicon-close"></i></button>
+            </div>
+            <div class="map-stage">
+              <canvas id="map-canvas" tabindex="0" aria-label="코드 지도. 누르면 정보, 두 번 누르면 코드를 엽니다"></canvas>
+              <div id="map-status" class="map-status hidden"></div>
+              <div id="map-footprint" class="map-footprint hidden"></div>
+              <aside id="map-card" class="map-card hidden" aria-live="polite"></aside>
+              <div id="map-legend" class="map-legend"></div>
+            </div>
+          </section>
+          <div id="editor-group">
+            <div id="tabs" role="tablist"></div>
+            <div id="breadcrumbs"></div>
+            <div id="editors">
+              <div id="welcome">
+                <div class="welcome-inner">
+                  <div class="welcome-brand"><span data-hex="brand"></span><h1>Lantern</h1></div>
+                  <p class="subtitle">내 프로젝트를 이해하는, 가볍고 자유로운 AI IDE</p>
+                  <div class="welcome-cols">
+                    <div>
+                      <h2>시작</h2>
+                      <a class="wl" id="wl-open"><i class="codicon codicon-folder-opened"></i>폴더 열기…</a>
+                      <a class="wl" id="wl-onboard"><i class="codicon codicon-rocket"></i>AI 모델 연결하기</a>
+                      <a class="wl" id="wl-config"><i class="codicon codicon-settings-gear"></i>설정</a>
+                      <h2 style="margin-top: 28px">최근 항목</h2>
+                      <div id="recent"></div>
+                    </div>
+                    <div class="welcome-facts">
+                      <h2>Lantern이 하는 일</h2>
+                      <div class="fact"><i class="codicon codicon-references"></i><span><b>질문마다 관련 코드를 골라 붙입니다.</b> 함수 호출 관계, 변경 이력, 프로젝트 메모리에서 토큰 예산 안으로 조립합니다.</span></div>
+                      <div class="fact"><i class="codicon codicon-eye"></i><span><b>무엇을 왜 보냈는지 보여줍니다.</b> 답변마다 붙인 코드와 이유, 토큰, 비용을 확인할 수 있습니다.</span></div>
+                      <div class="fact"><i class="codicon codicon-shield"></i><span><b>바꾸기 전에 묻습니다.</b> 파일 수정과 명령 실행은 Diff를 보고 승인해야 적용됩니다.</span></div>
+                      <div class="fact"><i class="codicon codicon-file-code"></i><span><b>전부 파일로 고칠 수 있습니다.</b> 모델, 에이전트, 규칙은 <code>.lantern/</code> 아래 텍스트 파일입니다.</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div id="watermark">
+                <span data-hex="plain"></span>
+                <dl>
+                  <dt>모든 명령 표시</dt><dd><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>P</kbd></dd>
+                  <dt>파일로 이동</dt><dd><kbd>Ctrl</kbd> <kbd>P</kbd></dd>
+                  <dt>파일에서 찾기</dt><dd><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>F</kbd></dd>
+                  <dt>Lantern에게 묻기</dt><dd><kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>I</kbd></dd>
+                  <dt>터미널 전환</dt><dd><kbd>Ctrl</kbd> <kbd>`</kbd></dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div class="sash-h" data-target="panel" data-var="--panel-h"></div>
+          <section id="panel">
+            <div class="panel-header">
+              <div class="panel-tabs" role="tablist">
+                <button data-panel="problems">문제 <span class="badge hidden" id="problems-badge">0</span></button>
+                <button data-panel="output">출력</button>
+                <button data-panel="terminal" class="active">터미널</button>
+              </div>
+              <div class="actions">
+                <button class="icon-btn" id="btn-clear-output" title="출력 지우기" aria-label="출력 지우기"><i class="codicon codicon-clear-all"></i></button>
+                <button class="icon-btn" id="btn-hide-panel" title="패널 닫기" aria-label="패널 닫기"><i class="codicon codicon-close"></i></button>
+              </div>
+            </div>
+            <div id="problems" class="panel-view scroll"></div>
+            <pre id="output" class="panel-view scroll"></pre>
+            <div id="terminal" class="panel-view active"></div>
+          </section>
+        </main>
+
+        <div class="sash" data-target="auxbar" data-var="--auxbar-w" data-dir="-1"></div>
+        <aside id="auxbar">
+          <div class="view-title aux-title">
+            <div class="aux-tabs" role="tablist">
+              <button data-ai="chat" class="active">작업</button>
+              <button data-ai="inspector">인스펙터</button>
+            </div>
+            <div class="actions">
+              <button class="icon-btn" id="btn-new-chat" title="새 작업" aria-label="새 작업"><i class="codicon codicon-add"></i></button>
+              <button class="icon-btn" id="btn-close-aux" title="숨기기" aria-label="채팅 사이드바 숨기기"><i class="codicon codicon-close"></i></button>
+            </div>
+          </div>
+          <div id="chat" class="ai-panel active">
+            <div id="task-head" class="task-head hidden"></div>
+            <div id="messages" class="scroll" aria-live="polite"></div>
+            <div id="composer">
+              <div class="composer-box">
+                <textarea id="prompt" rows="2" placeholder="코드에 대해 물어보거나 작업을 맡기세요" aria-label="Lantern에게 보낼 메시지"></textarea>
+                <div class="composer-row">
+                  <select id="agent-select" title="에이전트 (.lantern/agents/*.md)" aria-label="에이전트"></select>
+                  <label class="chip-btn focus-toggle" title="현재 파일과 커서 위치를 맥락에 포함"><input type="checkbox" id="focus-file" checked /><i class="codicon codicon-file"></i><span id="focus-name">현재 파일</span></label>
+                  <label class="chip-btn iso-toggle" title="이 작업을 별도 작업 공간(git worktree)에서 합니다. 여러 작업이 같은 파일을 고쳐도 겹치지 않고, 끝나면 변경을 보고 프로젝트에 적용하거나 버립니다. 작업을 시작하기 전에만 고를 수 있습니다."><input type="checkbox" id="isolate-task" /><i class="codicon codicon-git-branch"></i><span>격리</span></label>
+                  <div class="spacer"></div>
+                  <button class="chip-btn" id="composer-model" title="모델 설정"><i class="codicon codicon-sparkle"></i><span id="composer-model-name"></span></button>
+                  <button id="btn-stop" class="send-btn stop-btn hidden" title="중지 (Esc)" aria-label="중지"><i class="codicon codicon-debug-stop"></i></button>
+                  <button id="btn-send" class="send-btn" title="보내기 (Enter)" aria-label="보내기" disabled><i class="codicon codicon-arrow-up"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="inspector" class="ai-panel scroll">
+            <div class="inspector-preview">
+              <div class="small muted">맥락 미리보기: 모델을 부르지 않고 맥락 엔진이 무엇을 고르는지 확인합니다.</div>
+              <div class="input-wrap">
+                <input id="preview-query" placeholder="예: 로그인 처리 흐름" aria-label="맥락 미리보기 질문" />
+                <button class="toggle" id="btn-preview" title="미리보기" aria-label="미리보기"><i class="codicon codicon-eye"></i></button>
+              </div>
+            </div>
+            <div id="requests"></div>
+          </div>
+        </aside>
+      </div>
+
+      <footer id="statusbar">
+        <div class="sb-left">
+          <span class="sb-item sb-brand" data-hex="brand" title="Lantern"></span>
+          <span class="sb-item clickable sb-context" id="ctx-status" title="맥락 엔진"></span>
+          <span class="sb-item clickable warn hidden" id="sb-restricted" title="이 폴더를 신뢰하지 않아 제한 모드로 열었습니다. 눌러서 신뢰 설정"><i class="codicon codicon-shield"></i>제한 모드</span>
+          <span class="sb-item clickable hidden" id="sb-branch" title="현재 git 브랜치"><i class="codicon codicon-source-control"></i><span></span></span>
+          <span class="sb-item clickable" id="sb-problems" title="문제 보기"><i class="codicon codicon-error"></i><span id="sb-errors">0</span><i class="codicon codicon-warning"></i><span id="sb-warnings">0</span></span>
+        </div>
+        <div class="sb-right">
+          <span class="sb-item" id="st-pos"></span>
+          <span class="sb-item" id="st-enc">UTF-8</span>
+          <span class="sb-item" id="st-lang"></span>
+          <span class="sb-item" id="st-lsp"></span>
+          <span class="sb-item clickable" id="st-model" title="모델 설정"></span>
+          <span class="sb-item clickable" id="usage-meter" title="이번 달 AI 사용 비용"></span>
+          <span class="sb-item clickable" id="sb-bell" title="알림" aria-label="알림"><i class="codicon codicon-bell"></i></span>
+        </div>
+      </footer>
+    </div>
+
+    <div id="quickopen" class="hidden">
+      <div class="qo-box" role="dialog" aria-label="빠른 열기">
+        <input id="qo-input" spellcheck="false" aria-label="검색어" />
+        <ul id="qo-list" role="listbox"></ul>
+      </div>
+    </div>
+    <div id="menu-popup" class="hidden" role="menu"></div>
+    <div id="toasts" aria-live="polite"></div>
+    <div id="notif-center" class="hidden" role="dialog" aria-label="알림">
+      <div class="nc-head"><span>알림</span><div><button class="icon-btn" id="nc-clear" title="모두 지우기" aria-label="모두 지우기"><i class="codicon codicon-clear-all"></i></button><button class="icon-btn" id="nc-close" title="닫기" aria-label="닫기"><i class="codicon codicon-chevron-down"></i></button></div></div>
+      <div id="notif-list"></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
