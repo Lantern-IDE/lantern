@@ -1,0 +1,22 @@
+/target
+.lantern/index.db*
+app/node_modules
+app/dist
+app/src-tauri/gen
+node_modules/
+app/e2e/results/
+eval/index/
+
+# 개인 문서 (공개 레포에 올리지 않음)
+docs/과제_맥락엔진.md
+docs/교재_맥락엔진.md
+docs/포트폴리오_면접_대비.md
+docs/기획서*.html
+
+# 비공개 프로젝트(JellySafe) 평가 데이터: 파일 경로가 들어 있다
+eval/golden-jellysafe.json
+eval/questions-jellysafe.txt
+eval/results/
+
+# 디자인 도구의 로컬 작업 파일
+.impeccable/
