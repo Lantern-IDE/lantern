@@ -30,7 +30,7 @@ jobs:
             exe: target/release/lantern-app
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Linux 시스템 라이브러리 (WebView, 트레이, 자격 증명 저장소)
         if: runner.os == 'Linux'
