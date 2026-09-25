@@ -413,7 +413,14 @@ scenario("파일에서 바꾸기와 되돌리기", async () => {
     [...t.querySelectorAll("button")].find((b) => b.textContent.includes("되돌리기"))?.click();
     return true;
   });
-  await waitFor(() => [...document.querySelectorAll(".toast")].some((t) => t.innerText.includes("되돌렸습니다")), 8000, "되돌림 알림");
+  try {
+    await waitFor(() => [...document.querySelectorAll(".toast")].some((t) => t.innerText.includes("되돌렸습니다")), process.env.CI ? 20000 : 8000, "되돌림 알림");
+  } catch (e) {
+    // 네이티브 대화상자(예: 충돌 확인)는 화면 캡처에 찍히지 않으니 문구를 남긴다
+    const dialog = execFileSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join(HERE, "dialog.ps1"), "-ProcId", String(app.pid)], { encoding: "utf8" }).trim();
+    const toasts = await run(() => [...document.querySelectorAll(".toast")].map((t) => t.innerText.replace(/\s+/g, " ")).join(" | "));
+    throw new Error(`${e.message}\n      알림: ${toasts || "없음"}\n      ${dialog.replace(/\n/g, "\n      ")}`);
+  }
   if (file("src/api.ts").includes("handleSignIn")) throw new Error("되돌리지 않음");
 });
 
