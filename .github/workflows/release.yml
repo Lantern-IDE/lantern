@@ -31,7 +31,7 @@ jobs:
             args: "--bundles appimage,deb"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Linux 시스템 라이브러리
         if: runner.os == 'Linux'
