@@ -1,0 +1,19 @@
+name: Feature request / 기능 제안
+description: Suggest an idea / 아이디어 제안
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve? / 어떤 문제를 풀고 싶나요?
+      description: Describe the situation, not only the solution. / 해결책보다 상황을 먼저 알려 주세요.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to happen? / 어떻게 되면 좋을까요?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What do you do today instead? / 지금은 어떻게 하고 있나요?
