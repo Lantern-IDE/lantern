@@ -26,9 +26,9 @@
 
     <div id="app">
       <header id="titlebar" data-tauri-drag-region>
-        <div class="tb-left">
+        <div class="tb-left" data-tauri-drag-region>
           <div class="app-mark" data-tauri-drag-region data-hex="brand"></div>
-          <nav id="menubar" aria-label="메뉴"></nav>
+          <nav id="menubar" aria-label="메뉴" data-tauri-drag-region></nav>
         </div>
         <div class="tb-center" data-tauri-drag-region>
           <div id="canvas-switch" class="canvas-switch" role="tablist" aria-label="가운데 화면">
@@ -39,11 +39,11 @@
             <i class="codicon codicon-search"></i><span id="cc-label">Lantern</span>
           </button>
         </div>
-        <div class="tb-right">
+        <div class="tb-right" data-tauri-drag-region>
           <button class="tb-btn" id="toggle-sidebar" title="기본 사이드바 전환 (Ctrl+B)" aria-label="기본 사이드바 전환"><i class="codicon codicon-layout-sidebar-left"></i></button>
           <button class="tb-btn" id="toggle-panel" title="패널 전환 (Ctrl+J)" aria-label="패널 전환"><i class="codicon codicon-layout-panel"></i></button>
           <button class="tb-btn" id="toggle-auxbar" title="채팅 사이드바 전환 (Ctrl+Alt+B)" aria-label="채팅 사이드바 전환"><i class="codicon codicon-layout-sidebar-right"></i></button>
-          <div class="win-controls">
+          <div class="win-controls" data-tauri-drag-region>
             <button id="win-min" title="최소화" aria-label="최소화"><i class="codicon codicon-chrome-minimize"></i></button>
             <button id="win-max" title="최대화" aria-label="최대화"><i class="codicon codicon-chrome-maximize"></i></button>
             <button id="win-close" class="close" title="닫기" aria-label="닫기"><i class="codicon codicon-chrome-close"></i></button>
