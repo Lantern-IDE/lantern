@@ -1,40 +1,46 @@
-name: Beta feedback / 베타 사용 후기
-description: Tell us how Lantern worked on your real project / 실제 프로젝트에서 써 본 후기
-labels: [beta-feedback]
+name: 베타 사용 후기 (Beta feedback)
+description: 실제 프로젝트에서 써 본 후기
+labels: ["beta-feedback"]
 body:
   - type: markdown
     attributes:
-      value: |
-        Thanks for trying the beta. Short answers are fine. / 베타를 써 주셔서 고맙습니다. 짧게 적어도 됩니다.
+      value: 베타를 써 주셔서 고맙습니다. 짧게 적어도 됩니다. (English is fine.)
+
   - type: input
     id: project
     attributes:
-      label: Project size and languages / 프로젝트 규모와 언어
-      placeholder: "~800 files, TypeScript + Python"
+      label: 프로젝트 규모와 언어
+      placeholder: "파일 800개쯤, TypeScript + Python"
+
   - type: input
     id: model
     attributes:
-      label: Model / provider / 모델
+      label: 사용한 모델
+      placeholder: "claude-sonnet-5 / Ollama qwen2.5-coder:14b ..."
+
   - type: textarea
     id: context
     attributes:
-      label: Did the AI find the right code? / AI가 맞는 코드를 찾았나요?
-      description: Check "Context Lantern sent" on an answer. Was anything important missing? / 답변의 "Lantern이 본 코드"를 열어 보고, 빠진 중요한 파일이 있었는지 알려 주세요.
+      label: AI가 맞는 코드를 찾았나요?
+      description: 답변의 "Lantern이 본 코드"를 열어 보고, 빠진 중요한 파일이 있었는지 알려 주세요.
+
   - type: textarea
     id: map
     attributes:
-      label: Map, impact radius, footprint — useful or noise? / 지도·영향 반경·발자취는 쓸모 있었나요?
+      label: 코드 지도·영향 반경·발자취는 쓸모 있었나요?
+
   - type: textarea
     id: blockers
     attributes:
-      label: What stopped you from using it as your main editor? / 주력 편집기로 쓰지 못하게 막은 것은?
+      label: 주력 편집기로 쓰지 못하게 막은 것은?
     validations:
       required: true
+
   - type: dropdown
     id: again
     attributes:
-      label: Would you keep using it? / 계속 쓰시겠어요?
+      label: 계속 쓰시겠어요?
       options:
-        - "Yes / 네"
-        - "Maybe, if something is fixed / 무엇이 고쳐지면"
-        - "No / 아니요"
+        - 네
+        - 무엇이 고쳐지면
+        - 아니요
