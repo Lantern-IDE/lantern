@@ -702,6 +702,57 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .scm-file:hover .scm-actions { display: flex; }
 .scm-actions .icon-btn { width: 20px; height: 20px; }
 .scm-letter { width: 14px; text-align: center; font-weight: 700; font-size: 12px; font-family: var(--code-font); }
+
+/* 저장소 목록 (여러 저장소를 담은 작업 폴더) */
+.scm-repos { padding-bottom: 6px; border-bottom: 1px solid var(--border); margin-bottom: 6px; max-height: 40%; overflow-y: auto; }
+.scm-repo { display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 18px; cursor: pointer; white-space: nowrap; border-left: 2px solid transparent; }
+.scm-repo:hover { background: var(--hover); }
+.scm-repo:focus-visible { outline: 1px solid var(--focus); outline-offset: -1px; }
+.scm-repo.active { background: var(--inactive-sel); border-left-color: var(--accent); color: var(--fg-strong); }
+.scm-repo > .codicon { color: var(--muted); flex-shrink: 0; }
+.scm-repo .rname { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.scm-repo .rbranch { color: var(--dim); font-size: 12px; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
+.rsync { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+/* 브랜치 · 원격 · 가져오기/풀/푸시 */
+.scm-sync { display: flex; align-items: center; gap: 6px; padding: 0 10px 8px 18px; min-height: 28px; }
+.scm-branch-btn { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--sunken); color: var(--fg); font-size: 12px; max-width: 45%; flex-shrink: 0; }
+.scm-branch-btn:hover { border-color: var(--border-strong); color: var(--fg-strong); }
+.scm-branch-btn span:first-of-type { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.scm-remote { display: inline-flex; align-items: center; gap: 4px; color: var(--dim); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.scm-remote.none { font-style: italic; }
+.scm-sync-actions { display: flex; gap: 1px; margin-left: auto; flex-shrink: 0; }
+.scm-sync-actions .icon-btn { width: 24px; height: 24px; }
+.scm-sync-actions .icon-btn.busy { pointer-events: none; opacity: 0.7; }
+.scm-newbranch { flex: 1; height: 26px; font-size: 12px; }
+
+/* 커밋 이력 */
+.scm-history { margin-top: 6px; border-top: 1px solid var(--border); padding-top: 4px; }
+.scm-group.clickable { cursor: pointer; }
+.scm-group.clickable:hover { color: var(--fg-strong); }
+.scm-commit-row { display: flex; align-items: flex-start; gap: 5px; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
+.scm-commit-row > .codicon { margin-top: 2px; }
+.scm-commit-row .cbody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.scm-commit-row .cline { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; }
+.scm-commit-row .cline .cmeta { overflow: hidden; text-overflow: ellipsis; min-width: 0; flex-shrink: 1; }
+.scm-commit-row:hover { background: var(--hover); }
+.scm-commit-row:focus-visible { outline: 1px solid var(--focus); outline-offset: -1px; }
+.scm-commit-row > .codicon { color: var(--muted); font-size: 12px; flex-shrink: 0; }
+.scm-commit-row .csubject { overflow: hidden; text-overflow: ellipsis; color: var(--fg); }
+.scm-ref.more { border-style: dotted; }
+/* 소스 제어는 가로로 넘치지 않게: 긴 파일 이름은 말줄임 */
+#view-scm #scm-body, #view-scm .scm-repos { overflow-x: hidden; }
+#view-scm .scm-file .fname { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.scm-commit-row .cmeta { color: var(--dim); font-size: 11.5px; flex-shrink: 0; }
+.scm-ref { font-size: 10.5px; line-height: 15px; padding: 0 5px; border-radius: 8px; border: 1px solid var(--border-strong); color: var(--muted); flex-shrink: 0; max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+.scm-ref.head { border-color: var(--accent); color: var(--accent); }
+.scm-ref.remote { border-style: dashed; }
+.scm-ref.tag { border-color: var(--warning); color: var(--warning); }
+.scm-commit-files { padding-bottom: 4px; }
+.scm-commit-files .scm-file { padding-left: 30px; }
+.scm-commit-files .cinfo { padding: 2px 10px 4px 30px; color: var(--dim); font-size: 11.5px; font-family: var(--code-font); }
+.pad { padding: 4px 18px; }
+.empty-view.compact { padding-top: 2px; padding-bottom: 2px; }
 .s-M { color: var(--warning); }
 .s-A, .s-U { color: var(--ok); }
 .s-D { color: var(--error); }
