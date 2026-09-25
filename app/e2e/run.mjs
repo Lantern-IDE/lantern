@@ -54,7 +54,7 @@ function makeProject() {
   w("src/api.ts", "import { handleLogin } from './auth/login';\n\nexport function route(path: string) {\n  if (path === '/login') return handleLogin('x');\n}\n");
   w("tests/session.test.ts", "import { signCookie } from '../src/auth/session';\n\nexport function testSign() {\n  return signCookie('a');\n}\n");
   w(".lantern/memory/conventions.md", "# conventions\n\n- 쿠키 서명은 signCookie 한 곳에서만 한다\n");
-  git("init", "-q");
+  git("init", "-q", "-b", "main");
   git("config", "user.email", "e2e@example.com");
   git("config", "user.name", "e2e");
   git("config", "core.autocrlf", "false");
@@ -132,9 +132,10 @@ let ws = null;
 let msgId = 0;
 const pending = new Map();
 
-async function launch() {
+/** 앱을 띄운다. dir: 열 폴더 (기본은 시나리오용 프로젝트) */
+async function launch(dir = DIRS.proj) {
   cdpPort = 9400 + Math.floor(Math.random() * 500);
-  app = spawn(EXE, [DIRS.proj], {
+  app = spawn(EXE, [dir], {
     env: {
       ...process.env,
       LANTERN_HOME: DIRS.home,
@@ -197,7 +198,7 @@ async function launch() {
     await waitFor(() => document.documentElement.lang === "ko", 20000, "한국어 화면");
   }
   // 프로젝트를 열고 지도를 그릴 때까지
-  await waitFor(() => document.querySelector("#cc-label")?.textContent === "proj" && !!document.querySelector("#map-view:not(.hidden)") && !!document.querySelector("#map-crumb .cur"), 30000, "프로젝트 열림");
+  await waitFor((name) => document.querySelector("#cc-label")?.textContent === name && !!document.querySelector("#map-view:not(.hidden)") && !!document.querySelector("#map-crumb .cur"), 30000, "프로젝트 열림", path.basename(dir));
 }
 
 /** 앱이 뜨지 않았을 때 원인을 볼 수 있게 앱 로그와 충돌 보고서의 끝부분 */
@@ -426,7 +427,13 @@ scenario("파일에서 바꾸기와 되돌리기", async () => {
   await waitDialog(0);
   // "곳을 바꿨습니다"로 찾는다. "바꿨습니다"만으로는 에이전트 수정 알림("Lantern이 파일 N개를 바꿨습니다")도 걸려서,
   // CI처럼 느린 환경에서 앞 시나리오의 알림이 남아 있으면 되돌리기 단추가 없는 알림을 고른다.
-  await waitFor(() => [...document.querySelectorAll(".toast")].some((t) => t.innerText.includes("곳을 바꿨습니다")), 8000, "바꾸기 알림");
+  try {
+    await waitFor(() => [...document.querySelectorAll(".toast")].some((t) => t.innerText.includes("곳을 바꿨습니다")), process.env.CI ? 20000 : 8000, "바꾸기 알림");
+  } catch (e) {
+    const dialog = execFileSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join(HERE, "dialog.ps1"), "-ProcId", String(app.pid)], { encoding: "utf8" }).trim();
+    const toasts = await run(() => [...document.querySelectorAll(".toast")].map((t) => t.innerText.replace(/\s+/g, " ")).join(" | "));
+    throw new Error(`${e.message}\n      알림: ${toasts || "없음"}\n      파일: ${file("src/api.ts").includes("handleSignIn") ? "바뀜" : "그대로"}\n      ${dialog.replace(/\n/g, "\n      ")}`);
+  }
   if (!file("src/api.ts").includes("handleSignIn") || !file("src/auth/login.ts").includes("handleSignIn")) throw new Error("바꾸지 않음");
   const clicked = await run(() => {
     const t = [...document.querySelectorAll(".toast")].find((x) => x.innerText.includes("곳을 바꿨습니다"));
@@ -462,6 +469,81 @@ scenario("지도: 검색해서 주변 보기", async () => {
   const crumb = await waitFor(() => (document.querySelector("#map-crumb")?.textContent ?? "").includes("signCookie") && document.querySelector("#map-crumb").textContent, 8000, "주변 보기");
   const n = Number(crumb.replace(/.*signCookie/, "").replace(/\D/g, ""));
   if (n < 3) throw new Error(`주변 노드 ${n}개 (호출자 issueSession, testSign과 파일이 있어야 함)`);
+});
+
+/** 소스 제어 뷰를 연다 (이미 보이는 뷰의 아이콘을 다시 누르면 사이드바가 접히므로 안 보일 때만 누른다) */
+const openScm = () => run(() => {
+  if (!document.querySelector("#view-scm")?.offsetParent) document.querySelector('.ab-item[data-view="scm"]').click();
+  return true;
+});
+
+/** 메뉴 팝업에서 글자가 든 항목을 누른다 */
+const pickMenu = (text) => run((t) => {
+  const it = [...document.querySelectorAll("#menu-popup .menu-item")].find((x) => x.textContent.includes(t));
+  it?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+  return !!it;
+}, text);
+
+scenario("소스 제어: 원격 연결, 커밋 이력, 푸시, 브랜치 만들기·전환", async () => {
+  // 원격 저장소 흉내 (로컬 bare 저장소)
+  const bare = path.join(TMP, "remote.git");
+  execFileSync("git", ["init", "-q", "--bare", "-b", "main", bare]);
+  git("remote", "add", "origin", bare);
+  await openScm();
+  await waitFor(() => document.querySelector("#scm-sync .scm-branch-btn")?.textContent.includes("main") && document.querySelector("#scm-sync .scm-remote")?.textContent.includes("remote"), 10000, "브랜치와 원격 표시");
+
+  // 커밋 이력: 3개 (init, v2, v3), 커밋을 펼치면 바뀐 파일
+  await run(() => {
+    [...document.querySelectorAll(".scm-history .scm-group")][0].click();
+    return true;
+  });
+  const subjects = await waitFor(() => {
+    const rows = [...document.querySelectorAll(".scm-commit-row .csubject")].map((x) => x.textContent);
+    return rows.length >= 3 && rows;
+  }, 10000, "커밋 이력");
+  if (subjects[0] !== "v3" || !subjects.includes("init")) throw new Error(`커밋 이력: ${subjects.join(", ")}`);
+  await run(() => {
+    document.querySelector(".scm-commit-row").click();
+    return true;
+  });
+  const files = await waitFor(() => {
+    const f = [...document.querySelectorAll(".scm-commit-files .scm-file .fname")].map((x) => x.textContent);
+    return f.length && f;
+  }, 10000, "커밋의 바뀐 파일");
+  if (!files.includes("session.ts")) throw new Error(`v3에서 바뀐 파일: ${files.join(", ")}`);
+
+  // 푸시: 업스트림이 없으면 origin에 올리고 연결
+  await run(() => {
+    [...document.querySelectorAll("#scm-sync .scm-sync-actions button")].find((b) => b.title.startsWith("푸시")).click();
+    return true;
+  });
+  await waitFor(() => [...document.querySelectorAll(".toast")].some((t) => t.innerText.includes("원격에 올렸습니다")), 20000, "푸시 알림");
+  const pushed = execFileSync("git", ["--git-dir", bare, "rev-parse", "main"], { encoding: "utf8" }).trim();
+  if (pushed !== git("rev-parse", "HEAD").trim()) throw new Error("원격에 올라간 커밋이 다름");
+
+  // 새 브랜치 만들기 → 상태 표시줄에도 → 다시 main으로
+  await run(() => {
+    document.querySelector("#scm-sync .scm-branch-btn").click();
+    return true;
+  });
+  await waitFor(() => !!document.querySelector("#menu-popup:not(.hidden) .menu-item"), 5000, "브랜치 메뉴");
+  if (!(await pickMenu("새 브랜치 만들기"))) throw new Error("브랜치 메뉴에 '새 브랜치 만들기' 없음");
+  await run(() => {
+    const i = document.querySelector(".scm-newbranch");
+    i.value = "e2e/feature";
+    i.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    return true;
+  });
+  await waitFor(() => document.querySelector("#scm-sync .scm-branch-btn")?.textContent.includes("e2e/feature") && document.querySelector("#sb-branch")?.textContent.includes("e2e/feature"), 10000, "새 브랜치로 전환");
+  if (git("branch", "--show-current").trim() !== "e2e/feature") throw new Error("git 브랜치가 바뀌지 않음");
+  await run(() => {
+    document.querySelector("#scm-sync .scm-branch-btn").click();
+    return true;
+  });
+  await waitFor(() => !!document.querySelector("#menu-popup:not(.hidden) .menu-item"), 5000, "브랜치 메뉴");
+  if (!(await pickMenu("main"))) throw new Error("브랜치 메뉴에 main 없음");
+  await waitFor(() => document.querySelector("#scm-sync .scm-branch-btn")?.textContent.includes("main"), 10000, "main으로 전환");
+  if (git("branch", "--show-current").trim() !== "main") throw new Error("main으로 돌아가지 않음");
 });
 
 scenario("다시 켜면 작업이 복원된다", async () => {
@@ -505,6 +587,43 @@ scenario("영어 화면: 보이는 한국어가 없다", async () => {
     return true;
   });
   if (left.length) throw new Error(`번역 안 된 글자: ${left.slice(0, 5).join(" | ")}`);
+});
+
+scenario("여러 저장소를 담은 폴더: 저장소를 모두 찾고 골라서 본다", async () => {
+  // 저장소 두 개를 담은 작업 폴더 (폴더 자체는 저장소가 아님)
+  const ws = path.join(TMP, "ws");
+  for (const [name, file] of [["api", "server.ts"], ["web", "app.ts"]]) {
+    const dir = path.join(ws, name);
+    fs.mkdirSync(dir, { recursive: true });
+    const g = (...a) => execFileSync("git", ["-C", dir, ...a], { encoding: "utf8" });
+    g("init", "-q", "-b", "main");
+    g("config", "user.email", "e2e@example.com");
+    g("config", "user.name", "e2e");
+    fs.writeFileSync(path.join(dir, file), `export const ${name} = 1;\n`);
+    g("add", "-A");
+    g("commit", "-qm", `${name} 시작`);
+  }
+  fs.writeFileSync(path.join(ws, "web", "app.ts"), "export const web = 2;\n"); // web에만 변경 1개
+  const trusted = JSON.parse(fs.readFileSync(path.join(DIRS.data, "trusted.json"), "utf8"));
+  fs.writeFileSync(path.join(DIRS.data, "trusted.json"), JSON.stringify([...trusted, ws.replace(/\\/g, "/").toLowerCase()]));
+
+  await stop();
+  await launch(ws);
+  await openScm();
+  const names = await waitFor(() => {
+    const r = [...document.querySelectorAll("#scm-repos .scm-repo .rname")].map((x) => x.textContent);
+    return r.length === 2 && r;
+  }, 15000, "저장소 목록");
+  if (names.join(",") !== "api,web") throw new Error(`저장소 목록: ${names.join(", ")}`);
+  if (await run(() => !!document.querySelector("#scm-body .btn-primary"))) throw new Error("하위에 저장소가 있는데 '저장소 만들기'를 권함");
+  // 변경이 있는 저장소(web)를 먼저 고른다
+  await waitFor(() => document.querySelector("#scm-repos .scm-repo.active .rname")?.textContent === "web" && document.querySelectorAll("#scm-body .scm-file").length === 1, 10000, "web 저장소의 변경");
+  if (!(await run(() => document.querySelector("#sb-branch")?.textContent.includes("web: main")))) throw new Error("상태 표시줄에 저장소·브랜치가 없음");
+  await run(() => {
+    [...document.querySelectorAll("#scm-repos .scm-repo")].find((r) => r.textContent.includes("api")).click();
+    return true;
+  });
+  await waitFor(() => document.querySelector("#scm-repos .scm-repo.active .rname")?.textContent === "api" && document.querySelectorAll("#scm-body .scm-file").length === 0, 10000, "api 저장소로 전환");
 });
 
 // ── 실행 ──────────────────────────────────────────────────
