@@ -184,6 +184,16 @@ async function launch() {
     await cdp("Runtime.evaluate", { expression: "localStorage.setItem('lantern.trace','1')", returnByValue: true });
     await sleep(1200);
   }
+  // 시나리오는 한국어 화면 기준이다. 처음 켜면 시스템 언어를 따르므로(CI는 영어) 한국어로 고정한다.
+  if ((await run(() => document.documentElement.lang)) !== "ko") {
+    await run(() => {
+      localStorage.setItem("lang", JSON.stringify("ko"));
+      setTimeout(() => location.reload(), 50);
+      return true;
+    });
+    await sleep(1500);
+    await waitFor(() => document.documentElement.lang === "ko", 20000, "한국어 화면");
+  }
   // 프로젝트를 열고 지도를 그릴 때까지
   await waitFor(() => document.querySelector("#cc-label")?.textContent === "proj" && !!document.querySelector("#map-view:not(.hidden)") && !!document.querySelector("#map-crumb .cur"), 30000, "프로젝트 열림");
 }
