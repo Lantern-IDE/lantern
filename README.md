@@ -37,6 +37,7 @@ The engine also runs on its own as a CLI and an MCP server, so you can use it fr
 ```bash
 cargo build --release -p lantern-context
 ./target/release/lantern -C <project> context "where is the session cookie issued?"
+./target/release/lantern -C <project> graph impact src/auth/session.ts --lines 40-60   # blast radius as JSON
 claude mcp add lantern -- <path-to-lantern> mcp <project>
 ```
 

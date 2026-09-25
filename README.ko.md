@@ -37,6 +37,7 @@
 ```bash
 cargo build --release -p lantern-context
 ./target/release/lantern -C <프로젝트> context "세션 쿠키는 어디서 발급해?"
+./target/release/lantern -C <프로젝트> graph impact src/auth/session.ts --lines 40-60   # 영향 반경 (JSON)
 claude mcp add lantern -- <lantern 경로> mcp <프로젝트>
 ```
 
