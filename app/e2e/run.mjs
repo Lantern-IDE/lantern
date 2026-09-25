@@ -345,6 +345,24 @@ scenario("프로젝트를 열면 코드 지도와 빈 작업 목록", async () =
   if (!s.empty) throw new Error("작업 목록이 비어 있지 않음");
 });
 
+scenario("제목 표시줄의 빈 곳은 어디든 창을 끌 수 있다", async () => {
+  // 창 테두리를 직접 그려서, data-tauri-drag-region이 붙은 요소를 직접 눌러야 끌린다(자식은 해당 없음).
+  // 제목 표시줄을 가로로 훑어 단추·입력이 아닌 곳이 모두 끌기 영역인지 본다.
+  const bad = await run(() => {
+    const bar = document.querySelector("#titlebar").getBoundingClientRect();
+    const out = [];
+    for (let x = 1; x < bar.width - 1; x += 4) {
+      for (const y of [bar.top + 3, bar.top + bar.height / 2, bar.bottom - 3]) {
+        const el = document.elementFromPoint(x, y);
+        if (!el || el.closest("button, input, select, a, [role=tab], [role=tablist], [role=menuitem]")) continue;
+        if (!el.hasAttribute("data-tauri-drag-region")) out.push(`x=${Math.round(x)} ${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}${typeof el.className === "string" && el.className ? "." + el.className.split(" ")[0] : ""}`);
+      }
+    }
+    return [...new Set(out)].slice(0, 8);
+  });
+  if (bad.length) throw new Error(`끌리지 않는 빈 곳: ${bad.join(", ")}`);
+});
+
 scenario("에이전트 수정: 승인 카드의 영향 반경 → 적용 → 발자취", async () => {
   mock.old = "v + '.sig'";
   mock.new = "v + '.signed'";
