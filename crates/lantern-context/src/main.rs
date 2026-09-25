@@ -61,6 +61,49 @@ enum Cmd {
     },
     /// MCP 서버 실행 (stdio). 루트는 인자 또는 --root
     Mcp { path: Option<PathBuf> },
+    /// 코드 지도와 변경 영향 반경 (JSON)
+    Graph {
+        #[command(subcommand)]
+        view: GraphView,
+    },
+}
+
+#[derive(Subcommand)]
+enum GraphView {
+    /// 전체 구조. 파일이 많으면 폴더 단위로 묶는다
+    Overview {
+        #[arg(long, default_value_t = 400)]
+        max_nodes: usize,
+    },
+    /// 한 곳의 주변: `f:경로`, `s:심볼id`, 또는 이름
+    Neighborhood {
+        center: String,
+        #[arg(long, default_value_t = 30)]
+        limit: usize,
+    },
+    /// 파일의 줄을 바꿀 때 닿는 범위 (IDE 승인 카드와 같은 계산)
+    Impact {
+        path: String,
+        /// 바뀌는 줄 범위 `10-20` 또는 `15` (여러 번 줄 수 있다)
+        #[arg(long = "lines", required = true)]
+        lines: Vec<String>,
+    },
+}
+
+/// `10-20` 또는 `15` → (시작, 끝). 1부터, 양끝 포함
+fn parse_range(s: &str) -> Result<(u32, u32)> {
+    let bad = || anyhow::anyhow!("줄 범위는 `10-20`이나 `15`처럼 쓰세요: {s}");
+    let (a, z) = match s.split_once('-') {
+        Some((a, z)) => (a.trim().parse::<u32>().map_err(|_| bad())?, z.trim().parse::<u32>().map_err(|_| bad())?),
+        None => {
+            let n = s.trim().parse::<u32>().map_err(|_| bad())?;
+            (n, n)
+        }
+    };
+    if a == 0 || z < a {
+        return Err(bad());
+    }
+    Ok((a, z))
 }
 
 fn main() -> Result<()> {
@@ -127,6 +170,20 @@ fn main() -> Result<()> {
         Cmd::Mcp { path } => {
             let mut engine = Engine::open(path.as_ref().unwrap_or(&cli.root))?;
             lantern_context::mcp::serve(&mut engine)?;
+        }
+        Cmd::Graph { view } => {
+            use lantern_context::graph;
+            let mut engine = Engine::open(&cli.root)?;
+            engine.refresh()?;
+            let json = match view {
+                GraphView::Overview { max_nodes } => serde_json::to_string_pretty(&graph::overview(&engine.store, max_nodes)?)?,
+                GraphView::Neighborhood { center, limit } => serde_json::to_string_pretty(&graph::neighborhood(&engine.store, &center, limit)?)?,
+                GraphView::Impact { path, lines } => {
+                    let ranges = lines.iter().map(|s| parse_range(s)).collect::<Result<Vec<_>>>()?;
+                    serde_json::to_string_pretty(&graph::impact(&engine.store, &path.replace('\\', "/"), &ranges)?)?
+                }
+            };
+            println!("{json}");
         }
     }
     Ok(())
@@ -198,4 +255,19 @@ fn bench(root: &Path, questions: &Path, budget: usize, fresh: bool) -> Result<()
         println!("- 토큰: Lantern {total_k} vs 기준 {total_b} → {saving:.0}% 절감");
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_range;
+
+    #[test]
+    fn parses_line_ranges() {
+        assert_eq!(parse_range("10-20").unwrap(), (10, 20));
+        assert_eq!(parse_range("15").unwrap(), (15, 15));
+        assert_eq!(parse_range(" 3 - 4 ").unwrap(), (3, 4));
+        for bad in ["0", "20-10", "a-b", "", "5-"] {
+            assert!(parse_range(bad).is_err(), "{bad}");
+        }
+    }
 }
