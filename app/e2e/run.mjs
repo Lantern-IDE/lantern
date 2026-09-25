@@ -185,6 +185,8 @@ async function launch() {
     await sleep(1200);
   }
   // 시나리오는 한국어 화면 기준이다. 처음 켜면 시스템 언어를 따르므로(CI는 영어) 한국어로 고정한다.
+  // 앱 문서가 열리기 전(빈 페이지)에는 localStorage에 접근할 수 없으니 먼저 기다린다.
+  await waitFor(() => location.hostname === "tauri.localhost" && document.readyState !== "loading" && !!document.documentElement.lang, 30000, "앱 문서");
   if ((await run(() => document.documentElement.lang)) !== "ko") {
     await run(() => {
       localStorage.setItem("lang", JSON.stringify("ko"));
