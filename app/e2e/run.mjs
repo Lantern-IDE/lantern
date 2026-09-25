@@ -406,13 +406,17 @@ scenario("파일에서 바꾸기와 되돌리기", async () => {
     return true;
   });
   await waitDialog(0);
-  await waitFor(() => [...document.querySelectorAll(".toast")].some((t) => t.innerText.includes("바꿨습니다")), 8000, "바꾸기 알림");
+  // "곳을 바꿨습니다"로 찾는다. "바꿨습니다"만으로는 에이전트 수정 알림("Lantern이 파일 N개를 바꿨습니다")도 걸려서,
+  // CI처럼 느린 환경에서 앞 시나리오의 알림이 남아 있으면 되돌리기 단추가 없는 알림을 고른다.
+  await waitFor(() => [...document.querySelectorAll(".toast")].some((t) => t.innerText.includes("곳을 바꿨습니다")), 8000, "바꾸기 알림");
   if (!file("src/api.ts").includes("handleSignIn") || !file("src/auth/login.ts").includes("handleSignIn")) throw new Error("바꾸지 않음");
-  await run(() => {
-    const t = [...document.querySelectorAll(".toast")].find((x) => x.innerText.includes("바꿨습니다"));
-    [...t.querySelectorAll("button")].find((b) => b.textContent.includes("되돌리기"))?.click();
-    return true;
+  const clicked = await run(() => {
+    const t = [...document.querySelectorAll(".toast")].find((x) => x.innerText.includes("곳을 바꿨습니다"));
+    const b = t && [...t.querySelectorAll("button")].find((x) => x.textContent.includes("되돌리기"));
+    b?.click();
+    return !!b;
   });
+  if (!clicked) throw new Error("바꾸기 알림에 되돌리기 단추가 없음");
   try {
     await waitFor(() => [...document.querySelectorAll(".toast")].some((t) => t.innerText.includes("되돌렸습니다")), process.env.CI ? 20000 : 8000, "되돌림 알림");
   } catch (e) {
