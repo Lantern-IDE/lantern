@@ -10,6 +10,25 @@ Thanks for taking a look. Lantern is in early beta and maintained by one person,
 - **Features:** open an issue first so we can agree on the approach before you write code. Lantern deliberately stays small; not every good idea will fit.
 - **Security issues:** do not open a public issue. See [SECURITY.md](SECURITY.md).
 
+## How work flows
+
+Issue → branch → pull request → CI green → merge. Even the maintainer's own changes go through this, so the history explains *why* each change was made.
+
+1. **Issue.** Pick a form: bug report, feature request, task, or beta feedback. The form adds a `type:` label and the GitHub issue type; the maintainer adds `area:`, `priority:`, and a milestone.
+2. **Branch.** `<type>/<short-name>`, for example `fix/map-empty-after-reload` or `feat/public-benchmark`.
+3. **Pull request.** Fill in the template: the problem first, then what changed, what you left out and why, and the checks you ran. Link the issue with `Closes #N`.
+4. **Merge.** Rebase merge, so each commit stays as written.
+
+| Label | Meaning |
+|---|---|
+| `type: feat` `fix` `refactor` `perf` `test` `docs` `design` `chore` `ci` | Kind of change, same as the commit types |
+| `area: engine` `agent` `editor` `map` `eval` `infra` | Part of the codebase |
+| `priority: P0` | Data loss, security, or the app doesn't start: fix now |
+| `priority: P1` / `P2` | Next release / long term |
+| `beta-feedback` | Reports from beta users |
+
+Milestones follow the release plan: **M1** public beta, **M2** beta feedback, **M3** stable release.
+
 ## Development
 
 ```bash
