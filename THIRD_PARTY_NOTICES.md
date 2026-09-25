@@ -12,7 +12,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - **Pretendard (글꼴)** — OFL-1.1 — https://github.com/orioncactus/pretendard
   Pretendard는 SIL Open Font License 1.1에 따라 배포됩니다.
 
-## Rust 크레이트 (362개)
+## Rust 크레이트 (360개)
 
 ### (MIT OR Apache-2.0) AND Unicode-3.0
 
@@ -24,7 +24,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 ### Apache-2.0
 
-- similar 2.7.0 — https://github.com/mitsuhiko/similar
+- similar 3.2.0 — https://github.com/mitsuhiko/similar
 - sync_wrapper 1.0.2 — https://github.com/Actyx/sync_wrapper
 - tao 0.35.3 — https://github.com/tauri-apps/tao
 
@@ -192,7 +192,6 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - webview2-com-macros 0.8.1 — https://github.com/wravery/webview2-rs
 - webview2-com-sys 0.38.2 — https://github.com/wravery/webview2-rs
 - which 8.0.6 — https://github.com/harryfei/which-rs
-- winnow 0.7.15 — https://github.com/winnow-rs/winnow
 - winnow 1.0.4 — https://github.com/winnow-rs/winnow
 - winreg 0.10.1 — https://github.com/gentoo90/winreg-rs
 - zip 4.6.1 — https://github.com/zip-rs/zip2
@@ -237,6 +236,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - deranged 0.5.8 — https://github.com/jhpratt/deranged
 - digest 0.10.7 — https://github.com/RustCrypto/traits
 - dirs 6.0.0 — https://github.com/soc/dirs-rs
+- dirs 7.0.0 — https://codeberg.org/dirs/dirs-rs
 - dirs-sys 0.5.0 — https://github.com/dirs-dev/dirs-sys-rs
 - displaydoc 0.2.7 — https://github.com/yaahc/displaydoc
 - dtoa 1.0.11 — https://github.com/dtolnay/dtoa
@@ -338,9 +338,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - time-core 0.1.9 — https://github.com/time-rs/time
 - time-macros 0.2.32 — https://github.com/time-rs/time
 - tokio-rustls 0.26.5 — https://github.com/rustls/tokio-rustls
-- toml 0.9.12+spec-1.1.0 — https://github.com/toml-rs/toml
 - toml 1.1.6+spec-1.1.0 — https://github.com/toml-rs/toml
-- toml_datetime 0.7.5+spec-1.1.0 — https://github.com/toml-rs/toml
 - toml_datetime 1.1.1+spec-1.1.0 — https://github.com/toml-rs/toml
 - toml_edit 0.25.15+spec-1.1.0 — https://github.com/toml-rs/toml
 - toml_parser 1.1.3+spec-1.1.0 — https://github.com/toml-rs/toml
