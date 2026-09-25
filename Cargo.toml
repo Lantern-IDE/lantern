@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = ["crates/lantern-context"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
