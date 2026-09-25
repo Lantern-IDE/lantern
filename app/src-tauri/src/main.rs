@@ -181,36 +181,95 @@ async fn reveal_path(state: State<'_, AppState>, path: String) -> CmdResult<()> 
     workspace::reveal_in_os(&abs).map_err(anyhow_err)
 }
 
-#[tauri::command]
-async fn git_status(state: State<'_, AppState>) -> CmdResult<gitops::GitStatus> {
-    let p = state.project().map_err(anyhow_err)?;
-    tauri::async_runtime::spawn_blocking(move || gitops::status(&p.root)).await.map_err(err)?.map_err(anyhow_err)
+/// 소스 제어가 쓸 저장소 폴더. git은 저장소 설정(훅, fsmonitor 등)으로 명령을 실행할 수 있어서
+/// 신뢰하지 않은 폴더(제한 모드)에서는 쓰지 않는다 (VS Code와 같음).
+fn git_repo(state: &AppState, repo: &str) -> anyhow::Result<std::path::PathBuf> {
+    let p = state.project()?;
+    if !p.is_trusted() {
+        anyhow::bail!("제한 모드에서는 소스 제어를 쓸 수 없습니다. 이 폴더를 신뢰하면 켜집니다");
+    }
+    gitops::resolve(&p.root, repo)
+}
+
+/// git 작업을 백그라운드 스레드에서 돈다 (네트워크 작업은 오래 걸릴 수 있다)
+async fn git_blocking<T: Send + 'static>(f: impl FnOnce() -> anyhow::Result<T> + Send + 'static) -> CmdResult<T> {
+    tauri::async_runtime::spawn_blocking(f).await.map_err(err)?.map_err(anyhow_err)
 }
 
 #[tauri::command]
-async fn git_diff(state: State<'_, AppState>, path: String, staged: bool) -> CmdResult<String> {
+async fn git_repos(state: State<'_, AppState>) -> CmdResult<Vec<gitops::RepoSummary>> {
     let p = state.project().map_err(anyhow_err)?;
-    tauri::async_runtime::spawn_blocking(move || gitops::diff(&p.root, &path, staged)).await.map_err(err)?.map_err(anyhow_err)
+    if !p.is_trusted() {
+        return Err(anyhow_err(anyhow::anyhow!("제한 모드에서는 소스 제어를 쓸 수 없습니다. 이 폴더를 신뢰하면 켜집니다")));
+    }
+    git_blocking(move || Ok(gitops::repos(&p.root))).await
 }
 
-/// action: stage | unstage | discard | commit | init
 #[tauri::command]
-async fn git_action(state: State<'_, AppState>, action: String, paths: Vec<String>, message: Option<String>) -> CmdResult<String> {
-    let p = state.project().map_err(anyhow_err)?;
-    tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
-        let root = &p.root;
-        match action.as_str() {
-            "stage" => gitops::stage(root, &paths).map(|_| String::new()),
-            "unstage" => gitops::unstage(root, &paths).map(|_| String::new()),
-            "discard" => gitops::discard(root, &paths).map(|_| String::new()),
-            "commit" => gitops::commit(root, message.as_deref().unwrap_or("")),
-            "init" => gitops::init(root).map(|_| String::new()),
-            other => anyhow::bail!("알 수 없는 작업: {other}"),
+async fn git_status(state: State<'_, AppState>, repo: Option<String>) -> CmdResult<gitops::GitStatus> {
+    let dir = git_repo(&state, repo.as_deref().unwrap_or("")).map_err(anyhow_err)?;
+    git_blocking(move || gitops::status(&dir)).await
+}
+
+#[tauri::command]
+async fn git_diff(state: State<'_, AppState>, repo: Option<String>, path: String, staged: bool) -> CmdResult<String> {
+    let dir = git_repo(&state, repo.as_deref().unwrap_or("")).map_err(anyhow_err)?;
+    git_blocking(move || gitops::diff(&dir, &path, staged)).await
+}
+
+/// action: stage | unstage | discard | commit | init | fetch | pull | push
+#[tauri::command]
+async fn git_action(state: State<'_, AppState>, repo: Option<String>, action: String, paths: Vec<String>, message: Option<String>) -> CmdResult<String> {
+    if action == "init" {
+        // 저장소가 없는 연 폴더에 새로 만든다
+        let p = state.project().map_err(anyhow_err)?;
+        if !p.is_trusted() {
+            return Err(anyhow_err(anyhow::anyhow!("제한 모드에서는 소스 제어를 쓸 수 없습니다")));
         }
+        return git_blocking(move || gitops::init(&p.root).map(|_| String::new())).await;
+    }
+    let dir = git_repo(&state, repo.as_deref().unwrap_or("")).map_err(anyhow_err)?;
+    git_blocking(move || match action.as_str() {
+        "stage" => gitops::stage(&dir, &paths).map(|_| String::new()),
+        "unstage" => gitops::unstage(&dir, &paths).map(|_| String::new()),
+        "discard" => gitops::discard(&dir, &paths).map(|_| String::new()),
+        "commit" => gitops::commit(&dir, message.as_deref().unwrap_or("")),
+        "fetch" => gitops::fetch(&dir),
+        "pull" => gitops::pull(&dir),
+        "push" => gitops::push(&dir),
+        other => anyhow::bail!("알 수 없는 작업: {other}"),
     })
     .await
-    .map_err(err)?
-    .map_err(anyhow_err)
+}
+
+#[tauri::command]
+async fn git_log(state: State<'_, AppState>, repo: String, skip: u32, limit: u32) -> CmdResult<Vec<gitops::Commit>> {
+    let dir = git_repo(&state, &repo).map_err(anyhow_err)?;
+    git_blocking(move || gitops::log(&dir, skip, limit)).await
+}
+
+#[tauri::command]
+async fn git_commit_files(state: State<'_, AppState>, repo: String, hash: String) -> CmdResult<Vec<gitops::CommitFile>> {
+    let dir = git_repo(&state, &repo).map_err(anyhow_err)?;
+    git_blocking(move || gitops::commit_files(&dir, &hash)).await
+}
+
+#[tauri::command]
+async fn git_commit_diff(state: State<'_, AppState>, repo: String, hash: String, path: String) -> CmdResult<String> {
+    let dir = git_repo(&state, &repo).map_err(anyhow_err)?;
+    git_blocking(move || gitops::commit_diff(&dir, &hash, &path)).await
+}
+
+#[tauri::command]
+async fn git_branches(state: State<'_, AppState>, repo: String) -> CmdResult<Vec<gitops::Branch>> {
+    let dir = git_repo(&state, &repo).map_err(anyhow_err)?;
+    git_blocking(move || gitops::branches(&dir)).await
+}
+
+#[tauri::command]
+async fn git_checkout(state: State<'_, AppState>, repo: String, name: String, create: bool, remote: bool) -> CmdResult<String> {
+    let dir = git_repo(&state, &repo).map_err(anyhow_err)?;
+    git_blocking(move || gitops::checkout(&dir, &name, create, remote)).await
 }
 
 #[tauri::command]
@@ -255,10 +314,6 @@ async fn replace_text(
     Ok(ReplaceResult { count, files, checkpoint })
 }
 
-#[tauri::command]
-async fn git_branch(state: State<'_, AppState>) -> CmdResult<Option<String>> {
-    Ok(state.project().ok().and_then(|p| workspace::git_branch(&p.root)))
-}
 
 #[tauri::command]
 async fn read_file(state: State<'_, AppState>, path: String) -> CmdResult<String> {
@@ -833,11 +888,16 @@ fn main() {
             delete_path,
             reveal_path,
             search_text,
-            git_branch,
             replace_text,
             git_status,
             git_diff,
             git_action,
+            git_repos,
+            git_log,
+            git_commit_files,
+            git_commit_diff,
+            git_branches,
+            git_checkout,
             read_file,
             write_file,
             ensure_config,
