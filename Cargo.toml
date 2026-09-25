@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/lantern-context"]
+members = ["crates/lantern-context", "app/src-tauri"]
 
 [profile.release]
 lto = "thin"
