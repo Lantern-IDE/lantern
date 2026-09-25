@@ -2,6 +2,15 @@
   "name": "lantern-app",
   "private": true,
   "version": "0.1.0",
+  "description": "Lantern IDE: AI code editor with a local context engine and code map",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lantern-IDE/lantern.git",
+    "directory": "app"
+  },
+  "bugs": "https://github.com/Lantern-IDE/lantern/issues",
+  "homepage": "https://github.com/Lantern-IDE/lantern#readme",
   "type": "module",
   "scripts": {
     "dev": "vite",

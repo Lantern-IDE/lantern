@@ -1,6 +1,14 @@
 {
   "name": "lantern-eval-ab",
   "private": true,
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lantern-IDE/lantern.git",
+    "directory": "eval/ab"
+  },
+  "bugs": "https://github.com/Lantern-IDE/lantern/issues",
+  "homepage": "https://github.com/Lantern-IDE/lantern#readme",
   "type": "module",
   "description": "Lantern 맥락 엔진 A/B 평가 (같은 모델, 맥락 엔진 없음 vs 있음)",
   "scripts": {
