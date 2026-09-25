@@ -146,14 +146,17 @@ async function launch() {
     stdio: "ignore",
   });
   let page = null;
-  for (let i = 0; i < 60 && !page; i++) {
+  let seen = "연결 포트 응답 없음";
+  // CI 가상 머신은 첫 실행(WebView2 준비)이 느리다
+  for (let i = 0; i < (process.env.CI ? 180 : 60) && !page && app.exitCode === null; i++) {
     await sleep(500);
     try {
       const targets = await (await fetch(`http://127.0.0.1:${cdpPort}/json`)).json();
+      seen = targets.map((t) => `${t.type} ${t.url}`).join(", ") || "화면 없음";
       page = targets.find((t) => t.type === "page" && t.url.includes("tauri.localhost"));
     } catch { /* 아직 안 뜸 */ }
   }
-  if (!page) throw new Error("앱 화면에 연결하지 못했습니다");
+  if (!page) throw new Error(`앱 화면에 연결하지 못했습니다 (앱 ${app.exitCode === null ? "실행 중" : `종료 코드 ${app.exitCode}`}, 본 것: ${seen})${appLogTail()}`);
   ws = new WebSocket(page.webSocketDebuggerUrl);
   await new Promise((r, j) => {
     ws.addEventListener("open", r, { once: true });
@@ -183,6 +186,16 @@ async function launch() {
   }
   // 프로젝트를 열고 지도를 그릴 때까지
   await waitFor(() => document.querySelector("#cc-label")?.textContent === "proj" && !!document.querySelector("#map-view:not(.hidden)") && !!document.querySelector("#map-crumb .cur"), 30000, "프로젝트 열림");
+}
+
+/** 앱이 뜨지 않았을 때 원인을 볼 수 있게 앱 로그와 충돌 보고서의 끝부분 */
+function appLogTail() {
+  const dir = path.join(DIRS.data, "logs");
+  if (!fs.existsSync(dir)) return "\n      (앱 로그 없음: 앱이 로그를 쓰기 전에 멈춤)";
+  return fs.readdirSync(dir).filter((f) => f.endsWith(".log") || f.startsWith("crash-")).map((f) => {
+    const lines = fs.readFileSync(path.join(dir, f), "utf8").trim().split("\n").slice(-15);
+    return `\n      ── ${f}\n        ${lines.join("\n        ")}`;
+  }).join("");
 }
 
 let onPaused = null;
