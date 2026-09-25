@@ -1,0 +1,13 @@
+# 기본 리뷰어
+*                               @RosieOh
+
+# 맥락 엔진은 모든 AI 요청의 품질을 좌우하므로 변경 시 평가(eval/retrieval.mjs)로 적중률을 확인한다.
+/crates/lantern-context/        @RosieOh
+
+# 파일 쓰기·명령 실행·폴더 신뢰·비밀값 가리기는 보안 경계다.
+/app/src-tauri/src/tools.rs     @RosieOh
+/app/src-tauri/src/agent.rs     @RosieOh
+/app/src-tauri/capabilities/    @RosieOh
+
+# CI와 릴리스 (업데이트 서명)
+/.github/                       @RosieOh
