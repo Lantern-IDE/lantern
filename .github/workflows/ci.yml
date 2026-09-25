@@ -86,14 +86,14 @@ jobs:
 
       - name: E2E 실패 화면
         if: failure() && runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-screenshots
           path: app/e2e/results/
           if-no-files-found: ignore
 
       - name: 빌드 결과
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lantern-${{ runner.os }}
           path: |
