@@ -79,7 +79,7 @@ function showView(view: string, toggle = false) {
   for (const v of document.querySelectorAll<HTMLElement>("#sidebar .view")) v.classList.toggle("active", v.id === `view-${view}`);
   setPart("sidebar", true);
   if (view === "search") search.focus();
-  if (view === "scm") void scm.refresh();
+  if (view === "scm") void scm.refresh({ repos: true }); // 터미널에서 원격·브랜치를 바꿨을 수 있다
   if (view === "memory") void memory.refresh();
   if (view === "tasks") {
     chat.renderTaskList();
@@ -307,9 +307,9 @@ async function openProject(path: string) {
   // 프로젝트를 열면 코드 지도부터 (열린 탭이 없을 때)
   if (editor.tabCount() === 0) map.show();
   settingsPage.refreshIfOpen();
-  void refreshBranch();
   void refreshModelInfo();
-  void scm.refresh();
+  scm.reset();
+  void scm.refresh({ repos: true });
 }
 
 function renderTrust() {
@@ -390,13 +390,6 @@ on<IndexEvent>("index", (ev) => {
     toast.error("맥락 인덱스를 만들지 못했습니다", ev.message);
   }
 });
-
-async function refreshBranch() {
-  const b = await api.gitBranch().catch(() => null);
-  const el = $("#sb-branch");
-  el.classList.toggle("hidden", !b);
-  el.querySelector("span")!.textContent = b ?? "";
-}
 
 async function refreshModelInfo() {
   const model = $("#st-model");
@@ -617,6 +610,13 @@ function init() {
       b.textContent = n > 99 ? "99+" : String(n);
       b.classList.toggle("hidden", n === 0);
     },
+    // 상태 표시줄 브랜치: 소스 제어에서 고른 저장소 기준 (여러 저장소면 "이름: 브랜치")
+    onBranch: (text, title) => {
+      const el = $("#sb-branch");
+      el.classList.toggle("hidden", !text);
+      el.querySelector("span")!.textContent = text ?? "";
+      el.title = title ? `${title} (눌러서 소스 제어 열기)` : "현재 git 브랜치 (눌러서 소스 제어 열기)";
+    },
   });
   tree.onPathChange((ev) => {
     if (ev.kind === "rename") void editor.pathRenamed(ev.from, ev.to!);
@@ -758,7 +758,7 @@ function init() {
   $("#ctx-status").addEventListener("click", () => commands.run("chat.preview"));
   $("#sb-restricted").addEventListener("click", () => void toggleTrust());
   $("#sb-problems").addEventListener("click", () => showPanel("problems"));
-  $("#sb-branch").addEventListener("click", () => showPanel("terminal"));
+  $("#sb-branch").addEventListener("click", () => showView("scm"));
   $("#st-model").addEventListener("click", () => settingsPage.open("models"));
   $("#usage-meter").addEventListener("click", () => settingsPage.open("cost"));
 
@@ -772,7 +772,8 @@ function init() {
   window.addEventListener("focus", () => {
     if (project) {
       void refreshModelInfo();
-      void refreshBranch();
+      // 터미널이나 다른 도구에서 커밋·브랜치 전환을 했을 수 있다
+      void scm.refresh({ repos: true });
     }
   });
 

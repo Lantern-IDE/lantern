@@ -115,6 +115,8 @@
                 <button class="icon-btn" id="btn-scm-refresh" title="새로 고침" aria-label="소스 제어 새로 고침"><i class="codicon codicon-refresh"></i></button>
               </div>
             </div>
+            <div id="scm-repos" class="scm-repos hidden"></div>
+            <div id="scm-sync" class="scm-sync hidden"></div>
             <div id="scm-commit" class="scm-commit hidden">
               <textarea id="scm-message" rows="2" placeholder="커밋 메시지 (Ctrl+Enter로 커밋)" aria-label="커밋 메시지"></textarea>
               <button class="btn btn-primary block" id="scm-commit-btn"><i class="codicon codicon-check"></i>커밋</button>
@@ -273,7 +275,7 @@
           <span class="sb-item sb-brand" data-hex="brand" title="Lantern"></span>
           <span class="sb-item clickable sb-context" id="ctx-status" title="맥락 엔진"></span>
           <span class="sb-item clickable warn hidden" id="sb-restricted" title="이 폴더를 신뢰하지 않아 제한 모드로 열었습니다. 눌러서 신뢰 설정"><i class="codicon codicon-shield"></i>제한 모드</span>
-          <span class="sb-item clickable hidden" id="sb-branch" title="현재 git 브랜치"><i class="codicon codicon-source-control"></i><span></span></span>
+          <span class="sb-item clickable hidden" id="sb-branch" title="현재 git 브랜치 (눌러서 소스 제어 열기)"><i class="codicon codicon-source-control"></i><span></span></span>
           <span class="sb-item clickable" id="sb-problems" title="문제 보기"><i class="codicon codicon-error"></i><span id="sb-errors">0</span><i class="codicon codicon-warning"></i><span id="sb-warnings">0</span></span>
         </div>
         <div class="sb-right">
