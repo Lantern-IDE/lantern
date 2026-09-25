@@ -1,0 +1,102 @@
+# 검사: 세 운영체제에서 빌드·테스트하고, Windows에서는 실제 앱 E2E까지.
+# 앱 빌드 결과는 받아 볼 수 있게 올린다 (서명하지 않은 개발 빌드).
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            exe: target/release/lantern-app.exe
+          - name: macOS
+            os: macos-latest
+            exe: target/release/lantern-app
+          - name: Linux
+            os: ubuntu-22.04
+            exe: target/release/lantern-app
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux 시스템 라이브러리 (WebView, 트레이, 자격 증명 저장소)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev libdbus-1-dev pkg-config build-essential file
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 프론트엔드 의존성
+        working-directory: app
+        run: npm ci
+
+      - name: Rust 검사 (clippy, 경고는 실패)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Rust 테스트
+        run: cargo test --workspace --no-fail-fast
+
+      - name: 프론트엔드 타입 검사와 단위 테스트
+        working-directory: app
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: 영어 번역 누락
+        run: python scripts/i18n_check.py
+        env:
+          PYTHONIOENCODING: utf-8
+
+      - name: 앱 빌드
+        working-directory: app
+        run: npx tauri build --no-bundle
+
+      - name: 실제 앱 E2E (Windows)
+        if: runner.os == 'Windows'
+        working-directory: app
+        run: npm run e2e
+
+      - name: E2E 실패 화면
+        if: failure() && runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: app/e2e/results/
+          if-no-files-found: ignore
+
+      - name: 빌드 결과
+        uses: actions/upload-artifact@v4
+        with:
+          name: lantern-${{ runner.os }}
+          path: |
+            ${{ matrix.exe }}
+            target/release/lantern${{ runner.os == 'Windows' && '.exe' || '' }}
+          retention-days: 14
