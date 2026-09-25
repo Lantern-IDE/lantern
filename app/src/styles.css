@@ -171,6 +171,8 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .tb-left { display: flex; align-items: center; height: 100%; min-width: 0; overflow: hidden; }
 .app-mark { width: 44px; height: 100%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .app-mark .hex { width: 17px; height: 17px; }
+/* 제목 표시줄에서는 data-tauri-drag-region이 붙은 요소를 직접 눌러야 창이 끌린다. 장식 아이콘은 클릭을 통과시킨다. */
+.app-mark * { pointer-events: none; }
 #menubar { display: flex; height: 100%; }
 #menubar button { padding: 0 9px; height: 100%; font-size: 13px; color: var(--fg); white-space: nowrap; }
 #menubar .menu-compact { display: none; width: 34px; justify-content: center; align-items: center; }
