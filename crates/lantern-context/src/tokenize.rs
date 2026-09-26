@@ -84,7 +84,11 @@ const KO_STOP: &[&str] = &[
     "부분", "있는", "하는", "되는", "알려", "해줘", "알려줘", "보여줘", "찾아", "찾아줘", "이거",
     "그거", "저거", "여기", "거기", "어느", "왜", "언제", "누가", "좀", "그리고", "또는",
     "어디서", "어디에", "어떤", "무엇을", "뭘", "하려면", "고쳐야", "있어", "있나", "하나", "동작해",
+    "보여", "있게", "없게", "되게", "싶어", "같아",
 ];
+
+/// 부탁하는 끝말. 조사를 떼기 전에 먼저 뗀다 ("추가해줘" → "추가해" → "추가")
+const KO_REQUEST: &[&str] = &["해주세요", "주세요", "해줘", "줘"];
 
 /// 한국어 조사·어미를 떼어 어간을 남긴다 (긴 것부터 검사).
 const KO_SUFFIX: &[&str] = &[
@@ -235,10 +239,157 @@ const KO_EN: &[(&str, &[&str])] = &[
     ("시간", &["time"]),
     ("관측", &["observation", "observe"]),
     ("기상", &["weather"]),
+    ("주인", &["owner"]),
+    ("이름", &["name"]),
+    ("정보", &["info", "detail"]),
+    ("상세", &["detail"]),
+    ("기록", &["record", "history", "log"]),
+    ("이력", &["history", "log"]),
+    // 검색·맥락
+    ("검색어", &["query", "term", "keyword"]),
+    ("질문", &["query", "question", "prompt"]),
+    ("단어", &["word", "term", "token"]),
+    ("색인", &["index"]),
+    ("인덱스", &["index"]),
+    ("순위", &["rank", "score"]),
+    ("예산", &["budget"]),
+    ("맥락", &["context"]),
+    ("그래프", &["graph"]),
+    ("지도", &["map", "graph"]),
+    ("노드", &["node"]),
+    ("트리", &["tree"]),
+    ("파싱", &["parse", "parser"]),
+    ("파서", &["parser"]),
+    ("분석", &["analyze", "parse"]),
+    ("토큰화", &["tokenize"]),
+    // 코드·자료구조
+    ("할당", &["alloc", "allocate", "capacity"]),
+    ("메모리", &["memory", "alloc"]),
+    ("성능", &["performance", "perf"]),
+    ("속도", &["speed", "performance"]),
+    ("크기", &["size", "len", "length"]),
+    ("길이", &["length", "len"]),
+    ("개수", &["count", "len"]),
+    ("문자열", &["string", "str"]),
+    ("배열", &["array", "vec", "list"]),
+    ("키", &["key"]),
+    ("값", &["value"]),
+    ("반환", &["return"]),
+    ("호출", &["call", "invoke"]),
+    ("호출자", &["caller"]),
+    ("인자", &["arg", "param"]),
+    ("매개변수", &["param", "parameter"]),
+    ("타입", &["type"]),
+    ("복사", &["copy", "clone"]),
+    ("연결", &["connect", "link", "edge"]),
+    ("압축", &["compress", "compact"]),
+    ("정규식", &["regex"]),
+    ("스레드", &["thread"]),
+    ("쓰레드", &["thread"]),
+    ("병렬", &["parallel"]),
+    ("동시", &["concurrent", "parallel"]),
+    ("실행", &["run", "exec", "execute"]),
+    ("프로세스", &["process"]),
+    ("명령", &["command"]),
+    ("서버", &["server"]),
+    ("클라이언트", &["client"]),
+    ("주소", &["address", "url"]),
+    ("포트", &["port"]),
+    ("소켓", &["socket"]),
+    // 편집기·화면
+    ("편집기", &["editor"]),
+    ("터미널", &["terminal"]),
+    ("창", &["window"]),
+    ("탭", &["tab"]),
+    ("메뉴", &["menu"]),
+    ("단축키", &["keybinding", "shortcut", "keymap"]),
+    ("테마", &["theme"]),
+    ("색", &["color"]),
+    ("색상", &["color"]),
+    ("글꼴", &["font"]),
+    ("글자", &["text", "char", "font"]),
+    ("번역", &["i18n", "translate", "locale"]),
+    ("언어", &["lang", "language", "locale"]),
+    ("모델", &["model"]),
+    ("프롬프트", &["prompt"]),
+    ("에이전트", &["agent"]),
+    ("도구", &["tool"]),
+    ("승인", &["approve", "approval"]),
+    ("거부", &["reject", "deny"]),
+    // 흔한 업무 용어 (쇼핑·금융·게시판처럼 여러 프로젝트에 두루 나오는 것만)
+    ("결제", &["payment", "pay", "checkout"]),
+    ("주문", &["order"]),
+    ("상품", &["product", "item"]),
+    ("장바구니", &["cart"]),
+    ("가격", &["price"]),
+    ("금액", &["amount"]),
+    ("계좌", &["account"]),
+    ("이체", &["transfer"]),
+    ("송금", &["transfer", "remit"]),
+    ("잔액", &["balance"]),
+    ("거래", &["transaction", "trade"]),
+    ("고객", &["customer", "client"]),
+    ("직원", &["employee", "staff"]),
+    ("부서", &["department", "dept"]),
+    ("게시글", &["post", "article"]),
+    ("게시물", &["post", "article"]),
+    ("게시판", &["board"]),
+    ("댓글", &["comment", "reply"]),
+    ("메시지", &["message"]),
+    ("채팅", &["chat"]),
+    ("이메일", &["email", "mail"]),
+    ("메일", &["mail", "email"]),
+    ("쿠폰", &["coupon"]),
+    ("포인트", &["point"]),
+    ("배송", &["delivery", "shipping"]),
+    ("환불", &["refund"]),
+    ("예약", &["reservation", "booking"]),
+];
+
+/// 동사: 활용형 앞부분 → 영어 단어. "바꿀", "바꿔", "바꾸는"처럼 모양이 바뀌어서 어간 대신 앞부분으로 찾는다.
+/// 한 글자 활용형("셀", "뺄")은 낱말 전체가 같을 때만 ("셀러"는 count가 아니다).
+/// "찾아줘"처럼 '찾아 달라'는 부탁은 기능 설명이 아니라서 "찾" 대신 "찾는/찾을/찾기"만 둔다.
+const KO_VERB: &[(&[&str], &[&str])] = &[
+    (&["만들", "만드", "만든"], &["build", "make", "create"]),
+    (&["바꾸", "바꿔", "바꿀", "바꾼", "바뀌", "바뀐", "바뀔"], &["change", "update", "replace"]),
+    (&["줄이", "줄여", "줄일", "줄인"], &["reduce", "shrink"]),
+    (&["늘리", "늘려", "늘릴", "늘린"], &["increase", "extend", "grow"]),
+    (&["찾는", "찾을", "찾기", "찾은"], &["find", "search", "lookup"]),
+    (&["고치", "고쳐", "고칠", "고친"], &["fix"]),
+    (&["지우", "지워", "지울", "지운"], &["delete", "remove", "clear"]),
+    (&["읽는", "읽을", "읽어", "읽기", "읽은"], &["read", "load"]),
+    (&["보내", "보낼", "보낸"], &["send"]),
+    (&["받는", "받을", "받아", "받은"], &["receive", "fetch"]),
+    (&["나누", "나눠", "나눌", "나눈"], &["split", "divide"]),
+    (&["합치", "합쳐", "합칠", "합친"], &["merge", "join"]),
+    (&["묶는", "묶어", "묶을", "묶기"], &["group", "bundle"]),
+    (&["부르", "불러", "부를", "부른"], &["call", "invoke", "load"]),
+    (&["넣는", "넣어", "넣을", "넣기", "넣은"], &["insert", "add", "put"]),
+    (&["빼는", "빼고", "빼", "뺄", "뺀"], &["remove", "exclude"]),
+    (&["옮기", "옮겨", "옮길"], &["move"]),
+    (&["막아", "막는", "막을", "막기"], &["block", "prevent", "guard"]),
+    (&["세는", "셀", "세어", "세기"], &["count"]),
+    (&["느려", "느리", "느린"], &["slow", "performance"]),
+    (&["빠르", "빨리", "빠른"], &["fast", "performance"]),
+    (&["깨져", "깨지", "깨진"], &["broken", "encoding", "render"]),
 ];
 
 fn english_for(stem: &str) -> &'static [&'static str] {
-    KO_EN.iter().find(|(k, _)| *k == stem).map(|(_, v)| *v).unwrap_or(&[])
+    if let Some((_, v)) = KO_EN.iter().find(|(k, _)| *k == stem) {
+        return v;
+    }
+    // 합성어는 사전에 있는 가장 긴 앞말로 ("검색창" → "검색")
+    KO_EN
+        .iter()
+        .filter(|(k, _)| k.chars().count() >= 2 && stem.starts_with(k))
+        .max_by_key(|(k, _)| k.len())
+        .map(|(_, v)| *v)
+        .unwrap_or(&[])
+}
+
+fn verb_english(word: &str) -> &'static [&'static str] {
+    let hit = |f: &&str| if f.chars().count() == 1 { word == *f } else { word.starts_with(f) };
+    KO_VERB.iter().find(|(forms, _)| forms.iter().any(hit)).map(|(_, v)| *v).unwrap_or(&[])
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -280,6 +431,7 @@ pub fn query_terms(query: &str) -> Vec<QueryTerm> {
     // 한국어: 어간을 그대로 찾고(한국어 주석·문서), 개발 용어면 영어 단어도 함께 찾는다
     let mut english: Vec<&str> = Vec::new();
     for word in query.split(|c: char| !is_hangul(c)).filter(|w| !w.is_empty()) {
+        let word = KO_REQUEST.iter().find_map(|r| word.strip_suffix(r).filter(|w| !w.is_empty())).unwrap_or(word);
         let mut stem = word;
         for suf in KO_SUFFIX {
             if let Some(s) = stem.strip_suffix(suf) {
@@ -293,11 +445,10 @@ pub fn query_terms(query: &str) -> Vec<QueryTerm> {
             push(stem.to_string(), true, false, &mut out);
         }
         // "위험도"처럼 사전에 그대로 있거나, 조사를 떼기 전 낱말이 사전에 있으면
-        for key in [stem, word] {
-            for en in english_for(key) {
-                if !english.contains(en) {
-                    english.push(en);
-                }
+        let found = [stem, word].into_iter().flat_map(english_for).chain(verb_english(word));
+        for en in found {
+            if !english.contains(en) {
+                english.push(en);
             }
         }
     }
@@ -368,6 +519,40 @@ mod tests {
         assert!(ko.contains(&"login".to_string()) && ko.contains(&"handle".to_string()), "{ko:?}");
         let risk: Vec<_> = query_terms("위험도 계산 로직").into_iter().map(|t| t.text).collect();
         assert!(risk.contains(&"risk".to_string()) && risk.contains(&"calculate".to_string()), "{risk:?}");
+    }
+
+    fn texts(q: &str) -> Vec<String> {
+        query_terms(q).into_iter().map(|t| t.text).collect()
+    }
+
+    #[test]
+    fn korean_actions_become_code_words() {
+        // #33: 동작을 묘사한 질문도 코드 쪽 단어로 넓힌다
+        let t = texts("검색어를 만들 때 할당을 줄여줘");
+        for w in ["query", "term", "build", "alloc", "reduce"] {
+            assert!(t.contains(&w.to_string()), "{w} 없음: {t:?}");
+        }
+        // 부탁하는 끝말을 떼야 조사도 떨어진다
+        let t = texts("주인 정보를 저장할 때 검증을 추가해줘");
+        assert!(t.contains(&"추가".to_string()) && t.contains(&"add".to_string()), "{t:?}");
+        assert!(!t.iter().any(|w| w.ends_with('줘')), "{t:?}");
+        // 활용형: 바꿀, 바꿔, 바꾸는
+        for q in ["크기를 바꿀 때", "크기를 바꿔줘", "크기를 바꾸는 곳"] {
+            let t = texts(q);
+            assert!(t.contains(&"change".to_string()) && t.contains(&"size".to_string()), "{q}: {t:?}");
+        }
+    }
+
+    #[test]
+    fn korean_compounds_and_short_forms() {
+        // 사전에 없는 합성어는 가장 긴 앞말로
+        assert!(texts("검색창 열기").contains(&"search".to_string()));
+        // 한 글자 활용형은 낱말 전체가 같을 때만: "셀러"는 count가 아니다
+        assert!(texts("호출자를 셀 때").contains(&"count".to_string()));
+        assert!(!texts("셀러 목록").contains(&"count".to_string()));
+        // '찾아 달라'는 부탁은 기능 설명이 아니다
+        assert!(!texts("로그인 코드 찾아줘").contains(&"search".to_string()));
+        assert!(texts("주인을 찾을 때").contains(&"find".to_string()));
     }
 
     #[test]
