@@ -92,7 +92,14 @@ impl Parser {
             .iter()
             .map(|d| {
                 let full = String::from_utf8_lossy(&src[d.range.clone()]);
-                let signature = signature(lang, &full);
+                let mut signature = signature(lang, &full);
+                // Python 데코레이터와 Rust 속성은 정의 노드 밖에 있다. 누가 부르는지 알려 주므로 시그니처에 붙인다
+                if matches!(lang, Lang::Python | Lang::Rust) {
+                    let attrs = leading_attributes(src, &lines, d.range.start, lang);
+                    if !attrs.is_empty() {
+                        signature = format!("{} {signature}", attrs.join(" "));
+                    }
+                }
                 let doc = d
                     .docs
                     .as_deref()
@@ -215,6 +222,24 @@ fn leading_comment(src: &[u8], lines: &LineIndex, start_byte: usize) -> Option<S
     }
     collected.reverse();
     Some(collected.join("\n"))
+}
+
+/// 정의 바로 위의 한 줄짜리 데코레이터(`@app.get("/")`)·속성(`#[tauri::command]`)
+fn leading_attributes(src: &[u8], lines: &LineIndex, start_byte: usize, lang: Lang) -> Vec<String> {
+    let prefix = if lang == Lang::Python { "@" } else { "#[" };
+    let mut out = Vec::new();
+    let mut idx = lines.line_of(start_byte) as usize - 1; // 정의 줄의 0-based 인덱스
+    while out.len() < 6 {
+        let Some(prev) = idx.checked_sub(1) else { break };
+        idx = prev;
+        let text = String::from_utf8_lossy(lines.text(src, idx)).trim().to_string();
+        if !text.starts_with(prefix) {
+            break;
+        }
+        out.push(text);
+    }
+    out.reverse();
+    out
 }
 
 fn python_docstring(full: &str) -> Option<String> {
