@@ -925,10 +925,13 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 #map-canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; outline: none; }
 .map-status { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 420px; text-align: center; color: var(--muted); line-height: 1.6; pointer-events: none; }
 .map-status.hidden { display: none; }
-.map-footprint { position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 12px; padding: 6px 12px; background: color-mix(in srgb, var(--elevated) 92%, transparent); border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; color: var(--muted); max-width: calc(100% - 340px); }
+.map-footprint { position: absolute; top: 12px; left: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; padding: 6px 12px; background: color-mix(in srgb, var(--elevated) 92%, transparent); border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; color: var(--muted); max-width: calc(100% - 340px); }
 .map-footprint.hidden { display: none; }
 .map-footprint b { color: var(--fg-strong); margin-right: 3px; font-variant-numeric: tabular-nums; }
 .fp-title { color: var(--fg-strong); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+/* 항목은 한 덩어리로 (좁으면 항목 단위로 다음 줄). 줄어드는 건 작업 제목뿐이다 */
+.map-footprint > span { white-space: nowrap; flex-shrink: 0; }
+.map-footprint > .fp-title { flex-shrink: 1; min-width: 0; }
 .map-legend { position: absolute; left: 12px; bottom: 12px; display: flex; flex-wrap: wrap; gap: 4px 12px; max-width: calc(100% - 24px); padding: 5px 10px; background: color-mix(in srgb, var(--elevated) 88%, transparent); border: 1px solid var(--border); border-radius: var(--radius); font-size: 11.5px; color: var(--muted); pointer-events: none; }
 .lg { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
