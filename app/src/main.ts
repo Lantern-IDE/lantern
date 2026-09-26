@@ -34,6 +34,13 @@ import * as memory from "./memory";
 i18n.init();
 prefs.init();
 const win = getCurrentWindow();
+// macOS는 신호등 버튼이 제목 표시줄에 겹친다 (전체 화면이면 버튼이 사라져 자리도 비우지 않는다)
+if (/Macintosh|Mac OS X/.test(navigator.userAgent)) {
+  document.documentElement.classList.add("mac");
+  const syncFullscreen = async () => document.documentElement.classList.toggle("fullscreen", await win.isFullscreen());
+  void syncFullscreen();
+  void win.onResized(() => void syncFullscreen());
+}
 let project: ProjectInfo | null = null;
 let agentRunning = false;
 let indexing = false;

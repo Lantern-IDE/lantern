@@ -859,9 +859,18 @@ fn main() {
                 .title("Lantern")
                 .inner_size(1440.0, 900.0)
                 .min_inner_size(900.0, 560.0)
-                .decorations(false)
                 .shadow(true)
                 .background_color(tauri::window::Color(0x18, 0x18, 0x18, 0xff));
+            // Windows·Linux는 제목 표시줄을 직접 그린다 (창 조작 버튼 포함).
+            // macOS는 시스템 신호등 버튼을 제목 표시줄 위에 겹쳐 두고, 그 자리만 비운다 (styles.css의 .mac).
+            #[cfg(not(target_os = "macos"))]
+            {
+                builder = builder.decorations(false);
+            }
+            #[cfg(target_os = "macos")]
+            {
+                builder = builder.title_bar_style(tauri::TitleBarStyle::Overlay).hidden_title(true);
+            }
             if let Some(dir) = std::env::var_os("LANTERN_WEBVIEW_DATA_DIR") {
                 builder = builder.data_directory(dir.into());
             }
