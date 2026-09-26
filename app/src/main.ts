@@ -566,7 +566,7 @@ function registerCommands() {
   commands.installKeybindings();
   void keybindings.load();
   report.init();
-  window.setTimeout(() => void update.check(false), 5000);
+  update.schedule(5000);
 }
 
 // ── 창 ─────────────────────────────────────────────────
