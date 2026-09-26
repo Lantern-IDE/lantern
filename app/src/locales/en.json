@@ -159,6 +159,8 @@
   "새 키를 누르세요 (Esc 취소)": "Press a new key (Esc to cancel)",
   "새 터미널": "New Terminal",
   "새 파일": "New File",
+  "파일 수정": "Edit file",
+  "파일 덮어쓰기": "Overwrite file",
   "새 파일…": "New File…",
   "새 폴더": "New Folder",
   "새 폴더…": "New Folder…",

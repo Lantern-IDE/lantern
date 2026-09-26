@@ -328,6 +328,22 @@ function impactRow(diff: string, onTouched: (names: string[]) => void): HTMLElem
   return row;
 }
 
+/**
+ * 승인 카드 제목. 파일 수정은 "파일 수정: 경로"를 이름과 폴더로 나눠, 이름은 한 덩어리로 두고
+ * 폴더는 흐리게 `/` 뒤에서만 줄을 바꾼다 (글자 중간에서 "tokenize.r / s"로 꺾이지 않게).
+ */
+function approvalTitle(title: string, isEdit: boolean): HTMLElement {
+  const m = isEdit ? title.match(/^(.+?): (.+)$/) : null;
+  if (!m) return h("span", { class: "atitle" }, title);
+  const [, label, path] = m;
+  const dir = dirname(path);
+  const parts = dir ? dir.split("/").flatMap((p) => [p + "/", h("wbr")]) : [];
+  return h("span", { class: "atitle", title: path },
+    h("span", { class: "alabel" }, label), " ",
+    h("span", { class: "aname" }, basename(path)),
+    dir ? h("span", { class: "adir" }, ...parts) : null);
+}
+
 /** 되돌리기. 그 뒤로 다른 곳에서 바뀐 파일이 있으면 한 번 더 묻는다. 취소하면 null */
 export async function revertSafely(cp: string): Promise<number | null> {
   try {
@@ -450,7 +466,7 @@ function handle(ev: AgentEvent) {
       const newPath = isEdit ? ev.detail.match(/^\+\+\+ (?:b\/)?(.+)$/m)?.[1]?.trim() : undefined;
       if (newPath) task.approvalPaths.set(ev.id, newPath);
       const el = h("div", { class: "approval", role: "group", "aria-label": ev.title },
-        h("div", { class: "ahead" }, codicon(isEdit ? "edit" : "terminal"), h("span", { class: "atitle" }, ev.title), h("span", { class: "verdict" })),
+        h("div", { class: "ahead" }, codicon(isEdit ? "edit" : "terminal"), approvalTitle(ev.title, isEdit), h("span", { class: "verdict" })),
         isEdit ? renderDiff(ev.detail) : h("pre", { class: "diff" }, h("div", {}, ev.detail)),
         target && !replaying ? impactRow(ev.detail, (names) => {
           task.approvalTouched.set(ev.id, names);
