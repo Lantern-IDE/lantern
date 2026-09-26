@@ -355,6 +355,81 @@ class AuthService {
     }
 
     #[test]
+    fn parses_java() {
+        let src = r#"
+package com.example.user;
+
+public interface UserService { User login(String name, String password); }
+
+@Service
+public class UserServiceImpl implements UserService {
+    private final UserRepository repo;
+
+    public UserServiceImpl(UserRepository repo) { this.repo = repo; }
+
+    /**
+     * 사용자 로그인
+     */
+    @Override
+    public User login(String name, String password) {
+        User user = repo.findByName(name);
+        return checkPassword(user, password) ? user : new GuestUser();
+    }
+}
+
+enum Role { ADMIN, USER }
+record Token(String value) {}
+"#;
+        let mut p = Parser::new().unwrap();
+        let out = p.parse(Lang::Java, src.as_bytes()).unwrap();
+        let n = names(&out);
+        for (name, kind) in [("UserService", "interface"), ("UserServiceImpl", "class"), ("login", "method"), ("Role", "enum"), ("Token", "class")] {
+            assert!(n.contains(&(name.into(), kind.into())), "{name} {kind} 없음: {n:?}");
+        }
+        // 생성자도 정의로 잡는다
+        assert!(n.iter().filter(|(name, _)| name == "UserServiceImpl").count() >= 2, "{n:?}");
+
+        let login = out.symbols.iter().rposition(|s| s.name == "login").unwrap();
+        assert_eq!(out.symbols[login].doc.as_deref(), Some("사용자 로그인"));
+        assert_eq!(out.symbols[login].signature, "@Override public User login(String name, String password)");
+        let calls: Vec<_> = out.refs.iter().filter(|r| r.enclosing == Some(login)).map(|r| r.name.as_str()).collect();
+        for expected in ["findByName", "checkPassword", "GuestUser"] {
+            assert!(calls.contains(&expected), "{expected} 없음: {calls:?}");
+        }
+        assert!(out.refs.iter().any(|r| r.name == "UserService" && r.kind == "implementation"));
+    }
+
+    #[test]
+    fn parses_go() {
+        let src = "package auth\n\n// Login은 사용자를 확인한다\nfunc Login(name string) (*User, error) {\n\tu := findUser(name)\n\treturn u.Check(), nil\n}\n\ntype User struct{ Name string }\n\nfunc (u *User) Check() *User { return u }\n";
+        let mut p = Parser::new().unwrap();
+        let out = p.parse(Lang::Go, src.as_bytes()).unwrap();
+        let n = names(&out);
+        for (name, kind) in [("Login", "function"), ("User", "type"), ("Check", "method")] {
+            assert!(n.contains(&(name.into(), kind.into())), "{name} {kind} 없음: {n:?}");
+        }
+        let login = out.symbols.iter().find(|s| s.name == "Login").unwrap();
+        assert_eq!(login.doc.as_deref(), Some("Login은 사용자를 확인한다"));
+        assert!(out.refs.iter().any(|r| r.name == "findUser") && out.refs.iter().any(|r| r.name == "Check"));
+    }
+
+    #[test]
+    fn parses_csharp() {
+        let src = "namespace Shop;\n\npublic class OrderService : IOrderService {\n    public OrderService() { }\n    public Order Place(Cart cart) {\n        Validate(cart);\n        return repo.Save(new Order(cart));\n    }\n}\npublic struct Money { }\npublic enum Status { Open }\npublic record Order(Cart Cart);\n";
+        let mut p = Parser::new().unwrap();
+        let out = p.parse(Lang::CSharp, src.as_bytes()).unwrap();
+        let n = names(&out);
+        for (name, kind) in [("OrderService", "class"), ("Place", "method"), ("Money", "class"), ("Status", "enum"), ("Order", "class")] {
+            assert!(n.contains(&(name.into(), kind.into())), "{name} {kind} 없음: {n:?}");
+        }
+        let place = out.symbols.iter().position(|s| s.name == "Place").unwrap();
+        let calls: Vec<_> = out.refs.iter().filter(|r| r.enclosing == Some(place)).map(|r| r.name.as_str()).collect();
+        for expected in ["Validate", "Save", "Order"] {
+            assert!(calls.contains(&expected), "{expected} 없음: {calls:?}");
+        }
+    }
+
+    #[test]
     fn parses_javascript() {
         let src = b"function add(a, b) { return sum([a, b]); }\nconst mul = (a, b) => a * b;\n";
         let mut p = Parser::new().unwrap();

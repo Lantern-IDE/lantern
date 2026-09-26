@@ -423,18 +423,21 @@ impl Store {
     }
 
     /// 파일 A가 파일 B에 정의된 이름을 참조한 횟수 (이름 기반).
-    /// 정의가 `max_defs`개를 넘는 흔한 이름(new, get 등)은 잡음이라 뺀다.
+    /// 정의가 `max_defs`개를 넘는 흔한 이름(new, get 등)은 잡음이라 빼고, 언어 계열이 다른 파일끼리는 잇지 않는다.
     pub fn file_ref_edges(&self, max_defs: i64) -> Result<Vec<(String, String, i64)>> {
-        let mut stmt = self.conn.prepare(
+        let sql = format!(
             "WITH d AS (SELECT name FROM symbols GROUP BY name HAVING COUNT(*) <= ?1)
              SELECT fr.path, fs.path, COUNT(*) FROM refs r
              JOIN d ON d.name = r.name
              JOIN symbols s ON s.name = r.name
              JOIN files fr ON fr.id = r.file_id
              JOIN files fs ON fs.id = s.file_id
-             WHERE r.file_id != s.file_id
+             WHERE r.file_id != s.file_id AND {} = {}
              GROUP BY r.file_id, s.file_id",
-        )?;
+            crate::lang::family_sql("fr.lang"),
+            crate::lang::family_sql("fs.lang"),
+        );
+        let mut stmt = self.conn.prepare(&sql)?;
         let rows = stmt.query_map([max_defs], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
         Ok(rows.collect::<rusqlite::Result<_>>()?)
     }

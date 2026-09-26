@@ -23,6 +23,8 @@ Most AI editors are organised around files and a chat box. Once you let an agent
 
 The core is a local context engine (`crates/lantern-context`, Rust + tree-sitter + SQLite FTS5). For every question it assembles relevant code from the symbol graph, full-text search, git co-change history, and project memory within a token budget.
 
+Languages the engine understands (symbols, calls, map, impact radius): Rust, Python, TypeScript/JavaScript, Java, Go, C#. Other files still open with syntax colors, but have no symbols.
+
 On a private 1,772-file TypeScript/JavaScript project with 20 hand-labelled questions, at the same 8,000-token budget:
 
 | | Keyword search (grep, then read whole files) | Lantern |

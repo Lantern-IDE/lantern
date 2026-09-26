@@ -11,6 +11,9 @@ pub enum Lang {
     TypeScript,
     Tsx,
     JavaScript,
+    Java,
+    Go,
+    CSharp,
 }
 
 impl Lang {
@@ -22,6 +25,9 @@ impl Lang {
             "ts" | "mts" | "cts" => Lang::TypeScript,
             "tsx" => Lang::Tsx,
             "js" | "mjs" | "cjs" | "jsx" => Lang::JavaScript,
+            "java" => Lang::Java,
+            "go" => Lang::Go,
+            "cs" => Lang::CSharp,
             _ => return None,
         })
     }
@@ -33,6 +39,9 @@ impl Lang {
             Lang::TypeScript => "typescript",
             Lang::Tsx => "tsx",
             Lang::JavaScript => "javascript",
+            Lang::Java => "java",
+            Lang::Go => "go",
+            Lang::CSharp => "csharp",
         }
     }
 
@@ -44,9 +53,26 @@ impl Lang {
             "typescript" => "ts",
             "tsx" => "tsx",
             "javascript" => "js",
+            "java" => "java",
+            "go" => "go",
+            "csharp" => "csharp",
             _ => "",
         }
     }
+
+    /// 서로 호출할 수 있는 언어끼리 같은 값. 호출 관계는 이름으로 잇기 때문에,
+    /// Spring 백엔드의 `getUser`와 React 화면의 `getUser`가 이어지지 않게 계열로 나눈다.
+    pub fn family(name: &str) -> &str {
+        match name {
+            "typescript" | "tsx" | "javascript" => "js",
+            other => other,
+        }
+    }
+}
+
+/// SQL에서 언어 열(`col`)을 [`Lang::family`]와 같은 값으로 바꾸는 식
+pub fn family_sql(col: &str) -> String {
+    format!("(CASE WHEN {col} IN ('typescript', 'tsx', 'javascript') THEN 'js' ELSE {col} END)")
 }
 
 /// Rust는 문법 크레이트의 tags.scm을 쓰지 않고 직접 정의한다.
@@ -81,12 +107,32 @@ const TS_EXTRA: &str = r#"
 (enum_declaration name: (identifier) @name) @definition.enum
 "#;
 
+/// 문법 크레이트의 질의에 없는 정의: 생성자, enum, record, 애너테이션 타입
+const JAVA_EXTRA: &str = r#"
+(constructor_declaration name: (identifier) @name) @definition.method
+(enum_declaration name: (identifier) @name) @definition.enum
+(record_declaration name: (identifier) @name) @definition.class
+(annotation_type_declaration name: (identifier) @name) @definition.interface
+"#;
+
+/// 문법 크레이트의 질의는 `obj.Foo()`만 잡고 `Foo()`는 놓친다. struct·enum·record·생성자도 없다.
+const CSHARP_EXTRA: &str = r#"
+(invocation_expression function: (identifier) @name) @reference.call
+(struct_declaration name: (identifier) @name) @definition.class
+(enum_declaration name: (identifier) @name) @definition.enum
+(record_declaration name: (identifier) @name) @definition.class
+(constructor_declaration name: (identifier) @name) @definition.method
+"#;
+
 pub struct TagConfigs {
     rust: TagsConfiguration,
     python: TagsConfiguration,
     typescript: TagsConfiguration,
     tsx: TagsConfiguration,
     javascript: TagsConfiguration,
+    java: TagsConfiguration,
+    go: TagsConfiguration,
+    csharp: TagsConfiguration,
 }
 
 impl TagConfigs {
@@ -121,6 +167,25 @@ impl TagConfigs {
                 "",
             )
             .context("javascript 태그 질의")?,
+            java: TagsConfiguration::new(
+                tree_sitter_java::LANGUAGE.into(),
+                &format!("{}\n{}", tree_sitter_java::TAGS_QUERY, JAVA_EXTRA),
+                "",
+            )
+            .context("java 태그 질의")?,
+            go: TagsConfiguration::new(tree_sitter_go::LANGUAGE.into(), tree_sitter_go::TAGS_QUERY, "")
+                .context("go 태그 질의")?,
+            // 원본 질의의 `@module` 캡처는 tree-sitter-tags가 받지 않아 그 줄만 뺀다
+            csharp: TagsConfiguration::new(
+                tree_sitter_c_sharp::LANGUAGE.into(),
+                &format!(
+                    "{}\n{}",
+                    tree_sitter_c_sharp::TAGS_QUERY.lines().filter(|l| !l.trim_end().ends_with("@module")).collect::<Vec<_>>().join("\n"),
+                    CSHARP_EXTRA
+                ),
+                "",
+            )
+            .context("c# 태그 질의")?,
         })
     }
 
@@ -131,6 +196,9 @@ impl TagConfigs {
             Lang::TypeScript => &self.typescript,
             Lang::Tsx => &self.tsx,
             Lang::JavaScript => &self.javascript,
+            Lang::Java => &self.java,
+            Lang::Go => &self.go,
+            Lang::CSharp => &self.csharp,
         }
     }
 }
