@@ -1,0 +1,190 @@
+{
+  "project": "hono",
+  "url": "https://github.com/honojs/hono",
+  "ref": "ee0622e14487444211942eec2f6ab7ccede4c6af",
+  "made_by": "eval/bench/make.mjs",
+  "questions": [
+    {
+      "q": "allow returning a Blob as a response body",
+      "q_ko": "응답 본문으로 Blob을 반환할 수 있게",
+      "golden": [
+        "src/context.ts"
+      ],
+      "commit": "90d02fb1645c12a65d27f39594d2129db2065ba7",
+      "parent": "5f31392d724cf98c9e48a3de119a55284583ad5f"
+    },
+    {
+      "q": "fail with a descriptive error on a malformed event",
+      "q_ko": "잘못된 이벤트가 오면 알기 쉬운 오류로 실패",
+      "golden": [
+        "src/adapter/lambda-edge/handler.ts"
+      ],
+      "commit": "6cadf7537385c6e3df9cbd6d05c9b84c82ae0361",
+      "parent": "de310ac063febf3e7b73f6206142d0e88800661f"
+    },
+    {
+      "q": "sync content type detection with aws-lambda",
+      "q_ko": "콘텐츠 타입 판별을 aws-lambda와 맞추기",
+      "golden": [
+        "src/adapter/lambda-edge/handler.ts"
+      ],
+      "commit": "de310ac063febf3e7b73f6206142d0e88800661f",
+      "parent": "28e8572cd265b4da1160ce6cd51919bb70516e2c"
+    },
+    {
+      "q": "preserve empty query parameters",
+      "q_ko": "빈 쿼리 파라미터 유지",
+      "golden": [
+        "src/adapter/aws-lambda/handler.ts"
+      ],
+      "commit": "28e8572cd265b4da1160ce6cd51919bb70516e2c",
+      "parent": "0d86899d28e146da0c8760201b2d08ddae732eaa"
+    },
+    {
+      "q": "treat binary +xml archive media types as binary",
+      "q_ko": "+xml 압축 파일 미디어 타입을 바이너리로 처리",
+      "golden": [
+        "src/adapter/aws-lambda/handler.ts"
+      ],
+      "commit": "0d86899d28e146da0c8760201b2d08ddae732eaa",
+      "parent": "52febbcc30bc509d5e4987577e63906fe08fc471"
+    },
+    {
+      "q": "don't break responses with unparseable JSON bodies",
+      "q_ko": "파싱할 수 없는 JSON 본문이 있어도 응답이 깨지지 않게",
+      "golden": [
+        "src/middleware/pretty-json/index.ts"
+      ],
+      "commit": "f950277cd3d9264622785e82785f21c648da699a",
+      "parent": "00ee875728e2369b98a9ab7dda0690b77afedcff"
+    },
+    {
+      "q": "don't match an empty path segment as a param",
+      "q_ko": "빈 경로 조각을 파라미터로 매칭하지 않기",
+      "golden": [
+        "src/router/linear-router/router.ts"
+      ],
+      "commit": "00ee875728e2369b98a9ab7dda0690b77afedcff",
+      "parent": "f5a53463ad2ff791fc02418b645750ce75a260ad"
+    },
+    {
+      "q": "match media types and language tags case-insensitively",
+      "q_ko": "미디어 타입과 언어 태그를 대소문자 구분 없이 매칭",
+      "golden": [
+        "src/helper/accepts/accepts.ts"
+      ],
+      "commit": "f5a53463ad2ff791fc02418b645750ce75a260ad",
+      "parent": "cb5bea3614e6591e8ab933ef9a38ce7addf1d09a"
+    },
+    {
+      "q": "replace Suspense and ErrorBoundary content across newlines",
+      "q_ko": "줄바꿈이 있어도 Suspense와 ErrorBoundary 내용 교체",
+      "golden": [
+        "src/jsx/components.ts",
+        "src/jsx/streaming.ts"
+      ],
+      "commit": "cb5bea3614e6591e8ab933ef9a38ce7addf1d09a",
+      "parent": "098e11912ab244c5c33931de007f04dc8e3c2929"
+    },
+    {
+      "q": "optimize matching-head child lookup during reconciliation",
+      "q_ko": "재조정 중 head 자식 찾기 최적화",
+      "golden": [
+        "src/jsx/dom/render.ts"
+      ],
+      "commit": "e8c8c21244f87da80aaa5ac5ab9c92f3faca2489",
+      "parent": "8755b17fbcfdee76511eeb460e18e94e6c9a8d30"
+    },
+    {
+      "q": "clamp a negative q to 0, not 1",
+      "q_ko": "음수 q 값을 1이 아니라 0으로 제한",
+      "golden": [
+        "src/utils/accept.ts"
+      ],
+      "commit": "9b4e9c2864c30ea9275cf426e2d2716bd9f05195",
+      "parent": "65cff90e152dbbbcdde2808af15b48344676edfe"
+    },
+    {
+      "q": "treat the q parameter name as case-insensitive",
+      "q_ko": "q 파라미터 이름을 대소문자 구분 없이 처리",
+      "golden": [
+        "src/utils/accept.ts"
+      ],
+      "commit": "65cff90e152dbbbcdde2808af15b48344676edfe",
+      "parent": "f147de5ea1eeadd4b4851ab075999673e140a303"
+    },
+    {
+      "q": "skip accept entries with quality 0 when matching",
+      "q_ko": "매칭할 때 품질 값이 0인 accept 항목 건너뛰기",
+      "golden": [
+        "src/helper/accepts/accepts.ts",
+        "src/middleware/language/language.ts"
+      ],
+      "commit": "f147de5ea1eeadd4b4851ab075999673e140a303",
+      "parent": "90e1b948467961718afd3ae34af9dee582b42248"
+    },
+    {
+      "q": "use forEach for consistent handler iteration",
+      "q_ko": "핸들러를 일관되게 순회하도록 forEach 사용",
+      "golden": [
+        "src/hono-base.ts"
+      ],
+      "commit": "dac5d5794c6134711e469c5e69d09cd6274e1fc1",
+      "parent": "ec648d683768ec5093315e5dc694c05594fec185"
+    },
+    {
+      "q": "normalize root WebSocket URLs",
+      "q_ko": "루트 WebSocket URL 정규화",
+      "golden": [
+        "src/client/client.ts"
+      ],
+      "commit": "499c35ebda35777fd35a7dd1906dd4f2687da61e",
+      "parent": "50b8788cf54cb60112b7cd93642bc5094901475c"
+    },
+    {
+      "q": "keep a param value of \"index\" in $url() and $path()",
+      "q_ko": "$url()과 $path()에서 파라미터 값 index 유지",
+      "golden": [
+        "src/client/client.ts"
+      ],
+      "commit": "50b8788cf54cb60112b7cd93642bc5094901475c",
+      "parent": "06880c4a2b04de9dd74217f26dd831209b9c01f1"
+    },
+    {
+      "q": "do not let abort listeners crash abort()",
+      "q_ko": "abort 리스너가 abort()를 망가뜨리지 않게",
+      "golden": [
+        "src/utils/stream.ts"
+      ],
+      "commit": "5e5b83d6ed963a2bc7d8384002e1c953648253b1",
+      "parent": "241ae4c72b7ab732e425f40ea28cd3af2e78d8a2"
+    },
+    {
+      "q": "drop stale content length for cloned FormData",
+      "q_ko": "복제한 FormData의 오래된 content length 제거",
+      "golden": [
+        "src/request.ts"
+      ],
+      "commit": "612b59c0227b421090d46721cd5a98243ad8c6ec",
+      "parent": "73794bdabeadca93676cdbd54aa82d018feb69b8"
+    },
+    {
+      "q": "support wildcard media types and specificity ordering in defaultMatch",
+      "q_ko": "defaultMatch에서 와일드카드 미디어 타입과 구체성 순서 지원",
+      "golden": [
+        "src/helper/accepts/accepts.ts"
+      ],
+      "commit": "28a9c128912de19f3fb28b00ae289c9b93f6f392",
+      "parent": "1096d66e03a3fd16a5cc5f912c2d5e8fd6d990b0"
+    },
+    {
+      "q": "skip an undefined entry inside a query array",
+      "q_ko": "쿼리 배열 안의 undefined 항목 건너뛰기",
+      "golden": [
+        "src/client/utils.ts"
+      ],
+      "commit": "2059584f84187a688354956e0647269834ccf3a6",
+      "parent": "d6c0b0de163a3b709e4dc57de0e0e8581aa08b7b"
+    }
+  ]
+}

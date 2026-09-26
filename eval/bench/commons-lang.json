@@ -1,0 +1,190 @@
+{
+  "project": "commons-lang",
+  "url": "https://github.com/apache/commons-lang",
+  "ref": "29624cdb50ecd794207d561345b2fc9ca3a9d326",
+  "made_by": "eval/bench/make.mjs",
+  "questions": [
+    {
+      "q": "Fix mutable time zone keys in the FastDateFormat cache",
+      "q_ko": "FastDateFormat 캐시의 변경 가능한 시간대 키 수정",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/time/AbstractFormatCache.java"
+      ],
+      "commit": "55dcbc4bb1449aa9f7c6ee422cc22b465a35fa2f",
+      "parent": "d86ec875bdc7676d76c162d393e81db7dee01f2d"
+    },
+    {
+      "q": "Reflection builders' cycle registry unregisters per-visit: cycle-SAFE but DAG-exponential, a 40-level reference diamond drives ~2^40 traversals and unbounded output (f032).",
+      "q_ko": "리플렉션 빌더의 순환 참조 등록이 방문마다 해제되어 깊은 참조 구조에서 순회가 지수적으로 늘어나는 문제",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/builder/ToStringStyle.java"
+      ],
+      "commit": "4303a36de3a8b29d19b88e7ca5901f78a536de72",
+      "parent": "11e2dad29e2ae58d3bd604233af55183ccee1d17"
+    },
+    {
+      "q": "StrBuilder.indexOf materializes the whole builder as a String per call; deleteAll/replaceAll multiply it into ~750 GB churn on a 1 MB builder (f026).",
+      "q_ko": "StrBuilder.indexOf가 호출마다 전체를 String으로 만들어 deleteAll과 replaceAll이 메모리를 과하게 쓰는 문제",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/CharSequenceUtils.java"
+      ],
+      "commit": "4d053dc896df7c1165673637607fcc86a146eb10",
+      "parent": "2e16df6260fb207cf45ae456e25e391cb7ef9bf8"
+    },
+    {
+      "q": "Attacker-controlled exception message forges frames in getRootCauseStackTrace output AND suppresses all real frames, beyond cosmetic log spoofing (f025).",
+      "q_ko": "공격자가 만든 예외 메시지가 getRootCauseStackTrace 출력에 가짜 프레임을 끼워 넣고 진짜 프레임을 숨기는 문제",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java"
+      ],
+      "commit": "2e16df6260fb207cf45ae456e25e391cb7ef9bf8",
+      "parent": "2dfaafa2576afc5534575fa27967b622e86580b9"
+    },
+    {
+      "q": "default caches the first failure forever, has no size bound or eviction, and runs the user computation inside the ConcurrentHashMap bin lock (blocking unrelated keys, deadlocking reentrant use) (f011).",
+      "q_ko": "기본값이 첫 실패를 영원히 캐시하고 크기 제한도 없으며 ConcurrentHashMap 잠금 안에서 사용자 계산을 실행하는 문제",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/concurrent/Memoizer.java"
+      ],
+      "commit": "1aef131265a6b2c8a5ded4301dd92468c7d826c5",
+      "parent": "fd6361792d1e021462215386d69dd3e0d1b59229"
+    },
+    {
+      "q": "keep stripStart and stripEnd off surrogate pair boundaries",
+      "q_ko": "stripStart와 stripEnd가 서로게이트 쌍 경계를 자르지 않게",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      ],
+      "commit": "c747711133c3e13d8d2bdab27a2eb7b11f1c6d7f",
+      "parent": "8bf8b78700c778b10049131f51b687195e039da9"
+    },
+    {
+      "q": "Keep chop from splitting a trailing surrogate pair",
+      "q_ko": "chop이 끝의 서로게이트 쌍을 쪼개지 않게",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      ],
+      "commit": "62f6edfd96008fd10cd22bf854cf4e8d2c008ae2",
+      "parent": "9ed5d0ba95652ffcbb912894ce67d81a2fbd60df"
+    },
+    {
+      "q": "Handle ParsePosition index beyond source string length cleanly",
+      "q_ko": "ParsePosition 인덱스가 원본 문자열 길이를 넘을 때 깔끔하게 처리",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/time/FastDateParser.java"
+      ],
+      "commit": "e0dba35f9e41dfdbbbb646fcd377b8af8ef7344e",
+      "parent": "94ad3a756aad97add12e48ed8ff54d630a927d4b"
+    },
+    {
+      "q": "fix getMatchingMethod false ambiguity for boxed primitive args",
+      "q_ko": "박싱된 기본형 인자에서 getMatchingMethod가 잘못 모호하다고 하는 문제 수정",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/reflect/MethodUtils.java"
+      ],
+      "commit": "aae7f0e61c51040dbdc7556f9eca5786eb9f63bd",
+      "parent": "dfaea97de4dd175781eeb552ff9eb29db767acc3"
+    },
+    {
+      "q": "fix unescapeCsv bounds error on a single quote field",
+      "q_ko": "따옴표 하나뿐인 필드에서 unescapeCsv 범위 오류 수정",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/StringEscapeUtils.java"
+      ],
+      "commit": "6dbbbb308bb77ba9c0ddab1ae400ee2ff76026b4",
+      "parent": "c4c294b0e04024d361d710985f8500f7d2412232"
+    },
+    {
+      "q": "keep initials from splitting a supplementary code point",
+      "q_ko": "initials가 보조 코드 포인트를 쪼개지 않게",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/text/WordUtils.java"
+      ],
+      "commit": "6bef246b2f10699a56a3010bbc6fa11d241430c6",
+      "parent": "226bf3975afd430b6b74c23a0c9cbae9f9b90de5"
+    },
+    {
+      "q": "strip L suffix for oversized hex literals in createNumber",
+      "q_ko": "createNumber에서 너무 큰 16진수 리터럴의 L 접미사 제거",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/math/NumberUtils.java"
+      ],
+      "commit": "18063c1f6d935d60d0e7341d68434ab4c88a34ee",
+      "parent": "e10003978ba6bacb7b32c27816b68b858404e967"
+    },
+    {
+      "q": "Add tests to ensure nulls compare correctly",
+      "q_ko": "null이 올바르게 비교되는지 확인하는 테스트 추가",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/compare/ObjectToStringComparator.java"
+      ],
+      "commit": "60d4c9843891f07596d2caf52fb8689d80179344",
+      "parent": "3e111f128a1f5a2f1e7df78c5cd6e8206eada959"
+    },
+    {
+      "q": "reject doubled leading sign in createBigInteger",
+      "q_ko": "createBigInteger에서 앞에 부호가 두 번 오면 거부",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/math/NumberUtils.java"
+      ],
+      "commit": "060ab31e517d856292e97428345821b5b289249a",
+      "parent": "44298fe0c0df0688827bcbf07677c3706de00f88"
+    },
+    {
+      "q": "fix lookup translator code point count for supplementary keys",
+      "q_ko": "보조 문자 키에 대한 lookup translator의 코드 포인트 개수 수정",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/text/translate/LookupTranslator.java"
+      ],
+      "commit": "80bf07c61721520ef12679fc394ac5584c1e9536",
+      "parent": "1e071b3dd5a16cd74b3dd991b7d0b03e581c8d7a"
+    },
+    {
+      "q": "NaN bypass in primitive double range validators.",
+      "q_ko": "기본형 double 범위 검증에서 NaN이 통과하는 문제",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/Validate.java"
+      ],
+      "commit": "864dd6ea887fd394f15e3b55203d6f52f717373b",
+      "parent": "4b09471db039085a3114f79ece97ca7fd9bd6f1e"
+    },
+    {
+      "q": "Annotation lookup matches unrelated overloads via assignable-parameter resolution",
+      "q_ko": "애너테이션 조회가 대입 가능한 파라미터 해석 때문에 관련 없는 오버로드와 매칭되는 문제",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/reflect/MethodUtils.java"
+      ],
+      "commit": "daa17b8629a7a9921ffe42e7c2c0f0051af42571",
+      "parent": "0c7942f416ec7dbf163e72ce0a62a138f11822ad"
+    },
+    {
+      "q": "No need to end exception messages with an exclamation!",
+      "q_ko": "예외 메시지를 느낌표로 끝내지 않기",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/concurrent/BackgroundInitializer.java",
+        "src/main/java/org/apache/commons/lang3/concurrent/MultiBackgroundInitializer.java",
+        "src/main/java/org/apache/commons/lang3/concurrent/TimedSemaphore.java"
+      ],
+      "commit": "23a730b8ed392ba424cc275df793dcae88f4cebe",
+      "parent": "7138b8c001b9c60176598a21c0d15db43f8d8a1f"
+    },
+    {
+      "q": "Make stopInstant be in sync with stopTimeNanos for split",
+      "q_ko": "split할 때 stopInstant를 stopTimeNanos와 맞추기",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/time/StopWatch.java"
+      ],
+      "commit": "aa47951bd0223d674d2b85d06ccc6f7f1749a682",
+      "parent": "185edc4b8594e20d81baad65a199a211e2137616"
+    },
+    {
+      "q": "Use a single return in indexesOf() methods",
+      "q_ko": "indexesOf() 메서드에서 return을 하나만 쓰기",
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/ArrayUtils.java"
+      ],
+      "commit": "becbcffffe673ad062b2b389a2a31dce7565841e",
+      "parent": "a4cf528306f96784ed9c8e4cacb59e128fea92b3"
+    }
+  ]
+}
