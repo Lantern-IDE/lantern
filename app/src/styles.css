@@ -437,7 +437,9 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .approval { border: 1px solid var(--warning); border-radius: var(--radius); background: var(--elevated); overflow: hidden; }
 .approval .ahead { padding: 8px 10px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); font-size: 12px; background: var(--warning-soft); }
 .approval .ahead .codicon { font-size: 14px; color: var(--warning); }
-.approval .atitle { flex: 1; word-break: break-all; font-weight: 600; }
+.approval .atitle { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
+/* 파일 이름은 한 덩어리로, 폴더는 흐리게 `/` 뒤에서만 줄바꿈 (이름이 칸보다 길 때만 글자 단위) */
+.approval .adir { margin-left: 6px; font-weight: 400; color: var(--muted); }
 .approval .actions { display: flex; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--border); align-items: center; }
 .approval .actions .hint { margin-left: auto; font-size: 11.5px; color: var(--muted); }
 .approval.resolved { border-color: var(--border); }
