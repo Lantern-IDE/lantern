@@ -25,14 +25,15 @@ The core is a local context engine (`crates/lantern-context`, Rust + tree-sitter
 
 Languages the engine understands (symbols, calls, map, impact radius): Rust, Python, TypeScript/JavaScript, Java, Go, C#. Other files still open with syntax colors, but have no symbols.
 
-On a private 1,772-file TypeScript/JavaScript project with 20 hand-labelled questions, at the same 8,000-token budget:
+**Public benchmark.** 60 real commits from [Flask](https://github.com/pallets/flask) (Python), [Hono](https://github.com/honojs/hono) (TypeScript), and [Apache Commons Lang](https://github.com/apache/commons-lang) (Java). The question is the commit message, the answer files are the code files that commit changed, and each question is measured at the commit's parent. Nobody hand-picks the answers. Same 8,000-token budget, no model calls:
 
-| | Keyword search (grep, then read whole files) | Lantern |
-|---|---|---|
-| Answer files retrieved (mean recall) | 24% | **67%** |
-| Questions with at least one answer file | 35% | **90%** |
+| | Keyword search (grep, read whole files) | Keyword search (grep, snippets around matches) | Lantern |
+|---|---|---|---|
+| Answer files retrieved (mean recall) | 13% | 41% | **88%** |
+| An answer file among the first 3 files | 15% | 30% | **65%** |
+| Same questions in Korean: recall / first 3 | 13% / 13% | 38% / 27% | **76% / 43%** |
 
-Method and caveats: [eval/결과.md](eval/결과.md) (Korean). The evaluation script is in `eval/`; bring your own project and question set ([format](eval/README.md)). A public benchmark on an open-source codebase is planned.
+Picking as many files at random as Lantern returns would hit an answer file 10% of the time. Korean questions are human translations of the same commit messages. Reproduce with `node eval/bench/run.mjs` ([results](eval/bench/결과.md), [method](eval/README.md)). Bring your own project and questions with `eval/retrieval.mjs`.
 
 The engine also runs on its own as a CLI and an MCP server, so you can use it from other agents:
 

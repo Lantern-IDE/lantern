@@ -1,0 +1,193 @@
+{
+  "project": "flask",
+  "url": "https://github.com/pallets/flask",
+  "ref": "d73fa1cdcbd8b1465c151db8924ba58b1dd14e35",
+  "made_by": "eval/bench/make.mjs",
+  "questions": [
+    {
+      "q": "support query in methodview",
+      "q_ko": "MethodView에서 query 메서드 지원",
+      "golden": [
+        "src/flask/views.py"
+      ],
+      "commit": "2a8a38b051fc248865730bf3511bf2e2ea325e81",
+      "parent": "d8eaaba824655046958d1a97f11780de460c3271"
+    },
+    {
+      "q": "add app.query route decorator",
+      "q_ko": "app.query 라우트 데코레이터 추가",
+      "golden": [
+        "src/flask/sansio/scaffold.py"
+      ],
+      "commit": "89992954ec71b594b1b911f98977cdc8ad46a057",
+      "parent": "3596b1ab61cea85edb8970e83ff61daa073facf8"
+    },
+    {
+      "q": "Fix IPv6 server name parsing",
+      "q_ko": "IPv6 서버 이름 파싱 수정",
+      "golden": [
+        "src/flask/app.py"
+      ],
+      "commit": "7203feabf723edae0286ae5dc64fec8ac4c91735",
+      "parent": "de8429ffda8cfb54db175529e2bae72a24e1fa7e"
+    },
+    {
+      "q": "Fix IPv6 session transactions",
+      "q_ko": "IPv6에서 세션 트랜잭션 수정",
+      "golden": [
+        "src/flask/testing.py"
+      ],
+      "commit": "de8429ffda8cfb54db175529e2bae72a24e1fa7e",
+      "parent": "514fc6b3e8402e4c646d5284e97a4f0ab50a7c4b"
+    },
+    {
+      "q": "Any for  CertParamType type",
+      "q_ko": "CertParamType 타입에 Any 사용",
+      "golden": [
+        "src/flask/cli.py"
+      ],
+      "commit": "36e4a824f340fdee7ed50937ba8e7f6bc7d17f81",
+      "parent": "954f5684e4841aad84a8eec7ace7b81a0d3f6831"
+    },
+    {
+      "q": "separate copy per call",
+      "q_ko": "호출마다 복사본을 따로 만들기",
+      "golden": [
+        "src/flask/ctx.py"
+      ],
+      "commit": "06ea505ce2b2042af26e96d35ebf159af7c0869d",
+      "parent": "2ac89889f4cc330eabd50f295dcef02828522c69"
+    },
+    {
+      "q": "document that headers must be set before streaming",
+      "q_ko": "스트리밍 전에 헤더를 설정해야 한다는 점을 명시",
+      "golden": [
+        "src/flask/ctx.py",
+        "src/flask/helpers.py"
+      ],
+      "commit": "a29f88ce6f2f9843bd6fcbbfce1390a2071965d6",
+      "parent": "f00ad424ee3b050d382cc5b4aabb18afbb5e4ae7"
+    },
+    {
+      "q": "add back opening session on context push",
+      "q_ko": "컨텍스트를 push할 때 세션을 여는 동작 되돌리기",
+      "golden": [
+        "src/flask/ctx.py"
+      ],
+      "commit": "a411a2434b09d9cbaa4074232b2c247d591bb655",
+      "parent": "daca74d93a0edc458e618136de7d14803f06bc28"
+    },
+    {
+      "q": "Abort if the instance folder cannot be created",
+      "q_ko": "인스턴스 폴더를 만들 수 없으면 중단",
+      "golden": [
+        "examples/tutorial/flaskr/__init__.py"
+      ],
+      "commit": "3d03098a97ddc6a908aa4a50c2ef7381f8297d0a",
+      "parent": "407eb76b27884848383a37c7274654f0271e4bc4"
+    },
+    {
+      "q": "redirect defaults to 303",
+      "q_ko": "리다이렉트 기본값을 303으로",
+      "golden": [
+        "src/flask/helpers.py",
+        "src/flask/sansio/app.py"
+      ],
+      "commit": "eca5fd1dfdc614c2df876cc32018a7d71f84ea82",
+      "parent": "eb58d862cc4a8f31a369b6e9ad1724e9e642f13f"
+    },
+    {
+      "q": "pass context through dispatch methods",
+      "q_ko": "디스패치 메서드에 컨텍스트 전달",
+      "golden": [
+        "src/flask/app.py",
+        "src/flask/ctx.py",
+        "src/flask/templating.py"
+      ],
+      "commit": "6a64969009bf1898bd302e6a9633f71942523f7f",
+      "parent": "adf363679da2d9a5ddc564bb2da563c7ca083916"
+    },
+    {
+      "q": "use template_filter without parens",
+      "q_ko": "괄호 없이 template_filter 사용",
+      "golden": [
+        "src/flask/sansio/app.py",
+        "src/flask/sansio/blueprints.py"
+      ],
+      "commit": "daf1510a4bda652ac2cfca03ec5567b03ddf8bf1",
+      "parent": "85c5d93cbd049c4bd0679c36fd1ddcae8c37b642"
+    },
+    {
+      "q": "refactor stream_with_context for async views",
+      "q_ko": "비동기 뷰를 위해 stream_with_context 리팩터링",
+      "golden": [
+        "src/flask/helpers.py"
+      ],
+      "commit": "9822a0351574790cb66c652fcc396ad7aa2b09d8",
+      "parent": "49b7e7bc8fb69d605719991d1c0a99fcee689053"
+    },
+    {
+      "q": "relax type hint for bytes io",
+      "q_ko": "바이트 IO의 타입 힌트 완화",
+      "golden": [
+        "src/flask/helpers.py"
+      ],
+      "commit": "d44f1c65239c3e33509224aa1931631243dbfa7f",
+      "parent": "c56c5ec7c41e6ffd02516bf7cb80dd2ba9ba7aa3"
+    },
+    {
+      "q": "push preserved contexts in correct order",
+      "q_ko": "보존된 컨텍스트를 올바른 순서로 push",
+      "golden": [
+        "src/flask/testing.py"
+      ],
+      "commit": "53b8f08218796d95764c5252bccd8a50a173a6fb",
+      "parent": "5addaf833b2e8c7a616f89dd8ad5a44b07d7c000"
+    },
+    {
+      "q": "secret key rotation: fix key list ordering",
+      "q_ko": "시크릿 키 교체: 키 목록 순서 수정",
+      "golden": [
+        "src/flask/sessions.py"
+      ],
+      "commit": "fb54159861708558b5f5658ebdc14709d984361c",
+      "parent": "941efd4a36ed0f27e13758874f95e3aa1d3ee163"
+    },
+    {
+      "q": "Accept `AsyncIterable` for responses",
+      "q_ko": "응답으로 AsyncIterable 허용",
+      "golden": [
+        "src/flask/typing.py"
+      ],
+      "commit": "410e5ab7ed0ef326fa8b5164a633863f137ffff5",
+      "parent": "bfffe87d4c2ea255b9a51432bebb3d28741245c4"
+    },
+    {
+      "q": "better type checking during deprecation",
+      "q_ko": "지원 중단 처리 중 타입 검사 개선",
+      "golden": [
+        "src/flask/__init__.py"
+      ],
+      "commit": "7d5d1874581209f66ad7bcdfb7f85b2b9a7ca471",
+      "parent": "c7c8dc38ea2890d62b7aaff7e4c016e4b98101b0"
+    },
+    {
+      "q": "Handle help arg by itself the same as no args",
+      "q_ko": "help 인자만 있을 때 인자가 없을 때와 똑같이 처리",
+      "golden": [
+        "src/flask/cli.py"
+      ],
+      "commit": "da600394865c06a4772c433c1a560453dcf4f868",
+      "parent": "08c480b3b31e896698bb773069026a61eb53d158"
+    },
+    {
+      "q": "remove previously deprecated code",
+      "q_ko": "이전에 지원 중단된 코드 삭제",
+      "golden": [
+        "src/flask/__init__.py"
+      ],
+      "commit": "d22bfcd4cfe3b93daddfce8521f77447ca8d6b84",
+      "parent": "4fec712f329ceecd38729af6404a2c32aed83648"
+    }
+  ]
+}
