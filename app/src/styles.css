@@ -876,6 +876,10 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .istat.no-tests { color: var(--warning); }
 .itouch { display: inline-flex; align-items: center; gap: 4px; font-family: var(--code-font); color: var(--fg); }
 .inote { color: var(--muted); }
+.inote.framework { display: flex; align-items: flex-start; gap: 5px; color: var(--warning); }
+.inote.framework .codicon { flex-shrink: 0; margin-top: 1px; }
+.ibasis { display: inline-flex; color: var(--muted); cursor: help; }
+.ibasis .codicon { font-size: 13px; }
 
 /* ── 프로젝트 기억 ───────────────────────────────────── */
 #memory-body { flex: 1; padding: 0 8px 8px 12px; }

@@ -20,7 +20,12 @@ export interface GEdge { source: string; target: string; kind: EdgeKind; weight:
 export interface Graph { nodes: GNode[]; edges: GEdge[]; truncated: boolean }
 export interface Impact {
   path: string; touched: string[]; callers: number; callers2: number; files: number; modules: number;
-  cochanged: [string, number][]; tests: string[]; ambiguous: string[]; unique: boolean; risk: "low" | "medium" | "high"; graph: Graph;
+  cochanged: [string, number][]; tests: string[]; ambiguous: string[]; unique: boolean;
+  /** 엔진이 이 언어를 분석함. 아니면 0은 '없음'이 아니라 '모름' */
+  supported: boolean;
+  /** 프레임워크가 부른다는 표시 (@GetMapping 등). 호출자·테스트에 안 잡힌다 */
+  framework: string[];
+  risk: "low" | "medium" | "high"; graph: Graph;
 }
 export interface MemoryNote { id: string; topic: string; file: string; line: number; text: string; links: string[] }
 

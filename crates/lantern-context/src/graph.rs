@@ -540,9 +540,62 @@ pub struct Impact {
     pub ambiguous: Vec<String>,
     /// 바뀌는 심볼의 이름이 모두 프로젝트에서 한 곳에만 정의됨 (이름 기준 호출자가 믿을 만함)
     pub unique: bool,
+    /// 엔진이 이 파일의 언어를 분석함. 아니면 호출자 0은 '없음'이 아니라 '모름'
+    pub supported: bool,
+    /// 바뀌는 심볼에 붙은, 프레임워크가 부른다는 표시 (`@GetMapping`, `[HttpGet]`, `#[tauri::command]`).
+    /// 이런 코드는 프레임워크·라우팅·DI가 부르기 때문에 이름으로 찾은 호출자와 테스트에 나타나지 않는다.
+    pub framework: Vec<String>,
     /// low | medium | high
     pub risk: String,
     pub graph: Graph,
+}
+
+/// 코드에 붙어 있어도 누가 부르는지와 상관없는 표시 (언어 기능·검사·코드 생성·테스트)
+const NOT_FRAMEWORK: &[&str] = &[
+    "override", "deprecated", "suppresswarnings", "safevarargs", "functionalinterface", "nullable", "nonnull",
+    "notnull", "obsolete", "staticmethod", "classmethod", "abstractmethod", "property", "dataclass", "derive",
+    "allow", "deny", "warn", "expect", "cfg", "cfg_attr", "inline", "must_use", "doc", "test", "transactional",
+    "data", "getter", "setter", "builder", "tostring", "equalsandhashcode", "value", "serializable",
+];
+
+/// 시그니처 앞의 애너테이션·데코레이터·속성 중 프레임워크가 부른다는 표시.
+/// Java·TypeScript `@Name(...)`, Python `@app.get(...)`, C# `[HttpGet(...)]`, Rust `#[tauri::command]`
+pub fn framework_marks(signature: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut s = signature.trim_start();
+    loop {
+        let (mark, rest) = if let Some(r) = s.strip_prefix("#[") {
+            let end = r.find(']').unwrap_or(r.len());
+            (format!("#[{}]", r[..end].split('(').next().unwrap_or("").trim()), &r[(end + 1).min(r.len())..])
+        } else if let Some(r) = s.strip_prefix('[') {
+            let end = r.find(']').unwrap_or(r.len());
+            (format!("[{}]", r[..end].split('(').next().unwrap_or("").trim()), &r[(end + 1).min(r.len())..])
+        } else if let Some(r) = s.strip_prefix('@') {
+            let name_end = r.find(|c: char| !(c.is_alphanumeric() || c == '_' || c == '.')).unwrap_or(r.len());
+            let mut rest = &r[name_end..];
+            if rest.starts_with('(') {
+                let mut depth = 0;
+                let close = rest.char_indices().find(|&(_, c)| {
+                    match c {
+                        '(' => depth += 1,
+                        ')' => depth -= 1,
+                        _ => {}
+                    }
+                    depth == 0
+                });
+                rest = close.map(|(i, _)| &rest[i + 1..]).unwrap_or("");
+            }
+            (format!("@{}", &r[..name_end]), rest)
+        } else {
+            break;
+        };
+        let last = mark.trim_start_matches(['#', '[', '@']).trim_end_matches(']').rsplit(['.', ':']).next().unwrap_or("").to_ascii_lowercase();
+        if !last.is_empty() && !NOT_FRAMEWORK.contains(&last.as_str()) && !out.contains(&mark) {
+            out.push(mark);
+        }
+        s = rest.trim_start();
+    }
+    out
 }
 
 /// `path`의 `ranges`(1부터, 양끝 포함) 줄을 바꿀 때 닿는 범위
@@ -621,10 +674,23 @@ pub fn impact(store: &Store, path: &str, ranges: &[(u32, u32)]) -> Result<Impact
     for s in &touched {
         unique &= store.count_defs(&s.name)? == 1;
     }
+    let mut framework: Vec<String> = Vec::new();
+    for s in &touched {
+        for m in framework_marks(&s.signature) {
+            if !framework.contains(&m) {
+                framework.push(m);
+            }
+        }
+    }
     let callers = d1.len();
     let risk = if callers >= 10 || modules.len() >= 2 || (callers + d2.len()) >= 25 {
         "high"
-    } else if callers >= 3 || cochanged.len() >= 3 || (callers > 0 && tests.is_empty()) {
+    } else if callers >= 3
+        || cochanged.len() >= 3
+        || (callers > 0 && tests.is_empty())
+        // 밖에서 불리는 코드(엔드포인트, 이벤트 처리)는 호출자가 안 보여도 낮다고 하지 않는다
+        || !framework.is_empty()
+    {
         "medium"
     } else {
         "low"
@@ -640,6 +706,8 @@ pub fn impact(store: &Store, path: &str, ranges: &[(u32, u32)]) -> Result<Impact
         tests: tests.into_iter().collect(),
         ambiguous,
         unique,
+        supported: Lang::from_path(Path::new(path)).is_some(),
+        framework,
         risk: risk.into(),
         graph: b.finish(),
     })
@@ -820,6 +888,39 @@ mod tests {
         assert!(is_test_path("src/test/java/com/x/UserServiceTest.java") && is_test_path("UserServiceTests.java"));
         assert!(is_test_path("Shop.Tests/OrderTests.cs") && is_test_path("src/OrderServiceTest.cs"));
         assert!(!is_test_path("src/main/java/com/x/Contest.java") && !is_test_path("src/Test.java"));
+    }
+
+    #[test]
+    fn framework_marks_by_language() {
+        assert_eq!(framework_marks("@GetMapping(\"/owners\") public String processFindForm(@RequestParam int page)"), ["@GetMapping"]);
+        assert_eq!(framework_marks("@Override @EventListener(OrderPlaced.class) public void on(OrderPlaced e)"), ["@EventListener"]);
+        assert_eq!(framework_marks("[HttpGet(\"{id}\")] [Authorize] public IActionResult Get(int id)"), ["[HttpGet]", "[Authorize]"]);
+        assert_eq!(framework_marks("#[tauri::command] #[allow(dead_code)] fn git_repos(state: State)"), ["#[tauri::command]"]);
+        assert_eq!(framework_marks("@app.get(\"/items/{id}\") async def read_item(id: int)"), ["@app.get"]);
+        assert!(framework_marks("@Override public String toString()").is_empty());
+        assert!(framework_marks("@staticmethod def parse(raw)").is_empty());
+        assert!(framework_marks("pub fn load(path: &str) -> Config").is_empty());
+    }
+
+    #[test]
+    fn impact_flags_framework_entry_points_and_unknown_languages() {
+        let dir = tempfile::tempdir().unwrap();
+        let r = dir.path();
+        std::fs::create_dir_all(r.join("src")).unwrap();
+        std::fs::write(r.join("src/OwnerController.java"), "package app;\n\npublic class OwnerController {\n    @GetMapping(\"/owners\")\n    public String list(Model model) {\n        return \"owners\";\n    }\n}\n").unwrap();
+        std::fs::write(r.join("src/api.py"), "@app.get(\"/items\")\ndef list_items():\n    return []\n").unwrap();
+        std::fs::write(r.join("src/Owner.kt"), "class Owner(val name: String)\n").unwrap();
+        let mut e = Engine::open(r).unwrap();
+        e.refresh().unwrap();
+
+        // 호출자가 안 보여도 엔드포인트는 '낮음'이 아니다
+        let i = impact(&e.store, "src/OwnerController.java", &[(6, 6)]).unwrap();
+        assert_eq!((i.callers, i.framework.clone(), i.risk.as_str(), i.supported), (0, vec!["@GetMapping".to_string()], "medium", true));
+        let p = impact(&e.store, "src/api.py", &[(3, 3)]).unwrap();
+        assert_eq!(p.framework, ["@app.get"]);
+        // 분석하지 않는 언어: 0은 '없음'이 아니라 '모름'
+        let k = impact(&e.store, "src/Owner.kt", &[(1, 1)]).unwrap();
+        assert!(!k.supported && k.touched.is_empty());
     }
 
     #[test]

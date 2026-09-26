@@ -296,18 +296,24 @@ function impactRow(diff: string, onTouched: (names: string[]) => void): HTMLElem
     stats.push(h("span", { class: `istat ${i.tests.length ? "tests" : "no-tests"}` }, codicon(i.tests.length ? "beaker" : "warning"), i.tests.length ? `테스트 ${i.tests.length}` : "테스트 없음"));
     const view = h("button", { class: "btn btn-ghost", title: "영향 범위를 지도에서 보기" }, codicon("type-hierarchy"), "지도에서 보기");
     view.addEventListener("click", () => hooks.showImpact(i));
+    // 숫자를 사실로 믿지 않게: 무엇을 기준으로 셌고 무엇을 놓치는지
+    const basis = h("span", { class: "ibasis", title: "이름으로 찾은 호출 관계(정적 분석)입니다. DI·리플렉션·이벤트·라우팅처럼 실행 중에 정해지는 호출과, URL로 부르는 테스트는 세지 않습니다." }, codicon("info"));
     row.replaceChildren(...([
       h("div", { class: "ihead" },
         codicon("pulse"),
         h("span", { class: "ititle" }, "영향 반경"),
-        h("span", { class: `risk risk-${i.risk}` }, `위험도 ${RISK_LABEL[i.risk]}`),
+        basis,
+        i.supported ? h("span", { class: `risk risk-${i.risk}` }, `위험도 ${RISK_LABEL[i.risk]}`) : null,
         i.graph.nodes.length > 1 ? view : null),
-      nothing
-        ? h("div", { class: "inote" }, "이 변경을 호출하는 다른 코드를 찾지 못했습니다.")
-        : h("div", { class: "istats" }, ...stats),
+      !i.supported
+        ? h("div", { class: "inote" }, "이 언어는 호출 관계를 분석하지 않아 영향 범위를 알 수 없습니다. 바뀌는 곳을 직접 확인하세요.")
+        : nothing
+          ? h("div", { class: "inote" }, "이 변경을 호출하는 다른 코드를 찾지 못했습니다.")
+          : h("div", { class: "istats" }, ...stats),
+      i.framework.length ? h("div", { class: "inote framework" }, codicon("warning"), `${i.framework.join(", ")}: 프레임워크가 부르는 코드라 호출자·테스트 수에 잡히지 않을 수 있습니다`) : null,
       i.ambiguous.length ? h("div", { class: "inote ambiguous" }, `이름이 흔해 호출자를 셀 수 없음: ${i.ambiguous.join(", ")}`) : null,
     ].filter(Boolean) as Node[]));
-    row.classList.add(`risk-${i.risk}`);
+    if (i.supported) row.classList.add(`risk-${i.risk}`);
     // 언어 서버로 다시 확인 (켜져 있을 때만). 이름 기준 결과와 다르면 고쳐 보여준다.
     void lspCallers(i).then((r) => {
       if (!r) return;
