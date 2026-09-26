@@ -7,6 +7,7 @@
 //!
 //! 참조는 이름 기반이라, 같은 이름이 여러 곳에 정의된 흔한 이름은 잡음으로 보고 뺀다.
 
+use crate::lang::Lang;
 use crate::store::{Store, SymbolRow};
 use anyhow::Result;
 use serde::Serialize;
@@ -116,6 +117,10 @@ pub fn is_test_path(path: &str) -> bool {
     let p = path.to_ascii_lowercase();
     p.contains("/test/") || p.contains("/tests/") || p.contains("__tests__") || p.starts_with("test/") || p.starts_with("tests/")
         || p.contains(".test.") || p.contains(".spec.") || p.contains("_test.") || p.rsplit('/').next().is_some_and(|f| f.starts_with("test_"))
+        // C# 테스트 프로젝트 (MyApp.Tests/)
+        || p.contains(".tests/")
+        // Java·C#: UserServiceTest.java, UserServiceTests.cs (대문자 T로 구분해 Contest.java는 빼기)
+        || Path::new(path).file_stem().and_then(|s| s.to_str()).is_some_and(|s| s.len() > 4 && (s.ends_with("Test") || s.ends_with("Tests")))
 }
 
 fn basename(path: &str) -> &str {
@@ -227,8 +232,9 @@ fn callers(store: &Store, s: &SymbolRow, limit: usize) -> Result<Vec<SymbolRow>>
             continue;
         }
         if let Some(c) = store.symbol(id)? {
-            // 자기 안에 든 심볼(메서드가 클래스를 참조 등)은 호출자로 치지 않는다
-            if !s.contains(&c) {
+            // 자기 안에 든 심볼(메서드가 클래스를 참조 등)은 호출자로 치지 않는다.
+            // 다른 언어 계열에서 같은 이름을 부른 것도 호출이 아니다
+            if !s.contains(&c) && Lang::family(&c.lang) == Lang::family(&s.lang) {
                 out.push(c);
             }
         }
@@ -603,7 +609,8 @@ pub fn impact(store: &Store, path: &str, ranges: &[(u32, u32)]) -> Result<Impact
     for s in &touched {
         if store.count_defs(&s.name)? <= MAX_DEFS {
             for r in store.references(&s.name, 200)? {
-                if is_test_path(&r.path) {
+                let same_family = Lang::from_path(Path::new(&r.path)).is_some_and(|l| Lang::family(l.name()) == Lang::family(&s.lang));
+                if same_family && is_test_path(&r.path) {
                     tests.insert(r.path);
                 }
             }
@@ -810,6 +817,37 @@ mod tests {
         assert_eq!(group_of("main.rs"), "(root)");
         assert!(is_test_path("tests/a.rs") && is_test_path("src/a.test.ts") && is_test_path("pkg/foo_test.go"));
         assert!(!is_test_path("src/contest.ts"));
+        assert!(is_test_path("src/test/java/com/x/UserServiceTest.java") && is_test_path("UserServiceTests.java"));
+        assert!(is_test_path("Shop.Tests/OrderTests.cs") && is_test_path("src/OrderServiceTest.cs"));
+        assert!(!is_test_path("src/main/java/com/x/Contest.java") && !is_test_path("src/Test.java"));
+    }
+
+    #[test]
+    fn impact_stays_within_a_language_family() {
+        // Spring 백엔드와 React 화면에 같은 이름 getUser가 있어도 서로 호출로 잇지 않는다
+        let dir = tempfile::tempdir().unwrap();
+        let r = dir.path();
+        std::fs::create_dir_all(r.join("api/src/main/java/app")).unwrap();
+        std::fs::create_dir_all(r.join("api/src/test/java/app")).unwrap();
+        std::fs::create_dir_all(r.join("web/src")).unwrap();
+        std::fs::write(r.join("api/src/main/java/app/UserService.java"), "package app;\n\npublic class UserService {\n    public User getUser(long id) {\n        return repo.findById(id);\n    }\n}\n").unwrap();
+        std::fs::write(r.join("api/src/main/java/app/UserController.java"), "package app;\n\npublic class UserController {\n    public User show(long id) {\n        return service.getUser(id);\n    }\n}\n").unwrap();
+        std::fs::write(r.join("api/src/test/java/app/UserServiceTest.java"), "package app;\n\nclass UserServiceTest {\n    void gets() {\n        service.getUser(1);\n    }\n}\n").unwrap();
+        std::fs::write(r.join("web/src/user.ts"), "export async function loadProfile(id: number) {\n  return getUser(id);\n}\n").unwrap();
+        std::fs::write(r.join("web/src/user.test.ts"), "export function testProfile() {\n  return getUser(1);\n}\n").unwrap();
+        let mut e = Engine::open(r).unwrap();
+        e.refresh().unwrap();
+
+        let i = impact(&e.store, "api/src/main/java/app/UserService.java", &[(5, 5)]).unwrap();
+        assert_eq!(i.touched, vec!["getUser"]);
+        let callers: Vec<&str> = i.graph.nodes.iter().filter(|n| n.depth == Some(1)).map(|n| n.label.as_str()).collect();
+        assert!(callers.contains(&"show") && callers.contains(&"gets"), "{callers:?}");
+        assert!(!callers.contains(&"loadProfile") && !callers.contains(&"testProfile"), "다른 언어의 호출: {callers:?}");
+        assert_eq!(i.tests, vec!["api/src/test/java/app/UserServiceTest.java"]);
+
+        let g = overview(&e.store, 100).unwrap();
+        let web_to_api = g.edges.iter().any(|x| x.source.contains("web/") && x.target.contains("api/"));
+        assert!(!web_to_api, "{:?}", g.edges);
     }
 
     #[test]

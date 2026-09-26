@@ -14,7 +14,7 @@ IDE를 만들기 전에 **"맥락을 잘 조립하면 AI 답변이 나아지고 
 | 검색 | BM25 전문 검색 (식별자 분해 포함) | 임베딩 의미 검색 (Phase 0b, `embeddings` 기능 플래그) |
 | 조립 | 후보 수집 → 그래프 확장 → 순위 → 예산 내 압축 → 근거 표시 | 모델 기반 재순위 |
 | 인터페이스 | CLI, MCP 서버 (stdio) | IDE 연동 (Phase 1) |
-| 언어 | Rust, Python, TypeScript/TSX, JavaScript | 그 외 언어 |
+| 언어 | Rust, Python, TypeScript/TSX, JavaScript, Java, Go, C# | 그 외 언어 |
 
 ## 2. 구성
 

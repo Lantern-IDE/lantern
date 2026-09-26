@@ -23,6 +23,8 @@
 
 핵심은 로컬 맥락 엔진(`crates/lantern-context`, Rust + tree-sitter + SQLite FTS5)입니다. 질문마다 심볼 그래프, 전문 검색, git 동시 변경 이력, 프로젝트 기억에서 관련 코드를 골라 토큰 예산 안에 조립합니다.
 
+엔진이 이해하는 언어(심볼, 호출 관계, 지도, 영향 반경): Rust, Python, TypeScript/JavaScript, Java, Go, C#. 그 밖의 파일도 코드 색은 나오지만 심볼은 없습니다.
+
 비공개 프로젝트(코드 파일 1,772개, TypeScript/JavaScript)에서 정답 파일을 직접 정한 질문 20개로, 같은 8,000 토큰 예산에서 비교했습니다:
 
 | | 키워드 검색 (grep 후 파일 통째로 읽기) | Lantern |
