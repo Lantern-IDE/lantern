@@ -2,7 +2,7 @@
 
 **에이전트가 무엇을 보고, 무엇을 바꾸고, 그 수정이 어디까지 닿는지 보여주는 AI 코드 편집기.**
 
-[English](README.md) · Windows 베타 · Apache-2.0 · 모델은 직접 고름 (Claude, OpenAI 호환, Ollama, LM Studio)
+[English](README.md) · Windows 베타 · Apache-2.0 · 모델은 직접 고름 (Claude, GPT, Gemini, DeepSeek, Grok, Mistral, Groq, OpenRouter, Ollama, LM Studio, 그 밖의 OpenAI 호환 API)
 
 ![영향 반경이 붙은 승인 카드](docs/images/impact-ko.png)
 
@@ -52,7 +52,7 @@ claude mcp add lantern -- <lantern 경로> mcp <프로젝트>
 - **macOS** (`*.dmg`, Apple Silicon·Intel, 아직 실사용 확인 전): 응용 프로그램 폴더로 옮긴 뒤 터미널에서 `xattr -cr /Applications/Lantern.app`, 또는 **시스템 설정 → 개인정보 보호 및 보안 → 그래도 열기**.
 - **Linux** (`*.AppImage`, `*.deb`, 아직 실사용 확인 전).
 
-처음 켜면 **AI 모델 연결하기** 화면이 안내합니다 (나중에는 **설정 → 모델**). Anthropic·OpenAI 호환 API 키, 또는 Ollama·LM Studio 로컬 모델(무료, 코드가 컴퓨터 밖으로 나가지 않음)을 연결합니다. 키는 OS 자격 증명 저장소나 환경변수에 두고, 설정 파일에는 적지 않습니다.
+처음 켜면 **AI 모델 연결하기** 화면이 안내합니다 (나중에는 **설정 → 모델**). 클라우드 제공자(Anthropic, OpenAI, Google Gemini, DeepSeek, xAI, Mistral, Groq, OpenRouter)를 고르고 키를 넣은 뒤 그 회사의 모델 목록에서 모델을 고르거나, Ollama·LM Studio 로컬 모델(무료, 코드가 컴퓨터 밖으로 나가지 않음)을 연결합니다. 그 밖의 OpenAI 호환 API는 **설정 → 모델**에서 추가합니다. 채팅 입력창의 모델 버튼으로 연결해 둔 모델끼리 바로 바꿀 수 있습니다. 키는 OS 자격 증명 저장소나 환경변수에 두고, 설정 파일에는 적지 않습니다.
 
 ## 소스로 빌드
 

@@ -3,6 +3,7 @@ import { api, errorText, type LocalServer } from "./api";
 import { h, store } from "./dom";
 import * as editor from "./editor";
 import { codicon, hex } from "./icons";
+import { CLOUD, chatModels, modelKey, provider } from "./providers";
 
 interface Ctx {
   pickProject: () => Promise<void>;
@@ -31,46 +32,102 @@ function status(el: HTMLElement, kind: "ok" | "bad" | "wait" | "", text: string)
     text);
 }
 
-async function claudeChoice(onDone: () => void): Promise<HTMLElement> {
+/**
+ * 클라우드 모델: 제공자 고르기 → API 키 → 제공자의 모델 목록에서 고르기.
+ * 모델 이름은 제공자가 자주 바꾸므로 목록을 받아서 보여준다 (providers.ts).
+ */
+async function cloudChoice(onDone: () => void): Promise<HTMLElement> {
   const line = h("div", { class: "status-line" });
-  const input = h("input", { type: "password", placeholder: "sk-ant-…", autocomplete: "off", spellcheck: "false", "aria-label": "Anthropic API 키" }) as HTMLInputElement;
+  const which = h("select", { "aria-label": "제공자" }, ...CLOUD.map((p) => h("option", { value: p.id }, p.label))) as HTMLSelectElement;
+  const keyUrl = h("div", { class: "key-url" });
+  const input = h("input", { type: "password", autocomplete: "off", spellcheck: "false", "aria-label": "API 키" }) as HTMLInputElement;
   const btn = h("button", { class: "btn btn-secondary" }, "저장하고 확인") as HTMLButtonElement;
+  const pick = h("select", { "aria-label": "모델" }) as HTMLSelectElement;
+  const use = h("button", { class: "btn btn-primary" }, "이 모델 쓰기") as HTMLButtonElement;
+  const pickRow = h("div", { class: "row hidden" }, pick, use);
   const box = h("div", { class: "choice" },
-    h("h3", {}, codicon("cloud"), "Claude (Anthropic)"),
-    h("p", {}, "가장 정확한 답을 원할 때. 내 API 키로 쓰고, 사용한 만큼만 Anthropic에 비용을 냅니다."),
+    h("h3", {}, codicon("cloud"), "클라우드 모델"),
+    h("p", {}, "Claude, GPT, Gemini 등. 내 API 키로 쓰고, 사용한 만큼만 그 회사에 비용을 냅니다."),
+    h("div", { class: "row" }, which),
+    keyUrl,
     h("div", { class: "row" }, input, btn),
+    pickRow,
     line);
 
-  const settings = await api.getSettings().catch(() => null);
-  const smart = settings?.config.models.smart;
-  if (smart?.key_source) {
-    status(line, "", smart.key_source === "env" ? `환경변수 ${smart.api_key_env}에서 키를 찾았습니다. ‘저장하고 확인’으로 연결을 확인하세요` : "저장된 API 키가 있습니다. ‘저장하고 확인’으로 연결을 확인하세요");
-  } else status(line, "", "키는 Windows 자격 증명 관리자에 저장되고 설정 파일에는 남지 않습니다.");
+  const current = () => provider(which.value);
+  const describe = async () => {
+    const p = current();
+    input.placeholder = p.key_placeholder ?? "API 키";
+    keyUrl.replaceChildren(...(p.key_url ? ["키 발급: ", h("span", { class: "mono", title: "복사해서 브라우저에서 여세요" }, p.key_url)] : []));
+    pickRow.classList.add("hidden");
+    const m = (await api.getSettings().catch(() => null))?.config.models[modelKey(p)];
+    if (m?.key_source && m.provider === p.provider) {
+      status(line, "", m.key_source === "env" ? `환경변수 ${m.api_key_env}에서 키를 찾았습니다. ‘저장하고 확인’으로 모델 목록을 받으세요` : "저장된 API 키가 있습니다. ‘저장하고 확인’으로 모델 목록을 받으세요");
+    } else status(line, "", "키는 OS 자격 증명 저장소에 저장되고 설정 파일에는 남지 않습니다.");
+  };
+  which.addEventListener("change", () => void describe());
+  await describe();
 
-  const run = async () => {
+  // 1) 설정에 이 제공자를 만들고 키를 저장한 뒤, 모델 목록을 받는다
+  const connect = async () => {
+    const p = current();
+    const key = modelKey(p);
     btn.disabled = true;
     try {
-      if (input.value.trim()) await api.setApiKey("smart", input.value);
+      const existing = (await api.getSettings()).config.models[key];
+      if (!existing || existing.provider !== p.provider || (p.base_url && existing.base_url !== p.base_url)) {
+        const changes: [string, unknown][] = [
+          [`models.${key}.provider`, p.provider],
+          [`models.${key}.model`, existing?.model ?? p.model ?? ""],
+          [`models.${key}.api_key_env`, p.api_key_env],
+        ];
+        if (p.base_url) changes.push([`models.${key}.base_url`, p.base_url]);
+        if (p.price) changes.push([`models.${key}.price_input`, p.price[0]], [`models.${key}.price_output`, p.price[1]]);
+        await api.setSettings("global", changes);
+      }
+      if (input.value.trim()) await api.setApiKey(key, input.value);
       status(line, "wait", "연결을 확인하는 중…");
-      const r = await api.testModel("smart");
+      const r = await api.testModel(key);
       if (!r.ok) {
         status(line, "bad", r.message);
         return;
       }
-      await api.setSettings("global", [["routing.default", "smart"]]);
       input.value = "";
-      status(line, "ok", `연결되었습니다 · ${r.ms}ms · 기본 모델로 설정했습니다`);
-      box.classList.add("selected");
-      ctx.onModelChanged();
-      onDone();
+      const { models, pick: first } = chatModels(p, r.models);
+      if (!models.length) {
+        status(line, "bad", "연결은 되었지만 모델 목록을 받지 못했습니다. 설정 → 모델에서 모델 ID를 직접 넣으세요");
+        return;
+      }
+      pick.replaceChildren(...models.map((m) => h("option", { value: m, selected: m === first }, m)));
+      pickRow.classList.remove("hidden");
+      status(line, "ok", `연결되었습니다 · 쓸 수 있는 모델 ${models.length}개 · 하나를 고르세요`);
+      pick.focus();
     } catch (e) {
       status(line, "bad", errorText(e));
     } finally {
       btn.disabled = false;
     }
   };
-  btn.addEventListener("click", () => void run());
-  input.addEventListener("keydown", (e) => e.key === "Enter" && void run());
+  // 2) 고른 모델을 기본 모델로
+  const choose = async () => {
+    const p = current();
+    const key = modelKey(p);
+    use.disabled = true;
+    try {
+      await api.setSettings("global", [[`models.${key}.model`, pick.value], ["routing.default", key]]);
+      status(line, "ok", `기본 모델을 ${pick.value}(으)로 설정했습니다 · ${p.label}`);
+      box.classList.add("selected");
+      ctx.onModelChanged();
+      onDone();
+    } catch (e) {
+      status(line, "bad", errorText(e));
+    } finally {
+      use.disabled = false;
+    }
+  };
+  btn.addEventListener("click", () => void connect());
+  input.addEventListener("keydown", (e) => e.key === "Enter" && void connect());
+  use.addEventListener("click", () => void choose());
   return box;
 }
 
@@ -145,7 +202,7 @@ async function render(el: HTMLElement) {
   const skip = h("button", { class: "btn btn-ghost" }, "건너뛰기");
   skip.addEventListener("click", finish);
 
-  const models = h("div", { class: "choices" }, await claudeChoice(() => markDone(1)), localChoice(() => markDone(1)));
+  const models = h("div", { class: "choices" }, await cloudChoice(() => markDone(1)), localChoice(() => markDone(1)));
   el.append(h("div", { class: "onboard page-content" },
     h("div", { class: "onboard-head" }, hex("brand"), h("h1", {}, "Lantern 시작하기"), h("div", { class: "spacer" }), skip),
     h("p", { class: "lead" }, "세 단계면 됩니다. 나중에 설정에서 언제든 바꿀 수 있습니다."),

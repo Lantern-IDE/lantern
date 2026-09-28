@@ -2,7 +2,7 @@
 
 **An AI code editor that shows you what the agent sees, what it changes, and how far the change reaches.**
 
-[한국어](README.ko.md) · Windows beta · Apache-2.0 · Bring your own model (Claude, OpenAI-compatible, Ollama, LM Studio)
+[한국어](README.ko.md) · Windows beta · Apache-2.0 · Bring your own model (Claude, GPT, Gemini, DeepSeek, Grok, Mistral, Groq, OpenRouter, Ollama, LM Studio, any OpenAI-compatible API)
 
 ![Approval card with impact radius](docs/images/impact-en.png)
 
@@ -52,7 +52,7 @@ Download from [Releases](https://github.com/Lantern-IDE/lantern/releases). Build
 - **macOS** (`*.dmg`, Apple Silicon and Intel, untested): drag Lantern to Applications, then run `xattr -cr /Applications/Lantern.app` or allow it in **System Settings → Privacy & Security → Open Anyway**.
 - **Linux** (`*.AppImage`, `*.deb`, untested).
 
-On first run, **Connect an AI Model** walks you through it (later: **Settings → Models**): an Anthropic or OpenAI-compatible key, or a local model through Ollama / LM Studio (free, and your code never leaves the machine). Keys go to the OS credential store or environment variables, never to the config file.
+On first run, **Connect an AI Model** walks you through it (later: **Settings → Models**): pick a cloud provider (Anthropic, OpenAI, Google Gemini, DeepSeek, xAI, Mistral, Groq, OpenRouter), paste its key, and choose a model from its model list; or use a local model through Ollama / LM Studio (free, and your code never leaves the machine). Any other OpenAI-compatible API works from **Settings → Models**. The model button in the chat box switches between the models you've connected. Keys go to the OS credential store or environment variables, never to the config file.
 
 ## Build from source
 

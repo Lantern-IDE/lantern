@@ -408,7 +408,11 @@ async fn model_info(state: State<'_, AppState>) -> CmdResult<serde_json::Value> 
     let models: Vec<_> = cfg
         .models
         .iter()
-        .map(|(k, m)| json!({ "key": k, "provider": m.provider, "model": m.model, "has_key": m.provider != "anthropic" || m.resolve_api_key().is_some() }))
+        // 키를 쓰지 않는 모델(로컬 서버)은 키가 있는 것으로 친다. 키 이름이 있는 클라우드 모델은 실제로 찾아본다
+        .map(|(k, m)| {
+            let needs_key = m.provider == "anthropic" || m.api_key_env.is_some();
+            json!({ "key": k, "provider": m.provider, "model": m.model, "has_key": !needs_key || m.resolve_api_key().is_some() })
+        })
         .collect();
     let month = state::this_month_usage();
     Ok(json!({

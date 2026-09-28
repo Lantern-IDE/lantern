@@ -6,6 +6,7 @@ import * as editor from "./editor";
 import * as i18n from "./i18n";
 import { codicon } from "./icons";
 import * as prefs from "./prefs";
+import { PROVIDERS, chatModels, provider, type Provider } from "./providers";
 import * as toast from "./toast";
 
 type Scope = "global" | "project";
@@ -32,14 +33,37 @@ const SECTIONS: [string, string, string][] = [
   ["appearance", "화면", "color-mode"],
 ];
 
-const PRESETS: Record<string, { label: string; provider: string; base_url?: string; api_key_env?: string; model: string; price?: [number, number] }> = {
-  anthropic: { label: "Anthropic (Claude)", provider: "anthropic", api_key_env: "ANTHROPIC_API_KEY", model: "claude-opus-5", price: [5, 25] },
-  openai: { label: "OpenAI", provider: "openai", base_url: "https://api.openai.com/v1", api_key_env: "OPENAI_API_KEY", model: "" },
-  openrouter: { label: "OpenRouter", provider: "openai", base_url: "https://openrouter.ai/api/v1", api_key_env: "OPENROUTER_API_KEY", model: "" },
-  ollama: { label: "Ollama (로컬)", provider: "openai", base_url: "http://localhost:11434/v1", model: "", price: [0, 0] },
-  lmstudio: { label: "LM Studio (로컬)", provider: "openai", base_url: "http://localhost:1234/v1", model: "", price: [0, 0] },
-  custom: { label: "기타 OpenAI 호환", provider: "openai", base_url: "", model: "" },
-};
+const PRESETS = Object.fromEntries(PROVIDERS.map((p) => [p.id, { ...p, model: p.model ?? "" }]));
+
+/** 이 모델 설정이 어느 제공자인지 (주소로 알아본다) */
+function providerOf(m: SettingsModel): Provider | null {
+  if (m.provider === "anthropic") return provider("anthropic");
+  const base = (m.base_url ?? "").replace(/\/+$/, "");
+  return PROVIDERS.find((p) => p.base_url && p.base_url === base) ?? null;
+}
+
+/** 제공자의 모델 목록에서 이 모델 설정이 쓸 모델을 고른다 */
+async function modelPicker(key: string, m: SettingsModel, into: HTMLElement) {
+  into.className = "test-result";
+  into.replaceChildren(codicon("loading", "codicon-modifier-spin"), "모델 목록을 받는 중…");
+  const r = await api.testModel(key).catch((e) => ({ ok: false, message: errorText(e), ms: 0, models: [] as string[] }));
+  if (!r.ok) {
+    into.className = "test-result bad";
+    into.replaceChildren(codicon("error"), r.message);
+    return;
+  }
+  const { models } = chatModels(providerOf(m) ?? provider("custom"), r.models);
+  if (!models.length) {
+    into.className = "test-result bad";
+    into.replaceChildren(codicon("error"), "모델 목록을 받지 못했습니다. 설정 파일에서 model을 직접 고치세요");
+    return;
+  }
+  const select = h("select", { "aria-label": "모델" }, ...models.map((id) => h("option", { value: id, selected: id === m.model }, id))) as HTMLSelectElement;
+  const apply = h("button", { class: "btn btn-primary", onclick: () => void save([[`models.${key}.model`, select.value]]).then(() => refresh()) }, "이 모델로");
+  into.className = "test-result pick";
+  into.replaceChildren(select, apply, h("span", { class: "muted" }, `${models.length}개`));
+  select.focus();
+}
 
 async function save(changes: [string, unknown][], status?: HTMLElement): Promise<boolean> {
   try {
@@ -124,7 +148,7 @@ function modelRow(key: string, m: SettingsModel, isDefault: boolean): HTMLElemen
   const row = h("div", { class: "model" },
     h("div", {},
       h("div", { class: "m-title" }, key, isDefault ? h("span", { class: "pill default" }, codicon("star-full"), "기본") : null,
-        h("span", { class: "pill" }, m.provider === "anthropic" ? "Anthropic" : "OpenAI 호환")),
+        h("span", { class: "pill" }, providerOf(m)?.label ?? (m.provider === "anthropic" ? "Anthropic" : "OpenAI 호환"))),
       h("div", { class: "m-sub", title: m.base_url ?? "" }, `${m.model}${m.base_url ? " · " + m.base_url : ""}`)),
     h("div", { class: "m-actions" }),
     h("div", { class: "m-status" },
@@ -146,6 +170,7 @@ function modelRow(key: string, m: SettingsModel, isDefault: boolean): HTMLElemen
       result.replaceChildren(codicon(r.ok ? "pass" : "error"), `${r.message}${r.ms ? ` · ${r.ms}ms` : ""}`);
     },
   }, codicon("plug"), "연결 확인"));
+  actions.append(h("button", { class: "btn btn-secondary", title: "제공자의 모델 목록에서 고르기", onclick: () => void modelPicker(key, m, result) }, codicon("list-selection"), "모델 고르기"));
   if (m.api_key_env) {
     actions.append(h("button", { class: "btn btn-secondary", onclick: () => keyForm.classList.toggle("hidden") }, codicon("key"), "API 키"));
     const input = h("input", { type: "password", placeholder: `${m.api_key_env} 값`, autocomplete: "off", spellcheck: "false", "aria-label": "API 키" }) as HTMLInputElement;
