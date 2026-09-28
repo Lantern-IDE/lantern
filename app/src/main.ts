@@ -398,6 +398,32 @@ on<IndexEvent>("index", (ev) => {
   }
 });
 
+/** 채팅 입력창의 모델 버튼: 연결해 둔 모델 중에서 기본 모델을 바로 바꾼다 */
+async function pickModel(anchor: HTMLElement) {
+  const info = await api.modelInfo().catch(() => null);
+  const r = anchor.getBoundingClientRect();
+  const models = info?.models ?? [];
+  commands.showContextMenu(r.left, r.bottom, [
+    ...models.map((m) => ({
+      label: `${m.key === info?.default ? "✓ " : " "}${m.model || "(모델 미선택)"} · ${m.key}${m.has_key ? "" : " · API 키 없음"}`,
+      disabled: !m.has_key || !m.model,
+      run: async () => {
+        try {
+          await api.setSettings("global", [["routing.default", m.key]]);
+          await refreshModelInfo();
+          if ((await api.modelInfo()).default !== m.key) {
+            toast.warn("이 프로젝트의 설정 파일이 기본 모델을 정하고 있습니다", "프로젝트의 .lantern/config.toml에서 [routing] default를 바꾸세요.");
+          } else toast.info(`기본 모델을 ${m.model}(으)로 바꿨습니다`);
+        } catch (e) {
+          toast.error("모델을 바꾸지 못했습니다", errorText(e));
+        }
+      },
+    })),
+    ...(models.length ? ["-" as const] : []),
+    { label: "다른 모델 연결…", run: () => settingsPage.open("models") },
+  ]);
+}
+
 async function refreshModelInfo() {
   const model = $("#st-model");
   const meter = $("#usage-meter");
@@ -690,6 +716,7 @@ function init() {
       inspector.show(id);
     },
     openSettings: (sec) => settingsPage.open(sec),
+    pickModel: (anchor) => void pickModel(anchor),
     onRunning: (v) => {
       agentRunning = v;
       document.querySelector("#ctx-status .hex")?.classList.toggle("working", v || indexing);

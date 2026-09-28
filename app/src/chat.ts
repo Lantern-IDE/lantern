@@ -68,6 +68,8 @@ type Hooks = {
   onUsage: () => void;
   showInspector: (requestId: number) => void;
   openSettings: (section?: string) => void;
+  /** 입력창의 모델 버튼: 모델 고르기 메뉴 */
+  pickModel: (anchor: HTMLElement) => void;
   onRunning: (running: boolean) => void;
   /** 작업 목록이나 상태가 바뀜 */
   onTasks: () => void;
@@ -77,7 +79,7 @@ type Hooks = {
   showImpact: (i: Impact) => void;
 };
 let hooks: Hooks = {
-  onContext: () => {}, onFilesChanged: () => {}, onUsage: () => {}, showInspector: () => {}, openSettings: () => {}, onRunning: () => {},
+  onContext: () => {}, onFilesChanged: () => {}, onUsage: () => {}, showInspector: () => {}, openSettings: () => {}, pickModel: () => {}, onRunning: () => {},
   onTasks: () => {}, onFootprint: () => {}, showOnMap: () => {}, showImpact: () => {},
 };
 
@@ -1018,7 +1020,7 @@ export function init(h_: Hooks) {
   activate(newTask());
   $("#btn-send").addEventListener("click", () => void send());
   $("#btn-stop").addEventListener("click", () => active && void api.agentCancel(active.id));
-  $("#composer-model").addEventListener("click", () => hooks.openSettings("models"));
+  $("#composer-model").addEventListener("click", () => hooks.pickModel($("#composer-model")));
   $("#agent-select").addEventListener("change", (e) => store.set("agent", (e.target as HTMLSelectElement).value));
   const prompt = $<HTMLTextAreaElement>("#prompt");
   prompt.addEventListener("input", () => {
