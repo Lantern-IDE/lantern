@@ -202,10 +202,26 @@ pub struct LspConfig {
     pub args: Vec<String>,
 }
 
+/// 외부 에이전트 (Agent Client Protocol). 내장(gemini, codex)을 덮어쓰거나 새로 더한다.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AcpConfig {
+    /// 화면에 보이는 이름
+    #[serde(default)]
+    pub name: String,
+    pub command: String,
+    #[serde(default)]
+    pub args: Vec<String>,
+    #[serde(default)]
+    pub env: BTreeMap<String, String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     #[serde(default)]
     pub models: BTreeMap<String, ModelConfig>,
+    /// 외부 에이전트: `[acp.<이름>] command = "…"`
+    #[serde(default)]
+    pub acp: BTreeMap<String, AcpConfig>,
     #[serde(default)]
     pub routing: Routing,
     #[serde(default)]

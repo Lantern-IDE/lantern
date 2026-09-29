@@ -1,6 +1,7 @@
 // 릴리스 빌드에서 콘솔 창을 띄우지 않는다.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod acp;
 mod agent;
 mod agents;
 mod config;
@@ -72,6 +73,7 @@ async fn open_project(app: AppHandle, state: State<'_, AppState>, path: String) 
         l.stop();
     }
     state.sessions.lock().unwrap().clear();
+    acp::close(&state, None);
 
     let trusted = state::is_trusted(&root);
     let project = Arc::new(Project {
@@ -398,7 +400,17 @@ async fn probe_local(state: State<'_, AppState>) -> CmdResult<Vec<settings::Loca
 #[tauri::command]
 async fn list_agents(state: State<'_, AppState>) -> CmdResult<Vec<agents::AgentDef>> {
     let root = project_root(&state);
-    Ok(agents::load(root.as_deref()))
+    let mut list = agents::load(root.as_deref());
+    // 외부 에이전트 (Gemini CLI, Codex 등). 설정이 깨졌으면 내장 목록만
+    let cfg = config::load(root.as_deref()).unwrap_or_else(|_| toml::from_str(config::DEFAULT_CONFIG).expect("기본 설정"));
+    list.extend(acp::agent_defs(&cfg));
+    Ok(list)
+}
+
+/// 외부 에이전트 로그인. 대개 에이전트가 브라우저를 열고, 로그인이 끝나면 돌아온다.
+#[tauri::command]
+async fn acp_authenticate(app: AppHandle, session: String, agent: String, method: String) -> CmdResult<()> {
+    acp::authenticate(&app, &session, &agent, &method).await.map_err(anyhow_err)
 }
 
 #[tauri::command]
@@ -434,7 +446,11 @@ async fn agent_send(
     file: Option<String>,
     line: Option<u32>,
 ) -> CmdResult<()> {
-    tauri::async_runtime::spawn(agent::run(app, session, agent, text, file, line));
+    if agent.starts_with(acp::PREFIX) {
+        tauri::async_runtime::spawn(acp::run(app, session, agent, text, file, line));
+    } else {
+        tauri::async_runtime::spawn(agent::run(app, session, agent, text, file, line));
+    }
     Ok(())
 }
 
@@ -449,6 +465,7 @@ async fn agent_cancel(state: State<'_, AppState>, session: String) -> CmdResult<
 #[tauri::command]
 async fn agent_reset(state: State<'_, AppState>, session: String) -> CmdResult<()> {
     state.sessions.lock().unwrap().remove(&session);
+    acp::close(&state, Some(&session));
     Ok(())
 }
 
@@ -839,7 +856,30 @@ async fn lsp_send(state: State<'_, AppState>, lang: String, msg: String) -> CmdR
     l.send(&msg).map_err(anyhow_err)
 }
 
+/// `lantern-app --mcp <폴더>`: 창 없이 맥락 엔진을 MCP 서버(stdio)로 돌린다.
+/// 외부 에이전트(Gemini CLI, Codex 등)에게 Lantern 맥락 엔진을 넘길 때 쓴다.
+fn mcp_mode() -> Option<i32> {
+    let args: Vec<String> = std::env::args().collect();
+    let i = args.iter().position(|a| a == "--mcp")?;
+    let root = args.get(i + 1).map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from("."));
+    let run = || -> anyhow::Result<()> {
+        let mut engine = Engine::open(&root)?;
+        engine.refresh()?;
+        lantern_context::mcp::serve(&mut engine)
+    };
+    Some(match run() {
+        Ok(()) => 0,
+        Err(e) => {
+            eprintln!("lantern mcp: {e:#}");
+            1
+        }
+    })
+}
+
 fn main() {
+    if let Some(code) = mcp_mode() {
+        std::process::exit(code);
+    }
     applog::install_panic_hook();
     // 예전 이름(KHALA)의 데이터를 먼저 옮긴다 (로그도 새 자리에 쌓이도록)
     let moved = state::migrate_legacy_data();
@@ -891,6 +931,7 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            acp_authenticate,
             open_project,
             set_trust,
             startup_path,
