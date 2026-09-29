@@ -48,6 +48,8 @@ pub enum AgentEvent {
     },
     Done { session: String, changed: Vec<String>, checkpoint: Option<String> },
     Error { session: String, message: String },
+    /// 외부 에이전트가 로그인을 요구함. `methods`는 에이전트가 알려 준 로그인 방법 ({id, name, description})
+    AuthRequired { session: String, agent: String, agent_name: String, methods: Vec<Value> },
 }
 
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
@@ -56,7 +58,7 @@ pub(crate) fn next_id() -> u64 {
     NEXT_ID.fetch_add(1, Ordering::Relaxed)
 }
 
-fn emit(app: &AppHandle, ev: AgentEvent) {
+pub(crate) fn emit(app: &AppHandle, ev: AgentEvent) {
     let _ = app.emit("agent", ev);
 }
 
@@ -111,10 +113,11 @@ pub fn push_user_text(history: &mut Vec<Message>, text: String) {
     }
 }
 
-struct TauriApprover {
-    app: AppHandle,
-    session: String,
-    cancel: Arc<AtomicBool>,
+/// 승인 카드를 띄우고 사용자의 답을 기다린다 (외부 에이전트도 같이 쓴다)
+pub(crate) struct TauriApprover {
+    pub app: AppHandle,
+    pub session: String,
+    pub cancel: Arc<AtomicBool>,
 }
 
 impl Approver for TauriApprover {
@@ -173,6 +176,26 @@ pub async fn run(app: AppHandle, session: String, agent_id: String, text: String
             emit(&app, AgentEvent::Error { session, message: format!("{e:#}") })
         }
     }
+}
+
+/// 이번 작업에서 바꾼 파일의 원본을 되돌리기 체크포인트로 남긴다. 바꾼 게 없으면 None
+pub(crate) fn save_checkpoint(st: &AppState, originals: state::Originals) -> Option<String> {
+    (!originals.is_empty()).then(|| {
+        let id = crate::tasks::unique_id("cp");
+        // 앱을 다시 켜도 되돌릴 수 있게 디스크에도 둔다
+        if let Err(e) = crate::tasks::save_checkpoint(&id, &originals) {
+            crate::applog::error(&format!("되돌리기 원본 저장 실패: {e:#}"));
+        }
+        let mut cps = st.checkpoints.lock().unwrap();
+        // 오래된 체크포인트는 메모리에서 뺀다 (디스크에는 남는다)
+        if cps.len() >= 50 {
+            if let Some(oldest) = cps.keys().min().cloned() {
+                cps.remove(&oldest);
+            }
+        }
+        cps.insert(id.clone(), originals);
+        id
+    })
 }
 
 fn check_budget(config: &Config) -> Result<state::MonthUsage> {
@@ -371,22 +394,7 @@ async fn run_inner(
 
     let changed = tctx.changed.lock().unwrap().clone();
     let originals = std::mem::take(&mut *tctx.originals.lock().unwrap());
-    let checkpoint = (!originals.is_empty()).then(|| {
-        let id = crate::tasks::unique_id("cp");
-        // 앱을 다시 켜도 되돌릴 수 있게 디스크에도 둔다
-        if let Err(e) = crate::tasks::save_checkpoint(&id, &originals) {
-            crate::applog::error(&format!("되돌리기 원본 저장 실패: {e:#}"));
-        }
-        let mut cps = st.checkpoints.lock().unwrap();
-        // 오래된 체크포인트는 메모리에서 뺀다 (디스크에는 남는다)
-        if cps.len() >= 50 {
-            if let Some(oldest) = cps.keys().min().cloned() {
-                cps.remove(&oldest);
-            }
-        }
-        cps.insert(id.clone(), originals);
-        id
-    });
+    let checkpoint = save_checkpoint(&st, originals);
     // 격리된 작업의 훅은 프로젝트에 적용할 때로 미룬다
     if workdir.is_none() && project.is_trusted() && !changed.is_empty() && !config.hooks.on_agent_done.is_empty() {
         crate::hooks::run(app, &project.root, "on_agent_done", &config.hooks.on_agent_done).await;

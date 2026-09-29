@@ -45,6 +45,8 @@ pub struct AppState {
     pub completion_cancel: Mutex<Option<Arc<std::sync::atomic::AtomicBool>>>,
     /// AI 작업 되돌리기: 체크포인트 id → 원본 파일들
     pub checkpoints: Mutex<HashMap<String, Originals>>,
+    /// 외부 에이전트(ACP) 연결: 작업 → 에이전트 프로세스
+    pub acp: Mutex<HashMap<String, Arc<crate::acp::Conn>>>,
     /// 외부 파일 변경 감시 (프로젝트를 바꾸면 교체)
     pub watcher: Mutex<Option<notify::RecommendedWatcher>>,
     pub http: reqwest::Client,
