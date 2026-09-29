@@ -123,7 +123,19 @@ price_output = 0.0
 
 [routing]
 default = "mock"
+
+[acp.e2e]
+name = "E2E"
+command = "node"
+args = [${JSON.stringify(path.join(HERE, "acp-agent.mjs"))}]
+
+[acp.e2e.env]
+ACP_LOG = ${JSON.stringify(path.join(TMP, "acp.log"))}
+ACP_FILE = "src/api.ts"
+ACP_FROM = "'/login'"
+ACP_TO = "'/signin'"
 `);
+const acpLog = () => (fs.existsSync(path.join(TMP, "acp.log")) ? fs.readFileSync(path.join(TMP, "acp.log"), "utf8").trim().split("\n").map((l) => JSON.parse(l)) : []);
 
 // ── 앱 띄우기와 CDP ────────────────────────────────────────
 let app = null;
@@ -544,6 +556,43 @@ scenario("소스 제어: 원격 연결, 커밋 이력, 푸시, 브랜치 만들�
   if (!(await pickMenu("main"))) throw new Error("브랜치 메뉴에 main 없음");
   await waitFor(() => document.querySelector("#scm-sync .scm-branch-btn")?.textContent.includes("main"), 10000, "main으로 전환");
   if (git("branch", "--show-current").trim() !== "main") throw new Error("main으로 돌아가지 않음");
+});
+
+scenario("외부 에이전트(ACP): 로그인 카드 → 로그인 → 읽기 → 승인 카드 → 적용", async () => {
+  await run(() => {
+    document.querySelector("#btn-new-task").click();
+    return true;
+  });
+  await run(ui.sendTask, "로그인 경로를 /signin으로 바꿔줘", "acp:e2e", false);
+  // 로그인 전: 로그인 카드 (환경변수 방법은 버튼이 아니라 안내)
+  const card = await waitFor(() => {
+    const c = document.querySelector(".task-log:not(.hidden) .auth-card");
+    return c && { buttons: [...c.querySelectorAll("button")].map((b) => b.textContent), text: c.innerText };
+  }, 30000, "로그인 카드");
+  if (card.buttons.length !== 1 || !card.buttons[0].includes("Log in with E2E") || !card.text.includes("E2E_KEY")) throw new Error(`로그인 카드: ${JSON.stringify(card)}`);
+  const init = acpLog().find((l) => l.clientCapabilities);
+  if (!init?.clientCapabilities?.fs?.writeTextFile || init.clientCapabilities.terminal !== false) throw new Error(`클라이언트 기능: ${JSON.stringify(init)}`);
+  if (acpLog().find((l) => "mcp" in l)?.mcp !== "--mcp") throw new Error("Lantern MCP 서버를 넘기지 않음");
+  await run(() => {
+    document.querySelector(".task-log:not(.hidden) .auth-card button").click();
+    return true;
+  });
+  await waitFor(() => document.querySelector(".task-log:not(.hidden) .auth-card .auth-status")?.textContent.includes("로그인되었습니다"), 15000, "로그인");
+  await run(() => {
+    [...document.querySelectorAll(".task-log:not(.hidden) .auth-card button")].find((b) => b.textContent.includes("다시 보내기")).click();
+    return true;
+  });
+  // 수정 권한 요청 → 기존과 같은 승인 카드와 영향 반경
+  const impact = await waitFor(() => document.querySelector(".task-log:not(.hidden) .approval .impact:not(.loading)")?.innerText, 30000, "영향 반경");
+  if (!impact.includes("직접 호출") && !impact.includes("찾지 못했습니다")) throw new Error(`영향 반경: ${impact}`);
+  if (file("src/api.ts").includes("/signin")) throw new Error("승인 전에 파일이 바뀜");
+  if (!acpLog().some((l) => l.hasContext) || !acpLog().some((l) => typeof l.read === "string" && l.read.includes("/login"))) throw new Error("맥락 또는 파일 읽기가 에이전트에 가지 않음");
+  await run(ui.approve);
+  await waitFor(() => !!document.querySelector(".task-log:not(.hidden) .changed"), 15000, "완료");
+  if (!file("src/api.ts").includes("'/signin'")) throw new Error("적용 후 파일이 그대로");
+  if (!acpLog().some((l) => l.outside === "rejected") || fs.existsSync(path.join(TMP, "acp-escape.txt"))) throw new Error("프로젝트 밖 쓰기를 막지 못함");
+  const meta = await run(() => document.querySelector("#task-list .task.active .task-meta")?.textContent ?? "");
+  if (!meta.includes("수정 1")) throw new Error(`발자취: ${meta}`);
 });
 
 scenario("다시 켜면 작업이 복원된다", async () => {
