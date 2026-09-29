@@ -54,6 +54,19 @@ Download from [Releases](https://github.com/Lantern-IDE/lantern/releases). Build
 
 On first run, **Connect an AI Model** walks you through it (later: **Settings → Models**): pick a cloud provider (Anthropic, OpenAI, Google Gemini, DeepSeek, xAI, Mistral, Groq, OpenRouter), paste its key, and choose a model from its model list; or use a local model through Ollama / LM Studio (free, and your code never leaves the machine). Any other OpenAI-compatible API works from **Settings → Models**. The model button in the chat box switches between the models you've connected. Keys go to the OS credential store or environment variables, never to the config file.
 
+### Use your ChatGPT subscription or Google account (external agents)
+
+Lantern can drive official agent CLIs over the [Agent Client Protocol](https://agentclientprotocol.com). The CLI signs in by itself, so a ChatGPT subscription or a Google account works without an API key, and Lantern never sees your credentials.
+
+| Agent | Install | Sign-in |
+|---|---|---|
+| Codex | `npm install -g @zed-industries/codex-acp` | ChatGPT (paid plan), or an OpenAI API key |
+| Gemini CLI | `npm install -g @google/gemini-cli` | Google account, or a Gemini API key |
+
+Pick **Codex (external)** or **Gemini CLI (external)** in the chat's agent selector. The first time, a card offers the agent's own sign-in (usually in your browser). Everything else stays Lantern: each question carries Lantern's context (and the agent gets Lantern as an MCP server), edits come to the approval card with the impact radius, and changes can be undone. External agents run only in trusted folders. Any other ACP agent can be added in `config.toml` with `[acp.<name>] command = "…"`.
+
+Claude subscriptions (Pro/Max) can't be used this way: Anthropic's terms limit subscription sign-in to its own apps. Use an Anthropic API key instead.
+
 ## Build from source
 
 Requirements: Rust (stable), Node.js 22, and on Windows WebView2 (preinstalled on Windows 11). Linux needs `libwebkit2gtk-4.1-dev` and friends (see [CI](.github/workflows/ci.yml)).
