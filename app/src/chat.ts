@@ -7,7 +7,7 @@ import { marked } from "marked";
 import { invoke } from "@tauri-apps/api/core";
 import { ask } from "./dialog";
 import DOMPurify from "dompurify";
-import { api, errorText, on, type AgentDef, type AgentEvent } from "./api";
+import { api, errorText, on, type AgentDef, type AgentEvent, type AuthMethod } from "./api";
 import { $, basename, dirname, h, renderDiff, store } from "./dom";
 import { codicon, fileIcon, hex, setWorking } from "./icons";
 import * as editor from "./editor";
@@ -510,6 +510,9 @@ function handle(ev: AgentEvent) {
     case "usage":
       if (!replaying) hooks.onUsage();
       break;
+    case "auth_required":
+      append(task, authCard(task, ev.agent, ev.agent_name, ev.methods));
+      break;
     case "done":
       if (ev.changed.length) {
         const unique = [...new Set(ev.changed)];
@@ -562,6 +565,41 @@ function handle(ev: AgentEvent) {
       setStatus(task, "error");
       break;
   }
+}
+
+/**
+ * 외부 에이전트(Gemini CLI, Codex 등)가 로그인을 요구할 때. 로그인은 그 에이전트가 직접 하고(대개 브라우저),
+ * Lantern은 로그인 정보를 보지 않는다. 환경변수로 하는 방법은 버튼 대신 안내로만 보인다.
+ */
+function authCard(task: Task, agent: string, name: string, methods: AuthMethod[]): HTMLElement {
+  const line = h("div", { class: "auth-status" });
+  const buttons = methods
+    .filter((m) => m.type !== "env_var")
+    .map((m) => {
+      const b = h("button", { class: "btn btn-secondary", title: m.description ?? "" }, codicon("account"), m.name) as HTMLButtonElement;
+      b.addEventListener("click", async () => {
+        for (const x of card.querySelectorAll("button")) x.disabled = true;
+        line.replaceChildren(codicon("loading", "codicon-modifier-spin"), `${name}이(가) 연 브라우저에서 로그인을 마치세요…`);
+        try {
+          await api.acpAuthenticate(task.id, agent, m.id);
+          const again = h("button", { class: "btn btn-primary" }, codicon("debug-restart"), "다시 보내기");
+          again.addEventListener("click", () => void send(task.lastPrompt));
+          line.replaceChildren(codicon("pass"), "로그인되었습니다", again);
+        } catch (e) {
+          line.replaceChildren(codicon("error"), errorText(e));
+          for (const x of card.querySelectorAll("button")) x.disabled = false;
+        }
+      });
+      return b;
+    });
+  const envOnly = methods.filter((m) => m.type === "env_var").map((m) => m.name);
+  const card = h("div", { class: "auth-card" },
+    h("div", { class: "auth-head" }, codicon("lock"), `${name}에 로그인해야 합니다`),
+    h("p", {}, "로그인은 이 에이전트가 직접 합니다. Lantern은 로그인 정보를 보거나 저장하지 않습니다."),
+    h("div", { class: "row" }, ...buttons),
+    envOnly.length ? h("p", { class: "muted" }, `또는 환경변수로: ${envOnly.join(", ")}`) : null,
+    line);
+  return card;
 }
 
 async function send(text?: string) {
