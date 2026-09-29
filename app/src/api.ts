@@ -16,6 +16,9 @@ export interface ModelInfo {
 }
 export interface Usage { input_tokens: number; output_tokens: number; cache_read_tokens: number; cache_write_tokens: number }
 
+/** 외부 에이전트가 알려 준 로그인 방법. type "env_var"는 환경변수로만 된다 */
+export interface AuthMethod { id: string; name: string; description?: string | null; type?: string | null }
+
 export type AgentEvent = { session: string } & (
   | { kind: "request"; request_id: number; agent: string; model_key: string; model: string; system: string; context: string; context_tokens: number; tools: string[] }
   | { kind: "text"; text: string }
@@ -27,6 +30,7 @@ export type AgentEvent = { session: string } & (
   | { kind: "usage"; request_id: number; model: string; usage: Usage; cost_usd: number | null; month_cost_usd: number; month_limit_usd: number }
   | { kind: "done"; changed: string[]; checkpoint: string | null }
   | { kind: "error"; message: string }
+  | { kind: "auth_required"; agent: string; agent_name: string; methods: AuthMethod[] }
 );
 
 export interface IndexEvent {
@@ -84,6 +88,8 @@ export const api = {
   agentSend: (session: string, agent: string, text: string, file: string | null, line: number | null) =>
     invoke<void>("agent_send", { session, agent, text, file, line }),
   agentCancel: (session: string) => invoke<void>("agent_cancel", { session }),
+  /** 외부 에이전트 로그인 (에이전트가 브라우저를 여는 동안 기다린다) */
+  acpAuthenticate: (session: string, agent: string, method: string) => invoke<void>("acp_authenticate", { session, agent, method }),
   agentReset: (session: string) => invoke<void>("agent_reset", { session }),
   revertCheckpoint: (id: string, force = false) => invoke<number>("revert_checkpoint", { id, force }),
   resolveApproval: (session: string, id: string, approved: boolean) =>

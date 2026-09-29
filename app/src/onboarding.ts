@@ -207,7 +207,9 @@ async function render(el: HTMLElement) {
     h("div", { class: "onboard-head" }, hex("brand"), h("h1", {}, "Lantern 시작하기"), h("div", { class: "spacer" }), skip),
     h("p", { class: "lead" }, "세 단계면 됩니다. 나중에 설정에서 언제든 바꿀 수 있습니다."),
     h("div", { class: "steps" },
-      step(1, "AI 모델 연결", "클라우드 모델과 로컬 모델 중 하나를 고르세요. 둘 다 연결해 두고 작업마다 바꿔 써도 됩니다.", models),
+      step(1, "AI 모델 연결", "클라우드 모델과 로컬 모델 중 하나를 고르세요. 둘 다 연결해 두고 작업마다 바꿔 써도 됩니다.", models,
+        h("p", { class: "subscription-note" }, codicon("account"),
+          h("span", {}, "ChatGPT 구독이나 Google 계정이 있으면 API 키 없이도 됩니다. 채팅의 에이전트 선택에서 ‘Codex (외부)’나 ‘Gemini CLI (외부)’를 고르면, 그 CLI가 직접 로그인합니다. 먼저 터미널에서 설치하세요: npm install -g @zed-industries/codex-acp 또는 npm install -g @google/gemini-cli"))),
       step(2, "프로젝트 폴더 열기", "폴더를 열면 맥락 엔진이 코드를 인덱싱합니다. 대부분 몇 초면 끝납니다.", h("div", { class: "row" }, folderBtn)),
       step(3, "이렇게 씁니다", "질문하면 Lantern이 관련 코드를 골라 붙이고, 답변 위 ‘Lantern이 본 코드’에서 무엇을 왜 보냈는지 보여줍니다. 파일을 바꾸는 작업은 Diff를 보고 승인해야 적용됩니다.",
         h("div", { class: "row", style: "gap:8px" }, chatBtn, finishBtn)))));

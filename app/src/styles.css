@@ -460,6 +460,15 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .diff .hunk { color: var(--info); }
 .diff .meta { color: var(--dim); }
 
+/* 외부 에이전트 로그인 */
+.auth-card { font-size: 12.5px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--elevated); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.auth-card .auth-head { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--fg-strong); }
+.auth-card .auth-head .codicon { color: var(--warning); }
+.auth-card p { margin: 0; color: var(--muted); line-height: 1.5; }
+.auth-card .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.auth-card .auth-status { display: flex; align-items: center; gap: 6px; color: var(--muted); flex-wrap: wrap; }
+.auth-card .auth-status:empty { display: none; }
+
 .changed { font-size: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--elevated); overflow: hidden; }
 .changed .ch-head { padding: 6px 10px; color: var(--muted); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
 .changed .ch-head .codicon { color: var(--ok); font-size: 14px; }
@@ -658,6 +667,8 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 4px; }
 .choice { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--elevated); display: flex; flex-direction: column; gap: 10px; }
 .choice.selected { border-color: var(--ok); }
+.subscription-note { display: flex; gap: 8px; align-items: flex-start; margin: 12px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--muted); }
+.subscription-note .codicon { color: var(--link); margin-top: 2px; flex-shrink: 0; }
 .choice .connected { font-size: 12px; color: var(--ok); display: flex; align-items: center; gap: 6px; }
 .choice h3 { margin: 0; font-size: 13.5px; color: var(--fg-strong); display: flex; align-items: center; gap: 8px; }
 .choice p { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.55; }
