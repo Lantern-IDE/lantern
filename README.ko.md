@@ -54,6 +54,19 @@ claude mcp add lantern -- <lantern 경로> mcp <프로젝트>
 
 처음 켜면 **AI 모델 연결하기** 화면이 안내합니다 (나중에는 **설정 → 모델**). 클라우드 제공자(Anthropic, OpenAI, Google Gemini, DeepSeek, xAI, Mistral, Groq, OpenRouter)를 고르고 키를 넣은 뒤 그 회사의 모델 목록에서 모델을 고르거나, Ollama·LM Studio 로컬 모델(무료, 코드가 컴퓨터 밖으로 나가지 않음)을 연결합니다. 그 밖의 OpenAI 호환 API는 **설정 → 모델**에서 추가합니다. 채팅 입력창의 모델 버튼으로 연결해 둔 모델끼리 바로 바꿀 수 있습니다. 키는 OS 자격 증명 저장소나 환경변수에 두고, 설정 파일에는 적지 않습니다.
 
+### ChatGPT 구독이나 Google 계정으로 쓰기 (외부 에이전트)
+
+Lantern은 각 회사의 공식 에이전트 CLI를 [Agent Client Protocol](https://agentclientprotocol.com)로 부릴 수 있습니다. 로그인은 그 CLI가 직접 하므로 API 키 없이 ChatGPT 구독이나 Google 계정으로 쓸 수 있고, Lantern은 로그인 정보를 보지 않습니다.
+
+| 에이전트 | 설치 | 로그인 |
+|---|---|---|
+| Codex | `npm install -g @zed-industries/codex-acp` | ChatGPT(유료 요금제) 또는 OpenAI API 키 |
+| Gemini CLI | `npm install -g @google/gemini-cli` | Google 계정 또는 Gemini API 키 |
+
+채팅의 에이전트 선택에서 **Codex (외부)**나 **Gemini CLI (외부)**를 고릅니다. 처음에는 그 에이전트의 로그인 방법(대개 브라우저)이 카드로 나옵니다. 나머지는 Lantern 그대로입니다: 질문마다 Lantern 맥락을 붙이고(에이전트에게 Lantern을 MCP 서버로도 넘김), 수정은 영향 반경이 붙은 승인 카드로 오며, 바뀐 것은 되돌릴 수 있습니다. 외부 에이전트는 신뢰한 폴더에서만 켜집니다. 다른 ACP 에이전트는 `config.toml`의 `[acp.<이름>] command = "…"`로 더할 수 있습니다.
+
+Claude 구독(Pro/Max)은 이렇게 쓸 수 없습니다. Anthropic 약관이 구독 로그인을 자사 앱에만 허용합니다. Anthropic API 키를 쓰세요.
+
 ## 소스로 빌드
 
 필요한 것: Rust(stable), Node.js 22, Windows는 WebView2(Windows 11에는 기본 설치). Linux 패키지는 [CI 설정](.github/workflows/ci.yml)을 참고하세요.
