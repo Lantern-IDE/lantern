@@ -6,6 +6,7 @@ mod agent;
 mod agents;
 mod config;
 mod applog;
+mod inline;
 mod review;
 mod tasks;
 mod worktree;
@@ -605,6 +606,40 @@ async fn inline_complete(state: State<'_, AppState>, path: String, prefix: Strin
     Ok(if cancel.load(Ordering::Relaxed) { None } else { Some(text) })
 }
 
+/// 편집기 안 즉시 수정 (Ctrl+K). `before`·`selection`·`after`는 편집기 내용(저장 전 포함)을 선택 기준으로 나눈 것
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+async fn inline_edit(
+    state: State<'_, AppState>,
+    path: String,
+    before: String,
+    selection: String,
+    after: String,
+    instruction: String,
+    line: u32,
+) -> CmdResult<inline::InlineEdit> {
+    let p = state.project().map_err(anyhow_err)?;
+    let cfg = config::load(p.config_root()).map_err(anyhow_err)?;
+    agent::check_budget(&cfg).map_err(anyhow_err)?;
+    let rel = assemble_rel(&p.root, &path);
+    // 지시에 맞는 코드를 맥락 엔진이 조금 붙인다 (예산은 에이전트보다 작게)
+    let engine = p.engine.clone();
+    let req = ContextRequest { query: instruction.clone(), file: Some(rel.clone()), line: Some(line), budget_tokens: (cfg.context.budget_tokens / 3).max(1500) };
+    let context = tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
+        let mut e = engine.lock().unwrap();
+        e.refresh()?;
+        Ok(e.context(&req)?.to_markdown())
+    })
+    .await
+    .map_err(err)?
+    .unwrap_or_default();
+    inline::edit(&state.http, &cfg, &rel, &before, &selection, &after, &instruction, &context).await.map_err(anyhow_err)
+}
+
+fn assemble_rel(root: &std::path::Path, path: &str) -> String {
+    lantern_context::assemble::normalize_path(root, path)
+}
+
 // ── 작업 저장과 격리 ───────────────────────────────────────
 
 #[tauri::command]
@@ -960,6 +995,7 @@ fn main() {
             acp_authenticate,
             review_changes,
             commit_message,
+            inline_edit,
             open_project,
             set_trust,
             startup_path,
