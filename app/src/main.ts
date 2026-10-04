@@ -399,6 +399,24 @@ on<IndexEvent>("index", (ev) => {
   }
 });
 
+// 의미 검색 (config.toml의 [embeddings]): 뒤에서 벡터를 만드는 동안만 진행률을 보인다
+on<{ done?: number; total?: number; error?: string }>("semantic", (ev) => {
+  const el = $("#sb-semantic");
+  const label = el.querySelector("span")!;
+  el.classList.toggle("warn", !!ev.error);
+  if (ev.error) {
+    label.textContent = "의미 검색 오류";
+    el.title = `임베딩 서버에 보내지 못했습니다. 키워드 검색만으로 맥락을 고릅니다.
+${ev.error}`;
+    el.classList.remove("hidden");
+    return;
+  }
+  const { done = 0, total = 0 } = ev;
+  el.classList.toggle("hidden", !total || done >= total);
+  label.textContent = `의미 검색 준비 ${Math.floor((done / Math.max(total, 1)) * 100)}%`;
+  el.title = `코드 조각 ${done.toLocaleString()} / ${total.toLocaleString()}개를 임베딩했습니다. 끝나기 전에도 만든 만큼은 맥락 조립에 씁니다.`;
+});
+
 /** 채팅 입력창의 모델 버튼: 연결해 둔 모델 중에서 기본 모델을 바로 바꾼다 */
 async function pickModel(anchor: HTMLElement) {
   const info = await api.modelInfo().catch(() => null);

@@ -50,6 +50,16 @@ warn_at_percent = 80
 [context]
 budget_tokens = 8000       # 질문마다 자동으로 붙이는 코드 맥락의 토큰 예산
 
+# 의미 검색 (선택): 키워드가 겹치지 않는 질문(특히 한국어)도 뜻이 가까운 코드를 찾습니다.
+# OpenAI 호환 /embeddings 서버가 필요하고, 코드 조각(비밀 값은 가림)이 그 서버로 갑니다.
+# 처음 켜면 프로젝트 전체를 뒤에서 임베딩합니다 (CPU로 돌리는 로컬 모델은 큰 프로젝트에서 오래 걸립니다).
+# [embeddings]
+# base_url = "https://api.openai.com/v1"
+# model = "text-embedding-3-small"
+# api_key_env = "OPENAI_API_KEY"
+# 로컬 예 (Ollama): base_url = "http://localhost:11434/v1", model = "embeddinggemma",
+#   query_template = "task: code retrieval | query: {query}", doc_template = "title: {path} | text: {text}"
+
 # ── 에이전트 권한 ─────────────────────────────────────
 [agent]
 max_steps = 30
@@ -233,9 +243,52 @@ pub struct Config {
     pub hooks: Hooks,
     #[serde(default)]
     pub lsp: BTreeMap<String, LspConfig>,
+    /// 의미 검색 (선택)
+    #[serde(default)]
+    pub embeddings: Option<EmbeddingsConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct EmbeddingsConfig {
+    pub base_url: String,
+    pub model: String,
+    #[serde(default)]
+    pub api_key_env: Option<String>,
+    #[serde(default)]
+    pub api_key: Option<String>,
+    #[serde(default = "default_query_template")]
+    pub query_template: String,
+    #[serde(default = "default_doc_template")]
+    pub doc_template: String,
+}
+
+fn default_query_template() -> String {
+    "{query}".into()
+}
+
+fn default_doc_template() -> String {
+    "{path}\n{text}".into()
 }
 
 impl Config {
+    /// 의미 검색 임베딩 서버. 설정하지 않았으면 None (끔)
+    pub fn embedder(&self) -> Option<lantern_context::semantic::Embedder> {
+        let e = self.embeddings.as_ref().filter(|e| !e.base_url.is_empty() && !e.model.is_empty())?;
+        // 키를 찾는 순서는 모델과 같다 (환경변수 → OS 자격 증명 저장소 → 설정 파일)
+        let key = e
+            .api_key_env
+            .as_deref()
+            .and_then(|env| std::env::var(env).ok().filter(|v| !v.trim().is_empty()).or_else(|| keyring_get(env)))
+            .or_else(|| e.api_key.clone().filter(|k| !k.trim().is_empty()));
+        Some(lantern_context::semantic::Embedder {
+            base_url: e.base_url.clone(),
+            model: e.model.clone(),
+            api_key: key,
+            query_template: e.query_template.clone(),
+            doc_template: e.doc_template.clone(),
+        })
+    }
+
     pub fn model(&self, key: &str) -> Result<(&str, &ModelConfig)> {
         let key = if key.is_empty() { self.routing.default.as_str() } else { key };
         self.models

@@ -639,7 +639,8 @@
   "이미지 빼기": "Remove image",
   "이미지가 너무 큽니다": "The image is too large",
   "이미지를 붙이지 못했습니다": "Couldn't attach the image",
-  "이미지를 읽지 못했습니다": "Couldn't read the image"
+  "이미지를 읽지 못했습니다": "Couldn't read the image",
+  "의미 검색 오류": "Semantic search error"
  },
  "templates": {
   "'{}'{}을(를) 휴지통으로 옮길까요?": "Move '{}'{} to Trash?",
@@ -777,6 +778,9 @@
   "원격: {} · 이 브랜치는 아직 원격에 없습니다 (푸시하면 연결됩니다)": "Remote: {} · this branch isn't on the remote yet (push to publish it)",
   "테스트 만들기 ({})": "Write tests ({})",
   "이미지 {}장": "{} image(s)",
-  "이미지는 한 번에 {}장까지 보낼 수 있습니다": "You can send up to {} images at a time"
+  "이미지는 한 번에 {}장까지 보낼 수 있습니다": "You can send up to {} images at a time",
+  "의미 검색 준비 {}%": "Preparing semantic search {}%",
+  "임베딩 서버에 보내지 못했습니다. 키워드 검색만으로 맥락을 고릅니다.\n{}": "Couldn't reach the embedding server. Context is chosen by keyword search only.\n{}",
+  "코드 조각 {} / {}개를 임베딩했습니다. 끝나기 전에도 만든 만큼은 맥락 조립에 씁니다.": "Embedded {} / {} code chunks. Chunks done so far are already used for context."
  }
 }
