@@ -97,6 +97,11 @@ const mockServer = http.createServer((req, res) => {
       send({ choices: [{ index: 0, delta: { content: "a * b;" } }] });
       return done("stop");
     }
+    if (sys.includes("You write git commit messages")) {
+      mock.commitPrompt = String(j.messages.at(-1)?.content ?? "");
+      send({ choices: [{ index: 0, delta: { content: "FIX: 로그인 경로 이름 변경" } }] });
+      return done("stop");
+    }
     const tools = j.messages.filter((m) => m.role === "tool").length;
     const call = (name, args) => {
       send({ choices: [{ index: 0, delta: { tool_calls: [{ index: 0, id: `call_${tools}`, type: "function", function: { name, arguments: JSON.stringify(args) } }] } }] });
@@ -593,6 +598,49 @@ scenario("외부 에이전트(ACP): 로그인 카드 → 로그인 → 읽기 �
   if (!acpLog().some((l) => l.outside === "rejected") || fs.existsSync(path.join(TMP, "acp-escape.txt"))) throw new Error("프로젝트 밖 쓰기를 막지 못함");
   const meta = await run(() => document.querySelector("#task-list .task.active .task-meta")?.textContent ?? "");
   if (!meta.includes("수정 1")) throw new Error(`발자취: ${meta}`);
+});
+
+scenario("커밋 전 영향 검토와 AI 커밋 메시지", async () => {
+  // 사람이 직접 고친 변경: signCookie 본문 (호출자 issueSession, 테스트 session.test.ts)
+  fs.writeFileSync(path.join(DIRS.proj, "src/auth/session.ts"), file("src/auth/session.ts").replace("v + '.sig'", "v + '.sig2'"));
+  await run(() => {
+    document.querySelector('.ab-item[data-view="scm"]').click();
+    return true;
+  });
+  await waitFor(() => !document.querySelector("#scm-commit").classList.contains("hidden"), 15000, "소스 제어");
+  await run(() => {
+    document.querySelector("#scm-review-btn").click();
+    return true;
+  });
+  const rv = await waitFor(() => {
+    const box = document.querySelector("#scm-review:not(.hidden)");
+    const rows = box ? [...box.querySelectorAll(".rv-file")].map((r) => r.innerText.replace(/\s+/g, " ")) : [];
+    return rows.length ? { head: box.querySelector(".rv-head").innerText, rows } : null;
+  }, 20000, "영향 검토 결과");
+  const row = rv.rows.find((r) => r.includes("session.ts"));
+  // signCookie를 부르는 곳: issueSession, 테스트의 testSign
+  if (!row || !/직접 2/.test(row) || !/테스트 1/.test(row)) throw new Error(`영향 검토: ${JSON.stringify(rv)}`);
+  // 파일을 누르면 지도에서 영향 범위
+  await run(() => {
+    [...document.querySelectorAll("#scm-review .rv-file")].find((r) => r.innerText.includes("session.ts")).click();
+    return true;
+  });
+  await waitFor(() => document.querySelector("#map-crumb")?.textContent.includes("영향"), 10000, "지도의 영향 범위");
+  // AI 커밋 메시지
+  await run(() => {
+    document.querySelector("#scm-gen-msg").click();
+    return true;
+  });
+  const msg = await waitFor(() => document.querySelector("#scm-message").value, 15000, "커밋 메시지");
+  if (msg !== "FIX: 로그인 경로 이름 변경") throw new Error(`커밋 메시지: ${msg}`);
+  if (!mock.commitPrompt.includes(".sig2") || !mock.commitPrompt.includes("Recent commit subjects")) throw new Error("커밋 메시지 요청에 diff·최근 커밋이 없음");
+  // 다음 시나리오를 위해 되돌린다
+  fs.writeFileSync(path.join(DIRS.proj, "src/auth/session.ts"), file("src/auth/session.ts").replace("'.sig2'", "'.sig'"));
+  await run(() => {
+    document.querySelector("#scm-message").value = "";
+    document.querySelector('.ab-item[data-view="tasks"]').click();
+    return true;
+  });
 });
 
 scenario("다시 켜면 작업이 복원된다", async () => {
