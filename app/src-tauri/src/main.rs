@@ -636,6 +636,30 @@ async fn inline_edit(
     inline::edit(&state.http, &cfg, &rel, &before, &selection, &after, &instruction, &context).await.map_err(anyhow_err)
 }
 
+/// 테스트 만들기에 붙일 예시: 같은 언어 계열의 기존 테스트 파일 중 대상 파일과 경로가 가까운 것부터 3개
+#[tauri::command]
+async fn test_examples(state: State<'_, AppState>, path: String) -> CmdResult<Vec<String>> {
+    with_engine(&state, move |e, root| {
+        let rel = assemble_rel(root, &path);
+        use lantern_context::lang::Lang;
+        let Some(target) = Lang::from_path(std::path::Path::new(&rel)).map(|l| Lang::family(l.name()).to_string()) else {
+            return Ok(Vec::new());
+        };
+        let shared = |p: &str| rel.split('/').zip(p.split('/')).take_while(|(a, b)| a == b).count();
+        let mut tests: Vec<String> = e
+            .store
+            .file_summaries()?
+            .into_iter()
+            .filter(|(p, lang, _)| Lang::family(lang) == target && lantern_context::graph::is_test_path(p))
+            .map(|(p, _, _)| p)
+            .collect();
+        tests.sort_by(|a, b| shared(b).cmp(&shared(a)).then(a.len().cmp(&b.len())).then(a.cmp(b)));
+        tests.truncate(3);
+        Ok(tests)
+    })
+    .await
+}
+
 fn assemble_rel(root: &std::path::Path, path: &str) -> String {
     lantern_context::assemble::normalize_path(root, path)
 }
@@ -996,6 +1020,7 @@ fn main() {
             review_changes,
             commit_message,
             inline_edit,
+            test_examples,
             open_project,
             set_trust,
             startup_path,
