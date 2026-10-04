@@ -629,7 +629,17 @@
   "푸시에 실패했습니다": "Push failed",
   "기존 테스트 형식을 따라 이 코드의 테스트를 새 작업으로 만듭니다": "Start a new task that writes tests for this code, following your existing tests",
   "기존 테스트 형식을 따라 테스트가 없는 파일의 테스트를 새 작업으로 만듭니다": "Start a new task that writes tests for the untested files, following your existing tests",
-  "테스트 만들기": "Write tests"
+  "테스트 만들기": "Write tests",
+  "GIF가 너무 큽니다": "The GIF is too large",
+  "PNG, JPEG, GIF, WebP 이미지만 붙일 수 있습니다": "Only PNG, JPEG, GIF, and WebP images can be attached",
+  "붙인 이미지": "Attached image",
+  "빼기": "Remove",
+  "이미지 붙이기": "Attach image",
+  "이미지 붙이기 (붙여넣기·끌어 놓기도 됩니다)": "Attach image (you can also paste or drop)",
+  "이미지 빼기": "Remove image",
+  "이미지가 너무 큽니다": "The image is too large",
+  "이미지를 붙이지 못했습니다": "Couldn't attach the image",
+  "이미지를 읽지 못했습니다": "Couldn't read the image"
  },
  "templates": {
   "'{}'{}을(를) 휴지통으로 옮길까요?": "Move '{}'{} to Trash?",
@@ -765,6 +775,8 @@
   "새 브랜치를 만들었습니다: {}": "Created branch: {}",
   "원격: {} · 연결된 브랜치: {}": "Remote: {} · tracking {}",
   "원격: {} · 이 브랜치는 아직 원격에 없습니다 (푸시하면 연결됩니다)": "Remote: {} · this branch isn't on the remote yet (push to publish it)",
-  "테스트 만들기 ({})": "Write tests ({})"
+  "테스트 만들기 ({})": "Write tests ({})",
+  "이미지 {}장": "{} image(s)",
+  "이미지는 한 번에 {}장까지 보낼 수 있습니다": "You can send up to {} images at a time"
  }
 }

@@ -85,8 +85,8 @@ export const api = {
   probeLocal: () => invoke<LocalServer[]>("probe_local"),
   listAgents: () => invoke<AgentDef[]>("list_agents"),
   modelInfo: () => invoke<ModelInfo>("model_info"),
-  agentSend: (session: string, agent: string, text: string, file: string | null, line: number | null) =>
-    invoke<void>("agent_send", { session, agent, text, file, line }),
+  agentSend: (session: string, agent: string, text: string, images: { mediaType: string; data: string }[], file: string | null, line: number | null) =>
+    invoke<void>("agent_send", { session, agent, text, images, file, line }),
   agentCancel: (session: string) => invoke<void>("agent_cancel", { session }),
   /** 외부 에이전트 로그인 (에이전트가 브라우저를 여는 동안 기다린다) */
   acpAuthenticate: (session: string, agent: string, method: string) => invoke<void>("acp_authenticate", { session, agent, method }),
