@@ -118,9 +118,16 @@
             <div id="scm-repos" class="scm-repos hidden"></div>
             <div id="scm-sync" class="scm-sync hidden"></div>
             <div id="scm-commit" class="scm-commit hidden">
-              <textarea id="scm-message" rows="2" placeholder="커밋 메시지 (Ctrl+Enter로 커밋)" aria-label="커밋 메시지"></textarea>
-              <button class="btn btn-primary block" id="scm-commit-btn"><i class="codicon codicon-check"></i>커밋</button>
+              <div class="scm-msg-wrap">
+                <textarea id="scm-message" rows="2" placeholder="커밋 메시지 (Ctrl+Enter로 커밋)" aria-label="커밋 메시지"></textarea>
+                <button class="icon-btn" id="scm-gen-msg" title="AI로 커밋 메시지 만들기 (스테이징된 변경, 없으면 전체 변경)" aria-label="AI로 커밋 메시지 만들기"><i class="codicon codicon-sparkle"></i></button>
+              </div>
+              <div class="scm-commit-actions">
+                <button class="btn btn-primary" id="scm-commit-btn"><i class="codicon codicon-check"></i>커밋</button>
+                <button class="btn btn-secondary" id="scm-review-btn" title="커밋 전에, 아직 커밋하지 않은 변경 전체의 영향 반경을 봅니다"><i class="codicon codicon-pulse"></i>영향 검토</button>
+              </div>
             </div>
+            <div id="scm-review" class="scm-review hidden"></div>
             <div id="scm-body" class="scroll"></div>
           </section>
           <section class="view" id="view-search">

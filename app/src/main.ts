@@ -650,6 +650,12 @@ function init() {
       el.querySelector("span")!.textContent = text ?? "";
       el.title = title ? `${title} (눌러서 소스 제어 열기)` : "현재 git 브랜치 (눌러서 소스 제어 열기)";
     },
+    onShowImpact: (i) => map.showImpact(i),
+    // 영향 검토 → 새 작업으로 AI 리뷰 (읽기 전용 에이전트)
+    onAskReview: (prompt) => {
+      showAux("chat");
+      void chat.startTask(prompt, "ask");
+    },
   });
   tree.onPathChange((ev) => {
     if (ev.kind === "rename") void editor.pathRenamed(ev.from, ev.to!);
