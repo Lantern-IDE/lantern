@@ -872,7 +872,12 @@ if (!KEEP) {
   try {
     execFileSync("git", ["-C", DIRS.proj, "worktree", "prune"]);
   } catch { /* 없으면 넘어감 */ }
-  fs.rmSync(TMP, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
+  try {
+    fs.rmSync(TMP, { recursive: true, force: true, maxRetries: 10, retryDelay: 500 });
+  } catch (e) {
+    // 꺼진 뒤에도 WebView2가 잠깐 파일을 쥐고 있을 때가 있다. 결과와는 무관하다
+    console.warn(`임시 폴더를 지우지 못함: ${e.message}`);
+  }
 } else console.log(`임시 폴더: ${TMP}`);
 
 const failed = results.filter((r) => !r.ok).length;
