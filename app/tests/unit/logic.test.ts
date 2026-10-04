@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { diffTarget } from "../../src/lib/diff";
 import { parseContext } from "../../src/lib/context";
 import { displayKey, fromEvent } from "../../src/lib/keys";
+import { isTestPath, testPrompt } from "../../src/lib/testPrompt";
 
 describe("diffTarget: 바뀌는 원래 줄 범위", () => {
   it("가운데 한 줄 수정", () => {
@@ -67,5 +68,19 @@ describe("단축키", () => {
     expect(displayKey("Ctrl+Alt+M", true)).toBe("⌥⌘M");
     expect(displayKey("Ctrl+,", true)).toBe("⌘,");
     expect(displayKey("Ctrl+Shift+P", false)).toBe("Ctrl+Shift+P");
+  });
+});
+
+describe("테스트 만들기 요청", () => {
+  it("엔진과 같은 기준으로 테스트 파일을 알아본다", () => {
+    for (const p of ["tests/a.ts", "src/test/java/A.java", "a/__tests__/b.js", "x.test.ts", "y.spec.js", "pkg/z_test.go", "app/test_views.py"]) expect(isTestPath(p)).toBe(true);
+    for (const p of ["src/auth/session.ts", "src/latest/a.ts", "contest.py"]) expect(isTestPath(p)).toBe(false);
+  });
+
+  it("대상과 예시 테스트를 담는다", () => {
+    const p = testPrompt([{ path: "src/a.ts", symbols: ["f", "g"] }], ["tests/a.test.ts"], "ko");
+    expect(p).toContain("- src/a.ts: f, g");
+    expect(p).toContain("tests/a.test.ts");
+    expect(testPrompt([{ path: "a.py", symbols: [] }], [], "en")).toContain("no tests in this language");
   });
 });

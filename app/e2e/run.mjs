@@ -74,7 +74,7 @@ const file = (rel) => fs.readFileSync(path.join(DIRS.proj, rel), "utf8");
 
 // ── 모의 모델 (OpenAI 호환, 스트리밍) ────────────────────────
 // 1차: read_file → 2차: edit_file → 3차: 완료. 무엇을 읽고 고칠지는 시나리오가 정한다.
-const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0 };
+const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "" };
 const mockServer = http.createServer((req, res) => {
   let body = "";
   req.on("data", (c) => (body += c));
@@ -108,6 +108,12 @@ const mockServer = http.createServer((req, res) => {
       return done("stop");
     }
     const tools = j.messages.filter((m) => m.role === "tool").length;
+    const first = String(j.messages.find((m) => m.role === "user")?.content ?? "");
+    if (first.includes("테스트를 만들어줘")) {
+      mock.testPrompt = first;
+      send({ choices: [{ index: 0, delta: { content: "테스트를 만들었습니다." } }] });
+      return done("stop");
+    }
     const call = (name, args) => {
       send({ choices: [{ index: 0, delta: { tool_calls: [{ index: 0, id: `call_${tools}`, type: "function", function: { name, arguments: JSON.stringify(args) } }] } }] });
       done("tool_calls");
@@ -643,6 +649,38 @@ scenario("커밋 전 영향 검토와 AI 커밋 메시지", async () => {
   fs.writeFileSync(path.join(DIRS.proj, "src/auth/session.ts"), file("src/auth/session.ts").replace("'.sig2'", "'.sig'"));
   await run(() => {
     document.querySelector("#scm-message").value = "";
+    document.querySelector('.ab-item[data-view="tasks"]').click();
+    return true;
+  });
+});
+
+scenario("테스트 없는 변경 → 테스트 만들기: 기존 테스트를 예시로 새 작업", async () => {
+  // handleLogin은 route가 부르지만 테스트가 없다
+  fs.writeFileSync(path.join(DIRS.proj, "src/auth/login.ts"), file("src/auth/login.ts").replace("return s;", "return s.trim();"));
+  await run(() => {
+    document.querySelector('.ab-item[data-view="scm"]').click();
+    return true;
+  });
+  await waitFor(() => !document.querySelector("#scm-commit").classList.contains("hidden"), 15000, "소스 제어");
+  await run(() => {
+    document.querySelector("#scm-review-btn").click();
+    return true;
+  });
+  await waitFor(() => {
+    const b = [...document.querySelectorAll("#scm-review .rv-actions button")].find((x) => x.textContent.includes("테스트 만들기"));
+    if (!b) return false;
+    b.click();
+    b.click(); // 두 번 눌러도 작업은 하나
+    return true;
+  }, 20000, "테스트 만들기 버튼");
+  const prompt = await waitFor(() => document.querySelector("#messages")?.innerText.includes("테스트를 만들었습니다") && true, 20000, "테스트 작업의 응답");
+  if (!prompt || !mock.testPrompt.includes("src/auth/login.ts: handleLogin") || !mock.testPrompt.includes("tests/session.test.ts")) throw new Error(`테스트 요청: ${mock.testPrompt}`);
+  if (mock.testPrompt.includes("session.ts:")) throw new Error("테스트가 있는 파일까지 요청함");
+  const made = await run(() => [...document.querySelectorAll("#task-list .task .task-title")].filter((x) => x.textContent.includes("테스트를 만들어줘")).length);
+  if (made !== 1) throw new Error(`테스트 작업 ${made}개`);
+  git("checkout", "--", "src/auth/login.ts");
+  await run(() => {
+    document.querySelector("#scm-review .rv-head .codicon-close")?.closest("button")?.click();
     document.querySelector('.ab-item[data-view="tasks"]').click();
     return true;
   });
