@@ -97,6 +97,11 @@ const mockServer = http.createServer((req, res) => {
       send({ choices: [{ index: 0, delta: { content: "a * b;" } }] });
       return done("stop");
     }
+    if (sys.includes("You edit code inside an editor")) {
+      mock.inlinePrompt = String(j.messages.at(-1)?.content ?? "");
+      send({ choices: [{ index: 0, delta: { content: "v + '.inline'" } }] });
+      return done("stop");
+    }
     if (sys.includes("You write git commit messages")) {
       mock.commitPrompt = String(j.messages.at(-1)?.content ?? "");
       send({ choices: [{ index: 0, delta: { content: "FIX: 로그인 경로 이름 변경" } }] });
@@ -638,6 +643,78 @@ scenario("커밋 전 영향 검토와 AI 커밋 메시지", async () => {
   fs.writeFileSync(path.join(DIRS.proj, "src/auth/session.ts"), file("src/auth/session.ts").replace("'.sig2'", "'.sig'"));
   await run(() => {
     document.querySelector("#scm-message").value = "";
+    document.querySelector('.ab-item[data-view="tasks"]').click();
+    return true;
+  });
+});
+
+scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
+  await run(() => {
+    document.querySelector('.ab-item[data-view="explorer"]').click();
+    document.querySelector("#canvas-switch [data-canvas='editor']").click();
+    return true;
+  });
+  // session.ts를 열고 signCookie 본문의 v + '.sig'를 선택
+  await run(async () => {
+    for (const p of ["src", "src/auth"]) {
+      const n = [...document.querySelectorAll("#tree .node[data-path]")].find((e) => e.dataset.path === p);
+      if (n && n.getAttribute("aria-expanded") !== "true") n.click();
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    const f = [...document.querySelectorAll("#tree .node[data-path]")].find((e) => e.dataset.path === "src/auth/session.ts");
+    f.click();
+    f.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    return true;
+  });
+  await waitFor(() => [...document.querySelectorAll(".cm-editor")].some((e) => e.offsetParent && e.textContent.includes("signCookie")), 10000, "편집기");
+  await run(() => {
+    const ed = [...document.querySelectorAll(".cm-editor")].find((e) => e.offsetParent && e.textContent.includes("signCookie"));
+    const view = ed.querySelector(".cm-content").cmTile.root.view;
+    const text = view.state.doc.toString();
+    const from = text.indexOf("v + '.sig'");
+    view.dispatch({ selection: { anchor: from, head: from + "v + '.sig'".length } });
+    view.focus();
+    view.contentDOM.dispatchEvent(new KeyboardEvent("keydown", { key: "k", code: "KeyK", ctrlKey: true, bubbles: true }));
+    return true;
+  });
+  await waitFor(() => !!document.querySelector(".inline-edit .ie-input"), 5000, "Ctrl+K 패널");
+  await run(() => {
+    const i = document.querySelector(".inline-edit .ie-input");
+    i.value = "접미사를 .inline으로";
+    i.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    return true;
+  });
+  const panel = await waitFor(() => {
+    const p = document.querySelector(".inline-edit");
+    const impact = p?.querySelector(".impact:not(.loading)");
+    return impact && { diff: p.querySelector(".diff")?.innerText ?? "", impact: impact.innerText };
+  }, 20000, "diff와 영향 반경");
+  if (!panel.diff.includes(".inline") || !panel.impact.includes("signCookie")) throw new Error(`Ctrl+K 결과: ${JSON.stringify(panel)}`);
+  if (!mock.inlinePrompt.includes("<selection>v + '.sig'</selection>")) throw new Error("선택 영역이 프롬프트에 없음");
+  await run(() => {
+    [...document.querySelectorAll(".inline-edit button")].find((b) => b.textContent.includes("적용")).click();
+    return true;
+  });
+  const doc = () => run(() => [...document.querySelectorAll(".cm-editor")].find((e) => e.offsetParent && e.textContent.includes("signCookie")).querySelector(".cm-content").cmTile.root.view.state.doc.toString());
+  if (!(await doc()).includes("v + '.inline'")) throw new Error("적용 후 편집기에 반영되지 않음");
+  if (file("src/auth/session.ts").includes(".inline")) throw new Error("저장 전에 파일이 바뀜");
+  // Ctrl+Z
+  await run(() => {
+    const view = [...document.querySelectorAll(".cm-editor")].find((e) => e.offsetParent && e.textContent.includes("signCookie")).querySelector(".cm-content").cmTile.root.view;
+    view.focus();
+    view.contentDOM.dispatchEvent(new KeyboardEvent("keydown", { key: "z", code: "KeyZ", ctrlKey: true, bubbles: true }));
+    return true;
+  });
+  await sleep(300);
+  if ((await doc()).includes(".inline")) throw new Error("Ctrl+Z로 되돌아가지 않음");
+  // 되돌린 내용(원래와 같음)을 저장해 탭의 '저장 안 됨' 표시를 지운다 (다음 시나리오가 창을 닫는다)
+  await run(() => {
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "s", code: "KeyS", ctrlKey: true, bubbles: true }));
+    return true;
+  });
+  await sleep(500);
+  if (file("src/auth/session.ts").includes(".inline")) throw new Error("되돌린 뒤 저장했는데 파일에 남음");
+  await run(() => {
     document.querySelector('.ab-item[data-view="tasks"]').click();
     return true;
   });
