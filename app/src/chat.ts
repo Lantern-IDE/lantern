@@ -14,6 +14,8 @@ import * as editor from "./editor";
 import { emptyFootprint, type Footprint, type GNode, type Impact } from "./map";
 import { parseContext } from "./lib/context";
 import { diffTarget } from "./lib/diff";
+import { isTestPath, testPrompt, type TestTarget } from "./lib/testPrompt";
+import * as i18n from "./i18n";
 export { parseContext } from "./lib/context";
 import * as lsp from "./lsp";
 import * as toast from "./toast";
@@ -77,10 +79,11 @@ type Hooks = {
   onFootprint: (fp: Footprint, title: string, running: boolean) => void;
   showOnMap: () => void;
   showImpact: (i: Impact) => void;
+  showChat: () => void;
 };
 let hooks: Hooks = {
   onContext: () => {}, onFilesChanged: () => {}, onUsage: () => {}, showInspector: () => {}, openSettings: () => {}, pickModel: () => {}, onRunning: () => {},
-  onTasks: () => {}, onFootprint: () => {}, showOnMap: () => {}, showImpact: () => {},
+  onTasks: () => {}, onFootprint: () => {}, showOnMap: () => {}, showImpact: () => {}, showChat: () => {},
 };
 
 const messages = () => $("#messages");
@@ -296,6 +299,14 @@ export function impactRow(diff: string, onTouched: (names: string[]) => void = (
     if (i.files) stat(i.files, "파일에 걸침");
     if (i.cochanged.length) stat(i.cochanged.length, "함께 바뀌던 파일");
     stats.push(h("span", { class: `istat ${i.tests.length ? "tests" : "no-tests"}` }, codicon(i.tests.length ? "beaker" : "warning"), i.tests.length ? `테스트 ${i.tests.length}` : "테스트 없음"));
+    if (!i.tests.length && i.touched.length && !isTestPath(target.path)) {
+      const make = h("button", { class: "istat-action", title: "기존 테스트 형식을 따라 이 코드의 테스트를 새 작업으로 만듭니다" }, codicon("beaker"), "테스트 만들기");
+      make.addEventListener("click", () => {
+        make.disabled = true;
+        void createTests([{ path: target.path, symbols: i.touched }]);
+      });
+      stats.push(make);
+    }
     const view = h("button", { class: "btn btn-ghost", title: "영향 범위를 지도에서 보기" }, codicon("type-hierarchy"), "지도에서 보기");
     view.addEventListener("click", () => hooks.showImpact(i));
     // 숫자를 사실로 믿지 않게: 무엇을 기준으로 셌고 무엇을 놓치는지
@@ -600,6 +611,14 @@ function authCard(task: Task, agent: string, name: string, methods: AuthMethod[]
     envOnly.length ? h("p", { class: "muted" }, `또는 환경변수로: ${envOnly.join(", ")}`) : null,
     line);
   return card;
+}
+
+/** 테스트가 없는 코드의 테스트를 새 작업으로 만든다. 기존 테스트 파일을 예시로 붙인다 */
+export async function createTests(targets: TestTarget[]) {
+  if (!targets.length) return;
+  hooks.showChat();
+  const examples = await invoke<string[]>("test_examples", { path: targets[0].path }).catch(() => []);
+  await startTask(testPrompt(targets, examples, i18n.lang), "code");
 }
 
 /** 새 작업으로 보낸다 (영향 검토의 'AI에게 리뷰 맡기기' 등). agent가 있으면 그 에이전트로 */

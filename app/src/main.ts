@@ -668,6 +668,9 @@ function init() {
       showAux("chat");
       void chat.startTask(prompt, "ask");
     },
+    onCreateTests: (targets) => {
+      void chat.createTests(targets);
+    },
   });
   tree.onPathChange((ev) => {
     if (ev.kind === "rename") void editor.pathRenamed(ev.from, ev.to!);
@@ -753,6 +756,7 @@ function init() {
     },
     showOnMap: showFootprintOnMap,
     showImpact: (i) => map.showImpact(i),
+    showChat: () => showAux("chat"),
   });
   map.init({
     openFile: (p, line) => {
