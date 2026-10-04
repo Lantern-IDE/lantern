@@ -15,7 +15,8 @@ Most AI editors are organised around files and a chat box. Once you let an agent
 - **Code map.** The centre of the window switches between the editor and a live map of your code (folders → files → symbols, calls, and files that usually change together).
 - **Impact radius on every edit.** Before you approve an agent's edit, the card shows the symbols it touches, direct and indirect callers, the tests that cover them (or that there are none), and a risk level. One click shows it on the map.
 - **Agent footprint.** Each task records what was sent as context, what the agent read, and what it edited, and paints it on the map.
-- **Project memory map.** Team conventions live in `.lantern/memory/*.md`; Lantern links each rule to the code it talks about.
+- **Project memory map.** Team conventions live in `.lantern/memory/*.md`; Lantern links each rule to the code it talks about. Rule files from other tools (`AGENTS.md`, `CLAUDE.md`, `.cursorrules`, `.github/copilot-instructions.md`, `.windsurfrules`, `GEMINI.md`) are read too, in trusted folders.
+- **Impact review before you commit.** Source Control shows the impact radius of every uncommitted change, not just agent edits, and can hand it to the AI as a review. It also writes commit messages in your repository's style.
 - **Tasks, not tabs.** A task keeps its conversation, context, changed files, and undo together. Tasks survive restarts, and can run in an isolated git worktree so nothing touches your working tree until you apply it.
 - **Nothing hidden.** No hidden system prompt; the inspector shows every file, token, and cent sent to the model. No telemetry.
 
