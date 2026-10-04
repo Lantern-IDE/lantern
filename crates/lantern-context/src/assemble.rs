@@ -28,6 +28,13 @@ const MAX_AMBIGUOUS_DEFS: i64 = 5;
 /// 최고점 대비 이 비율보다 낮은 후보는 버린다.
 const MIN_RELATIVE_SCORE: f64 = 0.12;
 const MEMORY_SHARE: usize = 15; // %
+/// 의미 검색에서 쓰는 파일 수와 순위 합산 상수 (#67 실험에서 잰 값)
+const SEMANTIC_FILES: usize = 50;
+const RRF_K: f64 = 60.0;
+/// 키워드 후보가 없는 파일을 새로 넣을 때: 의미 순위 상위 몇 개 파일에서, 파일마다 심볼 몇 개까지.
+/// 많이 넣으면 적중률은 오르지만 시그니처만 든 파일이 늘어 맥락이 묽어진다
+const SEMANTIC_NEW_FILES: usize = 10;
+const SEMANTIC_NEW_SYMBOLS: usize = 1;
 const SINGLE_ITEM_SHARE: usize = 35; // %
 const ITEM_OVERHEAD_TOKENS: usize = 25;
 
@@ -147,6 +154,11 @@ pub fn normalize_path(root: &Path, path: &str) -> String {
 }
 
 pub fn assemble(store: &Store, root: &Path, req: &ContextRequest) -> Result<ContextResult> {
+    assemble_with(store, root, req, &[])
+}
+
+/// `semantic`: 질문과 뜻이 가까운 파일 순서 (경로, 가장 가까운 조각의 시작 줄, 점수). 비어 있으면 키워드·그래프만
+pub fn assemble_with(store: &Store, root: &Path, req: &ContextRequest, semantic: &[(String, u32, f32)]) -> Result<ContextResult> {
     let started = Instant::now();
     let mut cands = Candidates::default();
     let terms = tokenize::query_terms(&req.query);
@@ -253,6 +265,21 @@ pub fn assemble(store: &Store, root: &Path, req: &ContextRequest) -> Result<Cont
         }
     }
 
+    // 3-2. 의미 검색: 뜻이 가까운데 후보가 하나도 없는 파일은 가장 가까운 조각에 걸친 심볼을 후보로 넣는다
+    let sem: &[(String, u32, f32)] = &semantic[..semantic.len().min(SEMANTIC_FILES)];
+    for (path, line, _) in sem.iter().take(SEMANTIC_NEW_FILES) {
+        if cands.0.values().any(|c| &c.sym.path == path) {
+            continue;
+        }
+        let end = line + crate::semantic::CHUNK_LINES as u32 - 1;
+        let mut syms: Vec<SymbolRow> = store.symbols_in_file(path)?.into_iter().filter(|s| s.start_line <= end && *line <= s.end_line).collect();
+        // 파일 전체를 감싼 클래스보다 조각 안쪽의 작은 심볼부터
+        syms.sort_by_key(|s| s.end_line - s.start_line);
+        for s in syms.into_iter().take(SEMANTIC_NEW_SYMBOLS) {
+            cands.add(s, 0.0, "뜻이 가까움".into());
+        }
+    }
+
     // 4~5. 순위와 예산 내 압축
     let budget = req.budget_tokens.max(500);
     let mut used = 0usize;
@@ -270,7 +297,11 @@ pub fn assemble(store: &Store, root: &Path, req: &ContextRequest) -> Result<Cont
     let mut items: Vec<ContextItem> = Vec::new();
     let mut included: Vec<(SymbolRow, Mode)> = Vec::new();
 
-    for c in ranked.iter().filter(|c| c.score >= top * MIN_RELATIVE_SCORE).take(80) {
+    // 의미 검색으로만 들어온 후보(점수 0)는 순위 합산에서 자리를 정한다
+    let kept: Vec<&Candidate> =
+        ranked.into_iter().filter(|c| c.score >= top * MIN_RELATIVE_SCORE || (!sem.is_empty() && c.score == 0.0)).collect();
+    let (order, boosted) = fuse(kept, sem);
+    for c in order.into_iter().take(80) {
         let remaining = budget.saturating_sub(used);
         if remaining < ITEM_OVERHEAD_TOKENS * 2 {
             break;
@@ -318,7 +349,11 @@ pub fn assemble(store: &Store, root: &Path, req: &ContextRequest) -> Result<Cont
             start_line: c.sym.start_line,
             end_line: c.sym.end_line,
             score: (c.score * 1000.0).round() / 1000.0,
-            reasons: c.reasons.clone(),
+            reasons: match boosted.get(&c.sym.id) {
+                Some(r) if !c.reasons.iter().any(|x| x == "뜻이 가까움") => [c.reasons.clone(), vec![format!("뜻이 가까움 ({}위)", r + 1)]].concat(),
+                Some(r) => c.reasons.iter().map(|x| if x == "뜻이 가까움" { format!("뜻이 가까움 ({}위)", r + 1) } else { x.clone() }).collect(),
+                None => c.reasons.clone(),
+            },
             mode,
             doc: c.sym.doc.clone(),
             text,
@@ -337,6 +372,35 @@ pub fn assemble(store: &Store, root: &Path, req: &ContextRequest) -> Result<Cont
         elapsed_ms: started.elapsed().as_secs_f64() * 1000.0,
         redacted,
     })
+}
+
+/// 키워드·그래프 순위와 의미 검색 파일 순위를 합친다 (Reciprocal Rank Fusion).
+/// 의미 점수는 파일마다 가장 앞선 후보 하나에만 더해, 한 파일의 심볼이 한꺼번에 올라오지 않게 한다.
+/// 돌려주는 값: 합친 순서, 의미 점수를 받은 후보 id → 파일 순위
+fn fuse<'a>(kept: Vec<&'a Candidate>, sem: &[(String, u32, f32)]) -> (Vec<&'a Candidate>, HashMap<i64, usize>) {
+    if sem.is_empty() {
+        return (kept, HashMap::new());
+    }
+    let sem_rank: HashMap<&str, usize> = sem.iter().enumerate().map(|(i, (p, _, _))| (p.as_str(), i)).collect();
+    let mut first = std::collections::HashSet::new();
+    let mut boosted = HashMap::new();
+    let mut scored: Vec<(f64, usize, &Candidate)> = kept
+        .into_iter()
+        .enumerate()
+        .map(|(i, c)| {
+            let mut s = if c.score > 0.0 { 1.0 / (RRF_K + i as f64) } else { 0.0 };
+            if first.insert(c.sym.path.as_str()) {
+                if let Some(&r) = sem_rank.get(c.sym.path.as_str()) {
+                    s += 1.0 / (RRF_K + r as f64);
+                    boosted.insert(c.sym.id, r);
+                }
+            }
+            (s, i, c)
+        })
+        .filter(|(s, _, _)| *s > 0.0)
+        .collect();
+    scored.sort_by(|a, b| b.0.total_cmp(&a.0).then(a.1.cmp(&b.1)));
+    (scored.into_iter().map(|(_, _, c)| c).collect(), boosted)
 }
 
 /// `.lantern/memory/*.md`를 예산 안에서 읽는다.
@@ -439,5 +503,33 @@ impl ContextResult {
             }
         }
         out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Engine;
+
+    #[test]
+    fn semantic_files_join_the_context() {
+        let dir = tempfile::tempdir().unwrap();
+        let r = dir.path();
+        std::fs::create_dir_all(r.join("src")).unwrap();
+        std::fs::write(r.join("src/cookie.rs"), "/// parse cookie header\npub fn parse_cookie(h: &str) -> Vec<String> {\n    h.split(';').map(str::to_string).collect()\n}\n").unwrap();
+        std::fs::write(r.join("src/session.rs"), "pub fn refresh_login(token: &str) -> bool {\n    !token.is_empty()\n}\n").unwrap();
+        let mut e = Engine::open(r).unwrap();
+        e.refresh().unwrap();
+        let req = ContextRequest::new("parse cookie header");
+
+        let plain = assemble(&e.store, r, &req).unwrap();
+        assert!(plain.items.iter().all(|i| i.path != "src/session.rs"), "키워드만으로는 못 찾는 파일");
+
+        // 뜻이 가장 가까운 파일로 session.rs가 오면 후보로 들어오고, 이유가 남는다
+        let sem = vec![("src/session.rs".to_string(), 1, 0.9), ("src/cookie.rs".to_string(), 1, 0.5)];
+        let r2 = assemble_with(&e.store, r, &req, &sem).unwrap();
+        let s = r2.items.iter().find(|i| i.path == "src/session.rs").expect("의미 검색 후보");
+        assert!(s.reasons.iter().any(|x| x == "뜻이 가까움 (1위)"), "{:?}", s.reasons);
+        assert!(r2.items.iter().any(|i| i.path == "src/cookie.rs"), "키워드 후보는 그대로");
     }
 }
