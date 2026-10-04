@@ -74,7 +74,7 @@ const file = (rel) => fs.readFileSync(path.join(DIRS.proj, rel), "utf8");
 
 // ── 모의 모델 (OpenAI 호환, 스트리밍) ────────────────────────
 // 1차: read_file → 2차: edit_file → 3차: 완료. 무엇을 읽고 고칠지는 시나리오가 정한다.
-const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null };
+const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "" };
 const mockServer = http.createServer((req, res) => {
   let body = "";
   req.on("data", (c) => (body += c));
@@ -83,8 +83,16 @@ const mockServer = http.createServer((req, res) => {
       res.writeHead(200, { "content-type": "application/json" });
       return res.end(JSON.stringify({ data: [{ id: "e2e-model" }] }));
     }
-    mock.requests++;
     const j = JSON.parse(body);
+    // 의미 검색 임베딩: 글자에서 정한 고정 벡터 (뜻은 없지만 늘 같은 값)
+    if (req.url.endsWith("/embeddings")) {
+      const input = Array.isArray(j.input) ? j.input : [j.input];
+      mock.embedded += input.length;
+      const vec = (t) => Array.from({ length: 8 }, (_, i) => [...t].reduce((n, c, k) => n + ((c.charCodeAt(0) * (k + 1) * (i + 3)) % 97), 1));
+      res.writeHead(200, { "content-type": "application/json" });
+      return res.end(JSON.stringify({ data: input.map((t, index) => ({ index, embedding: vec(t) })) }));
+    }
+    mock.requests++;
     res.writeHead(200, { "content-type": "text/event-stream" });
     const send = (o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
     const done = (reason) => {
@@ -117,6 +125,11 @@ const mockServer = http.createServer((req, res) => {
       return done("stop");
     }
     const first = String(j.messages.find((m) => m.role === "user")?.content ?? "");
+    if (first.includes("뜻으로 찾기 확인")) {
+      mock.semanticPrompt = first;
+      send({ choices: [{ index: 0, delta: { content: "맥락을 받았습니다." } }] });
+      return done("stop");
+    }
     if (first.includes("테스트를 만들어줘")) {
       mock.testPrompt = first;
       send({ choices: [{ index: 0, delta: { content: "테스트를 만들었습니다." } }] });
@@ -147,6 +160,10 @@ price_output = 0.0
 
 [routing]
 default = "mock"
+
+[embeddings]
+base_url = "http://127.0.0.1:${MOCK_PORT}/v1"
+model = "e2e-embed"
 
 [acp.e2e]
 name = "E2E"
@@ -723,6 +740,23 @@ scenario("채팅에 이미지 붙여넣기: 미리보기 → 줄여서 모델에
     pending: document.querySelectorAll("#attachments .attach-thumb").length,
   }));
   if (ui2.thumbs !== 1 || ui2.pending !== 0) throw new Error(`화면: ${JSON.stringify(ui2)}`);
+});
+
+scenario("의미 검색: 뒤에서 코드 조각을 임베딩하고, 질문에 뜻이 가까운 코드를 붙인다", async () => {
+  // 프로젝트를 열면 인덱싱 뒤에 조각 임베딩이 돈다 (코드 파일 4개 → 조각 4개 이상)
+  const end = Date.now() + 20000;
+  while (mock.embedded < 4 && Date.now() < end) await sleep(250);
+  if (mock.embedded < 4) throw new Error(`임베딩한 조각 ${mock.embedded}개`);
+  await run(() => {
+    document.querySelector("#btn-new-task").click();
+    return true;
+  });
+  await run(ui.sendTask, "뜻으로 찾기 확인", "ask", false);
+  await waitFor(() => document.querySelector(".task-log:not(.hidden)")?.innerText.includes("맥락을 받았습니다"), 20000, "답");
+  // 키워드가 하나도 안 맞는 질문인데도 뜻이 가까운 코드가 맥락에 들어간다
+  if (!/뜻이 가까움 \(\d+위\)/.test(mock.semanticPrompt)) throw new Error(`맥락: ${mock.semanticPrompt.slice(0, 600)}`);
+  const hidden = await run(() => document.querySelector("#sb-semantic").classList.contains("hidden"));
+  if (!hidden) throw new Error("다 만들었는데 진행률이 남아 있음");
 });
 
 scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
