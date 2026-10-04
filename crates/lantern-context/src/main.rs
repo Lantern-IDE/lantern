@@ -150,7 +150,16 @@ fn main() -> Result<()> {
         Cmd::Context { query, file, line, budget, json } => {
             let mut engine = Engine::open(&cli.root)?;
             engine.refresh()?;
-            let result = engine.context(&ContextRequest { query, file, line, budget_tokens: budget })?;
+            let req = ContextRequest { query, file, line, budget_tokens: budget };
+            // 의미 검색: LANTERN_EMBED_URL·LANTERN_EMBED_MODEL이 있으면 빠진 벡터를 다 만든 뒤 함께 쓴다
+            let result = match lantern_context::semantic::Embedder::from_env() {
+                Some(emb) => {
+                    let (done, total) = engine.embed_pending(&emb, usize::MAX)?;
+                    eprintln!("lantern: 의미 검색 조각 {done}/{total}");
+                    engine.context_semantic(&req, &emb)?
+                }
+                None => engine.context(&req)?,
+            };
             if json {
                 println!("{}", serde_json::to_string_pretty(&result)?);
             } else {

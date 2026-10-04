@@ -60,6 +60,23 @@ CREATE TABLE cochange(
 CREATE INDEX cochange_b ON cochange(file_b);
 "#;
 
+const SEMANTIC_SCHEMA: &str = r#"
+CREATE TABLE IF NOT EXISTS chunks(
+    path TEXT NOT NULL,
+    file_hash TEXT NOT NULL,
+    start_line INTEGER NOT NULL,
+    hash TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS chunks_path ON chunks(path);
+CREATE INDEX IF NOT EXISTS chunks_hash ON chunks(hash);
+CREATE TABLE IF NOT EXISTS vectors(
+    model TEXT NOT NULL,
+    hash TEXT NOT NULL,
+    vec BLOB NOT NULL,
+    PRIMARY KEY(model, hash)
+);
+"#;
+
 const TABLES: &[&str] = &["meta", "files", "symbols", "refs", "symbols_fts", "cochange"];
 
 const SYMBOL_COLS: &str = "s.id, s.file_id, f.path, f.lang, s.name, s.kind, s.start_line, s.end_line, \
@@ -164,6 +181,8 @@ impl Store {
                 [SCHEMA_VERSION],
             )?;
         }
+        // 의미 검색 벡터는 다시 인덱싱해도 남긴다 (내용 해시 기준이라 그대로 쓸 수 있고, 다시 만들기 비싸다)
+        conn.execute_batch(SEMANTIC_SCHEMA)?;
         Ok(Self { conn })
     }
 
@@ -313,6 +332,70 @@ impl Store {
             stmt.execute(params![a, b, n])?;
         }
         Ok(())
+    }
+
+    // ── 의미 검색 ──────────────────────────────────────────
+
+    /// 조각으로 나눠 둔 파일과 그때의 파일 해시
+    pub fn chunked_files(&self) -> Result<HashMap<String, String>> {
+        let mut stmt = self.conn.prepare("SELECT DISTINCT path, file_hash FROM chunks")?;
+        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
+    }
+
+    pub fn replace_chunks(&self, path: &str, file_hash: &str, chunks: &[(u32, String)]) -> Result<()> {
+        self.conn.execute("DELETE FROM chunks WHERE path = ?1", [path])?;
+        let mut stmt = self.conn.prepare_cached("INSERT INTO chunks(path, file_hash, start_line, hash) VALUES (?1, ?2, ?3, ?4)")?;
+        for (line, hash) in chunks {
+            stmt.execute(params![path, file_hash, line, hash])?;
+        }
+        Ok(())
+    }
+
+    pub fn remove_chunks(&self, path: &str) -> Result<()> {
+        self.conn.execute("DELETE FROM chunks WHERE path = ?1", [path])?;
+        Ok(())
+    }
+
+    /// 아직 벡터가 없는 조각 (경로, 시작 줄, 해시)
+    pub fn chunks_without_vectors(&self, model: &str, limit: usize) -> Result<Vec<(String, u32, String)>> {
+        let mut stmt = self.conn.prepare_cached(
+            "SELECT c.path, c.start_line, c.hash FROM chunks c
+             WHERE NOT EXISTS (SELECT 1 FROM vectors v WHERE v.model = ?1 AND v.hash = c.hash)
+             GROUP BY c.hash LIMIT ?2",
+        )?;
+        let rows = stmt.query_map(params![model, limit as i64], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
+    }
+
+    pub fn count_chunks(&self, model: &str) -> Result<(i64, i64)> {
+        let total: i64 = self.conn.query_row("SELECT COUNT(DISTINCT hash) FROM chunks", [], |r| r.get(0))?;
+        let done: i64 = self.conn.query_row(
+            "SELECT COUNT(DISTINCT c.hash) FROM chunks c JOIN vectors v ON v.model = ?1 AND v.hash = c.hash",
+            [model],
+            |r| r.get(0),
+        )?;
+        Ok((done, total))
+    }
+
+    pub fn put_vector(&self, model: &str, hash: &str, vec: &[f32]) -> Result<()> {
+        let bytes: Vec<u8> = vec.iter().flat_map(|f| f.to_le_bytes()).collect();
+        self.conn
+            .prepare_cached("INSERT OR REPLACE INTO vectors(model, hash, vec) VALUES (?1, ?2, ?3)")?
+            .execute(params![model, hash, bytes])?;
+        Ok(())
+    }
+
+    /// 벡터가 있는 조각 전부 (경로, 시작 줄, 벡터)
+    pub fn chunk_vectors(&self, model: &str) -> Result<Vec<(String, u32, Vec<f32>)>> {
+        let mut stmt = self.conn.prepare_cached(
+            "SELECT c.path, c.start_line, v.vec FROM chunks c JOIN vectors v ON v.model = ?1 AND v.hash = c.hash",
+        )?;
+        let rows = stmt.query_map([model], |r| {
+            let b: Vec<u8> = r.get(2)?;
+            Ok((r.get(0)?, r.get(1)?, b.chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect()))
+        })?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
     }
 
     // ── 읽기 ────────────────────────────────────────────────

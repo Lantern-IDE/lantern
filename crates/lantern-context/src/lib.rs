@@ -11,6 +11,7 @@ pub mod lang;
 pub mod mcp;
 pub mod parse;
 pub mod secrets;
+pub mod semantic;
 pub mod store;
 pub mod tokenize;
 
@@ -96,6 +97,28 @@ impl Engine {
 
     pub fn context(&self, req: &ContextRequest) -> Result<ContextResult> {
         assemble::assemble(&self.store, &self.root, req)
+    }
+
+    /// 의미 검색을 곁들인 맥락 조립. 임베딩 서버에 닿지 않으면 키워드·그래프만으로 조립한다
+    pub fn context_semantic(&self, req: &ContextRequest, emb: &semantic::Embedder) -> Result<ContextResult> {
+        match emb.embed_query(&req.query) {
+            Ok(q) => self.context_with_vector(req, &emb.model, &q),
+            Err(e) => {
+                eprintln!("lantern: 의미 검색 건너뜀: {e:#}");
+                self.context(req)
+            }
+        }
+    }
+
+    /// 질문 벡터를 미리 구해 둔 경우 (임베딩을 인덱스 잠금 밖에서 할 때)
+    pub fn context_with_vector(&self, req: &ContextRequest, model: &str, query: &[f32]) -> Result<ContextResult> {
+        let ranked = semantic::rank_files(&self.store, model, query, 50)?;
+        assemble::assemble_with(&self.store, &self.root, req, &ranked)
+    }
+
+    /// 벡터가 없는 조각을 최대 `max_new`개 만든다. (벡터가 있는 조각, 전체 조각)
+    pub fn embed_pending(&self, emb: &semantic::Embedder, max_new: usize) -> Result<(i64, i64)> {
+        semantic::update(&self.store, &self.root, emb, max_new)
     }
 
     pub fn search(&self, query: &str, limit: usize) -> Result<Vec<(SymbolRow, f64)>> {
