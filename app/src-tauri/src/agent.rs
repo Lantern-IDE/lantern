@@ -264,10 +264,13 @@ async fn run_inner(
     // 1. 맥락 조립
     let engine = project.engine.clone();
     let req = ContextRequest { query: text.clone(), file, line, budget_tokens: config.context.budget_tokens };
+    let emb = config.embedder();
     let ctx = tokio::task::spawn_blocking(move || -> Result<(String, usize)> {
+        // 질문 벡터는 잠금 밖에서 (임베딩 서버가 느려도 다른 작업을 막지 않게)
+        let q = crate::semantic::query_vector(emb.as_ref(), &req.query);
         let mut e = engine.lock().unwrap();
         e.refresh()?;
-        let r = e.context(&req)?;
+        let r = crate::semantic::context(&e, &req, q.as_ref())?;
         Ok((r.to_markdown(), r.used_tokens))
     })
     .await??;

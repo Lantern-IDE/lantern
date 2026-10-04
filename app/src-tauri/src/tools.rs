@@ -100,19 +100,24 @@ impl ToolCtx<'_> {
             "get_context" | "search_symbols" | "get_symbol" | "find_references" => {
                 let engine = self.project.engine.clone();
                 let budget = self.config.context.budget_tokens;
+                let emb = self.config.embedder();
                 let (name, input) = (name.to_string(), input.clone());
                 tokio::task::spawn_blocking(move || -> Result<String> {
+                    let q = if name == "get_context" { crate::semantic::query_vector(emb.as_ref(), s(&input, "query").unwrap_or("")) } else { None };
                     let mut e = engine.lock().unwrap();
                     e.refresh()?;
                     match name.as_str() {
-                        "get_context" => Ok(e
-                            .context(&ContextRequest {
+                        "get_context" => Ok(crate::semantic::context(
+                            &e,
+                            &ContextRequest {
                                 query: s(&input, "query")?.to_string(),
                                 file: input.get("file").and_then(Value::as_str).map(str::to_string),
                                 line: input.get("line").and_then(Value::as_u64).map(|l| l as u32),
                                 budget_tokens: budget,
-                            })?
-                            .to_markdown()),
+                            },
+                            q.as_ref(),
+                        )?
+                        .to_markdown()),
                         "search_symbols" => {
                             let limit = input.get("limit").and_then(Value::as_u64).unwrap_or(20) as usize;
                             e.search_report(s(&input, "query")?, limit)

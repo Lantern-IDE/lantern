@@ -8,6 +8,7 @@ mod config;
 mod applog;
 mod inline;
 mod review;
+mod semantic;
 mod tasks;
 mod worktree;
 mod completion;
@@ -94,11 +95,12 @@ async fn open_project(app: AppHandle, state: State<'_, AppState>, path: String) 
         }
     };
 
-    // 인덱싱은 뒤에서. 끝나면 알린다.
+    // 인덱싱은 뒤에서. 끝나면 알린다. 의미 검색을 켰으면 그 뒤로 벡터도 조금씩 만든다.
     let _ = app.emit("index", json!({ "status": "running" }));
     let app2 = app.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let r = project.engine.lock().unwrap().refresh();
+        semantic::spawn_background(app2.clone(), project.clone());
         let payload = match r {
             Ok(s) => json!({ "status": "done", "stats": s }),
             Err(e) => json!({ "status": "error", "message": format!("{e:#}") }),
@@ -628,10 +630,12 @@ async fn inline_edit(
     // 지시에 맞는 코드를 맥락 엔진이 조금 붙인다 (예산은 에이전트보다 작게)
     let engine = p.engine.clone();
     let req = ContextRequest { query: instruction.clone(), file: Some(rel.clone()), line: Some(line), budget_tokens: (cfg.context.budget_tokens / 3).max(1500) };
+    let emb = cfg.embedder();
     let context = tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
+        let q = semantic::query_vector(emb.as_ref(), &req.query);
         let mut e = engine.lock().unwrap();
         e.refresh()?;
-        Ok(e.context(&req)?.to_markdown())
+        Ok(semantic::context(&e, &req, q.as_ref())?.to_markdown())
     })
     .await
     .map_err(err)?
@@ -850,10 +854,12 @@ async fn context_preview(
     let p = state.project().map_err(anyhow_err)?;
     let cfg = config::load(p.config_root()).map_err(anyhow_err)?;
     let req = ContextRequest { query, file, line, budget_tokens: cfg.context.budget_tokens };
+    let emb = cfg.embedder();
     tauri::async_runtime::spawn_blocking(move || {
+        let q = semantic::query_vector(emb.as_ref(), &req.query);
         let mut e = p.engine.lock().unwrap();
         e.refresh()?;
-        let r = e.context(&req)?;
+        let r = semantic::context(&e, &req, q.as_ref())?;
         Ok::<_, anyhow::Error>(json!({ "markdown": r.to_markdown(), "used_tokens": r.used_tokens, "elapsed_ms": r.elapsed_ms, "items": r.items.len() }))
     })
     .await
