@@ -9,6 +9,7 @@ import { codicon, fileIcon } from "./icons";
 import * as editor from "./editor";
 import type { Impact } from "./map";
 import * as i18n from "./i18n";
+import type { TestTarget } from "./lib/testPrompt";
 import { reviewPrompt, type Review } from "./lib/reviewPrompt";
 import * as toast from "./toast";
 
@@ -515,11 +516,18 @@ export function reset() {
 const RISK: Record<string, string> = { low: "낮음", medium: "보통", high: "높음" };
 let onShowImpact: (i: Impact) => void = () => {};
 let onAskReview: (prompt: string) => void = () => {};
+let onCreateTests: (targets: TestTarget[]) => void = () => {};
 
 function renderReview(box: HTMLElement, r: Review) {
   const close = iconButton("close", "닫기", () => box.classList.add("hidden"));
   const ask = h("button", { class: "btn btn-secondary" }, codicon("comment-discussion"), "AI에게 리뷰 맡기기");
   ask.addEventListener("click", () => onAskReview(reviewPrompt(r, i18n.lang)));
+  const untested = r.files.filter((f) => r.untested.includes(f.path) && f.impact?.touched.length);
+  const make = untested.length ? h("button", { class: "btn btn-secondary", title: "기존 테스트 형식을 따라 테스트가 없는 파일의 테스트를 새 작업으로 만듭니다" }, codicon("beaker"), `테스트 만들기 (${untested.length})`) : null;
+  make?.addEventListener("click", () => {
+    make.disabled = true;
+    onCreateTests(untested.map((f) => ({ path: f.path, symbols: f.impact!.touched })));
+  });
   const notes: HTMLElement[] = [];
   if (r.untested.length) notes.push(h("div", { class: "rv-note warn" }, codicon("warning"), `호출하는 곳은 있는데 테스트가 없는 파일 ${r.untested.length}개`));
   if (r.framework.length) notes.push(h("div", { class: "rv-note warn" }, codicon("info"), `프레임워크가 부르는 코드를 고친 파일 ${r.framework.length}개 (호출자가 안 보일 수 있음)`));
@@ -544,7 +552,7 @@ function renderReview(box: HTMLElement, r: Review) {
     h("div", { class: "rv-head" }, codicon("pulse"), h("span", {}, "영향 검토"), h("span", { class: `risk risk-${r.risk}` }, `위험도 ${RISK[r.risk]}`), h("span", { class: "badge" }, String(r.files.length)), close),
     ...notes,
     h("div", { class: "rv-files" }, ...rows),
-    h("div", { class: "rv-actions" }, ask));
+    h("div", { class: "rv-actions" }, make, ask));
   box.classList.remove("hidden");
 }
 
@@ -586,11 +594,13 @@ export function init(opts: {
   onBranch: (text: string | null, title: string) => void;
   onShowImpact: (i: Impact) => void;
   onAskReview: (prompt: string) => void;
+  onCreateTests: (targets: TestTarget[]) => void;
 }) {
   onCount = opts.onCount;
   onBranch = opts.onBranch;
   onShowImpact = opts.onShowImpact;
   onAskReview = opts.onAskReview;
+  onCreateTests = opts.onCreateTests;
   $("#scm-review-btn").addEventListener("click", () => void runReview());
   $("#scm-gen-msg").addEventListener("click", () => void generateMessage());
   $("#scm-commit-btn").addEventListener("click", () => void commit());

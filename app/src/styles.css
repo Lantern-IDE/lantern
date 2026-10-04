@@ -930,6 +930,9 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .istat b { color: var(--fg-strong); font-variant-numeric: tabular-nums; }
 .istat.tests { color: var(--ok); }
 .istat.no-tests { color: var(--warning); }
+.istat-action { display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; border: 1px solid color-mix(in srgb, var(--warning) 45%, transparent); border-radius: 4px; background: transparent; color: var(--fg-strong); font: inherit; cursor: pointer; }
+.istat-action:hover { background: color-mix(in srgb, var(--warning) 14%, transparent); }
+.istat-action:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
 .itouch { display: inline-flex; align-items: center; gap: 4px; font-family: var(--code-font); color: var(--fg); }
 .inote { color: var(--muted); }
 .inote.framework { display: flex; align-items: flex-start; gap: 5px; color: var(--warning); }
