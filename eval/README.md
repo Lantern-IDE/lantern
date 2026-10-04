@@ -17,6 +17,21 @@ node eval/bench/run.mjs --dir <저장소를 받을 폴더>
 - **비교 방식**: 키워드 검색(파일 통째로), 키워드 검색(맞은 줄 앞뒤 12줄씩), Lantern. 그리고 Lantern과 같은 수의 파일을 무작위로 골랐을 때의 기대 적중률
 - **한계**: 커밋 메시지는 짧고 영어라 실제 사용자 질문과 다릅니다. 정답 파일은 '고친 파일'이라, 읽어야 했지만 고치지 않은 파일은 정답에 없습니다
 
+### 의미 검색 켜고 재기
+
+OpenAI 호환 `/embeddings` 서버를 환경변수로 넘기면 `lantern context`가 빠진 벡터를 모두 만든 뒤 의미 검색을 곁들여 조립합니다. 벡터는 인덱스에 (모델, 조각 내용 해시)로 남아 커밋을 바꿔 가며 재도 바뀐 조각만 새로 만듭니다.
+
+```bash
+export LANTERN_EMBED_URL=http://127.0.0.1:8711/v1      # 예: Ollama는 http://localhost:11434/v1
+export LANTERN_EMBED_MODEL=google/embeddinggemma-300m
+export LANTERN_EMBED_QUERY="task: code retrieval | query: {query}"   # 모델이 권하는 지시문 (없으면 생략)
+export LANTERN_EMBED_DOC="title: {path} | text: {text}"
+# export LANTERN_EMBED_KEY=...                        # 키가 필요한 서버
+node eval/bench/run.mjs --dir <저장소를 받을 폴더>
+```
+
+[bench/결과-의미검색.md](bench/결과-의미검색.md)는 이렇게 잰 결과입니다 (run.mjs는 `bench/결과.md`를 덮어쓰므로 이름을 바꿔 둠). CPU에서 `embeddinggemma-300m`은 초당 약 2조각이라, commons-lang(약 1만 5천 조각)은 처음에 몇 시간 걸립니다.
+
 ## 맥락 적중률 (모델 호출 없음, 무료)
 
 ```bash
