@@ -6,6 +6,7 @@ mod agent;
 mod agents;
 mod config;
 mod applog;
+mod review;
 mod tasks;
 mod worktree;
 mod completion;
@@ -405,6 +406,31 @@ async fn list_agents(state: State<'_, AppState>) -> CmdResult<Vec<agents::AgentD
     let cfg = config::load(root.as_deref()).unwrap_or_else(|_| toml::from_str(config::DEFAULT_CONFIG).expect("기본 설정"));
     list.extend(acp::agent_defs(&cfg));
     Ok(list)
+}
+
+/// 커밋 전 영향 검토: 아직 커밋하지 않은 변경 전체의 영향 반경
+#[tauri::command]
+async fn review_changes(state: State<'_, AppState>, repo: Option<String>) -> CmdResult<review::Review> {
+    let dir = git_repo(&state, repo.as_deref().unwrap_or("")).map_err(anyhow_err)?;
+    let root = state.project().map_err(anyhow_err)?.root.clone();
+    let prefix = gitops::rel_path(&root, &dir);
+    // 연 폴더가 저장소의 하위 폴더면, 저장소 기준 경로에서 그 부분을 뗀다
+    let strip = if prefix.is_empty() && dir != root {
+        gitops::git(&root, &["rev-parse", "--show-prefix"]).unwrap_or_default().trim().trim_end_matches('/').to_string()
+    } else {
+        String::new()
+    };
+    with_engine(&state, move |e, _| review::review(&e.store, &dir, &prefix, &strip)).await
+}
+
+/// 스테이징된 변경(없으면 전체)으로 커밋 메시지를 만든다 (기본 모델)
+#[tauri::command]
+async fn commit_message(state: State<'_, AppState>, repo: Option<String>) -> CmdResult<String> {
+    let dir = git_repo(&state, repo.as_deref().unwrap_or("")).map_err(anyhow_err)?;
+    let p = state.project().map_err(anyhow_err)?;
+    let cfg = config::load(p.config_root()).map_err(anyhow_err)?;
+    agent::check_budget(&cfg).map_err(anyhow_err)?;
+    review::commit_message(&state.http, &cfg, &dir).await.map_err(anyhow_err)
 }
 
 /// 외부 에이전트 로그인. 대개 에이전트가 브라우저를 열고, 로그인이 끝나면 돌아온다.
@@ -932,6 +958,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             acp_authenticate,
+            review_changes,
+            commit_message,
             open_project,
             set_trust,
             startup_path,
