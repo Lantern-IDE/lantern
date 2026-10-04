@@ -74,7 +74,7 @@ const file = (rel) => fs.readFileSync(path.join(DIRS.proj, rel), "utf8");
 
 // ── 모의 모델 (OpenAI 호환, 스트리밍) ────────────────────────
 // 1차: read_file → 2차: edit_file → 3차: 완료. 무엇을 읽고 고칠지는 시나리오가 정한다.
-const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "" };
+const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null };
 const mockServer = http.createServer((req, res) => {
   let body = "";
   req.on("data", (c) => (body += c));
@@ -108,6 +108,14 @@ const mockServer = http.createServer((req, res) => {
       return done("stop");
     }
     const tools = j.messages.filter((m) => m.role === "tool").length;
+    const parts = j.messages.flatMap((m) => (m.role === "user" && Array.isArray(m.content) ? m.content : []));
+    const img = parts.find((p) => p.type === "image_url");
+    if (img) {
+      const png = Buffer.from(img.image_url.url.split(",")[1], "base64");
+      mock.image = { prefix: img.image_url.url.split(",")[0], width: png.readUInt32BE(16), height: png.readUInt32BE(20), text: parts.find((p) => p.type === "text")?.text ?? "" };
+      send({ choices: [{ index: 0, delta: { content: "이미지를 봤습니다." } }] });
+      return done("stop");
+    }
     const first = String(j.messages.find((m) => m.role === "user")?.content ?? "");
     if (first.includes("테스트를 만들어줘")) {
       mock.testPrompt = first;
@@ -684,6 +692,37 @@ scenario("테스트 없는 변경 → 테스트 만들기: 기존 테스트를 �
     document.querySelector('.ab-item[data-view="tasks"]').click();
     return true;
   });
+});
+
+scenario("채팅에 이미지 붙여넣기: 미리보기 → 줄여서 모델에 보냄", async () => {
+  await run(() => {
+    document.querySelector("#btn-new-task").click();
+    return true;
+  });
+  // 3000×2000 PNG를 붙여 넣는다 (긴 변 1568로 줄어야 한다)
+  await run(async () => {
+    const c = document.createElement("canvas");
+    c.width = 3000;
+    c.height = 2000;
+    const g = c.getContext("2d");
+    g.fillStyle = "#22d3ee";
+    g.fillRect(0, 0, 3000, 2000);
+    const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+    const dt = new DataTransfer();
+    dt.items.add(new File([blob], "shot.png", { type: "image/png" }));
+    document.querySelector("#prompt").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+    return true;
+  });
+  await waitFor(() => document.querySelectorAll("#attachments .attach-thumb").length === 1, 10000, "미리보기");
+  await run(ui.sendTask, "이 화면에서 버튼 색을 알려줘", "ask", false);
+  await waitFor(() => document.querySelector(".task-log:not(.hidden)")?.innerText.includes("이미지를 봤습니다"), 20000, "이미지에 대한 답");
+  if (!mock.image || mock.image.prefix !== "data:image/png;base64" || mock.image.width !== 1568 || mock.image.height !== 1045) throw new Error(`보낸 이미지: ${JSON.stringify(mock.image)}`);
+  if (!mock.image.text.includes("버튼 색")) throw new Error("이미지와 함께 글이 가지 않음");
+  const ui2 = await run(() => ({
+    thumbs: document.querySelectorAll(".task-log:not(.hidden) .user-images img").length,
+    pending: document.querySelectorAll("#attachments .attach-thumb").length,
+  }));
+  if (ui2.thumbs !== 1 || ui2.pending !== 0) throw new Error(`화면: ${JSON.stringify(ui2)}`);
 });
 
 scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
