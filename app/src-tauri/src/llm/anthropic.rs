@@ -30,6 +30,9 @@ pub fn build_body(m: &ModelConfig, req: &ChatRequest<'_>) -> Value {
                         "type": "tool_result", "tool_use_id": tool_use_id,
                         "content": content, "is_error": is_error
                     }),
+                    Block::Image { media_type, data } => json!({
+                        "type": "image", "source": { "type": "base64", "media_type": media_type, "data": data }
+                    }),
                     Block::Raw { value } => value.clone(),
                 })
                 .collect();
@@ -262,6 +265,21 @@ mod tests {
         assert_eq!(b["messages"][1]["content"][0]["type"], "thinking");
         assert_eq!(b["messages"][1]["content"][1]["type"], "tool_use");
         assert_eq!(b["messages"][2]["content"][0]["type"], "tool_result");
+    }
+
+    fn with_image() -> Vec<Message> {
+        vec![Message {
+            role: Role::User,
+            blocks: vec![Block::Text { text: "이 화면 고쳐줘".into() }, Block::Image { media_type: "image/png".into(), data: "iVBO".into() }],
+        }]
+    }
+
+    #[test]
+    fn sends_images_as_base64_source() {
+        let b = build_body(&model(), &ChatRequest { system: "s", messages: &with_image(), tools: &[] });
+        let c = &b["messages"][0]["content"];
+        assert_eq!(c[0]["type"], "text");
+        assert_eq!(c[1], json!({ "type": "image", "source": { "type": "base64", "media_type": "image/png", "data": "iVBO" } }));
     }
 
     #[test]

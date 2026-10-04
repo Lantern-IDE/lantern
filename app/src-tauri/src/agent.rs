@@ -3,7 +3,7 @@
 
 use crate::agents::{self, AgentDef};
 use crate::config::{self, Config};
-use crate::llm::{self, Block, ChatRequest, Message, Role, StopReason, StreamEvent, Usage};
+use crate::llm::{self, Block, ChatRequest, ImageInput, Message, Role, StopReason, StreamEvent, Usage};
 use crate::state::{self, AppState};
 use crate::tools::{Approver, BoxFuture, ToolCtx, ToolOutcome};
 use anyhow::{bail, Context, Result};
@@ -132,11 +132,13 @@ pub fn repair_history(history: &mut Vec<Message>) {
     }
 }
 
-/// 사용자 메시지를 붙인다. 직전이 사용자 메시지(도구 결과)면 같은 메시지에 합친다.
-pub fn push_user_text(history: &mut Vec<Message>, text: String) {
+/// 사용자 메시지(글과 붙인 이미지)를 붙인다. 직전이 사용자 메시지(도구 결과)면 같은 메시지에 합친다.
+pub fn push_user(history: &mut Vec<Message>, text: String, images: Vec<ImageInput>) {
+    let mut blocks = vec![Block::Text { text }];
+    blocks.extend(images.into_iter().map(|i| Block::Image { media_type: i.media_type, data: i.data }));
     match history.last_mut() {
-        Some(m) if m.role == Role::User => m.blocks.push(Block::Text { text }),
-        _ => history.push(Message::user_text(text)),
+        Some(m) if m.role == Role::User => m.blocks.extend(blocks),
+        _ => history.push(Message { role: Role::User, blocks }),
     }
 }
 
@@ -182,10 +184,10 @@ impl Approver for TauriApprover {
     }
 }
 
-pub async fn run(app: AppHandle, session: String, agent_id: String, text: String, file: Option<String>, line: Option<u32>) {
+pub async fn run(app: AppHandle, session: String, agent_id: String, text: String, images: Vec<ImageInput>, file: Option<String>, line: Option<u32>) {
     let cancel = Arc::new(AtomicBool::new(false));
     app.state::<AppState>().cancels.lock().unwrap().insert(session.clone(), cancel.clone());
-    let result = run_inner(&app, &session, &agent_id, text, file, line, &cancel).await;
+    let result = run_inner(&app, &session, &agent_id, text, images, file, line, &cancel).await;
     let st = app.state::<AppState>();
     st.cancels.lock().unwrap().remove(&session);
     if let Some(h) = st.sessions.lock().unwrap().get_mut(&session) {
@@ -237,11 +239,13 @@ pub(crate) fn check_budget(config: &Config) -> Result<state::MonthUsage> {
     Ok(month)
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn run_inner(
     app: &AppHandle,
     session: &str,
     agent_id: &str,
     text: String,
+    images: Vec<ImageInput>,
     file: Option<String>,
     line: Option<u32>,
     cancel: &Arc<AtomicBool>,
@@ -287,7 +291,7 @@ async fn run_inner(
         known.or_else(|| crate::tasks::worktree_of(&project.root, session).map(|w| w.0)).filter(|p| p.is_dir())
     };
     repair_history(&mut history);
-    push_user_text(&mut history, format!("{text}\n\n<project_context>\n{}\n</project_context>", ctx.0));
+    push_user(&mut history, format!("{text}\n\n<project_context>\n{}\n</project_context>", ctx.0), images);
 
     let approver = TauriApprover { app: app.clone(), session: session.to_string(), cancel: cancel.clone() };
     let tctx = ToolCtx { project: project.clone(), config: &config, approver: &approver, changed: Default::default(), originals: Default::default(), workdir: workdir.clone() };
@@ -447,9 +451,10 @@ mod tests {
         repair_history(&mut h);
         assert_eq!(h.len(), 3);
         assert!(matches!(&h[2].blocks[0], Block::ToolResult { tool_use_id, is_error: true, .. } if tool_use_id == "t1"));
-        push_user_text(&mut h, "next".into());
+        push_user(&mut h, "next".into(), vec![ImageInput { media_type: "image/png".into(), data: "AAAA".into() }]);
         assert_eq!(h.len(), 3, "도구 결과 메시지에 합쳐져야 한다");
-        assert_eq!(h[2].blocks.len(), 2);
+        assert_eq!(h[2].blocks.len(), 3);
+        assert!(matches!(&h[2].blocks[2], Block::Image { media_type, .. } if media_type == "image/png"));
     }
 
     #[test]

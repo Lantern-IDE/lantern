@@ -18,9 +18,13 @@ pub fn build_body(m: &ModelConfig, req: &ChatRequest<'_>) -> Value {
         match msg.role {
             Role::User => {
                 let mut text = Vec::new();
+                let mut images = Vec::new();
                 for b in &msg.blocks {
                     match b {
                         Block::Text { text: t } => text.push(t.clone()),
+                        Block::Image { media_type, data } => {
+                            images.push(json!({ "type": "image_url", "image_url": { "url": format!("data:{media_type};base64,{data}") } }))
+                        }
                         Block::ToolResult { tool_use_id, content, is_error } => {
                             let content = if *is_error { format!("[오류] {content}") } else { content.clone() };
                             messages.push(json!({ "role": "tool", "tool_call_id": tool_use_id, "content": content }));
@@ -28,7 +32,12 @@ pub fn build_body(m: &ModelConfig, req: &ChatRequest<'_>) -> Value {
                         _ => {}
                     }
                 }
-                if !text.is_empty() {
+                if !images.is_empty() {
+                    // 이미지가 있으면 내용을 조각 배열로 (글 먼저)
+                    let mut parts = vec![json!({ "type": "text", "text": text.join("\n\n") })];
+                    parts.extend(images);
+                    messages.push(json!({ "role": "user", "content": parts }));
+                } else if !text.is_empty() {
                     messages.push(json!({ "role": "user", "content": text.join("\n\n") }));
                 }
             }
@@ -219,5 +228,24 @@ mod tests {
         assert_eq!(ms[2]["tool_calls"][0]["function"]["arguments"], "{\"path\":\"a\"}");
         assert_eq!(ms[3]["role"], "tool");
         assert!(b.get("tools").is_none());
+    }
+
+    fn with_image() -> Vec<Message> {
+        vec![Message {
+            role: Role::User,
+            blocks: vec![Block::Text { text: "이 화면 고쳐줘".into() }, Block::Image { media_type: "image/png".into(), data: "iVBO".into() }],
+        }]
+    }
+
+    #[test]
+    fn sends_images_as_data_urls() {
+        let m = crate::config::load(None).unwrap().models["local"].clone();
+        let b = build_body(&m, &ChatRequest { system: "s", messages: &with_image(), tools: &[] });
+        let c = &b["messages"][1]["content"];
+        assert_eq!(c[0], json!({ "type": "text", "text": "이 화면 고쳐줘" }));
+        assert_eq!(c[1]["image_url"]["url"], "data:image/png;base64,iVBO");
+        // 이미지가 없으면 예전처럼 글 하나
+        let plain = build_body(&m, &ChatRequest { system: "s", messages: &[Message::user_text("hi")], tools: &[] });
+        assert_eq!(plain["messages"][1]["content"], "hi");
     }
 }

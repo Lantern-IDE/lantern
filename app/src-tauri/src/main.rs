@@ -470,13 +470,16 @@ async fn agent_send(
     session: String,
     agent: String,
     text: String,
+    images: Option<Vec<llm::ImageInput>>,
     file: Option<String>,
     line: Option<u32>,
 ) -> CmdResult<()> {
+    let images = images.unwrap_or_default();
+    llm::check_images(&images).map_err(err)?;
     if agent.starts_with(acp::PREFIX) {
-        tauri::async_runtime::spawn(acp::run(app, session, agent, text, file, line));
+        tauri::async_runtime::spawn(acp::run(app, session, agent, text, images, file, line));
     } else {
-        tauri::async_runtime::spawn(agent::run(app, session, agent, text, file, line));
+        tauri::async_runtime::spawn(agent::run(app, session, agent, text, images, file, line));
     }
     Ok(())
 }
@@ -989,7 +992,9 @@ fn main() {
                 .inner_size(1440.0, 900.0)
                 .min_inner_size(900.0, 560.0)
                 .shadow(true)
-                .background_color(tauri::window::Color(0x18, 0x18, 0x18, 0xff));
+                .background_color(tauri::window::Color(0x18, 0x18, 0x18, 0xff))
+                // 파일 끌어 놓기를 웹 화면이 받는다 (채팅에 이미지 붙이기)
+                .disable_drag_drop_handler();
             // Windows·Linux는 제목 표시줄을 직접 그린다 (창 조작 버튼 포함).
             // macOS는 시스템 신호등 버튼을 제목 표시줄 위에 겹쳐 두고, 그 자리만 비운다 (styles.css의 .mac).
             #[cfg(not(target_os = "macos"))]
