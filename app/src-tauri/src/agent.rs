@@ -198,7 +198,7 @@ pub(crate) fn save_checkpoint(st: &AppState, originals: state::Originals) -> Opt
     })
 }
 
-fn check_budget(config: &Config) -> Result<state::MonthUsage> {
+pub(crate) fn check_budget(config: &Config) -> Result<state::MonthUsage> {
     let month = state::this_month_usage();
     let limit = config.budget.monthly_usd_limit;
     if limit > 0.0 && month.cost_usd >= limit {
