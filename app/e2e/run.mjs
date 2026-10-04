@@ -774,6 +774,22 @@ scenario("다시 켜면 작업이 복원된다", async () => {
   if (!titles.includes("서명 접미사를 바꿔줘") || !titles.includes("격리해서 바꿔줘")) throw new Error(`작업 목록: ${titles.join(", ")}`);
 });
 
+scenario("외부 에이전트: 다시 켠 뒤에도 같은 대화를 이어간다 (session/load)", async () => {
+  await run(() => {
+    [...document.querySelectorAll("#task-list .task")].find((t) => t.textContent.includes("/signin으로 바꿔줘")).click();
+    return true;
+  });
+  await run(ui.sendTask, "이어서 확인해줘", "acp:e2e", false);
+  await waitFor(() => document.querySelector(".task-log:not(.hidden)")?.innerText.includes("앞의 대화를 기억합니다"), 30000, "이어진 대화의 답");
+  const log = acpLog();
+  const loads = log.filter((l) => "load" in l);
+  if (loads.length !== 1 || loads[0].load !== "s1") throw new Error(`session/load: ${JSON.stringify(loads)}`);
+  if (log.filter((l) => "mcp" in l).length !== 2) throw new Error("다시 켠 뒤 새 세션을 만듦"); // 로그인 전·후 두 번뿐
+  if (!log.some((l) => l.followUp === "s1")) throw new Error("이어간 세션에 보내지 않음");
+  const text = await run(() => document.querySelector(".task-log:not(.hidden)").innerText);
+  if (text.includes("REPLAYED") || text.includes("새 대화로 시작")) throw new Error("다시 보낸 지난 대화가 화면에 쌓이거나 이어가지 못했다고 나옴");
+});
+
 scenario("영어 화면: 보이는 한국어가 없다", async () => {
   await run(() => {
     localStorage.setItem("lang", JSON.stringify("en"));
