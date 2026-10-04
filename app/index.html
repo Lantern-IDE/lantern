@@ -251,12 +251,14 @@
             <div id="messages" class="scroll" aria-live="polite"></div>
             <div id="composer">
               <div class="composer-box">
+                <div id="attachments" class="attachments hidden"></div>
                 <textarea id="prompt" rows="2" placeholder="코드에 대해 물어보거나 작업을 맡기세요" aria-label="Lantern에게 보낼 메시지"></textarea>
                 <div class="composer-row">
                   <select id="agent-select" title="에이전트 (.lantern/agents/*.md)" aria-label="에이전트"></select>
                   <label class="chip-btn focus-toggle" title="현재 파일과 커서 위치를 맥락에 포함"><input type="checkbox" id="focus-file" checked /><i class="codicon codicon-file"></i><span id="focus-name">현재 파일</span></label>
                   <label class="chip-btn iso-toggle" title="이 작업을 별도 작업 공간(git worktree)에서 합니다. 여러 작업이 같은 파일을 고쳐도 겹치지 않고, 끝나면 변경을 보고 프로젝트에 적용하거나 버립니다. 작업을 시작하기 전에만 고를 수 있습니다."><input type="checkbox" id="isolate-task" /><i class="codicon codicon-git-branch"></i><span>격리</span></label>
                   <div class="spacer"></div>
+                  <button class="icon-btn" id="btn-attach" title="이미지 붙이기 (붙여넣기·끌어 놓기도 됩니다)" aria-label="이미지 붙이기"><i class="codicon codicon-file-media"></i></button>
                   <button class="chip-btn" id="composer-model" title="모델 설정"><i class="codicon codicon-sparkle"></i><span id="composer-model-name"></span></button>
                   <button id="btn-stop" class="send-btn stop-btn hidden" title="중지 (Esc)" aria-label="중지"><i class="codicon codicon-debug-stop"></i></button>
                   <button id="btn-send" class="send-btn" title="보내기 (Enter)" aria-label="보내기" disabled><i class="codicon codicon-arrow-up"></i></button>

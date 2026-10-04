@@ -498,11 +498,24 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 #composer { padding: 8px 12px 12px; }
 .composer-box { background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; transition: border-color var(--t-fast), box-shadow var(--t-fast); }
 .composer-box:focus-within { border-color: var(--focus); }
+.composer-box.drop { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.attachments { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 8px 0; }
+.attach-thumb { position: relative; width: 56px; height: 56px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--bg); }
+.attach-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.attach-remove { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 4px; background: rgb(0 0 0 / 0.65); color: #fff; cursor: pointer; opacity: 0; transition: opacity var(--t-fast); }
+.attach-remove .codicon { font-size: 12px; }
+.attach-thumb:hover .attach-remove, .attach-remove:focus-visible { opacity: 1; }
+.user-images { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.user-images img { max-width: 160px; max-height: 120px; border: 1px solid var(--border); border-radius: 6px; object-fit: contain; background: var(--bg); }
+.user-images-note { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--muted); font-size: 12px; }
 #prompt { display: block; width: 100%; resize: none; border: none; background: transparent; padding: 10px 12px 4px; min-height: 48px; max-height: 220px; line-height: 1.5; box-shadow: none; }
 #prompt:focus { border: none; }
 .composer-row { display: flex; align-items: center; gap: 4px; padding: 4px 6px 6px; min-width: 0; }
 #composer { container-type: inline-size; }
-@container (max-width: 300px) { .focus-toggle span, #composer-model span { display: none; } }
+@container (max-width: 380px) { .focus-toggle span, .iso-toggle span { display: none; } }
+@container (max-width: 300px) { #composer-model span { display: none; } }
+#btn-attach { flex-shrink: 0; width: 22px; height: 22px; color: var(--muted); }
+#btn-attach .codicon { font-size: 13px; }
 .chip-btn { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 6px; border-radius: var(--radius-sm); font-size: 11.5px; color: var(--muted); border: 1px solid transparent; max-width: 140px; min-width: 0; flex-shrink: 1; white-space: nowrap; transition: background var(--t-fast), color var(--t-fast); }
 .chip-btn:hover { background: var(--hover); color: var(--fg); }
 .chip-btn .codicon { font-size: 12px; }

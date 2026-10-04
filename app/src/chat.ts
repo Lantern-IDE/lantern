@@ -19,12 +19,13 @@ import * as i18n from "./i18n";
 export { parseContext } from "./lib/context";
 import * as lsp from "./lsp";
 import * as toast from "./toast";
+import * as attach from "./attach";
 
 export type TaskStatus = "idle" | "running" | "approval" | "done" | "error" | "stopped";
 
 /** 저장·복원용 기록 한 줄 */
 type Entry =
-  | { t: "user"; text: string }
+  | { t: "user"; text: string; images?: number }
   | { t: "ev"; ev: AgentEvent }
   | { t: "touched"; id: string; names: string[] }
   | { t: "iso-done" };
@@ -156,7 +157,7 @@ function isRunning(task: Task | null): boolean {
 }
 
 function updateSendState() {
-  const empty = !$<HTMLTextAreaElement>("#prompt").value.trim();
+  const empty = !$<HTMLTextAreaElement>("#prompt").value.trim() && !attach.count();
   ($("#btn-send") as HTMLButtonElement).disabled = isRunning(active) || empty;
 }
 
@@ -634,7 +635,8 @@ export async function startTask(text: string, agent?: string) {
 async function send(text?: string) {
   const input = $<HTMLTextAreaElement>("#prompt");
   const msg = (text ?? input.value).trim();
-  if (!msg) return;
+  // 이미지만 붙여 보내도 된다
+  if (!msg && (text !== undefined || !attach.count())) return;
   if (!active) activate(newTask());
   const task = active!;
   if (isRunning(task)) return;
@@ -650,15 +652,19 @@ async function send(text?: string) {
     }
   }
   task.lastPrompt = msg;
-  if (task.title === NEW_TITLE) task.title = msg.length > 48 ? `${msg.slice(0, 46)}…` : msg;
+  if (task.title === NEW_TITLE && msg) task.title = msg.length > 48 ? `${msg.slice(0, 46)}…` : msg;
   const agent = $<HTMLSelectElement>("#agent-select").value;
   const useFocus = $<HTMLInputElement>("#focus-file").checked;
   const f = useFocus ? editor.focusInfo() : { file: null, line: null };
   if (!text) input.value = "";
+  // 붙인 이미지는 입력창에서 보낼 때만 (다시 시도는 글만)
+  const images = text ? [] : attach.take();
   const u = turn(task, "user");
-  u.append(h("div", { class: "user-text" }, msg));
+  if (msg) u.append(h("div", { class: "user-text" }, msg));
+  if (images.length) u.append(attach.thumbs(images));
   if (first && task.isolated) u.append(isolationNote(task.isolated));
-  task.log.push({ t: "user", text: msg });
+  // 작업 기록에는 이미지 자체 대신 장수만 남긴다 (모델 대화 기록에는 그대로 있다)
+  task.log.push(images.length ? { t: "user", text: msg, images: images.length } : { t: "user", text: msg });
   persist(task);
   syncIsolateToggle();
   task.footprint.last = null;
@@ -666,7 +672,7 @@ async function send(text?: string) {
   task.body = turn(task, "bot");
   setWorking(task.botMark, true);
   try {
-    await api.agentSend(task.id, agent, msg, f.file, f.line);
+    await api.agentSend(task.id, agent, msg, images.map(({ mediaType, data }) => ({ mediaType, data })), f.file, f.line);
   } catch (e) {
     showError(task, errorText(e));
     task.body = null;
@@ -961,6 +967,7 @@ function restore(data: SavedTask) {
       if (e.t === "user") {
         const u = turn(task, "user");
         u.append(h("div", { class: "user-text" }, e.text));
+        if (e.images) u.append(h("div", { class: "user-images-note" }, codicon("file-media"), `이미지 ${e.images}장`));
         if (task.isolated && e === task.log.find((x) => x.t === "user")) u.append(isolationNote(task.isolated));
         task.lastPrompt = e.text;
         task.body = turn(task, "bot");
@@ -1089,6 +1096,7 @@ export function init(h_: Hooks) {
   $("#btn-stop").addEventListener("click", () => active && void api.agentCancel(active.id));
   $("#composer-model").addEventListener("click", () => hooks.pickModel($("#composer-model")));
   $("#agent-select").addEventListener("change", (e) => store.set("agent", (e.target as HTMLSelectElement).value));
+  attach.init(() => updateSendState());
   const prompt = $<HTMLTextAreaElement>("#prompt");
   prompt.addEventListener("input", () => {
     updateSendState();
