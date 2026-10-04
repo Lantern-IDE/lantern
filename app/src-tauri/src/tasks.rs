@@ -130,7 +130,7 @@ pub fn delete(root: &Path, id: &str) -> Result<()> {
 }
 
 fn delete_in(dir: &Path, id: &str) {
-    for ext in ["ui.json", "history.json"] {
+    for ext in ["ui.json", "history.json", "acp.json"] {
         let _ = std::fs::remove_file(dir.join(format!("{id}.{ext}")));
     }
 }
@@ -155,6 +155,23 @@ pub fn load_history(root: &Path, id: &str) -> Option<Vec<Message>> {
     check_id(id).ok()?;
     let text = std::fs::read_to_string(dir(root).ok()?.join(format!("{id}.history.json"))).ok()?;
     serde_json::from_str(&text).ok()
+}
+
+// ── 외부 에이전트 대화 ────────────────────────────────────
+
+/// 외부 에이전트의 세션 id. 다시 켠 뒤 session/load로 같은 대화를 이어가는 데 쓴다
+pub fn save_acp_session(root: &Path, id: &str, agent: &str, session_id: &str) -> Result<()> {
+    check_id(id)?;
+    let v = serde_json::json!({ "agent": agent, "sessionId": session_id });
+    write_atomic(&dir(root)?.join(format!("{id}.acp.json")), &serde_json::to_vec(&v)?)
+}
+
+/// 같은 에이전트로 만든 세션만 돌려준다
+pub fn load_acp_session(root: &Path, id: &str, agent: &str) -> Option<String> {
+    check_id(id).ok()?;
+    let text = std::fs::read_to_string(dir(root).ok()?.join(format!("{id}.acp.json"))).ok()?;
+    let v: Value = serde_json::from_str(&text).ok()?;
+    (v["agent"].as_str()? == agent).then(|| v["sessionId"].as_str().map(String::from))?
 }
 
 // ── 되돌리기 원본 ────────────────────────────────────────
