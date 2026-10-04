@@ -36,6 +36,15 @@ Languages the engine understands (symbols, calls, map, impact radius): Rust, Pyt
 
 Picking as many files at random as Lantern returns would hit an answer file 10% of the time. Korean questions are human translations of the same commit messages. Reproduce with `node eval/bench/run.mjs` ([results](eval/bench/결과.md), [method](eval/README.md)). Bring your own project and questions with `eval/retrieval.mjs`.
 
+**Semantic search (optional).** With an embedding server configured, the engine also finds code whose meaning is close to the question even when no keyword matches, and merges that ranking with its own. Measured on the same benchmark with a small local model (`embeddinggemma-300m`): recall 88% → **93%**, first 3 65% → **73%**; in Korean 76% → **86%**, 43% → **52%**, with about 5 more files per question ([results](eval/bench/결과-의미검색.md)). It is off by default. Turn it on in `config.toml` with any OpenAI-compatible `/embeddings` endpoint (OpenAI, Ollama, LM Studio…); code chunks, with secrets masked, are sent to that server. The first run embeds the whole project in the background, which can take hours for a large project with a CPU-only local model.
+
+```toml
+[embeddings]
+base_url = "https://api.openai.com/v1"
+model = "text-embedding-3-small"
+api_key_env = "OPENAI_API_KEY"
+```
+
 The engine also runs on its own as a CLI and an MCP server, so you can use it from other agents:
 
 ```bash

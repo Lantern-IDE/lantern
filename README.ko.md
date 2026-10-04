@@ -36,6 +36,15 @@
 
 Lantern이 가져온 것과 같은 수의 파일을 무작위로 고르면 정답을 가져올 확률은 10%입니다. 한국어 질문은 같은 커밋 메시지를 사람이 옮긴 것입니다. `node eval/bench/run.mjs`로 재현할 수 있습니다 ([결과](eval/bench/결과.md), [방법](eval/README.md)). 자기 프로젝트와 질문으로는 `eval/retrieval.mjs`를 쓰면 됩니다.
 
+**의미 검색 (선택).** 임베딩 서버를 설정하면 키워드가 겹치지 않아도 질문과 뜻이 가까운 코드를 찾아 엔진의 순위와 합칩니다. 같은 벤치마크에서 작은 로컬 모델(`embeddinggemma-300m`)로 재면 적중률 88% → **93%**, 앞 3개 65% → **73%**, 한국어는 76% → **86%**, 43% → **52%**이고, 질문당 가져오는 파일은 5개쯤 늘어납니다 ([결과](eval/bench/결과-의미검색.md)). 기본은 꺼져 있습니다. `config.toml`에 OpenAI 호환 `/embeddings` 서버(OpenAI, Ollama, LM Studio 등)를 적으면 켜지고, 코드 조각(비밀 값은 가림)이 그 서버로 갑니다. 처음 켜면 프로젝트 전체를 뒤에서 임베딩하는데, CPU로 돌리는 로컬 모델은 큰 프로젝트에서 몇 시간 걸릴 수 있습니다.
+
+```toml
+[embeddings]
+base_url = "https://api.openai.com/v1"
+model = "text-embedding-3-small"
+api_key_env = "OPENAI_API_KEY"
+```
+
 맥락 엔진은 CLI와 MCP 서버로 따로 쓸 수도 있습니다:
 
 ```bash
