@@ -297,9 +297,11 @@ impl Conn {
         }
     }
 
-    async fn ensure_session(&self, cwd: &Path, project_root: &Path) -> Reply {
+    /// 세션을 준비한다. 이 작업에서 쓰던 세션이 있고 에이전트가 지원하면 session/load로 같은 대화를 이어간다
+    /// (다시 켠 뒤에도). 이어가지 못하면 새로 만들고, 두 번째 값으로 알린다.
+    async fn ensure_session(&self, cwd: &Path, project_root: &Path, task: &str) -> std::result::Result<(String, bool), RpcError> {
         if let Some(s) = self.acp_session.lock().unwrap().clone() {
-            return Ok(Value::String(s));
+            return Ok((s, false));
         }
         // Lantern 맥락 엔진을 MCP 서버로 넘긴다 (에이전트가 get_context 등을 부를 수 있게)
         let mcp: Vec<Value> = std::env::current_exe()
@@ -307,10 +309,26 @@ impl Conn {
             .map(|exe| json!({ "name": "lantern", "command": exe, "args": ["--mcp", project_root], "env": [] }))
             .into_iter()
             .collect();
+        let saved = crate::tasks::load_acp_session(project_root, task, &self.agent);
+        let can_load = self.init.lock().unwrap().pointer("/agentCapabilities/loadSession").and_then(Value::as_bool).unwrap_or(false);
+        if let (Some(id), true) = (&saved, can_load) {
+            // 지난 대화를 session/update로 다시 보내 오지만, 진행 중인 작업이 없을 때라 화면에는 쌓지 않는다
+            match self.request("session/load", json!({ "sessionId": id, "cwd": cwd, "mcpServers": mcp }), Some(Duration::from_secs(90))).await {
+                Ok(_) => {
+                    *self.acp_session.lock().unwrap() = Some(id.clone());
+                    return Ok((id.clone(), false));
+                }
+                Err(e) if e.code == AUTH_REQUIRED => return Err(e),
+                Err(e) => crate::applog::error(&format!("외부 에이전트 대화를 이어가지 못함: {e}")),
+            }
+        }
         let r = self.request("session/new", json!({ "cwd": cwd, "mcpServers": mcp }), Some(Duration::from_secs(90))).await?;
         let id = r["sessionId"].as_str().ok_or(RpcError { code: -32603, message: "sessionId가 없습니다".into() })?.to_string();
         *self.acp_session.lock().unwrap() = Some(id.clone());
-        Ok(Value::String(id))
+        if let Err(e) = crate::tasks::save_acp_session(project_root, task, &self.agent, &id) {
+            crate::applog::error(&format!("외부 에이전트 세션을 저장하지 못함: {e:#}"));
+        }
+        Ok((id, saved.is_some()))
     }
 
     fn current_turn(&self) -> std::result::Result<Arc<Turn>, RpcError> {
@@ -676,8 +694,8 @@ async fn run_inner(
         );
         Ok((vec![], None))
     };
-    let acp_session = match conn.ensure_session(&root, &project.root).await {
-        Ok(v) => v.as_str().unwrap_or_default().to_string(),
+    let (acp_session, lost) = match conn.ensure_session(&root, &project.root, session).await {
+        Ok(v) => v,
         Err(e) if e.code == AUTH_REQUIRED => return auth_required(&conn),
         Err(e) => return Err(conn.fail(&format!("{} 세션을 만들지 못했습니다: {e}", spec.name))),
     };
@@ -706,6 +724,15 @@ async fn run_inner(
             tools: vec![],
         },
     );
+
+    if lost {
+        agent::emit(
+            app,
+            AgentEvent::Text { session: session.into(), text: format!("({}이(가) 이전 대화를 이어가지 못해 새 대화로 시작합니다. 필요한 내용은 다시 알려 주세요)
+
+", spec.name) },
+        );
+    }
 
     let turn = Arc::new(Turn {
         session: session.into(),
