@@ -460,6 +460,21 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .diff .hunk { color: var(--info); }
 .diff .meta { color: var(--dim); }
 
+/* 편집기 안 즉시 수정 (Ctrl+K) */
+.cm-scroller { position: relative; }
+.cm-inline-edit-range { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.inline-edit { position: absolute; z-index: 20; width: min(640px, calc(100% - 60px)); background: var(--elevated); border: 1px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow); padding: 8px; display: flex; flex-direction: column; gap: 6px; font-family: var(--ui-font); font-size: 12.5px; }
+.inline-edit .ie-head { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.inline-edit .ie-head .codicon { color: var(--link); }
+.inline-edit .ie-keys { margin-left: auto; color: var(--dim); font-size: 11.5px; }
+.inline-edit .ie-input { width: 100%; }
+.inline-edit .ie-body:empty { display: none; }
+.inline-edit .ie-body { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow: auto; }
+.inline-edit .ie-body .impact { margin: 0; }
+.inline-edit .ie-status { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.inline-edit .ie-status.bad { color: var(--error); }
+.inline-edit .ie-actions { display: flex; align-items: center; gap: 6px; }
+
 /* 외부 에이전트 로그인 */
 .auth-card { font-size: 12.5px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--elevated); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 .auth-card .auth-head { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--fg-strong); }

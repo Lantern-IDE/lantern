@@ -280,7 +280,7 @@ async function lspCallers(i: Impact): Promise<{ callers: number; files: number; 
   return { callers: found.size, files: new Set([...found.values()].map((n) => n.path).filter((p) => p !== i.path)).size, lspOnly };
 }
 
-function impactRow(diff: string, onTouched: (names: string[]) => void): HTMLElement | null {
+export function impactRow(diff: string, onTouched: (names: string[]) => void = () => {}): HTMLElement | null {
   const target = diffTarget(diff);
   if (!target) return null;
   const row = h("div", { class: "impact loading" }, codicon("loading", "codicon-modifier-spin"), h("span", {}, "영향 반경 계산 중…"));

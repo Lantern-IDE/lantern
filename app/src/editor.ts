@@ -34,6 +34,7 @@ import { $, basename, h } from "./dom";
 import { codicon, fileIcon } from "./icons";
 import { clientFor, pathToUri } from "./lsp";
 import { inlineCompletion } from "./completion";
+import { inlineEditExtension } from "./inlineEdit";
 import * as prefs from "./prefs";
 import { editorAppearance } from "./theme";
 import * as toast from "./toast";
@@ -329,6 +330,7 @@ export async function openFile(path: string, line?: number, col?: number): Promi
         lang ? lang.cm() : [],
         lspSlot.of([]),
         inlineCompletion(path),
+        inlineEditExtension,
         EditorView.updateListener.of((u) => {
           if (u.docChanged && !tab.dirty) {
             tab.dirty = true;
@@ -483,6 +485,12 @@ export async function pathDeleted(path: string) {
 }
 
 /** 활성 편집기 (메뉴의 실행 취소, 찾기 등에 쓴다) */
+/** 지금 보이는 파일 탭의 편집기와 경로 (설정 등 페이지 탭이면 null) */
+export function activeFile(): { view: EditorView; path: string } | null {
+  const t = active ? tabs.get(active) : null;
+  return t?.kind === "file" && t.view ? { view: t.view, path: t.key } : null;
+}
+
 export function activeView(): EditorView | null {
   return active ? tabs.get(active)?.view ?? null : null;
 }

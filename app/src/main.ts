@@ -30,6 +30,7 @@ import * as update from "./update";
 import * as completion from "./completion";
 import * as map from "./map";
 import * as memory from "./memory";
+import * as inlineEdit from "./inlineEdit";
 
 i18n.init();
 prefs.init();
@@ -547,6 +548,16 @@ function registerCommands() {
     { id: "edit.undo", label: "실행 취소", run: withView(undo) },
     { id: "edit.redo", label: "다시 실행", run: withView(redo) },
     { id: "edit.find", label: "찾기", run: withView(openSearchPanel) },
+    {
+      id: "edit.inlineEdit",
+      label: "AI로 바로 고치기",
+      key: "Ctrl+K",
+      run: () => {
+        const f = editor.activeFile();
+        if (!f) return toast.info("고칠 파일을 편집기에서 여세요", "코드를 선택하고 Ctrl+K를 누르면 그 자리에서 고칩니다.");
+        inlineEdit.start(f.view, f.path);
+      },
+    },
     { id: "edit.findInFiles", label: "파일에서 찾기", key: "Ctrl+Shift+F", run: () => showView("search") },
     { id: "edit.replaceInFiles", label: "파일에서 바꾸기", key: "Ctrl+Shift+H", run: () => { showView("search"); search.focusReplace(); } },
     { id: "view.scm", label: "소스 제어", key: "Ctrl+Shift+G", run: () => showView("scm") },
@@ -637,6 +648,7 @@ function init() {
   quickopen.init();
   search.init();
   tree.init();
+  inlineEdit.init({ impactRow: (diff) => chat.impactRow(diff) });
   scm.init({
     onCount: (n) => {
       const b = $("#scm-badge");
