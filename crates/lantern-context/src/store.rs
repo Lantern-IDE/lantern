@@ -393,7 +393,7 @@ impl Store {
         )?;
         let rows = stmt.query_map([model], |r| {
             let b: Vec<u8> = r.get(2)?;
-            Ok((r.get(0)?, r.get(1)?, b.chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect()))
+            Ok((r.get(0)?, r.get(1)?, (0..b.len() / 4).map(|i| f32::from_le_bytes([b[4 * i], b[4 * i + 1], b[4 * i + 2], b[4 * i + 3]])).collect()))
         })?;
         Ok(rows.collect::<rusqlite::Result<_>>()?)
     }
