@@ -1,6 +1,7 @@
 // E2E용 가짜 외부 에이전트 (Agent Client Protocol, 줄 단위 JSON-RPC).
 // 실제 Gemini CLI·Codex와 같은 순서로 움직인다: 로그인 전 session/new는 -32000 → authenticate →
 // 프롬프트: 파일 읽기 요청 → 수정 권한 요청(diff) → 승인되면 쓰기 → 프로젝트 밖 쓰기 시도(거절돼야 함).
+// 다시 켜면 session/load로 같은 세션을 이어간다(지난 대화를 다시 보내 온다).
 // 받은 요청은 ACP_LOG 파일에 한 줄씩 남겨 run.mjs가 확인한다.
 // 환경변수: ACP_FILE(프로젝트 기준 경로), ACP_FROM, ACP_TO(바꿀 글자)
 import fs from "node:fs";
@@ -22,6 +23,11 @@ async function prompt(id, p) {
   const cwd = sessions.get(sid);
   const file = path.join(cwd, ACP_FILE);
   log({ hasContext: p.prompt[0].text.includes("<project_context>") });
+  if (p.prompt[0].text.startsWith("이어서")) {
+    log({ followUp: sid });
+    update(sid, { sessionUpdate: "agent_message_chunk", content: { type: "text", text: "앞의 대화를 기억합니다." } });
+    return send({ id, result: { stopReason: "end_turn" } });
+  }
   update(sid, { sessionUpdate: "agent_message_chunk", content: { type: "text", text: "파일을 읽겠습니다. " } });
   update(sid, { sessionUpdate: "tool_call", toolCallId: "t1", title: "Read", kind: "read", status: "in_progress", locations: [{ path: file }] });
   const read = await ask("fs/read_text_file", { sessionId: sid, path: file });
@@ -59,7 +65,7 @@ readline.createInterface({ input: process.stdin }).on("line", (line) => {
   switch (m.method) {
     case "initialize":
       log({ clientCapabilities: m.params.clientCapabilities });
-      return send({ id: m.id, result: { protocolVersion: 1, agentInfo: { name: "e2e", title: "E2E Agent", version: "1" }, authMethods: [{ id: "browser", name: "Log in with E2E" }, { type: "env_var", id: "key", name: "Use E2E_KEY" }], agentCapabilities: {} } });
+      return send({ id: m.id, result: { protocolVersion: 1, agentInfo: { name: "e2e", title: "E2E Agent", version: "1" }, authMethods: [{ id: "browser", name: "Log in with E2E" }, { type: "env_var", id: "key", name: "Use E2E_KEY" }], agentCapabilities: { loadSession: true } } });
     case "authenticate":
       authed = m.params.methodId === "browser";
       log({ authenticate: m.params.methodId });
@@ -69,6 +75,12 @@ readline.createInterface({ input: process.stdin }).on("line", (line) => {
       if (!authed) return send({ id: m.id, error: { code: -32000, message: "Authentication required" } });
       sessions.set("s1", m.params.cwd);
       return send({ id: m.id, result: { sessionId: "s1" } });
+    case "session/load":
+      log({ load: m.params.sessionId });
+      sessions.set(m.params.sessionId, m.params.cwd);
+      // 지난 대화를 다시 보낸다 (Lantern은 화면에 다시 쌓지 않아야 한다)
+      update(m.params.sessionId, { sessionUpdate: "agent_message_chunk", content: { type: "text", text: "REPLAYED" } });
+      return send({ id: m.id, result: {} });
     case "session/prompt":
       return void prompt(m.id, m.params);
     default:
