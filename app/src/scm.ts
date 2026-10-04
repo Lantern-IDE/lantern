@@ -7,6 +7,9 @@ import { showContextMenu, type MenuEntry } from "./commands";
 import { $, basename, dirname, h, renderDiff } from "./dom";
 import { codicon, fileIcon } from "./icons";
 import * as editor from "./editor";
+import type { Impact } from "./map";
+import * as i18n from "./i18n";
+import { reviewPrompt, type Review } from "./lib/reviewPrompt";
 import * as toast from "./toast";
 
 interface GitFile { path: string; orig: string | null; index: string; worktree: string }
@@ -177,6 +180,7 @@ function renderRepos() {
       const pick = () => {
         if (r.path === active) return;
         active = r.path;
+        $("#scm-review").classList.add("hidden");
         history = [];
         expanded.clear();
         void refresh();
@@ -503,11 +507,92 @@ export function reset() {
   historyOpen = false;
   expanded.clear();
   reposAt = 0;
+  $("#scm-review").classList.add("hidden");
 }
 
-export function init(opts: { onCount: (n: number) => void; onBranch: (text: string | null, title: string) => void }) {
+// ── 커밋 전 검토 ─────────────────────────────────────────
+
+const RISK: Record<string, string> = { low: "낮음", medium: "보통", high: "높음" };
+let onShowImpact: (i: Impact) => void = () => {};
+let onAskReview: (prompt: string) => void = () => {};
+
+function renderReview(box: HTMLElement, r: Review) {
+  const close = iconButton("close", "닫기", () => box.classList.add("hidden"));
+  const ask = h("button", { class: "btn btn-secondary" }, codicon("comment-discussion"), "AI에게 리뷰 맡기기");
+  ask.addEventListener("click", () => onAskReview(reviewPrompt(r, i18n.lang)));
+  const notes: HTMLElement[] = [];
+  if (r.untested.length) notes.push(h("div", { class: "rv-note warn" }, codicon("warning"), `호출하는 곳은 있는데 테스트가 없는 파일 ${r.untested.length}개`));
+  if (r.framework.length) notes.push(h("div", { class: "rv-note warn" }, codicon("info"), `프레임워크가 부르는 코드를 고친 파일 ${r.framework.length}개 (호출자가 안 보일 수 있음)`));
+  const rows = r.files.map((f) => {
+    const i = f.impact;
+    const stats = !i
+      ? f.status === "deleted" ? "삭제됨" : "분석 안 함"
+      : !i.supported ? "분석하지 않는 언어"
+      : `직접 ${i.callers} · 간접 ${i.callers2} · ${i.tests.length ? `테스트 ${i.tests.length}` : "테스트 없음"}`;
+    const row = h("div", { class: "rv-file", role: "button", tabindex: "0", title: i ? "영향 범위를 지도에서 보기" : f.path },
+      fileIcon(f.path),
+      h("span", { class: "rv-name" }, basename(f.path), h("span", { class: "rv-dir" }, dirname(f.path))),
+      i && i.supported ? h("span", { class: `risk risk-${i.risk}` }, RISK[i.risk]) : null,
+      h("span", { class: "rv-stats" }, `+${f.added} −${f.removed} · ${stats}`));
+    if (i && i.graph.nodes.length > 1) {
+      row.addEventListener("click", () => onShowImpact(i));
+      row.addEventListener("keydown", (e) => e.key === "Enter" && onShowImpact(i));
+    } else row.classList.add("static");
+    return row;
+  });
+  box.replaceChildren(
+    h("div", { class: "rv-head" }, codicon("pulse"), h("span", {}, "영향 검토"), h("span", { class: `risk risk-${r.risk}` }, `위험도 ${RISK[r.risk]}`), h("span", { class: "badge" }, String(r.files.length)), close),
+    ...notes,
+    h("div", { class: "rv-files" }, ...rows),
+    h("div", { class: "rv-actions" }, ask));
+  box.classList.remove("hidden");
+}
+
+async function runReview() {
+  const box = $("#scm-review");
+  box.classList.remove("hidden");
+  box.replaceChildren(h("div", { class: "rv-head" }, codicon("loading", "codicon-modifier-spin"), h("span", {}, "영향을 계산하는 중…")));
+  try {
+    const r = await invoke<Review>("review_changes", { repo: active });
+    if (!r.files.length) {
+      box.replaceChildren(h("div", { class: "rv-head" }, codicon("pass"), h("span", {}, "커밋하지 않은 변경이 없습니다"), iconButton("close", "닫기", () => box.classList.add("hidden"))));
+      return;
+    }
+    renderReview(box, r);
+  } catch (e) {
+    box.classList.add("hidden");
+    toast.error("영향 검토를 하지 못했습니다", errorText(e));
+  }
+}
+
+async function generateMessage() {
+  const btn = $<HTMLButtonElement>("#scm-gen-msg");
+  const msg = $<HTMLTextAreaElement>("#scm-message");
+  btn.disabled = true;
+  btn.replaceChildren(codicon("loading", "codicon-modifier-spin"));
+  try {
+    msg.value = await invoke<string>("commit_message", { repo: active });
+    msg.focus();
+  } catch (e) {
+    toast.error("커밋 메시지를 만들지 못했습니다", errorText(e));
+  } finally {
+    btn.disabled = false;
+    btn.replaceChildren(codicon("sparkle"));
+  }
+}
+
+export function init(opts: {
+  onCount: (n: number) => void;
+  onBranch: (text: string | null, title: string) => void;
+  onShowImpact: (i: Impact) => void;
+  onAskReview: (prompt: string) => void;
+}) {
   onCount = opts.onCount;
   onBranch = opts.onBranch;
+  onShowImpact = opts.onShowImpact;
+  onAskReview = opts.onAskReview;
+  $("#scm-review-btn").addEventListener("click", () => void runReview());
+  $("#scm-gen-msg").addEventListener("click", () => void generateMessage());
   $("#scm-commit-btn").addEventListener("click", () => void commit());
   $("#scm-message").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {

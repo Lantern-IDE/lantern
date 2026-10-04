@@ -602,6 +602,16 @@ function authCard(task: Task, agent: string, name: string, methods: AuthMethod[]
   return card;
 }
 
+/** 새 작업으로 보낸다 (영향 검토의 'AI에게 리뷰 맡기기' 등). agent가 있으면 그 에이전트로 */
+export async function startTask(text: string, agent?: string) {
+  if (agent) {
+    const sel = $<HTMLSelectElement>("#agent-select");
+    if ([...sel.options].some((o) => o.value === agent)) sel.value = agent;
+  }
+  activate(newTask());
+  await send(text);
+}
+
 async function send(text?: string) {
   const input = $<HTMLTextAreaElement>("#prompt");
   const msg = (text ?? input.value).trim();
