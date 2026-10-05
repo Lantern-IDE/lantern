@@ -74,7 +74,7 @@ const file = (rel) => fs.readFileSync(path.join(DIRS.proj, rel), "utf8");
 
 // ── 모의 모델 (OpenAI 호환, 스트리밍) ────────────────────────
 // 1차: read_file → 2차: edit_file → 3차: 완료. 무엇을 읽고 고칠지는 시나리오가 정한다.
-const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "", toolNames: [] };
+const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "", toolNames: [], verifyFailure: "" };
 const mockServer = http.createServer((req, res) => {
   let body = "";
   req.on("data", (c) => (body += c));
@@ -125,6 +125,24 @@ const mockServer = http.createServer((req, res) => {
       return done("stop");
     }
     const first = String(j.messages.find((m) => m.role === "user")?.content ?? "");
+    // 고친 뒤 확인: 일부러 틀리게 고치고, 테스트 실패를 받으면 되돌려 고친다
+    if (first.includes("검증 시나리오")) {
+      const last = j.messages.at(-1);
+      const lastText = typeof last.content === "string" ? last.content : "";
+      const edit = (from, to) => {
+        send({ choices: [{ index: 0, delta: { tool_calls: [{ index: 0, id: `call_v${j.messages.length}`, type: "function", function: { name: "edit_file", arguments: JSON.stringify({ path: "src/auth/session.ts", old_string: from, new_string: to }) } }] } }] });
+        done("tool_calls");
+      };
+      if (last.role === "tool") {
+        send({ choices: [{ index: 0, delta: { content: "고쳤습니다." } }] });
+        return done("stop");
+      }
+      if (lastText.includes("Lantern ran the tests")) {
+        mock.verifyFailure = lastText;
+        return edit("v + '.bad'", "v + '.sig'");
+      }
+      return edit("v + '.sig'", "v + '.bad'");
+    }
     // 외부 MCP 도구: 티켓을 찾아 그 내용으로 답한다
     if (first.includes("티켓 T-1")) {
       mock.toolNames = (j.tools ?? []).map((t) => t.function?.name);
@@ -864,6 +882,37 @@ scenario("외부 MCP 서버: 에이전트 도구로 보이고, 승인 카드 →
     document.querySelector('.ab-item[data-view="tasks"]').click();
     return true;
   });
+});
+
+scenario("고친 뒤 관련 테스트로 확인: 실패 → 출력을 받아 다시 고침 → 통과", async () => {
+  // 이 프로젝트만: 테스트 명령과, 승인 없이 실행할 node
+  const projCfg = path.join(DIRS.proj, ".lantern", "config.toml");
+  const check = path.join(HERE, "check-test.mjs").replace(/\\/g, "/");
+  fs.writeFileSync(projCfg, `[agent]\nallowed_commands = ["node"]\ntest_command = "node ${check} {files}"\n`);
+  await run(() => {
+    document.querySelector("#btn-new-task").click();
+    return true;
+  });
+  await run(ui.sendTask, "검증 시나리오: 서명 접미사를 바꿔줘", "code", false);
+  // 틀린 수정 → (테스트 실패) → 되돌리는 수정: 승인 카드가 하나씩 차례로 온다
+  for (let i = 0; i < 2; i++) {
+    await waitFor(() => !!document.querySelector(".task-log:not(.hidden) .approval:not(.resolved)"), 30000, `수정 승인 카드 ${i + 1}`);
+    await run(() => {
+      [...document.querySelectorAll(".task-log:not(.hidden) .approval:not(.resolved) .actions button")].find((b) => b.textContent.includes("적용")).click();
+      return true;
+    });
+    await waitFor((n) => document.querySelectorAll(".task-log:not(.hidden) .approval.resolved").length === n, 10000, `승인 반영 ${i + 1}`, i + 1);
+  }
+  const cards = await waitFor(() => {
+    const c = [...document.querySelectorAll(".task-log:not(.hidden) details.tool")].filter((d) => d.querySelector(".tname")?.textContent.includes("관련 테스트로 확인"));
+    return c.length >= 2 && !c.some((d) => d.querySelector(".tstate.run")) && c.map((d) => ({ ok: !!d.querySelector(".tstate.ok"), text: d.querySelector("pre")?.textContent ?? "" }));
+  }, 30000, "테스트 확인 두 번");
+  if (cards.length !== 2 || cards[0].ok || !cards[1].ok) throw new Error(`테스트 카드: ${JSON.stringify(cards)}`);
+  if (!cards[1].text.includes("PASS") || !cards[0].text.includes("tests/session.test.ts")) throw new Error(`테스트 출력: ${JSON.stringify(cards)}`);
+  if (!mock.verifyFailure.includes("FAIL testSign")) throw new Error("실패 출력이 모델에 가지 않음");
+  if (!file("src/auth/session.ts").includes("v + '.sig'")) throw new Error("다시 고친 결과가 파일에 없음");
+  fs.rmSync(projCfg);
+  git("checkout", "--", "src/auth/session.ts");
 });
 
 scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
