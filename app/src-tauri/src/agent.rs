@@ -207,6 +207,51 @@ pub async fn run(app: AppHandle, session: String, agent_id: String, text: String
     }
 }
 
+/// 고친 파일과 연결된 테스트를 돌린다. 실패하면 모델에 돌려줄 글을, 통과·건너뜀·같은 실패 반복이면 None을 돌려준다.
+/// 화면에는 명령 도구 카드로 보인다.
+async fn verify(app: &AppHandle, session: &str, project: &Arc<state::Project>, tctx: &ToolCtx<'_>, config: &Config, checked: &mut crate::verify::Checked) -> Option<String> {
+    let changed = tctx.changed.lock().unwrap().clone();
+    if changed.is_empty() {
+        return None;
+    }
+    let note = |text: &str| emit(app, AgentEvent::Text { session: session.into(), text: format!("\n\n({text})") });
+    let originals = tctx.originals.lock().unwrap().clone();
+    let (p, root, isolated) = (project.clone(), tctx.root().to_path_buf(), tctx.workdir.is_some());
+    let found = tokio::task::spawn_blocking(move || crate::verify::related_tests(&p, &root, &changed, &originals, isolated)).await.unwrap_or_default();
+    // 앞에서 실패한 테스트는 계속 돌린다 (되돌려 고쳐 바뀐 줄이 없어져도)
+    checked.tests.extend(found);
+    let tests: Vec<String> = checked.tests.iter().cloned().collect();
+    if tests.is_empty() {
+        note("바꾼 코드와 연결된 테스트를 찾지 못해 테스트 확인은 건너뜁니다");
+        return None;
+    }
+    let Some(cmd) = crate::verify::command(tctx.root(), &tests, config.agent.test_command.as_deref()) else {
+        note("이 프로젝트의 테스트 명령을 알 수 없어 확인을 건너뜁니다. 설정 → 에이전트 → 테스트 명령에서 정할 수 있습니다");
+        return None;
+    };
+    let id = format!("verify{}", next_id());
+    emit(app, AgentEvent::ToolCall { session: session.into(), id: id.clone(), name: "run_tests".into(), input: json!({ "command": cmd, "tests": tests }) });
+    let (content, failed) = match tctx.run_check(&cmd).await {
+        Ok(Some(out)) => {
+            let failed = crate::verify::exit_code(&out) != Some(0);
+            (out, failed)
+        }
+        Ok(None) => ("사용자가 테스트 실행을 거절했습니다".into(), false),
+        Err(e) => (format!("{e:#}"), true),
+    };
+    emit(app, AgentEvent::ToolResult { session: session.into(), id, name: "run_tests".into(), content: content.clone(), is_error: failed });
+    if !failed {
+        return None;
+    }
+    let sig = crate::verify::signature(&content);
+    if checked.last_failure.as_deref() == Some(sig.as_str()) {
+        note("같은 테스트 실패가 반복되어 멈췄습니다. 테스트 출력을 보고 직접 확인해 주세요");
+        return None;
+    }
+    checked.last_failure = Some(sig);
+    Some(crate::verify::failure_message(&cmd, &content))
+}
+
 /// 이번 작업에서 바꾼 파일의 원본을 되돌리기 체크포인트로 남긴다. 바꾼 게 없으면 None
 pub(crate) fn save_checkpoint(st: &AppState, originals: state::Originals) -> Option<String> {
     (!originals.is_empty()).then(|| {
@@ -309,6 +354,17 @@ async fn run_inner(
     let approver = TauriApprover { app: app.clone(), session: session.to_string(), cancel: cancel.clone() };
     let tctx = ToolCtx { project: project.clone(), config: &config, approver: &approver, changed: Default::default(), originals: Default::default(), workdir: workdir.clone(), mcp: mcp.map };
     let max_steps = config.agent.max_steps.max(1);
+    // 고친 뒤 확인: 쓰기·실행이 되는 에이전트, 신뢰한 폴더에서만
+    let verify_on = config.agent.verify_tests && project.is_trusted() && allowed.iter().any(|t| t == "run_command") && allowed.iter().any(|t| t == "edit_file" || t == "write_file");
+    let system = if verify_on {
+        format!("{system}
+When you finish editing, Lantern runs the tests related to the files you changed and sends you any failures to fix.
+")
+    } else {
+        system
+    };
+    let mut verify_rounds = 0usize;
+    let mut checked = crate::verify::Checked::default();
     let save = |h: &Vec<Message>| {
         st.sessions.lock().unwrap().insert(session.to_string(), h.clone());
     };
@@ -396,6 +452,19 @@ async fn run_inner(
             _ => {}
         }
         if uses.is_empty() {
+            // 끝내기 전에 고친 코드를 관련 테스트로 확인한다. 실패하면 출력을 돌려줘 다시 고치게 한다
+            if verify_on && verify_rounds < crate::verify::MAX_ROUNDS + 1 {
+                verify_rounds += 1;
+                if let Some(msg) = verify(app, session, &project, &tctx, &config, &mut checked).await {
+                    if verify_rounds > crate::verify::MAX_ROUNDS {
+                        emit(app, AgentEvent::Text { session: session.into(), text: "\n\n(관련 테스트가 계속 실패해 멈췄습니다. 테스트 출력을 보고 직접 확인해 주세요)".into() });
+                    } else {
+                        push_user(&mut history, msg, vec![]);
+                        save(&history);
+                        continue;
+                    }
+                }
+            }
             break;
         }
 

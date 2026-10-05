@@ -10,6 +10,7 @@ mod inline;
 mod review;
 mod semantic;
 mod mcp_client;
+mod verify;
 mod tasks;
 mod worktree;
 mod completion;
