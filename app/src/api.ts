@@ -25,7 +25,7 @@ export type AgentEvent = { session: string } & (
   | { kind: "tool_start"; name: string }
   | { kind: "tool_call"; id: string; name: string; input: Record<string, unknown> }
   | { kind: "tool_result"; id: string; name: string; content: string; is_error: boolean }
-  | { kind: "approval"; id: string; approval_kind: "edit" | "command"; title: string; detail: string }
+  | { kind: "approval"; id: string; approval_kind: "edit" | "command" | "secret" | "mcp"; title: string; detail: string }
   | { kind: "approval_resolved"; id: string; approved: boolean }
   | { kind: "usage"; request_id: number; model: string; usage: Usage; cost_usd: number | null; month_cost_usd: number; month_limit_usd: number }
   | { kind: "done"; changed: string[]; checkpoint: string | null }
@@ -51,6 +51,8 @@ export interface SettingsModel {
   key_source: "env" | "keychain" | "config" | null;
   needs_key: boolean;
 }
+export interface McpServerSettings { command: string; args: string[]; env: Record<string, string>; auto_approve: string[]; enabled: boolean }
+export interface McpStatus { name: string; command: string; enabled: boolean; tools: { name: string; description: string }[]; error: string | null }
 export interface EmbeddingsSettings {
   base_url: string;
   model: string;
@@ -66,6 +68,7 @@ export interface SettingsSnapshot {
     budget: { monthly_usd_limit: number; warn_at_percent: number };
     context: { budget_tokens: number };
     embeddings?: EmbeddingsSettings | null;
+    mcp?: Record<string, McpServerSettings>;
     agent: { max_steps: number; auto_approve: string[]; allowed_commands: string[] };
     hooks: { on_save: string[]; on_agent_done: string[] };
   };
@@ -94,6 +97,7 @@ export const api = {
   probeLocal: () => invoke<LocalServer[]>("probe_local"),
   testEmbeddings: (baseUrl: string, model: string, apiKeyEnv: string | null) =>
     invoke<{ dim: number; ms: number }>("test_embeddings", { baseUrl, model, apiKeyEnv }),
+  mcpStatus: () => invoke<McpStatus[]>("mcp_status"),
   semanticStatus: () => invoke<{ done: number; total: number } | null>("semantic_status"),
   setEmbeddingsKey: (env: string, key: string) => invoke<void>("set_embeddings_key", { env, key }),
   listAgents: () => invoke<AgentDef[]>("list_agents"),
