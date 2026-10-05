@@ -759,6 +759,50 @@ scenario("의미 검색: 뒤에서 코드 조각을 임베딩하고, 질문에 �
   if (!hidden) throw new Error("다 만들었는데 진행률이 남아 있음");
 });
 
+scenario("설정 화면에서 의미 검색: 연결 시험 → 끄기 → 직접 입력으로 다시 켜기", async () => {
+  const cfgPath = path.join(DIRS.home, "config.toml");
+  await run(() => {
+    document.querySelector("#ab-settings").click();
+    return true;
+  });
+  // 기본 포트가 아닌 로컬 서버는 '직접 입력'으로 보여야 한다 (로컬 찾기 결과로 덮어쓰지 않게)
+  const shown = await waitFor(() => {
+    const box = document.querySelector("#set-embed");
+    const on = box?.querySelector(".segmented button.on")?.getAttribute("data-kind");
+    const url = box?.querySelector('input[aria-label="주소"]')?.value;
+    return on && url ? { on, url } : null;
+  }, 10000, "의미 검색 설정");
+  if (shown.on !== "custom" || !shown.url.includes("127.0.0.1")) throw new Error(`설정 표시: ${JSON.stringify(shown)}`);
+  await run(() => {
+    [...document.querySelectorAll("#set-embed button")].find((b) => b.textContent.includes("연결 시험")).click();
+    return true;
+  });
+  const ok = await waitFor(() => document.querySelector("#set-embed .test-result.ok")?.textContent, 10000, "연결 시험");
+  if (!ok.includes("8차원")) throw new Error(`연결 시험: ${ok}`);
+  // 끄면 설정 파일에서 [embeddings]가 빠진다
+  await run(() => {
+    document.querySelector('#set-embed [data-kind="off"]').click();
+    return true;
+  });
+  const end = Date.now() + 5000;
+  while (fs.readFileSync(cfgPath, "utf8").includes("[embeddings]") && Date.now() < end) await sleep(100);
+  if (fs.readFileSync(cfgPath, "utf8").includes("[embeddings]")) throw new Error("끈 뒤에도 [embeddings]가 남음");
+  // 직접 입력으로 다시 저장
+  await run(() => {
+    document.querySelector('#set-embed [data-kind="custom"]').click();
+    return true;
+  });
+  await run(() => {
+    [...document.querySelectorAll("#set-embed button")].find((b) => b.textContent.trim() === "저장").click();
+    return true;
+  });
+  const end2 = Date.now() + 5000;
+  while (!fs.readFileSync(cfgPath, "utf8").includes("[embeddings]") && Date.now() < end2) await sleep(100);
+  const cfg = fs.readFileSync(cfgPath, "utf8");
+  if (!cfg.includes("[embeddings]") || !cfg.includes(`127.0.0.1:${MOCK_PORT}/v1`) || !cfg.includes('model = "e2e-embed"')) throw new Error(`다시 켠 설정:
+${cfg}`);
+});
+
 scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
   await run(() => {
     document.querySelector('.ab-item[data-view="explorer"]').click();
