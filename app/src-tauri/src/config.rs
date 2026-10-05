@@ -50,6 +50,14 @@ warn_at_percent = 80
 [context]
 budget_tokens = 8000       # 질문마다 자동으로 붙이는 코드 맥락의 토큰 예산
 
+# 외부 MCP 서버 (선택): 내장 에이전트('코드 작성')가 도구로 쓰고, 외부 에이전트에도 넘깁니다.
+# 부를 때마다 승인을 받습니다. 신뢰한 폴더에서만 씁니다.
+# [mcp.github]
+# command = "npx"
+# args = ["-y", "@modelcontextprotocol/server-github"]
+# env = { GITHUB_PERSONAL_ACCESS_TOKEN = "…" }
+# auto_approve = ["search_issues"]   # 승인 없이 실행할 도구 ("*"이면 전부)
+
 # 의미 검색 (선택): 키워드가 겹치지 않는 질문(특히 한국어)도 뜻이 가까운 코드를 찾습니다.
 # OpenAI 호환 /embeddings 서버가 필요하고, 코드 조각(비밀 값은 가림)이 그 서버로 갑니다.
 # 처음 켜면 프로젝트 전체를 뒤에서 임베딩합니다 (CPU로 돌리는 로컬 모델은 큰 프로젝트에서 오래 걸립니다).
@@ -225,6 +233,25 @@ pub struct AcpConfig {
     pub env: BTreeMap<String, String>,
 }
 
+/// 외부 MCP 서버 (stdio). 내장 에이전트가 도구로 쓰고, 외부 에이전트에도 넘긴다.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McpServerConfig {
+    pub command: String,
+    #[serde(default)]
+    pub args: Vec<String>,
+    #[serde(default)]
+    pub env: BTreeMap<String, String>,
+    /// 승인 없이 실행할 도구 이름 (`"*"`이면 이 서버의 모든 도구)
+    #[serde(default)]
+    pub auto_approve: Vec<String>,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     #[serde(default)]
@@ -246,6 +273,9 @@ pub struct Config {
     /// 의미 검색 (선택)
     #[serde(default)]
     pub embeddings: Option<EmbeddingsConfig>,
+    /// 외부 MCP 서버: `[mcp.<이름>] command = "…"`
+    #[serde(default)]
+    pub mcp: BTreeMap<String, McpServerConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

@@ -284,7 +284,17 @@ async fn run_inner(
     } else {
         agent.tools.iter().filter(|t| agents::READ_TOOLS.contains(&t.as_str())).cloned().collect()
     };
-    let tools = crate::tools::specs(&allowed);
+    let mut tools = crate::tools::specs(&allowed);
+    // 외부 MCP 서버의 도구 ('mcp'를 허용한 에이전트, 신뢰한 폴더에서만). 못 띄운 서버는 알리고 계속한다
+    let mcp = if allowed.iter().any(|t| t == "mcp") && !config.mcp.is_empty() {
+        crate::mcp_client::toolset(&st, &config, &project.root).await
+    } else {
+        crate::mcp_client::Toolset { specs: vec![], map: Default::default(), errors: vec![] }
+    };
+    for e in &mcp.errors {
+        emit(app, AgentEvent::Text { session: session.into(), text: format!("(MCP 서버를 쓰지 못했습니다: {})\n\n", e.lines().next().unwrap_or("")) });
+    }
+    tools.extend(mcp.specs);
     // 앱을 다시 켠 뒤 이어서 하는 작업이면 저장해 둔 대화를 읽는다
     let saved = st.sessions.lock().unwrap().get(session).cloned();
     let mut history = saved.or_else(|| crate::tasks::load_history(&project.root, session)).unwrap_or_default();
@@ -297,7 +307,7 @@ async fn run_inner(
     push_user(&mut history, format!("{text}\n\n<project_context>\n{}\n</project_context>", ctx.0), images);
 
     let approver = TauriApprover { app: app.clone(), session: session.to_string(), cancel: cancel.clone() };
-    let tctx = ToolCtx { project: project.clone(), config: &config, approver: &approver, changed: Default::default(), originals: Default::default(), workdir: workdir.clone() };
+    let tctx = ToolCtx { project: project.clone(), config: &config, approver: &approver, changed: Default::default(), originals: Default::default(), workdir: workdir.clone(), mcp: mcp.map };
     let max_steps = config.agent.max_steps.max(1);
     let save = |h: &Vec<Message>| {
         st.sessions.lock().unwrap().insert(session.to_string(), h.clone());
@@ -394,7 +404,7 @@ async fn run_inner(
             emit(app, AgentEvent::ToolCall { session: session.into(), id: id.clone(), name: name.clone(), input: input.clone() });
             let out = match invalid {
                 Some(raw) => ToolOutcome { content: json!({ "INVALID_JSON": raw }).to_string(), is_error: true },
-                None if !allowed.contains(&name) => ToolOutcome {
+                None if !allowed.contains(&name) && !tctx.mcp.contains_key(&name) => ToolOutcome {
                     content: if project.is_trusted() {
                         format!("이 에이전트는 '{name}' 도구를 쓸 수 없습니다")
                     } else {

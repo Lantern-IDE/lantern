@@ -26,6 +26,8 @@ pub const ALL_TOOLS: &[&str] = &[
     "edit_file",
     "run_command",
     "remember",
+    // 설정한 외부 MCP 서버의 도구 전부 (부를 때마다 승인)
+    "mcp",
 ];
 
 pub const EXAMPLE_AGENT: &str = r#"---

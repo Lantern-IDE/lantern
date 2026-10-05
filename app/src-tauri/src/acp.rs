@@ -304,16 +304,18 @@ impl Conn {
 
     /// 세션을 준비한다. 이 작업에서 쓰던 세션이 있고 에이전트가 지원하면 session/load로 같은 대화를 이어간다
     /// (다시 켠 뒤에도). 이어가지 못하면 새로 만들고, 두 번째 값으로 알린다.
-    async fn ensure_session(&self, cwd: &Path, project_root: &Path, task: &str) -> std::result::Result<(String, bool), RpcError> {
+    async fn ensure_session(&self, cwd: &Path, project_root: &Path, task: &str, extra_mcp: Vec<Value>) -> std::result::Result<(String, bool), RpcError> {
         if let Some(s) = self.acp_session.lock().unwrap().clone() {
             return Ok((s, false));
         }
         // Lantern 맥락 엔진을 MCP 서버로 넘긴다 (에이전트가 get_context 등을 부를 수 있게)
-        let mcp: Vec<Value> = std::env::current_exe()
+        let mut mcp: Vec<Value> = std::env::current_exe()
             .ok()
             .map(|exe| json!({ "name": "lantern", "command": exe, "args": ["--mcp", project_root], "env": [] }))
             .into_iter()
             .collect();
+        // 사용자가 설정한 MCP 서버도 같이
+        mcp.extend(extra_mcp);
         let saved = crate::tasks::load_acp_session(project_root, task, &self.agent);
         let can_load = self.init.lock().unwrap().pointer("/agentCapabilities/loadSession").and_then(Value::as_bool).unwrap_or(false);
         if let (Some(id), true) = (&saved, can_load) {
@@ -704,7 +706,7 @@ async fn run_inner(
     if !images.is_empty() && !conn.accepts_images() {
         bail!("{}은(는) 이미지를 받지 않습니다. 이미지를 빼고 보내세요", spec.name);
     }
-    let (acp_session, lost) = match conn.ensure_session(&root, &project.root, session).await {
+    let (acp_session, lost) = match conn.ensure_session(&root, &project.root, session, crate::mcp_client::acp_servers(&cfg)).await {
         Ok(v) => v,
         Err(e) if e.code == AUTH_REQUIRED => return auth_required(&conn),
         Err(e) => return Err(conn.fail(&format!("{} 세션을 만들지 못했습니다: {e}", spec.name))),
