@@ -16,6 +16,8 @@ use std::time::Duration;
 const READ_LIMIT_LINES: usize = 2000;
 const OUTPUT_LIMIT: usize = 20_000;
 const COMMAND_TIMEOUT: Duration = Duration::from_secs(120);
+/// 테스트는 첫 빌드가 섞이면 오래 걸린다
+const CHECK_TIMEOUT: Duration = Duration::from_secs(600);
 
 pub fn specs(allowed: &[String]) -> Vec<ToolSpec> {
     let all = vec![
@@ -86,6 +88,23 @@ impl ToolCtx<'_> {
             Ok(content) => ToolOutcome { content: lantern_context::secrets::redact(&truncate(content)).0, is_error: false },
             Err(e) => ToolOutcome { content: lantern_context::secrets::redact(&format!("{e:#}")).0, is_error: true },
         }
+    }
+
+    /// 허용 목록의 명령이면 승인 없이 실행한다 (연결 기호가 있으면 항상 묻는다)
+    fn command_allowed(&self, cmd: &str) -> bool {
+        self.config.agent.allowed_commands.iter().any(|a| cmd == *a || cmd.starts_with(&format!("{a} ")))
+            && !cmd.contains(['&', '|', ';', '>', '<', '`', '$', '\n'])
+    }
+
+    /// 관련 테스트 실행 (고친 뒤 확인). 승인 규칙은 run_command와 같다. 거절하면 Ok(None)
+    pub async fn run_check(&self, cmd: &str) -> Result<Option<String>> {
+        if !self.command_allowed(cmd) && !self.approver.ask("command", "관련 테스트로 확인", cmd).await {
+            return Ok(None);
+        }
+        self.approver.output(&format!("$ {cmd}\n"));
+        let out = run_shell(self.root(), cmd, CHECK_TIMEOUT).await?;
+        self.approver.output(&out);
+        Ok(Some(lantern_context::secrets::redact(&out).0))
     }
 
     /// 외부 MCP 도구. 서버 설정의 auto_approve에 없으면 승인 카드를 거친다
@@ -227,14 +246,7 @@ impl ToolCtx<'_> {
             }
             "run_command" => {
                 let cmd = s(input, "command")?.trim().to_string();
-                let allowed = self
-                    .config
-                    .agent
-                    .allowed_commands
-                    .iter()
-                    .any(|a| cmd == *a || cmd.starts_with(&format!("{a} ")))
-                    && !cmd.contains(['&', '|', ';', '>', '<', '`', '$', '\n']);
-                if !allowed && !self.approver.ask("command", "명령 실행", &cmd).await {
+                if !self.command_allowed(&cmd) && !self.approver.ask("command", "명령 실행", &cmd).await {
                     bail!("사용자가 명령 실행을 거절했습니다");
                 }
                 self.approver.output(&format!("$ {cmd}\n"));

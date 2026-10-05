@@ -71,6 +71,9 @@ budget_tokens = 8000       # 질문마다 자동으로 붙이는 코드 맥락�
 # ── 에이전트 권한 ─────────────────────────────────────
 [agent]
 max_steps = 30
+# 고치고 끝낼 때 관련 테스트로 확인 (실패하면 다시 고치게). 명령은 프로젝트를 보고 고르고, 바꾸려면 test_command
+# verify_tests = true
+# test_command = "pnpm vitest run {files}"
 # 승인 없이 수정해도 되는 파일 (glob). 예: ["**/*.test.ts", "docs/**"]
 auto_approve = []
 # 승인 없이 실행해도 되는 명령 (앞부분 일치)
@@ -203,6 +206,12 @@ pub struct AgentConfig {
     pub auto_approve: Vec<String>,
     #[serde(default)]
     pub allowed_commands: Vec<String>,
+    /// 파일을 고치고 끝낼 때 관련 테스트를 돌려 확인한다 (실패하면 다시 고치게)
+    #[serde(default = "default_true")]
+    pub verify_tests: bool,
+    /// 테스트 명령. 비우면 프로젝트를 보고 고른다. `{files}`에 관련 테스트 파일이 들어간다
+    #[serde(default)]
+    pub test_command: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
