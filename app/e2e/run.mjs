@@ -74,11 +74,17 @@ const file = (rel) => fs.readFileSync(path.join(DIRS.proj, rel), "utf8");
 
 // ── 모의 모델 (OpenAI 호환, 스트리밍) ────────────────────────
 // 1차: read_file → 2차: edit_file → 3차: 완료. 무엇을 읽고 고칠지는 시나리오가 정한다.
-const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "", toolNames: [], verifyFailure: "" };
+const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "", toolNames: [], verifyFailure: "", fetched: [], fetchResult: "" };
 const mockServer = http.createServer((req, res) => {
   let body = "";
   req.on("data", (c) => (body += c));
   req.on("end", () => {
+    // fetch_url이 읽을 가짜 문서
+    if (req.method === "GET" && req.url.startsWith("/docs/")) {
+      mock.fetched.push(req.url);
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      return res.end(`<html><head><script>steal()</script></head><body><h1>${req.url === "/docs/cookie" ? "Cookie signing" : "Session lifetime"}</h1><p>Sign cookies with an HMAC; keep sessions for 7 days.</p></body></html>`);
+    }
     if (req.method === "GET") {
       res.writeHead(200, { "content-type": "application/json" });
       return res.end(JSON.stringify({ data: [{ id: "e2e-model" }] }));
@@ -142,6 +148,19 @@ const mockServer = http.createServer((req, res) => {
         return edit("v + '.bad'", "v + '.sig'");
       }
       return edit("v + '.sig'", "v + '.bad'");
+    }
+    // 웹 문서: 같은 사이트의 두 페이지를 읽고 요약한다
+    if (first.includes("문서를 찾아봐")) {
+      const fetchCall = (url) => {
+        send({ choices: [{ index: 0, delta: { tool_calls: [{ index: 0, id: `call_f${tools}`, type: "function", function: { name: "fetch_url", arguments: JSON.stringify({ url }) } }] } }] });
+        done("tool_calls");
+      };
+      if (tools === 0) return fetchCall(`http://127.0.0.1:${MOCK_PORT}/docs/cookie`);
+      if (tools === 1) return fetchCall(`http://127.0.0.1:${MOCK_PORT}/docs/session`);
+      const result = String(j.messages.filter((m) => m.role === "tool").at(0)?.content ?? "");
+      mock.fetchResult = result;
+      send({ choices: [{ index: 0, delta: { content: "문서 요약: HMAC으로 서명" } }] });
+      return done("stop");
     }
     // 외부 MCP 도구: 티켓을 찾아 그 내용으로 답한다
     if (first.includes("티켓 T-1")) {
@@ -233,6 +252,7 @@ async function launch(dir = DIRS.proj) {
       LANTERN_WEBVIEW_DATA_DIR: DIRS.wv,
       LANTERN_INDEX_DIR: DIRS.index,
       LANTERN_E2E_CDP_PORT: String(cdpPort),
+      LANTERN_FETCH_ALLOW_LOCAL: "1", // 가짜 문서 서버가 로컬이라
     },
     stdio: "ignore",
   });
@@ -913,6 +933,29 @@ scenario("고친 뒤 관련 테스트로 확인: 실패 → 출력을 받아 다
   if (!file("src/auth/session.ts").includes("v + '.sig'")) throw new Error("다시 고친 결과가 파일에 없음");
   fs.rmSync(projCfg);
   git("checkout", "--", "src/auth/session.ts");
+});
+
+scenario("웹 문서 가져오기: 처음 여는 사이트만 승인 → 본문 글로 읽기", async () => {
+  await run(() => {
+    document.querySelector("#btn-new-task").click();
+    return true;
+  });
+  await run(ui.sendTask, "쿠키 서명 문서를 찾아봐", "ask", false);
+  const card = await waitFor(() => {
+    const c = document.querySelector(".task-log:not(.hidden) .approval:not(.resolved)");
+    return c && { title: c.querySelector(".atitle")?.textContent ?? "", globe: !!c.querySelector(".ahead .codicon-globe"), detail: c.querySelector("pre")?.textContent ?? "" };
+  }, 20000, "사이트 승인 카드");
+  if (!card.title.includes("127.0.0.1") || !card.globe || !card.detail.includes("/docs/cookie")) throw new Error(`승인 카드: ${JSON.stringify(card)}`);
+  if (mock.fetched.length) throw new Error("승인 전에 가져옴");
+  await run(() => {
+    [...document.querySelectorAll(".task-log:not(.hidden) .approval:not(.resolved) .actions button")].find((b) => b.textContent.includes("가져오기")).click();
+    return true;
+  });
+  await waitFor(() => document.querySelector(".task-log:not(.hidden)")?.innerText.includes("문서 요약"), 20000, "요약");
+  // 같은 사이트의 두 번째 페이지는 묻지 않는다
+  const approvals = await run(() => document.querySelectorAll(".task-log:not(.hidden) .approval").length);
+  if (approvals !== 1 || mock.fetched.join() !== "/docs/cookie,/docs/session") throw new Error(`승인 ${approvals}개, 가져온 곳 ${mock.fetched}`);
+  if (!mock.fetchResult.includes("Cookie signing") || !mock.fetchResult.includes("HMAC") || mock.fetchResult.includes("steal()") || mock.fetchResult.includes("<p>")) throw new Error(`본문: ${mock.fetchResult}`);
 });
 
 scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
