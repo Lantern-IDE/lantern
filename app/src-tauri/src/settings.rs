@@ -113,6 +113,11 @@ pub fn snapshot(root: Option<&Path>) -> Result<Value> {
             m["needs_key"] = json!(cfg.models[key].provider == "anthropic" || cfg.models[key].api_key_env.is_some());
         }
     }
+    // 의미 검색 키도 값은 내보내지 않는다
+    if let Some(e) = v.get_mut("embeddings").filter(|e| e.is_object()) {
+        e["api_key"] = Value::Null;
+        e["key_source"] = json!(cfg.embedder().and_then(|x| x.api_key).map(|_| "set"));
+    }
     let global = config::global_path();
     Ok(json!({
         "config": v,
