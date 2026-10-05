@@ -693,7 +693,14 @@
   "비우면 프로젝트를 보고 고릅니다 (vitest·jest·pytest·go·cargo·maven·gradle). {files}에 관련 테스트 파일이 들어갑니다.": "Leave empty to pick one from the project (vitest, jest, pytest, go, cargo, maven, gradle). {files} is replaced with the related test files.",
   "에이전트가 파일을 고치고 끝내려 할 때, 영향 반경이 찾은 관련 테스트만 돌립니다. 실패하면 출력을 보고 두 번까지 다시 고치고, 같은 실패가 반복되면 멈춥니다. 실행은 명령 승인 규칙을 따릅니다.": "When the agent finishes editing files, only the tests the impact radius links to them are run. On failure it reads the output and fixes up to twice, and stops if the same failure repeats. Running follows the command approval rules.",
   "예: pnpm vitest run {files}": "e.g. pnpm vitest run {files}",
-  "테스트 명령": "Test command"
+  "테스트 명령": "Test command",
+  "가져오기": "Fetch",
+  "가져옴": "Fetched",
+  "승인 없이 열 사이트": "Sites opened without approval",
+  "에이전트의 웹 페이지 가져오기(fetch_url)가 묻지 않고 여는 도메인입니다. 하위 도메인도 포함합니다. 내부망·로컬 주소는 늘 막습니다.": "Domains the agent's web page fetch (fetch_url) opens without asking, including subdomains. Internal and local addresses are always blocked.",
+  "예: docs.rs": "e.g. docs.rs",
+  "웹 페이지": "Web page",
+  "이 사이트는 이번 작업에서 처음 엽니다. 주소에 코드나 비밀이 들어 있지 않은지 확인하세요": "This task opens this site for the first time. Check that the address doesn't contain code or secrets"
  },
  "templates": {
   "'{}'{}을(를) 휴지통으로 옮길까요?": "Move '{}'{} to Trash?",
