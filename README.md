@@ -77,6 +77,17 @@ Pick **Codex (external)** or **Gemini CLI (external)** in the chat's agent selec
 
 Claude subscriptions (Pro/Max) can't be used this way: Anthropic's terms limit subscription sign-in to its own apps. Use an Anthropic API key instead.
 
+### Use your MCP servers
+
+Add any stdio MCP server (issue tracker, database, browser…) in **Settings → MCP servers** or in `config.toml`. The **Write code** agent sees its tools, and every call goes through an approval card unless you mark that tool as allowed. External agents get the same servers. MCP servers run only in trusted folders.
+
+```toml
+[mcp.github]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+env = { GITHUB_PERSONAL_ACCESS_TOKEN = "…" }
+```
+
 ## Build from source
 
 Requirements: Rust (stable), Node.js 22, and on Windows WebView2 (preinstalled on Windows 11). Linux needs `libwebkit2gtk-4.1-dev` and friends (see [CI](.github/workflows/ci.yml)).
