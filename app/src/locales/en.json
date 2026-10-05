@@ -666,7 +666,28 @@
   "키는 이 이름의 환경변수에서 읽습니다.": "The key is read from the environment variable with this name.",
   "키를 저장하지 못했습니다": "Couldn't save the key",
   "키워드·호출 관계·함께 바뀐 이력으로만 코드를 고릅니다.": "Code is chosen only by keywords, call relations, and change history.",
-  "키워드가 겹치지 않아도 질문과 뜻이 가까운 코드를 함께 찾습니다. 공개 벤치마크에서 한국어 질문의 적중률이 76%에서 86%로 올랐습니다.": "Also finds code close in meaning to the question, even when no keyword matches. On the public benchmark, recall for Korean questions rose from 76% to 86%."
+  "키워드가 겹치지 않아도 질문과 뜻이 가까운 코드를 함께 찾습니다. 공개 벤치마크에서 한국어 질문의 적중률이 76%에서 86%로 올랐습니다.": "Also finds code close in meaning to the question, even when no keyword matches. On the public benchmark, recall for Korean questions rose from 76% to 86%.",
+  "MCP 서버": "MCP servers",
+  "MCP 서버 삭제": "Delete MCP server",
+  "stdio로 실행하는 MCP 서버. 토큰 같은 환경변수는 설정 파일의 [mcp.<이름>.env]에 적습니다.": "An MCP server run over stdio. Put environment variables such as tokens in [mcp.<name>.env] in the settings file.",
+  "‘코드 작성’ 에이전트가 외부 MCP 서버(이슈 트래커, DB, 브라우저 등)의 도구를 씁니다. 부를 때마다 승인을 받고, 신뢰한 폴더에서만 씁니다. 외부 에이전트(Codex·Gemini CLI)에도 같은 서버를 넘깁니다.": "The ‘Write code’ agent uses tools from external MCP servers (issue trackers, databases, browsers, …). Every call asks for approval, and they're used only in trusted folders. External agents (Codex, Gemini CLI) get the same servers.",
+  "꺼짐": "Off",
+  "끄기": "Turn off",
+  "누르면 승인 없이 실행:": "Click to run without approval:",
+  "명령 (예: npx)": "Command (e.g. npx)",
+  "서버 이름": "Server name",
+  "서버 추가": "Add server",
+  "아직 연결한 MCP 서버가 없습니다.": "No MCP servers connected yet.",
+  "연결 안 됨": "Not connected",
+  "외부 MCP 서버의 도구입니다. 설정에서 승인 없이 실행하게 할 수 있습니다": "A tool from an external MCP server. You can let it run without approval in Settings",
+  "이 서버 설정 지우기": "Remove this server's settings",
+  "이름 (예: github)": "Name (e.g. github)",
+  "이름은 영문·숫자·-·_만 씁니다": "Use only letters, digits, - and _ in the name",
+  "인자": "Arguments",
+  "인자 (예: -y @modelcontextprotocol/server-github)": "Arguments (e.g. -y @modelcontextprotocol/server-github)",
+  "켜기": "Turn on",
+  "확인 중": "Checking",
+  "실행함": "Ran"
  },
  "templates": {
   "'{}'{}을(를) 휴지통으로 옮길까요?": "Move '{}'{} to Trash?",
@@ -811,6 +832,7 @@
   "연결됨 · {}차원 · {}ms": "Connected · {} dimensions · {}ms",
   "코드 조각 {} / {}개 준비됨 · 뒤에서 계속 만듭니다": "{} / {} code chunks ready · continuing in the background",
   "코드 조각 {}개 모두 준비됨": "All {} code chunks ready",
-  "환경변수 {}가 있으면 그것을 씁니다. OpenAI 채팅 모델에 저장한 키와 같은 키입니다.": "Uses the {} environment variable if set. It's the same key as the one saved for OpenAI chat models."
+  "환경변수 {}가 있으면 그것을 씁니다. OpenAI 채팅 모델에 저장한 키와 같은 키입니다.": "Uses the {} environment variable if set. It's the same key as the one saved for OpenAI chat models.",
+  "MCP 서버 '{}'을(를) 설정에서 지울까요?": "Remove MCP server '{}' from the settings?"
  }
 }

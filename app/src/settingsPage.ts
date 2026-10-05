@@ -1,6 +1,7 @@
 // 설정 화면. 원본은 TOML 파일이고, 이 화면은 그 파일을 고치는 편한 수단이다.
 // 모든 변경은 바로 저장되며(주석 보존), 저장 위치는 "사용자 전체" 또는 "이 프로젝트"다.
-import { api, errorText, type EmbeddingsSettings, type SettingsModel, type SettingsSnapshot } from "./api";
+import { api, errorText, type EmbeddingsSettings, type McpServerSettings, type McpStatus, type SettingsModel, type SettingsSnapshot } from "./api";
+import { ask } from "./dialog";
 import { h } from "./dom";
 import * as editor from "./editor";
 import * as i18n from "./i18n";
@@ -29,6 +30,7 @@ const SECTIONS: [string, string, string][] = [
   ["cost", "비용", "credit-card"],
   ["context", "맥락", "references"],
   ["agent", "에이전트", "shield"],
+  ["mcp", "MCP 서버", "plug"],
   ["hooks", "훅", "zap"],
   ["appearance", "화면", "color-mode"],
 ];
@@ -130,6 +132,95 @@ function tagField(label: string, help: string, path: string, values: string[], p
   });
   render();
   return field(label, help, h("div", { class: "row" }, box, status));
+}
+
+// ── MCP 서버 ─────────────────────────────────────────────
+
+/** "a b 'c d'" → ["a", "b", "c d"] (따옴표로 공백 포함) */
+function splitArgs(text: string): string[] {
+  return [...text.matchAll(/"([^"]*)"|'([^']*)'|(\S+)/g)].map((m) => m[1] ?? m[2] ?? m[3]);
+}
+
+function mcpSection(servers: Record<string, McpServerSettings>): HTMLElement[] {
+  const list = h("div", { class: "model-list mcp-list" });
+  const names = Object.keys(servers);
+  const statusOf = new Map<string, McpStatus>();
+
+  const row = (name: string) => {
+    const s = servers[name];
+    const st = statusOf.get(name);
+    const auto = new Set(s.auto_approve ?? []);
+    const pill = !s.enabled
+      ? h("span", { class: "pill" }, "꺼짐")
+      : !st
+        ? h("span", { class: "pill" }, codicon("loading", "codicon-modifier-spin"), "확인 중")
+        : st.error
+          ? h("span", { class: "pill bad", title: st.error }, codicon("error"), "연결 안 됨")
+          : h("span", { class: "pill ok" }, codicon("pass"), `도구 ${st.tools.length}개`);
+    const toggle = h("button", { class: "btn btn-secondary" }, s.enabled ? "끄기" : "켜기");
+    toggle.addEventListener("click", () => void save([[`mcp.${name}.enabled`, !s.enabled]]).then(() => refresh()));
+    const remove = h("button", { class: "btn btn-ghost", title: "이 서버 설정 지우기" }, codicon("trash"), "삭제");
+    remove.addEventListener("click", async () => {
+      if (await ask(`MCP 서버 '${name}'을(를) 설정에서 지울까요?`, { title: "MCP 서버 삭제", kind: "warning" })) void save([[`mcp.${name}`, null]]).then(() => refresh());
+    });
+    // 도구마다 '승인 없이' 켜고 끄기
+    const tools = st && !st.error && st.tools.length
+      ? h("div", { class: "mcp-tools" },
+        h("span", { class: "muted small" }, "누르면 승인 없이 실행:"),
+        ...st.tools.map((t) => {
+          const on = auto.has("*") || auto.has(t.name);
+          const chip = h("button", { class: `tool-chip${on ? " on" : ""}`, title: t.description || t.name, "aria-pressed": String(on) }, on ? codicon("unlock") : null, t.name);
+          chip.addEventListener("click", () => {
+            const next = new Set(auto.has("*") ? st.tools.map((x) => x.name) : auto);
+            if (next.has(t.name)) next.delete(t.name);
+            else next.add(t.name);
+            void save([[`mcp.${name}.auto_approve`, [...next]]]).then(() => refresh());
+          });
+          return chip;
+        }))
+      : null;
+    return h("div", { class: "model", "data-mcp": name },
+      h("div", {},
+        h("div", { class: "m-title" }, name, pill),
+        h("div", { class: "m-sub", title: [s.command, ...(s.args ?? [])].join(" ") }, [s.command, ...(s.args ?? [])].join(" "))),
+      h("div", { class: "m-actions" }, toggle, remove),
+      st?.error ? h("div", { class: "test-result bad" }, codicon("error"), st.error.split("\n")[0]) : null,
+      tools);
+  };
+  const render = () => list.replaceChildren(...names.map(row));
+  if (names.length) {
+    render();
+    void api.mcpStatus().then((all) => {
+      for (const st of all) statusOf.set(st.name, st);
+      render();
+    }).catch((e) => {
+      list.replaceChildren(...names.map(row), h("div", { class: "model" }, h("div", { class: "test-result bad" }, codicon("error"), errorText(e))));
+    });
+  }
+
+  // 추가
+  const name = h("input", { placeholder: "이름 (예: github)", "aria-label": "서버 이름" }) as HTMLInputElement;
+  const command = h("input", { placeholder: "명령 (예: npx)", "aria-label": "명령" }) as HTMLInputElement;
+  const args = h("input", { placeholder: "인자 (예: -y @modelcontextprotocol/server-github)", "aria-label": "인자" }) as HTMLInputElement;
+  const status = h("span", { class: "saved" });
+  const add = h("button", { class: "btn btn-primary" }, codicon("add"), "추가") as HTMLButtonElement;
+  add.addEventListener("click", () => {
+    const n = name.value.trim();
+    if (!/^[A-Za-z0-9_-]+$/.test(n)) {
+      status.className = "ferr";
+      status.textContent = "이름은 영문·숫자·-·_만 씁니다";
+      return;
+    }
+    if (!command.value.trim()) return;
+    void save([[`mcp.${n}.command`, command.value.trim()], [`mcp.${n}.args`, splitArgs(args.value)]], status).then((ok) => {
+      if (ok) void refresh();
+    });
+  });
+  return [
+    names.length ? list : h("p", { class: "muted small" }, "아직 연결한 MCP 서버가 없습니다."),
+    field("서버 추가", "stdio로 실행하는 MCP 서버. 토큰 같은 환경변수는 설정 파일의 [mcp.<이름>.env]에 적습니다.",
+      h("div", { class: "mcp-add" }, name, command, args, h("div", { class: "row" }, add, status))),
+  ];
 }
 
 // ── 의미 검색 ────────────────────────────────────────────
@@ -502,6 +593,9 @@ async function refresh() {
       numberField("최대 단계", "한 번의 요청에서 도구를 부를 수 있는 최대 횟수입니다.", "agent.max_steps", c.agent.max_steps, { min: 1, max: 200 }),
       tagField("승인 없이 실행할 명령", "앞부분이 일치하면 바로 실행합니다. &, |, ; 같은 연결 기호가 있으면 항상 묻습니다.", "agent.allowed_commands", c.agent.allowed_commands, "명령 입력 후 Enter"),
       tagField("승인 없이 수정할 파일", "glob 형식. 예: docs/**, **/*.test.ts", "agent.auto_approve", c.agent.auto_approve, "패턴 입력 후 Enter")),
+
+    section("mcp", "MCP 서버", "‘코드 작성’ 에이전트가 외부 MCP 서버(이슈 트래커, DB, 브라우저 등)의 도구를 씁니다. 부를 때마다 승인을 받고, 신뢰한 폴더에서만 씁니다. 외부 에이전트(Codex·Gemini CLI)에도 같은 서버를 넘깁니다.",
+      ...mcpSection(c.mcp ?? {})),
 
     section("hooks", "훅", "정해진 순간에 실행할 명령입니다. 결과는 출력 패널에 표시됩니다.",
       tagField("저장할 때", "", "hooks.on_save", c.hooks.on_save, "예: npx prettier --check ."),
