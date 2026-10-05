@@ -47,6 +47,8 @@ pub struct AppState {
     pub checkpoints: Mutex<HashMap<String, Originals>>,
     /// 외부 에이전트(ACP) 연결: 작업 → 에이전트 프로세스
     pub acp: Mutex<HashMap<String, Arc<crate::acp::Conn>>>,
+    /// 외부 MCP 서버 연결: 서버 이름 → 프로세스
+    pub mcp: Mutex<HashMap<String, Arc<crate::mcp_client::Conn>>>,
     /// 외부 파일 변경 감시 (프로젝트를 바꾸면 교체)
     pub watcher: Mutex<Option<notify::RecommendedWatcher>>,
     pub http: reqwest::Client,

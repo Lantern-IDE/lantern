@@ -9,6 +9,7 @@ mod applog;
 mod inline;
 mod review;
 mod semantic;
+mod mcp_client;
 mod tasks;
 mod worktree;
 mod completion;
@@ -77,6 +78,7 @@ async fn open_project(app: AppHandle, state: State<'_, AppState>, path: String) 
     }
     state.sessions.lock().unwrap().clear();
     acp::close(&state, None);
+    mcp_client::close_all(&state);
 
     let trusted = state::is_trusted(&root);
     let project = Arc::new(Project {
@@ -399,6 +401,17 @@ async fn test_model(state: State<'_, AppState>, model_key: String) -> CmdResult<
 #[tauri::command]
 async fn probe_local(state: State<'_, AppState>) -> CmdResult<Vec<settings::LocalServer>> {
     Ok(settings::probe_local(&state.http).await)
+}
+
+/// 설정 화면: 설정한 MCP 서버를 띄워 보고 도구 목록이나 오류를 알린다
+#[tauri::command]
+async fn mcp_status(state: State<'_, AppState>) -> CmdResult<Vec<mcp_client::ServerStatus>> {
+    let p = state.project().map_err(anyhow_err)?;
+    if !p.is_trusted() {
+        return Err("MCP 서버는 신뢰한 폴더에서만 씁니다".into());
+    }
+    let cfg = config::load(p.config_root()).map_err(anyhow_err)?;
+    Ok(mcp_client::status(&state, &cfg, &p.root).await)
 }
 
 /// 의미 검색 연결 시험: 글 하나를 임베딩해 본다
@@ -1075,6 +1088,7 @@ fn main() {
             test_embeddings,
             semantic_status,
             set_embeddings_key,
+            mcp_status,
             open_project,
             set_trust,
             startup_path,

@@ -8,6 +8,7 @@ use globset::{Glob, GlobSetBuilder};
 use lantern_context::assemble::ContextRequest;
 use serde_json::{json, Value};
 use similar::TextDiff;
+use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
@@ -65,6 +66,8 @@ pub struct ToolCtx<'a> {
     pub originals: std::sync::Mutex<crate::state::Originals>,
     /// 격리된 작업이면 그 작업 공간(git worktree). 파일 읽기·쓰기·명령이 여기서 일어난다.
     pub workdir: Option<std::path::PathBuf>,
+    /// 외부 MCP 도구: 모델에 보이는 이름 → (서버 연결, 서버의 도구 이름)
+    pub mcp: HashMap<String, (Arc<crate::mcp_client::Conn>, String)>,
 }
 
 pub struct ToolOutcome {
@@ -85,6 +88,18 @@ impl ToolCtx<'_> {
         }
     }
 
+    /// 외부 MCP 도구. 서버 설정의 auto_approve에 없으면 승인 카드를 거친다
+    async fn mcp_call(&self, name: &str, input: &Value) -> Result<String> {
+        let (conn, tool) = self.mcp.get(name).with_context(|| format!("알 수 없는 도구: {name}"))?;
+        let server = &conn.server_name;
+        let auto = self.config.mcp.get(server).is_some_and(|c| c.auto_approve.iter().any(|a| a == "*" || a == tool));
+        let detail = serde_json::to_string_pretty(input).unwrap_or_default();
+        if !auto && !self.approver.ask("mcp", &format!("MCP 도구: {server} · {tool}"), &detail).await {
+            bail!("사용자가 {server}의 {tool} 실행을 거절했습니다");
+        }
+        conn.call(tool, input.clone()).await
+    }
+
     /// 파일 도구가 일하는 폴더 (격리 작업이면 작업 공간)
     pub fn root(&self) -> &Path {
         self.workdir.as_deref().unwrap_or(&self.project.root)
@@ -93,7 +108,7 @@ impl ToolCtx<'_> {
     async fn dispatch(&self, name: &str, input: &Value) -> Result<String> {
         let root = self.root().to_path_buf();
         // 에이전트 쪽에서도 거르지만, 제한 모드의 쓰기·실행 도구는 여기서 한 번 더 막는다.
-        if !self.project.is_trusted() && matches!(name, "write_file" | "edit_file" | "run_command" | "remember") {
+        if !self.project.is_trusted() && (matches!(name, "write_file" | "edit_file" | "run_command" | "remember") || name.starts_with(crate::mcp_client::PREFIX)) {
             bail!("제한 모드라 '{name}'을(를) 쓸 수 없습니다. 사용자가 이 폴더를 신뢰해야 합니다");
         }
         match name {
@@ -227,6 +242,7 @@ impl ToolCtx<'_> {
                 self.approver.output(&out);
                 Ok(out)
             }
+            other if other.starts_with(crate::mcp_client::PREFIX) => self.mcp_call(other, input).await,
             other => bail!("알 수 없는 도구: {other}"),
         }
     }
