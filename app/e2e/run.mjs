@@ -74,7 +74,7 @@ const file = (rel) => fs.readFileSync(path.join(DIRS.proj, rel), "utf8");
 
 // ── 모의 모델 (OpenAI 호환, 스트리밍) ────────────────────────
 // 1차: read_file → 2차: edit_file → 3차: 완료. 무엇을 읽고 고칠지는 시나리오가 정한다.
-const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "" };
+const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "", toolNames: [] };
 const mockServer = http.createServer((req, res) => {
   let body = "";
   req.on("data", (c) => (body += c));
@@ -125,6 +125,17 @@ const mockServer = http.createServer((req, res) => {
       return done("stop");
     }
     const first = String(j.messages.find((m) => m.role === "user")?.content ?? "");
+    // 외부 MCP 도구: 티켓을 찾아 그 내용으로 답한다
+    if (first.includes("티켓 T-1")) {
+      mock.toolNames = (j.tools ?? []).map((t) => t.function?.name);
+      if (tools === 0) {
+        send({ choices: [{ index: 0, delta: { tool_calls: [{ index: 0, id: "call_mcp", type: "function", function: { name: "mcp__tracker__lookup_ticket", arguments: JSON.stringify({ id: "T-1" }) } }] } }] });
+        return done("tool_calls");
+      }
+      const result = String(j.messages.filter((m) => m.role === "tool").at(-1)?.content ?? "");
+      send({ choices: [{ index: 0, delta: { content: `티켓 내용: ${result}` } }] });
+      return done("stop");
+    }
     if (first.includes("뜻으로 찾기 확인")) {
       mock.semanticPrompt = first;
       send({ choices: [{ index: 0, delta: { content: "맥락을 받았습니다." } }] });
@@ -165,6 +176,13 @@ default = "mock"
 base_url = "http://127.0.0.1:${MOCK_PORT}/v1"
 model = "e2e-embed"
 
+[mcp.tracker]
+command = "node"
+args = [${JSON.stringify(path.join(HERE, "mcp-server.mjs"))}]
+
+[mcp.tracker.env]
+MCP_LOG = ${JSON.stringify(path.join(TMP, "mcp.log"))}
+
 [acp.e2e]
 name = "E2E"
 command = "node"
@@ -176,6 +194,7 @@ ACP_FILE = "src/api.ts"
 ACP_FROM = "'/login'"
 ACP_TO = "'/signin'"
 `);
+const mcpLog = () => (fs.existsSync(path.join(TMP, "mcp.log")) ? fs.readFileSync(path.join(TMP, "mcp.log"), "utf8").trim().split("\n").map((l) => JSON.parse(l)) : []);
 const acpLog = () => (fs.existsSync(path.join(TMP, "acp.log")) ? fs.readFileSync(path.join(TMP, "acp.log"), "utf8").trim().split("\n").map((l) => JSON.parse(l)) : []);
 
 // ── 앱 띄우기와 CDP ────────────────────────────────────────
@@ -801,6 +820,50 @@ scenario("설정 화면에서 의미 검색: 연결 시험 → 끄기 → 직접
   const cfg = fs.readFileSync(cfgPath, "utf8");
   if (!cfg.includes("[embeddings]") || !cfg.includes(`127.0.0.1:${MOCK_PORT}/v1`) || !cfg.includes('model = "e2e-embed"')) throw new Error(`다시 켠 설정:
 ${cfg}`);
+});
+
+scenario("외부 MCP 서버: 에이전트 도구로 보이고, 승인 카드 → 실행 → 결과로 답", async () => {
+  await run(() => {
+    document.querySelector("#btn-new-task").click();
+    return true;
+  });
+  await run(ui.sendTask, "티켓 T-1 확인해줘", "code", false);
+  const card = await waitFor(() => {
+    const c = [...document.querySelectorAll(".task-log:not(.hidden) .approval:not(.resolved)")].at(-1);
+    return c && { title: c.querySelector(".atitle")?.textContent ?? "", plug: !!c.querySelector(".ahead .codicon-plug"), detail: c.querySelector("pre")?.textContent ?? "" };
+  }, 30000, "MCP 승인 카드");
+  if (!card.title.includes("tracker · lookup_ticket") || !card.plug || !card.detail.includes("T-1")) throw new Error(`승인 카드: ${JSON.stringify(card)}`);
+  if (!mock.toolNames.includes("mcp__tracker__lookup_ticket") || !mock.toolNames.includes("mcp__tracker__list_tickets")) throw new Error(`모델에 보인 도구: ${mock.toolNames}`);
+  if (mcpLog().some((l) => l.call)) throw new Error("승인 전에 도구가 실행됨");
+  await run(() => {
+    [...document.querySelectorAll(".task-log:not(.hidden) .approval:not(.resolved) .actions button")].find((b) => b.textContent.includes("실행")).click();
+    return true;
+  });
+  await waitFor(() => document.querySelector(".task-log:not(.hidden)")?.innerText.includes("티켓 내용: T-1: 로그인 쿠키 만료가 너무 짧음"), 20000, "도구 결과로 답");
+  const calls = mcpLog().filter((l) => l.call);
+  if (calls.length !== 1 || calls[0].call !== "lookup_ticket" || calls[0].args?.id !== "T-1") throw new Error(`MCP 호출: ${JSON.stringify(calls)}`);
+  // 설정 화면: 서버 상태와 도구, 도구를 눌러 '승인 없이'로
+  await run(() => {
+    document.querySelector("#ab-settings").click();
+    return true;
+  });
+  const row = await waitFor(() => {
+    const r = document.querySelector('[data-mcp="tracker"]');
+    return r?.querySelector(".pill.ok") && r.innerText;
+  }, 15000, "MCP 서버 상태");
+  if (!row.includes("도구 2개") || !row.includes("lookup_ticket")) throw new Error(`서버 상태: ${row}`);
+  await run(() => {
+    [...document.querySelectorAll('[data-mcp="tracker"] .tool-chip')].find((b) => b.textContent.includes("lookup_ticket")).click();
+    return true;
+  });
+  const cfgPath = path.join(DIRS.home, "config.toml");
+  const end = Date.now() + 5000;
+  while (!/auto_approve = \["lookup_ticket"\]/.test(fs.readFileSync(cfgPath, "utf8")) && Date.now() < end) await sleep(100);
+  if (!/auto_approve = \["lookup_ticket"\]/.test(fs.readFileSync(cfgPath, "utf8"))) throw new Error(`auto_approve 저장 안 됨:\n${fs.readFileSync(cfgPath, "utf8")}`);
+  await run(() => {
+    document.querySelector('.ab-item[data-view="tasks"]').click();
+    return true;
+  });
 });
 
 scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
