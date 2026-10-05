@@ -17,7 +17,7 @@ anyhow = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "1.1"
-tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "process", "io-util"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "process", "io-util", "net"] }
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
 futures-util = "0.3"
 portable-pty = "0.9"
@@ -32,6 +32,7 @@ notify = "8"
 trash = "5"
 tauri-plugin-updater = "2"
 regex = "1"
+html2text = "0.17.1"
 
 [dev-dependencies]
 tempfile = "3"

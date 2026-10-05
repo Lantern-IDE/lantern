@@ -206,6 +206,9 @@ pub struct AgentConfig {
     pub auto_approve: Vec<String>,
     #[serde(default)]
     pub allowed_commands: Vec<String>,
+    /// fetch_url이 승인 없이 열 사이트 (도메인과 그 하위 도메인)
+    #[serde(default)]
+    pub allowed_domains: Vec<String>,
     /// 파일을 고치고 끝낼 때 관련 테스트를 돌려 확인한다 (실패하면 다시 고치게)
     #[serde(default = "default_true")]
     pub verify_tests: bool,

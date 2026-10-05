@@ -11,6 +11,7 @@ mod review;
 mod semantic;
 mod mcp_client;
 mod verify;
+mod webfetch;
 mod tasks;
 mod worktree;
 mod completion;

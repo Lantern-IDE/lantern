@@ -14,7 +14,7 @@ use serde::Serialize;
 use std::path::Path;
 
 pub const READ_TOOLS: &[&str] =
-    &["get_context", "search_symbols", "get_symbol", "find_references", "read_file", "list_dir"];
+    &["get_context", "search_symbols", "get_symbol", "find_references", "read_file", "list_dir", "fetch_url"];
 pub const ALL_TOOLS: &[&str] = &[
     "get_context",
     "search_symbols",
@@ -22,6 +22,7 @@ pub const ALL_TOOLS: &[&str] = &[
     "find_references",
     "read_file",
     "list_dir",
+    "fetch_url",
     "write_file",
     "edit_file",
     "run_command",
