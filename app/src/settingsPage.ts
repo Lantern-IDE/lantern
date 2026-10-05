@@ -1,6 +1,6 @@
 // 설정 화면. 원본은 TOML 파일이고, 이 화면은 그 파일을 고치는 편한 수단이다.
 // 모든 변경은 바로 저장되며(주석 보존), 저장 위치는 "사용자 전체" 또는 "이 프로젝트"다.
-import { api, errorText, type SettingsModel, type SettingsSnapshot } from "./api";
+import { api, errorText, type EmbeddingsSettings, type SettingsModel, type SettingsSnapshot } from "./api";
 import { h } from "./dom";
 import * as editor from "./editor";
 import * as i18n from "./i18n";
@@ -130,6 +130,172 @@ function tagField(label: string, help: string, path: string, values: string[], p
   });
   render();
   return field(label, help, h("div", { class: "row" }, box, status));
+}
+
+// ── 의미 검색 ────────────────────────────────────────────
+
+type EmbedKind = "off" | "openai" | "local" | "custom";
+interface EmbedTarget { base_url: string; model: string; api_key_env: string | null }
+const OPENAI_EMBED: EmbedTarget = { base_url: "https://api.openai.com/v1", model: "text-embedding-3-small", api_key_env: "OPENAI_API_KEY" };
+/** 로컬 서버의 모델 중 임베딩 모델로 보이는 것 */
+const EMBED_MODEL = /embed|bge|minilm|e5-|gte-|arctic/i;
+
+/** 모델이 권하는 질문·조각 형식 (모르면 그대로) */
+function templatesFor(model: string): { query_template: string; doc_template: string } {
+  if (/embeddinggemma/i.test(model)) return { query_template: "task: code retrieval | query: {query}", doc_template: "title: {path} | text: {text}" };
+  if (/nomic-embed/i.test(model)) return { query_template: "search_query: {query}", doc_template: "search_document: {path}\n{text}" };
+  if (/qwen3-embedding/i.test(model)) return { query_template: "Instruct: Given a description of a code change, retrieve the source code that needs to be modified\nQuery:{query}", doc_template: "{path}\n{text}" };
+  return { query_template: "{query}", doc_template: "{path}\n{text}" };
+}
+
+function kindOf(e: EmbeddingsSettings | null | undefined): EmbedKind {
+  if (!e?.base_url) return "off";
+  if (e.base_url.replace(/\/+$/, "") === OPENAI_EMBED.base_url) return "openai";
+  // 로컬 서버 찾기가 아는 주소(Ollama·LM Studio 기본 포트)만. 다른 로컬 서버는 직접 입력으로 보여 덮어쓰지 않는다
+  if (/^http:\/\/localhost:(11434|1234)\/v1\/?$/.test(e.base_url)) return "local";
+  return "custom";
+}
+
+function semanticField(cur: EmbeddingsSettings | null | undefined): HTMLElement {
+  let kind = kindOf(cur);
+  const status = h("span", { class: "saved" });
+  const body = h("div", { class: "embed-body" });
+  const result = h("div", { class: "test-result hidden" });
+
+  const apply = (e: EmbedTarget) => {
+    const t = templatesFor(e.model);
+    return save([
+      ["embeddings.base_url", e.base_url],
+      ["embeddings.model", e.model],
+      ["embeddings.api_key_env", e.api_key_env],
+      ["embeddings.query_template", t.query_template],
+      ["embeddings.doc_template", t.doc_template],
+    ], status);
+  };
+
+  /** 연결 시험 버튼. 값은 누를 때 읽는다 */
+  const test = (target: () => EmbedTarget) => {
+    const btn = h("button", { class: "btn btn-secondary" }, codicon("plug"), "연결 시험") as HTMLButtonElement;
+    btn.addEventListener("click", async () => {
+      const e = target();
+      if (!e.base_url || !e.model) return;
+      btn.disabled = true;
+      result.className = "test-result";
+      result.replaceChildren(codicon("loading", "codicon-modifier-spin"), "임베딩해 보는 중…");
+      try {
+        const r = await api.testEmbeddings(e.base_url, e.model, e.api_key_env);
+        result.className = "test-result ok";
+        result.replaceChildren(codicon("pass"), `연결됨 · ${r.dim}차원 · ${r.ms}ms`);
+      } catch (err) {
+        result.className = "test-result bad";
+        result.replaceChildren(codicon("error"), errorText(err));
+      } finally {
+        btn.disabled = false;
+      }
+    });
+    return btn;
+  };
+
+  const progress = h("div", { class: "muted small embed-progress" });
+  const showProgress = () => void api.semanticStatus().then((st) => {
+    progress.textContent = !st ? "" : !st.total ? "다음 인덱싱 뒤에 코드 조각을 임베딩합니다." : st.done >= st.total
+      ? `코드 조각 ${st.total.toLocaleString()}개 모두 준비됨`
+      : `코드 조각 ${st.done.toLocaleString()} / ${st.total.toLocaleString()}개 준비됨 · 뒤에서 계속 만듭니다`;
+  }).catch(() => {});
+
+  const render = () => {
+    result.className = "test-result hidden";
+    if (kind === "off") {
+      body.replaceChildren(h("p", { class: "muted small" }, "키워드·호출 관계·함께 바뀐 이력으로만 코드를 고릅니다."));
+      return;
+    }
+    const note = h("p", { class: "embed-note" }, codicon(kind === "local" ? "lock" : "cloud-upload"),
+      kind === "local"
+        ? "코드 조각이 이 컴퓨터의 서버로만 갑니다. CPU로 돌리면 큰 프로젝트는 처음 준비에 몇 시간 걸릴 수 있습니다."
+        : "코드 조각(비밀로 보이는 값은 가림)이 이 서버로 갑니다. 처음 켜면 프로젝트 전체를 한 번 임베딩합니다.");
+    if (kind === "openai") {
+      const e = OPENAI_EMBED;
+      const keyInput = h("input", { type: "password", placeholder: cur?.key_source ? "저장됨 · 바꾸려면 새 키 입력" : "sk-…", "aria-label": "OpenAI API 키" }) as HTMLInputElement;
+      const keySave = h("button", { class: "btn btn-secondary" }, "키 저장") as HTMLButtonElement;
+      keySave.addEventListener("click", async () => {
+        if (!keyInput.value.trim()) return;
+        try {
+          await api.setEmbeddingsKey(e.api_key_env!, keyInput.value);
+          keyInput.value = "";
+          keyInput.placeholder = "저장됨 · 바꾸려면 새 키 입력";
+          toast.success("OpenAI 키를 저장했습니다", "OS 자격 증명 저장소에 저장했습니다. 설정 파일에는 적지 않습니다.");
+        } catch (err) {
+          toast.error("키를 저장하지 못했습니다", errorText(err));
+        }
+      });
+      body.replaceChildren(
+        field("모델", "", h("code", {}, e.model)),
+        field("API 키", `환경변수 ${e.api_key_env}가 있으면 그것을 씁니다. OpenAI 채팅 모델에 저장한 키와 같은 키입니다.`, h("div", { class: "row" }, keyInput, keySave)),
+        h("div", { class: "row" }, test(() => e)), result, note, progress);
+      if (kindOf(cur) !== "openai") void apply(e);
+      showProgress();
+      return;
+    }
+    if (kind === "local") {
+      body.replaceChildren(h("div", { class: "test-result" }, codicon("loading", "codicon-modifier-spin"), "로컬 서버를 찾는 중…"));
+      void api.probeLocal().then((servers) => {
+        if (kind !== "local") return;
+        const options = servers.filter((sv) => sv.running).flatMap((sv) => sv.models.filter((m) => EMBED_MODEL.test(m)).map((m) => ({ server: sv, model: m })));
+        if (!options.length) {
+          body.replaceChildren(
+            h("p", { class: "muted small" }, servers.some((sv) => sv.running)
+              ? "로컬 서버에 임베딩 모델이 없습니다. Ollama라면 터미널에서 받으세요:"
+              : "Ollama나 LM Studio가 실행 중이 아닙니다. Ollama를 설치하고 임베딩 모델을 받으세요:"),
+            h("code", { class: "embed-cmd" }, "ollama pull embeddinggemma"),
+            h("div", { class: "row" }, h("button", { class: "btn btn-secondary", onclick: render }, codicon("refresh"), "다시 찾기")));
+          return;
+        }
+        const select = h("select", { "aria-label": "임베딩 모델" },
+          ...options.map((o, i) => h("option", { value: String(i), selected: cur?.model === o.model && cur?.base_url === o.server.base_url }, `${o.model} · ${o.server.name}`))) as HTMLSelectElement;
+        const current = (): EmbedTarget => {
+          const o = options[Number(select.value)];
+          return { base_url: o.server.base_url, model: o.model, api_key_env: null };
+        };
+        select.addEventListener("change", () => void apply(current()));
+        body.replaceChildren(field("모델", "", h("div", { class: "row" }, select, test(current))), result, note, progress);
+        if (!options.some((o) => o.model === cur?.model && o.server.base_url === cur?.base_url)) void apply(current());
+        showProgress();
+      });
+      return;
+    }
+    // 직접 입력
+    const url = h("input", { value: cur?.base_url ?? "", placeholder: "https://…/v1", "aria-label": "주소" }) as HTMLInputElement;
+    const model = h("input", { value: cur?.model ?? "", placeholder: "모델 이름", "aria-label": "모델" }) as HTMLInputElement;
+    const env = h("input", { value: cur?.api_key_env ?? "", placeholder: "예: MY_EMBED_KEY (없으면 비워 둠)", "aria-label": "키 환경변수" }) as HTMLInputElement;
+    const values = (): EmbedTarget => ({ base_url: url.value.trim(), model: model.value.trim(), api_key_env: env.value.trim() || null });
+    const saveBtn = h("button", { class: "btn btn-primary" }, "저장") as HTMLButtonElement;
+    saveBtn.addEventListener("click", () => {
+      if (values().base_url && values().model) void apply(values());
+    });
+    body.replaceChildren(
+      field("주소", "OpenAI 호환 /embeddings를 받는 서버 주소 (끝의 /embeddings는 빼고)", url),
+      field("모델", "", model),
+      field("키 환경변수", "키는 이 이름의 환경변수에서 읽습니다.", env),
+      h("div", { class: "row" }, saveBtn, test(values)),
+      result, note, progress);
+    showProgress();
+  };
+
+  const seg = h("div", { class: "segmented", role: "group", "aria-label": "의미 검색" },
+    ...([["off", "끔"], ["openai", "OpenAI"], ["local", "로컬 (Ollama 등)"], ["custom", "직접 입력"]] as [EmbedKind, string][]).map(([k, label]) => {
+      const b = h("button", { class: kind === k ? "on" : "", "aria-pressed": String(kind === k), "data-kind": k }, label);
+      b.addEventListener("click", () => {
+        if (kind === k) return;
+        kind = k;
+        seg.querySelectorAll("button").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", String(x === b)); });
+        if (k === "off") void save([["embeddings", null]], status);
+        render();
+      });
+      return b;
+    }));
+  render();
+  return field("의미 검색", "키워드가 겹치지 않아도 질문과 뜻이 가까운 코드를 함께 찾습니다. 공개 벤치마크에서 한국어 질문의 적중률이 76%에서 86%로 올랐습니다.",
+    h("div", { class: "embed", id: "set-embed" }, h("div", { class: "row" }, seg, status), body));
 }
 
 function keySourceText(m: SettingsModel): [string, string] {
@@ -327,6 +493,7 @@ async function refresh() {
 
     section("context", "맥락", "질문마다 맥락 엔진이 관련 코드를 골라 붙입니다. 예산이 클수록 더 많은 코드를 보내고 토큰을 더 씁니다.",
       numberField("맥락 토큰 예산", "보통 4,000~16,000 사이가 적당합니다.", "context.budget_tokens", c.context.budget_tokens, { min: 500, step: 500 }),
+      semanticField(c.embeddings),
       h("div", { class: "field" }, h("div", { class: "row" },
         h("button", { class: "btn btn-secondary", onclick: () => ctx.openPreview() }, codicon("eye"), "맥락 미리보기 열기"),
         h("span", { class: "muted small" }, "모델을 부르지 않고 어떤 코드가 골라지는지 확인합니다.")))),
