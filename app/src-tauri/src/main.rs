@@ -401,6 +401,46 @@ async fn probe_local(state: State<'_, AppState>) -> CmdResult<Vec<settings::Loca
     Ok(settings::probe_local(&state.http).await)
 }
 
+/// 의미 검색 연결 시험: 글 하나를 임베딩해 본다
+#[tauri::command]
+async fn test_embeddings(base_url: String, model: String, api_key_env: Option<String>) -> CmdResult<serde_json::Value> {
+    let mut cfg: config::Config = toml::from_str(config::DEFAULT_CONFIG).map_err(err)?;
+    cfg.embeddings = Some(config::EmbeddingsConfig {
+        base_url,
+        model,
+        api_key_env: api_key_env.filter(|k| !k.is_empty()),
+        api_key: None,
+        query_template: "{query}".into(),
+        doc_template: "{path}
+{text}".into(),
+    });
+    let emb = cfg.embedder().ok_or("주소와 모델을 적어 주세요")?;
+    let started = std::time::Instant::now();
+    let v = tauri::async_runtime::spawn_blocking(move || emb.embed_query("where is the session cookie issued?"))
+        .await
+        .map_err(err)?
+        .map_err(anyhow_err)?;
+    Ok(json!({ "dim": v.len(), "ms": started.elapsed().as_millis() as u64 }))
+}
+
+/// 의미 검색 키를 OS 자격 증명 저장소에 (이름은 환경변수 이름, 모델 키와 같은 방식)
+#[tauri::command]
+async fn set_embeddings_key(env: String, key: String) -> CmdResult<()> {
+    if env.is_empty() || !env.chars().all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_') {
+        return Err("키 이름은 OPENAI_API_KEY처럼 영문 대문자·숫자·_만 씁니다".into());
+    }
+    settings::set_api_key(&env, key.trim()).map_err(anyhow_err)
+}
+
+/// 의미 검색 준비 상태 (설정했을 때): 벡터를 만든 조각 / 전체 조각
+#[tauri::command]
+async fn semantic_status(state: State<'_, AppState>) -> CmdResult<Option<serde_json::Value>> {
+    let Ok(p) = state.project() else { return Ok(None) };
+    let Some(emb) = config::load(p.config_root()).ok().and_then(|c| c.embedder()) else { return Ok(None) };
+    let (done, total) = p.engine.lock().unwrap().store.count_chunks(&emb.model).map_err(anyhow_err)?;
+    Ok(Some(json!({ "done": done, "total": total })))
+}
+
 #[tauri::command]
 async fn list_agents(state: State<'_, AppState>) -> CmdResult<Vec<agents::AgentDef>> {
     let root = project_root(&state);
@@ -1032,6 +1072,9 @@ fn main() {
             commit_message,
             inline_edit,
             test_examples,
+            test_embeddings,
+            semantic_status,
+            set_embeddings_key,
             open_project,
             set_trust,
             startup_path,
