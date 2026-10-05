@@ -234,7 +234,7 @@ async fn tools_edit_with_approval_and_rejection() {
 
     // 승인하는 경우
     let yes = FakeApprover { answer: true, asked: Mutex::new(vec![]) };
-    let ctx = ToolCtx { project: p.clone(), config: &cfg, approver: &yes, changed: Default::default(), originals: Default::default(), workdir: None, mcp: Default::default() };
+    let ctx = ToolCtx { project: p.clone(), config: &cfg, approver: &yes, changed: Default::default(), originals: Default::default(), workdir: None, mcp: Default::default(), fetched_hosts: Default::default() };
     let out = ctx
         .run("edit_file", &json!({"path":"src/lib.rs","old_string":"hi {name}","new_string":"안녕 {name}"}))
         .await;
@@ -259,7 +259,7 @@ async fn tools_edit_with_approval_and_rejection() {
 
     // 거절하는 경우: 파일이 그대로여야 한다
     let no = FakeApprover { answer: false, asked: Mutex::new(vec![]) };
-    let ctx2 = ToolCtx { project: p.clone(), config: &cfg, approver: &no, changed: Default::default(), originals: Default::default(), workdir: None, mcp: Default::default() };
+    let ctx2 = ToolCtx { project: p.clone(), config: &cfg, approver: &no, changed: Default::default(), originals: Default::default(), workdir: None, mcp: Default::default(), fetched_hosts: Default::default() };
     let rejected = ctx2.run("write_file", &json!({"path":"src/new.rs","content":"x"})).await;
     assert!(rejected.is_error && rejected.content.contains("거절"));
     assert!(!dir.path().join("src/new.rs").exists());
@@ -300,7 +300,7 @@ async fn tools_edit_with_approval_and_rejection() {
     // 자동 승인 glob
     cfg.agent.auto_approve = vec!["docs/**".into()];
     let never = FakeApprover { answer: false, asked: Mutex::new(vec![]) };
-    let ctx3 = ToolCtx { project: p.clone(), config: &cfg, approver: &never, changed: Default::default(), originals: Default::default(), workdir: None, mcp: Default::default() };
+    let ctx3 = ToolCtx { project: p.clone(), config: &cfg, approver: &never, changed: Default::default(), originals: Default::default(), workdir: None, mcp: Default::default(), fetched_hosts: Default::default() };
     let auto = ctx3.run("write_file", &json!({"path":"docs/a.md","content":"# a"})).await;
     assert!(!auto.is_error, "{}", auto.content);
     assert!(never.asked.lock().unwrap().is_empty());

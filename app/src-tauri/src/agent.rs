@@ -352,7 +352,7 @@ async fn run_inner(
     push_user(&mut history, format!("{text}\n\n<project_context>\n{}\n</project_context>", ctx.0), images);
 
     let approver = TauriApprover { app: app.clone(), session: session.to_string(), cancel: cancel.clone() };
-    let tctx = ToolCtx { project: project.clone(), config: &config, approver: &approver, changed: Default::default(), originals: Default::default(), workdir: workdir.clone(), mcp: mcp.map };
+    let tctx = ToolCtx { project: project.clone(), config: &config, approver: &approver, changed: Default::default(), originals: Default::default(), workdir: workdir.clone(), mcp: mcp.map, fetched_hosts: Default::default() };
     let max_steps = config.agent.max_steps.max(1);
     // 고친 뒤 확인: 쓰기·실행이 되는 에이전트, 신뢰한 폴더에서만
     let verify_on = config.agent.verify_tests && project.is_trusted() && allowed.iter().any(|t| t == "run_command") && allowed.iter().any(|t| t == "edit_file" || t == "write_file");

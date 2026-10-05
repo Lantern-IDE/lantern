@@ -31,6 +31,8 @@ pub fn specs(allowed: &[String]) -> Vec<ToolSpec> {
             json!({"type":"object","properties":{"name":{"type":"string"}},"required":["name"]})),
         ("read_file", "Read a file with line numbers (`N<TAB>text`). Optionally a 1-based inclusive line range.",
             json!({"type":"object","properties":{"path":{"type":"string"},"start_line":{"type":"integer"},"end_line":{"type":"integer"}},"required":["path"]})),
+        ("fetch_url", "Fetch a web page (http/https) and return it as text, e.g. a library's documentation or an explanation of an error message. Each new site needs the user's approval. Never put project code, file contents or secrets in the URL.",
+            json!({"type":"object","properties":{"url":{"type":"string"}},"required":["url"]})),
         ("list_dir", "List a directory (respects .gitignore). Use \".\" for the project root.",
             json!({"type":"object","properties":{"path":{"type":"string"}},"required":["path"]})),
         ("write_file", "Create or overwrite a file with the full content. The user reviews a diff before it is applied. Prefer edit_file for small changes to existing files.",
@@ -70,6 +72,8 @@ pub struct ToolCtx<'a> {
     pub workdir: Option<std::path::PathBuf>,
     /// 외부 MCP 도구: 모델에 보이는 이름 → (서버 연결, 서버의 도구 이름)
     pub mcp: HashMap<String, (Arc<crate::mcp_client::Conn>, String)>,
+    /// 이번 작업에서 사용자가 열어도 된다고 한 사이트
+    pub fetched_hosts: std::sync::Mutex<std::collections::HashSet<String>>,
 }
 
 pub struct ToolOutcome {
@@ -253,6 +257,17 @@ impl ToolCtx<'_> {
                 let out = run_shell(&root, &cmd, COMMAND_TIMEOUT).await?;
                 self.approver.output(&out);
                 Ok(out)
+            }
+            "fetch_url" => {
+                let url = crate::webfetch::check_url(s(input, "url")?)?;
+                let host = url.host_str().unwrap_or_default().to_ascii_lowercase();
+                let known = crate::webfetch::host_allowed(&host, &self.config.agent.allowed_domains) || self.fetched_hosts.lock().unwrap().contains(&host);
+                if !known && !self.approver.ask("fetch", &format!("웹 페이지 가져오기: {host}"), url.as_str()).await {
+                    bail!("사용자가 {host} 접속을 거절했습니다");
+                }
+                self.fetched_hosts.lock().unwrap().insert(host);
+                let f = crate::webfetch::fetch(url.as_str()).await?;
+                Ok(format!("{}\n\n{}", f.url, f.text.trim()))
             }
             other if other.starts_with(crate::mcp_client::PREFIX) => self.mcp_call(other, input).await,
             other => bail!("알 수 없는 도구: {other}"),
