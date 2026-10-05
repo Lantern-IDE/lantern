@@ -77,6 +77,17 @@ Lantern은 각 회사의 공식 에이전트 CLI를 [Agent Client Protocol](http
 
 Claude 구독(Pro/Max)은 이렇게 쓸 수 없습니다. Anthropic 약관이 구독 로그인을 자사 앱에만 허용합니다. Anthropic API 키를 쓰세요.
 
+### MCP 서버 쓰기
+
+stdio로 도는 MCP 서버(이슈 트래커, DB, 브라우저 등)를 **설정 → MCP 서버**나 `config.toml`에 넣으면 **코드 작성** 에이전트가 그 도구를 씁니다. 부를 때마다 승인 카드를 거치고, 승인 없이 실행할 도구는 설정에서 고를 수 있습니다. 외부 에이전트에도 같은 서버를 넘기며, 신뢰한 폴더에서만 씁니다.
+
+```toml
+[mcp.github]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+env = { GITHUB_PERSONAL_ACCESS_TOKEN = "…" }
+```
+
 ## 소스로 빌드
 
 필요한 것: Rust(stable), Node.js 22, Windows는 WebView2(Windows 11에는 기본 설치). Linux 패키지는 [CI 설정](.github/workflows/ci.yml)을 참고하세요.
