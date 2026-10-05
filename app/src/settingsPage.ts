@@ -110,6 +110,28 @@ function numberField(label: string, help: string, path: string, value: number, o
   return field(label, help, h("div", { class: "row" }, input, status), id);
 }
 
+function toggleField(label: string, help: string, path: string, value: boolean): HTMLElement {
+  const id = `set-${path.replace(/\./g, "-")}`;
+  const status = h("span", { class: "saved" });
+  const input = h("input", { type: "checkbox", id, checked: value }) as HTMLInputElement;
+  input.addEventListener("change", () => void save([[path, input.checked]], status));
+  return h("div", { class: "field" },
+    h("label", { class: "check-row", for: id }, input, h("span", { class: "flabel" }, label), status),
+    help ? h("div", { class: "fhelp" }, help) : null);
+}
+
+function textField(label: string, help: string, path: string, value: string, placeholder: string): HTMLElement {
+  const id = `set-${path.replace(/\./g, "-")}`;
+  const status = h("span", { class: "saved" });
+  const input = h("input", { id, value, placeholder, spellcheck: "false", class: "code-input" }) as HTMLInputElement;
+  let timer: number | undefined;
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = window.setTimeout(() => void save([[path, input.value.trim() || null]], status), 600);
+  });
+  return field(label, help, h("div", { class: "row" }, input, status), id);
+}
+
 function tagField(label: string, help: string, path: string, values: string[], placeholder: string): HTMLElement {
   const list = [...values];
   const status = h("span", { class: "saved" });
@@ -592,7 +614,9 @@ async function refresh() {
     section("agent", "에이전트", "‘코드 작성’ 같은 에이전트가 파일을 바꾸거나 명령을 실행할 때의 권한입니다. 목록 밖의 작업은 항상 승인을 받습니다.",
       numberField("최대 단계", "한 번의 요청에서 도구를 부를 수 있는 최대 횟수입니다.", "agent.max_steps", c.agent.max_steps, { min: 1, max: 200 }),
       tagField("승인 없이 실행할 명령", "앞부분이 일치하면 바로 실행합니다. &, |, ; 같은 연결 기호가 있으면 항상 묻습니다.", "agent.allowed_commands", c.agent.allowed_commands, "명령 입력 후 Enter"),
-      tagField("승인 없이 수정할 파일", "glob 형식. 예: docs/**, **/*.test.ts", "agent.auto_approve", c.agent.auto_approve, "패턴 입력 후 Enter")),
+      tagField("승인 없이 수정할 파일", "glob 형식. 예: docs/**, **/*.test.ts", "agent.auto_approve", c.agent.auto_approve, "패턴 입력 후 Enter"),
+      toggleField("고친 뒤 관련 테스트로 확인", "에이전트가 파일을 고치고 끝내려 할 때, 영향 반경이 찾은 관련 테스트만 돌립니다. 실패하면 출력을 보고 두 번까지 다시 고치고, 같은 실패가 반복되면 멈춥니다. 실행은 명령 승인 규칙을 따릅니다.", "agent.verify_tests", c.agent.verify_tests ?? true),
+      textField("테스트 명령", "비우면 프로젝트를 보고 고릅니다 (vitest·jest·pytest·go·cargo·maven·gradle). {files}에 관련 테스트 파일이 들어갑니다.", "agent.test_command", c.agent.test_command ?? "", "예: pnpm vitest run {files}")),
 
     section("mcp", "MCP 서버", "‘코드 작성’ 에이전트가 외부 MCP 서버(이슈 트래커, DB, 브라우저 등)의 도구를 씁니다. 부를 때마다 승인을 받고, 신뢰한 폴더에서만 씁니다. 외부 에이전트(Codex·Gemini CLI)에도 같은 서버를 넘깁니다.",
       ...mcpSection(c.mcp ?? {})),

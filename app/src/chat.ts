@@ -149,6 +149,7 @@ function endText(task: Task) {
 
 /** mcp__서버__도구 → "서버 · 도구" */
 function toolLabel(name: string): string {
+  if (name === "run_tests") return "관련 테스트로 확인";
   const m = name.match(/^mcp__(.+?)__(.+)$/);
   return m ? `${m[1]} · ${m[2]}` : name;
 }
@@ -454,7 +455,7 @@ function handle(ev: AgentEvent) {
       const el = h("details", { class: "tool" },
         h("summary", {},
           h("span", { class: "tstate run" }, codicon("loading", "codicon-modifier-spin")),
-          ev.name.startsWith("mcp__") ? codicon("plug") : null,
+          ev.name.startsWith("mcp__") ? codicon("plug") : ev.name === "run_tests" ? codicon("beaker") : null,
           h("span", { class: "tname" }, toolLabel(ev.name)),
           h("span", { class: "targ" }, toolSummary(ev.input))),
         h("pre", {}, JSON.stringify(ev.input, null, 2)));

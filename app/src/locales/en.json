@@ -687,7 +687,13 @@
   "인자 (예: -y @modelcontextprotocol/server-github)": "Arguments (e.g. -y @modelcontextprotocol/server-github)",
   "켜기": "Turn on",
   "확인 중": "Checking",
-  "실행함": "Ran"
+  "실행함": "Ran",
+  "고친 뒤 관련 테스트로 확인": "Check with related tests after edits",
+  "관련 테스트로 확인": "Check with related tests",
+  "비우면 프로젝트를 보고 고릅니다 (vitest·jest·pytest·go·cargo·maven·gradle). {files}에 관련 테스트 파일이 들어갑니다.": "Leave empty to pick one from the project (vitest, jest, pytest, go, cargo, maven, gradle). {files} is replaced with the related test files.",
+  "에이전트가 파일을 고치고 끝내려 할 때, 영향 반경이 찾은 관련 테스트만 돌립니다. 실패하면 출력을 보고 두 번까지 다시 고치고, 같은 실패가 반복되면 멈춥니다. 실행은 명령 승인 규칙을 따릅니다.": "When the agent finishes editing files, only the tests the impact radius links to them are run. On failure it reads the output and fixes up to twice, and stops if the same failure repeats. Running follows the command approval rules.",
+  "예: pnpm vitest run {files}": "e.g. pnpm vitest run {files}",
+  "테스트 명령": "Test command"
  },
  "templates": {
   "'{}'{}을(를) 휴지통으로 옮길까요?": "Move '{}'{} to Trash?",
