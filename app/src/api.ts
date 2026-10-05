@@ -51,12 +51,21 @@ export interface SettingsModel {
   key_source: "env" | "keychain" | "config" | null;
   needs_key: boolean;
 }
+export interface EmbeddingsSettings {
+  base_url: string;
+  model: string;
+  api_key_env?: string | null;
+  query_template: string;
+  doc_template: string;
+  key_source?: "set" | null;
+}
 export interface SettingsSnapshot {
   config: {
     models: Record<string, SettingsModel>;
     routing: { default: string; completion?: string };
     budget: { monthly_usd_limit: number; warn_at_percent: number };
     context: { budget_tokens: number };
+    embeddings?: EmbeddingsSettings | null;
     agent: { max_steps: number; auto_approve: string[]; allowed_commands: string[] };
     hooks: { on_save: string[]; on_agent_done: string[] };
   };
@@ -83,6 +92,10 @@ export const api = {
   deleteApiKey: (modelKey: string) => invoke<void>("delete_api_key", { modelKey }),
   testModel: (modelKey: string) => invoke<TestResult>("test_model", { modelKey }),
   probeLocal: () => invoke<LocalServer[]>("probe_local"),
+  testEmbeddings: (baseUrl: string, model: string, apiKeyEnv: string | null) =>
+    invoke<{ dim: number; ms: number }>("test_embeddings", { baseUrl, model, apiKeyEnv }),
+  semanticStatus: () => invoke<{ done: number; total: number } | null>("semantic_status"),
+  setEmbeddingsKey: (env: string, key: string) => invoke<void>("set_embeddings_key", { env, key }),
   listAgents: () => invoke<AgentDef[]>("list_agents"),
   modelInfo: () => invoke<ModelInfo>("model_info"),
   agentSend: (session: string, agent: string, text: string, images: { mediaType: string; data: string }[], file: string | null, line: number | null) =>

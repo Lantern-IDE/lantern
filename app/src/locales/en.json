@@ -640,7 +640,33 @@
   "이미지가 너무 큽니다": "The image is too large",
   "이미지를 붙이지 못했습니다": "Couldn't attach the image",
   "이미지를 읽지 못했습니다": "Couldn't read the image",
-  "의미 검색 오류": "Semantic search error"
+  "의미 검색 오류": "Semantic search error",
+  "OS 자격 증명 저장소에 저장했습니다. 설정 파일에는 적지 않습니다.": "Saved to the OS credential store. It isn't written to the settings file.",
+  "Ollama나 LM Studio가 실행 중이 아닙니다. Ollama를 설치하고 임베딩 모델을 받으세요:": "Ollama or LM Studio isn't running. Install Ollama and pull an embedding model:",
+  "OpenAI API 키": "OpenAI API key",
+  "OpenAI 키를 저장했습니다": "Saved the OpenAI key",
+  "OpenAI 호환 /embeddings를 받는 서버 주소 (끝의 /embeddings는 빼고)": "Address of a server that accepts OpenAI-compatible /embeddings (without the trailing /embeddings)",
+  "다음 인덱싱 뒤에 코드 조각을 임베딩합니다.": "Code chunks will be embedded after the next indexing.",
+  "로컬 (Ollama 등)": "Local (Ollama etc.)",
+  "로컬 서버를 찾는 중…": "Looking for local servers…",
+  "로컬 서버에 임베딩 모델이 없습니다. Ollama라면 터미널에서 받으세요:": "No embedding model on the local server. With Ollama, pull one in a terminal:",
+  "모델 이름": "Model name",
+  "연결 시험": "Test connection",
+  "예: MY_EMBED_KEY (없으면 비워 둠)": "e.g. MY_EMBED_KEY (leave empty if none)",
+  "의미 검색": "Semantic search",
+  "임베딩 모델": "Embedding model",
+  "임베딩해 보는 중…": "Trying an embedding…",
+  "저장됨 · 바꾸려면 새 키 입력": "Saved · enter a new key to replace it",
+  "주소": "Address",
+  "직접 입력": "Custom",
+  "코드 조각(비밀로 보이는 값은 가림)이 이 서버로 갑니다. 처음 켜면 프로젝트 전체를 한 번 임베딩합니다.": "Code chunks (with likely secrets masked) are sent to this server. The first time, the whole project is embedded once.",
+  "코드 조각이 이 컴퓨터의 서버로만 갑니다. CPU로 돌리면 큰 프로젝트는 처음 준비에 몇 시간 걸릴 수 있습니다.": "Code chunks only go to a server on this computer. On a CPU, the first pass over a large project can take hours.",
+  "키 저장": "Save key",
+  "키 환경변수": "Key environment variable",
+  "키는 이 이름의 환경변수에서 읽습니다.": "The key is read from the environment variable with this name.",
+  "키를 저장하지 못했습니다": "Couldn't save the key",
+  "키워드·호출 관계·함께 바뀐 이력으로만 코드를 고릅니다.": "Code is chosen only by keywords, call relations, and change history.",
+  "키워드가 겹치지 않아도 질문과 뜻이 가까운 코드를 함께 찾습니다. 공개 벤치마크에서 한국어 질문의 적중률이 76%에서 86%로 올랐습니다.": "Also finds code close in meaning to the question, even when no keyword matches. On the public benchmark, recall for Korean questions rose from 76% to 86%."
  },
  "templates": {
   "'{}'{}을(를) 휴지통으로 옮길까요?": "Move '{}'{} to Trash?",
@@ -781,6 +807,10 @@
   "이미지는 한 번에 {}장까지 보낼 수 있습니다": "You can send up to {} images at a time",
   "의미 검색 준비 {}%": "Preparing semantic search {}%",
   "임베딩 서버에 보내지 못했습니다. 키워드 검색만으로 맥락을 고릅니다.\n{}": "Couldn't reach the embedding server. Context is chosen by keyword search only.\n{}",
-  "코드 조각 {} / {}개를 임베딩했습니다. 끝나기 전에도 만든 만큼은 맥락 조립에 씁니다.": "Embedded {} / {} code chunks. Chunks done so far are already used for context."
+  "코드 조각 {} / {}개를 임베딩했습니다. 끝나기 전에도 만든 만큼은 맥락 조립에 씁니다.": "Embedded {} / {} code chunks. Chunks done so far are already used for context.",
+  "연결됨 · {}차원 · {}ms": "Connected · {} dimensions · {}ms",
+  "코드 조각 {} / {}개 준비됨 · 뒤에서 계속 만듭니다": "{} / {} code chunks ready · continuing in the background",
+  "코드 조각 {}개 모두 준비됨": "All {} code chunks ready",
+  "환경변수 {}가 있으면 그것을 씁니다. OpenAI 채팅 모델에 저장한 키와 같은 키입니다.": "Uses the {} environment variable if set. It's the same key as the one saved for OpenAI chat models."
  }
 }

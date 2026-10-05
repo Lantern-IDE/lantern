@@ -667,6 +667,13 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .test-result { font-size: 12px; grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; }
 .test-result.ok { color: var(--ok); }
 .test-result.bad { color: var(--error); }
+.embed { display: flex; flex-direction: column; gap: 10px; }
+.embed-body { display: flex; flex-direction: column; gap: 10px; padding-left: 12px; border-left: 2px solid var(--border); }
+.embed-body .field { margin: 0; padding: 0; border-bottom: 0; }
+.embed-note { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 12px; color: var(--muted); max-width: 64ch; }
+.embed-note .codicon { margin-top: 2px; flex-shrink: 0; }
+.embed-cmd { align-self: flex-start; padding: 4px 8px; border-radius: var(--radius-sm); background: var(--sunken); font-size: 12px; user-select: all; }
+.embed-progress:empty { display: none; }
 .add-model { margin-top: 12px; border: 1px dashed var(--border-strong); border-radius: 8px; padding: 14px 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
 .add-model label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
 .add-model .full { grid-column: 1 / -1; }
