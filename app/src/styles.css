@@ -675,6 +675,9 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .test-result { font-size: 12px; grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; }
 .test-result.ok { color: var(--ok); }
 .test-result.bad { color: var(--error); }
+.check-row { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.check-row input { margin: 0; }
+.code-input { font-family: var(--code-font); font-size: 12px; width: 100%; max-width: 480px; }
 .embed { display: flex; flex-direction: column; gap: 10px; }
 .embed-body { display: flex; flex-direction: column; gap: 10px; padding-left: 12px; border-left: 2px solid var(--border); }
 .embed-body .field { margin: 0; padding: 0; border-bottom: 0; }

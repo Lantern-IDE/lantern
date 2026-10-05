@@ -69,7 +69,7 @@ export interface SettingsSnapshot {
     context: { budget_tokens: number };
     embeddings?: EmbeddingsSettings | null;
     mcp?: Record<string, McpServerSettings>;
-    agent: { max_steps: number; auto_approve: string[]; allowed_commands: string[] };
+    agent: { max_steps: number; auto_approve: string[]; allowed_commands: string[]; verify_tests: boolean; test_command?: string | null };
     hooks: { on_save: string[]; on_agent_done: string[] };
   };
   global_path: string | null;
