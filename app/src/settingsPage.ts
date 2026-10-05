@@ -615,6 +615,7 @@ async function refresh() {
       numberField("최대 단계", "한 번의 요청에서 도구를 부를 수 있는 최대 횟수입니다.", "agent.max_steps", c.agent.max_steps, { min: 1, max: 200 }),
       tagField("승인 없이 실행할 명령", "앞부분이 일치하면 바로 실행합니다. &, |, ; 같은 연결 기호가 있으면 항상 묻습니다.", "agent.allowed_commands", c.agent.allowed_commands, "명령 입력 후 Enter"),
       tagField("승인 없이 수정할 파일", "glob 형식. 예: docs/**, **/*.test.ts", "agent.auto_approve", c.agent.auto_approve, "패턴 입력 후 Enter"),
+      tagField("승인 없이 열 사이트", "에이전트의 웹 페이지 가져오기(fetch_url)가 묻지 않고 여는 도메인입니다. 하위 도메인도 포함합니다. 내부망·로컬 주소는 늘 막습니다.", "agent.allowed_domains", c.agent.allowed_domains ?? [], "예: docs.rs"),
       toggleField("고친 뒤 관련 테스트로 확인", "에이전트가 파일을 고치고 끝내려 할 때, 영향 반경이 찾은 관련 테스트만 돌립니다. 실패하면 출력을 보고 두 번까지 다시 고치고, 같은 실패가 반복되면 멈춥니다. 실행은 명령 승인 규칙을 따릅니다.", "agent.verify_tests", c.agent.verify_tests ?? true),
       textField("테스트 명령", "비우면 프로젝트를 보고 고릅니다 (vitest·jest·pytest·go·cargo·maven·gradle). {files}에 관련 테스트 파일이 들어갑니다.", "agent.test_command", c.agent.test_command ?? "", "예: pnpm vitest run {files}")),
 

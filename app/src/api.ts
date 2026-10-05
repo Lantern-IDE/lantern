@@ -25,7 +25,7 @@ export type AgentEvent = { session: string } & (
   | { kind: "tool_start"; name: string }
   | { kind: "tool_call"; id: string; name: string; input: Record<string, unknown> }
   | { kind: "tool_result"; id: string; name: string; content: string; is_error: boolean }
-  | { kind: "approval"; id: string; approval_kind: "edit" | "command" | "secret" | "mcp"; title: string; detail: string }
+  | { kind: "approval"; id: string; approval_kind: "edit" | "command" | "secret" | "mcp" | "fetch"; title: string; detail: string }
   | { kind: "approval_resolved"; id: string; approved: boolean }
   | { kind: "usage"; request_id: number; model: string; usage: Usage; cost_usd: number | null; month_cost_usd: number; month_limit_usd: number }
   | { kind: "done"; changed: string[]; checkpoint: string | null }
@@ -69,7 +69,7 @@ export interface SettingsSnapshot {
     context: { budget_tokens: number };
     embeddings?: EmbeddingsSettings | null;
     mcp?: Record<string, McpServerSettings>;
-    agent: { max_steps: number; auto_approve: string[]; allowed_commands: string[]; verify_tests: boolean; test_command?: string | null };
+    agent: { max_steps: number; auto_approve: string[]; allowed_commands: string[]; allowed_domains?: string[]; verify_tests: boolean; test_command?: string | null };
     hooks: { on_save: string[]; on_agent_done: string[] };
   };
   global_path: string | null;

@@ -150,12 +150,13 @@ function endText(task: Task) {
 /** mcp__서버__도구 → "서버 · 도구" */
 function toolLabel(name: string): string {
   if (name === "run_tests") return "관련 테스트로 확인";
+  if (name === "fetch_url") return "웹 페이지";
   const m = name.match(/^mcp__(.+?)__(.+)$/);
   return m ? `${m[1]} · ${m[2]}` : name;
 }
 
 function toolSummary(input: Record<string, unknown>): string {
-  const v = input.path ?? input.query ?? input.name ?? input.command ?? input.topic ?? "";
+  const v = input.path ?? input.query ?? input.name ?? input.command ?? input.url ?? input.topic ?? "";
   return typeof v === "string" ? v : JSON.stringify(v);
 }
 
@@ -455,7 +456,7 @@ function handle(ev: AgentEvent) {
       const el = h("details", { class: "tool" },
         h("summary", {},
           h("span", { class: "tstate run" }, codicon("loading", "codicon-modifier-spin")),
-          ev.name.startsWith("mcp__") ? codicon("plug") : ev.name === "run_tests" ? codicon("beaker") : null,
+          ev.name.startsWith("mcp__") ? codicon("plug") : ev.name === "run_tests" ? codicon("beaker") : ev.name === "fetch_url" ? codicon("globe") : null,
           h("span", { class: "tname" }, toolLabel(ev.name)),
           h("span", { class: "targ" }, toolSummary(ev.input))),
         h("pre", {}, JSON.stringify(ev.input, null, 2)));
@@ -483,13 +484,14 @@ function handle(ev: AgentEvent) {
       endText(task);
       const isEdit = ev.approval_kind === "edit";
       const isMcp = ev.approval_kind === "mcp";
+      const isFetch = ev.approval_kind === "fetch";
       const decide = (ok: boolean) => void api.resolveApproval(task.id, ev.id, ok);
-      const apply = h("button", { class: "btn btn-primary", onclick: () => decide(true) }, codicon("check"), isEdit ? "적용" : "실행");
+      const apply = h("button", { class: "btn btn-primary", onclick: () => decide(true) }, codicon("check"), isEdit ? "적용" : isFetch ? "가져오기" : "실행");
       const target = isEdit ? diffTarget(ev.detail) : null;
       const newPath = isEdit ? ev.detail.match(/^\+\+\+ (?:b\/)?(.+)$/m)?.[1]?.trim() : undefined;
       if (newPath) task.approvalPaths.set(ev.id, newPath);
       const el = h("div", { class: "approval", role: "group", "aria-label": ev.title, "data-kind": ev.approval_kind },
-        h("div", { class: "ahead" }, codicon(isEdit ? "edit" : isMcp ? "plug" : "terminal"), approvalTitle(ev.title, isEdit), h("span", { class: "verdict" })),
+        h("div", { class: "ahead" }, codicon(isEdit ? "edit" : isMcp ? "plug" : isFetch ? "globe" : "terminal"), approvalTitle(ev.title, isEdit), h("span", { class: "verdict" })),
         isEdit ? renderDiff(ev.detail) : h("pre", { class: "diff" }, h("div", {}, ev.detail)),
         target && !replaying ? impactRow(ev.detail, (names) => {
           task.approvalTouched.set(ev.id, names);
@@ -499,7 +501,7 @@ function handle(ev: AgentEvent) {
         h("div", { class: "actions" },
           apply,
           h("button", { class: "btn btn-secondary", onclick: () => decide(false) }, "거절"),
-          h("span", { class: "hint" }, isEdit ? "적용하기 전에는 파일이 바뀌지 않습니다" : isMcp ? "외부 MCP 서버의 도구입니다. 설정에서 승인 없이 실행하게 할 수 있습니다" : "허용 목록 밖의 명령입니다")));
+          h("span", { class: "hint" }, isEdit ? "적용하기 전에는 파일이 바뀌지 않습니다" : isMcp ? "외부 MCP 서버의 도구입니다. 설정에서 승인 없이 실행하게 할 수 있습니다" : isFetch ? "이 사이트는 이번 작업에서 처음 엽니다. 주소에 코드나 비밀이 들어 있지 않은지 확인하세요" : "허용 목록 밖의 명령입니다")));
       task.approvalEls.set(ev.id, el);
       append(task, el);
       task.pendingApprovals++;
@@ -516,7 +518,7 @@ function handle(ev: AgentEvent) {
       if (!el) break;
       el.classList.add("resolved");
       const v = el.querySelector(".verdict")!;
-      v.textContent = !ev.approved ? "거절됨" : el.dataset.kind === "edit" ? "적용됨" : "실행함";
+      v.textContent = !ev.approved ? "거절됨" : el.dataset.kind === "edit" ? "적용됨" : el.dataset.kind === "fetch" ? "가져옴" : "실행함";
       v.classList.toggle("yes", ev.approved);
       const p = task.approvalPaths.get(ev.id);
       if (ev.approved && p) {
