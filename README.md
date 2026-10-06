@@ -79,7 +79,7 @@ Claude subscriptions (Pro/Max) can't be used this way: Anthropic's terms limit s
 
 ### Use your MCP servers
 
-Add any stdio MCP server (issue tracker, database, browser…) in **Settings → MCP servers** or in `config.toml`. The **Write code** agent sees its tools, and every call goes through an approval card unless you mark that tool as allowed. External agents get the same servers. MCP servers run only in trusted folders.
+Add any stdio MCP server (issue tracker, database, browser…) in **Settings → MCP servers** or in `config.toml`. The **Code** agent sees its tools, and every call goes through an approval card unless you mark that tool as allowed. External agents get the same servers. MCP servers run only in trusted folders.
 
 ```toml
 [mcp.github]

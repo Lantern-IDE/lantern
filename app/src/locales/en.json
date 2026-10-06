@@ -670,7 +670,7 @@
   "MCP 서버": "MCP servers",
   "MCP 서버 삭제": "Delete MCP server",
   "stdio로 실행하는 MCP 서버. 토큰 같은 환경변수는 설정 파일의 [mcp.<이름>.env]에 적습니다.": "An MCP server run over stdio. Put environment variables such as tokens in [mcp.<name>.env] in the settings file.",
-  "‘코드 작성’ 에이전트가 외부 MCP 서버(이슈 트래커, DB, 브라우저 등)의 도구를 씁니다. 부를 때마다 승인을 받고, 신뢰한 폴더에서만 씁니다. 외부 에이전트(Codex·Gemini CLI)에도 같은 서버를 넘깁니다.": "The ‘Write code’ agent uses tools from external MCP servers (issue trackers, databases, browsers, …). Every call asks for approval, and they're used only in trusted folders. External agents (Codex, Gemini CLI) get the same servers.",
+  "‘코드 작성’ 에이전트가 외부 MCP 서버(이슈 트래커, DB, 브라우저 등)의 도구를 씁니다. 부를 때마다 승인을 받고, 신뢰한 폴더에서만 씁니다. 외부 에이전트(Codex·Gemini CLI)에도 같은 서버를 넘깁니다.": "The ‘Code’ agent uses tools from external MCP servers (issue trackers, databases, browsers, …). Every call asks for approval, and they're used only in trusted folders. External agents (Codex, Gemini CLI) get the same servers.",
   "꺼짐": "Off",
   "끄기": "Turn off",
   "누르면 승인 없이 실행:": "Click to run without approval:",
