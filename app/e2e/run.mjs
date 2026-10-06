@@ -638,6 +638,8 @@ scenario("소스 제어: 원격 연결, 커밋 이력, 푸시, 브랜치 만들�
   });
   await waitFor(() => !!document.querySelector("#menu-popup:not(.hidden) .menu-item"), 5000, "브랜치 메뉴");
   if (!(await pickMenu("새 브랜치 만들기"))) throw new Error("브랜치 메뉴에 '새 브랜치 만들기' 없음");
+  // 입력칸은 메뉴를 고른 뒤에 그려진다 (느린 CI에서 바로 찾으면 없을 수 있다)
+  await waitFor(() => !!document.querySelector(".scm-newbranch"), 5000, "새 브랜치 입력칸");
   await run(() => {
     const i = document.querySelector(".scm-newbranch");
     i.value = "e2e/feature";
