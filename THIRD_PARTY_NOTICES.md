@@ -12,7 +12,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - **Pretendard (글꼴)** — OFL-1.1 — https://github.com/orioncactus/pretendard
   Pretendard는 SIL Open Font License 1.1에 따라 배포됩니다.
 
-## Rust 크레이트 (360개)
+## Rust 크레이트 (369개)
 
 ### (MIT OR Apache-2.0) AND Unicode-3.0
 
@@ -119,6 +119,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 ### CDLA-Permissive-2.0
 
+- webpki-roots 0.26.11 — https://github.com/rustls/webpki-roots
 - webpki-roots 1.0.9 — https://github.com/rustls/webpki-roots
 
 ### ISC
@@ -139,6 +140,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - dom_query 0.27.0 — https://github.com/niklak/dom_query
 - filedescriptor 0.8.3 — https://github.com/wezterm/wezterm
 - generic-array 0.14.7 — https://github.com/fizyk20/generic-array
+- html2text 0.17.1 — https://github.com/jugglerchris/rust-html2text/
 - http-body 1.1.0 — https://github.com/hyperium/http-body
 - http-body-util 0.1.5 — https://github.com/hyperium/http-body
 - hyper 1.11.1 — https://github.com/hyperium/hyper
@@ -179,6 +181,9 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - tracing-core 0.1.36 — https://github.com/tokio-rs/tracing
 - trash 5.2.9 — https://github.com/ArturKovacs/trash
 - tree-sitter 0.25.10 — https://github.com/tree-sitter/tree-sitter
+- tree-sitter-c-sharp 0.23.5 — https://github.com/tree-sitter/tree-sitter-c-sharp
+- tree-sitter-go 0.25.0 — https://github.com/tree-sitter/tree-sitter-go
+- tree-sitter-java 0.23.5 — https://github.com/tree-sitter/tree-sitter-java
 - tree-sitter-javascript 0.25.0 — https://github.com/tree-sitter/tree-sitter-javascript
 - tree-sitter-language 0.1.8 — https://github.com/tree-sitter/tree-sitter
 - tree-sitter-python 0.25.0 — https://github.com/tree-sitter/tree-sitter-python
@@ -262,6 +267,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - heck 0.5.0 — https://github.com/withoutboats/heck
 - hex 0.4.3 — https://github.com/KokaKiwi/rust-hex
 - html5ever 0.38.0 — https://github.com/servo/html5ever
+- html5ever 0.39.0 — https://github.com/servo/html5ever
 - http 1.5.0 — https://github.com/hyperium/http
 - httparse 1.10.1 — https://github.com/seanmonstar/httparse
 - idna 1.1.0 — https://github.com/servo/rust-url/
@@ -276,6 +282,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - lock_api 0.4.14 — https://github.com/Amanieu/parking_lot
 - log 0.4.34 — https://github.com/rust-lang/log
 - markup5ever 0.38.0 — https://github.com/servo/html5ever
+- markup5ever 0.39.0 — https://github.com/servo/html5ever
 - mime 0.3.17 — https://github.com/hyperium/mime
 - notify-types 2.1.0 — https://github.com/notify-rs/notify
 - num-conv 0.2.2 — https://github.com/jhpratt/num-conv
@@ -347,6 +354,8 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - typeid 1.0.3 — https://github.com/dtolnay/typeid
 - typenum 1.20.1 — https://github.com/paholg/typenum
 - unicode-segmentation 1.13.3 — https://github.com/unicode-rs/unicode-segmentation
+- unicode-width 0.2.2 — https://github.com/unicode-rs/unicode-width
+- ureq 2.12.1 — https://github.com/algesten/ureq
 - url 2.5.8 — https://github.com/servo/rust-url
 - web_atoms 0.2.6 — https://github.com/servo/html5ever
 - windows 0.61.3 — https://github.com/microsoft/windows-rs
@@ -464,7 +473,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 - tinyvec 1.13.3 — https://github.com/Lokathor/tinyvec
 
-## JavaScript 패키지 (44개)
+## JavaScript 패키지 (58개)
 
 ### (MPL-2.0 OR Apache-2.0)
 
@@ -489,14 +498,22 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 - @codemirror/autocomplete 6.20.3 — https://code.haverbeke.berlin/codemirror/autocomplete
 - @codemirror/commands 6.11.1 — https://code.haverbeke.berlin/codemirror/commands
+- @codemirror/lang-cpp 6.0.3 — https://github.com/codemirror/lang-cpp
 - @codemirror/lang-css 6.3.1 — https://github.com/codemirror/lang-css
+- @codemirror/lang-go 6.0.1 — https://github.com/codemirror/lang-go
 - @codemirror/lang-html 6.4.12 — https://code.haverbeke.berlin/codemirror/lang-html
+- @codemirror/lang-java 6.0.2 — https://github.com/codemirror/lang-java
 - @codemirror/lang-javascript 6.2.5 — https://github.com/codemirror/lang-javascript
 - @codemirror/lang-json 6.0.2 — https://github.com/codemirror/lang-json
 - @codemirror/lang-markdown 6.5.2 — https://code.haverbeke.berlin/codemirror/lang-markdown
+- @codemirror/lang-php 6.0.2 — https://github.com/codemirror/lang-php
 - @codemirror/lang-python 6.2.1 — https://github.com/codemirror/lang-python
 - @codemirror/lang-rust 6.0.2 — https://github.com/codemirror/lang-rust
+- @codemirror/lang-sql 6.10.0 — https://github.com/codemirror/lang-sql
+- @codemirror/lang-xml 6.1.0 — https://github.com/codemirror/lang-xml
+- @codemirror/lang-yaml 6.1.3 — https://github.com/codemirror/lang-yaml
 - @codemirror/language 6.12.4 — https://code.haverbeke.berlin/codemirror/language
+- @codemirror/legacy-modes 6.5.4 — https://code.haverbeke.berlin/codemirror/legacy-modes
 - @codemirror/lint 6.9.7 — https://code.haverbeke.berlin/codemirror/lint
 - @codemirror/lsp-client 6.3.0
 - @codemirror/search 6.7.2 — https://code.haverbeke.berlin/codemirror/search
@@ -504,14 +521,20 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - @codemirror/theme-one-dark 6.1.3 — https://github.com/codemirror/theme-one-dark
 - @codemirror/view 6.43.13 — https://code.haverbeke.berlin/codemirror/view
 - @lezer/common 1.5.2 — https://github.com/lezer-parser/common
+- @lezer/cpp 1.1.6 — https://code.haverbeke.berlin/lezer/cpp
 - @lezer/css 1.3.8 — https://code.haverbeke.berlin/lezer/css
+- @lezer/go 1.0.1 — https://github.com/lezer-parser/go
 - @lezer/highlight 1.2.3 — https://github.com/lezer-parser/highlight
 - @lezer/html 1.3.13 — https://github.com/lezer-parser/html
+- @lezer/java 1.1.4 — https://code.haverbeke.berlin/lezer/java
 - @lezer/json 1.0.3 — https://github.com/lezer-parser/json
 - @lezer/lr 1.4.10 — https://code.haverbeke.berlin/lezer/lr
 - @lezer/markdown 1.7.2 — https://code.haverbeke.berlin/lezer/markdown
+- @lezer/php 1.0.6 — https://code.haverbeke.berlin/lezer/php
 - @lezer/python 1.1.19 — https://code.haverbeke.berlin/lezer/python
 - @lezer/rust 1.0.3 — https://code.haverbeke.berlin/lezer/rust
+- @lezer/xml 1.0.6 — https://github.com/lezer-parser/xml
+- @lezer/yaml 1.0.4 — https://github.com/lezer-parser/yaml
 - @types/trusted-types 2.0.7 — https://github.com/DefinitelyTyped/DefinitelyTyped
 - @xterm/addon-fit 0.11.0 — https://github.com/xtermjs/xterm.js/tree/master/addons/addon-fit
 - @xterm/xterm 6.0.0 — https://github.com/xtermjs/xterm.js
