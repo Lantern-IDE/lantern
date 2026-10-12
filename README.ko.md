@@ -24,7 +24,7 @@
 
 핵심은 로컬 맥락 엔진(`crates/lantern-context`, Rust + tree-sitter + SQLite FTS5)입니다. 질문마다 심볼 그래프, 전문 검색, git 동시 변경 이력, 프로젝트 기억에서 관련 코드를 골라 토큰 예산 안에 조립합니다.
 
-엔진이 이해하는 언어(심볼, 호출 관계, 지도, 영향 반경): Rust, Python, TypeScript/JavaScript, Java, Go, C#. 그 밖의 파일도 코드 색은 나오지만 심볼은 없습니다.
+엔진이 이해하는 언어(심볼, 호출 관계, 지도, 영향 반경): Rust, Python, TypeScript/JavaScript, Java, Kotlin, Go, C#, C/C++. 그 밖의 파일도 코드 색은 나오지만 심볼은 없습니다.
 
 **공개 벤치마크.** [Flask](https://github.com/pallets/flask)(Python), [Hono](https://github.com/honojs/hono)(TypeScript), [Apache Commons Lang](https://github.com/apache/commons-lang)(Java)의 실제 커밋 60개로 쟀습니다. 질문은 커밋 메시지, 정답 파일은 그 커밋이 고친 코드 파일이고, 각 질문은 그 커밋의 부모 시점에서 잽니다. 정답을 사람이 고르지 않습니다. 같은 8,000 토큰 예산, 모델 호출 없음:
 
