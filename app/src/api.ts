@@ -17,6 +17,7 @@ export interface ModelInfo {
 export interface Usage { input_tokens: number; output_tokens: number; cache_read_tokens: number; cache_write_tokens: number }
 
 /** 외부 에이전트가 알려 준 로그인 방법. type "env_var"는 환경변수로만 된다 */
+export type Mention = { kind: "file"; path: string } | { kind: "symbol"; name: string; path: string; line: number };
 export interface AuthMethod { id: string; name: string; description?: string | null; type?: string | null }
 
 export type AgentEvent = { session: string } & (
@@ -104,8 +105,8 @@ export const api = {
   setEmbeddingsKey: (env: string, key: string) => invoke<void>("set_embeddings_key", { env, key }),
   listAgents: () => invoke<AgentDef[]>("list_agents"),
   modelInfo: () => invoke<ModelInfo>("model_info"),
-  agentSend: (session: string, agent: string, text: string, images: { mediaType: string; data: string }[], file: string | null, line: number | null) =>
-    invoke<void>("agent_send", { session, agent, text, images, file, line }),
+  agentSend: (session: string, agent: string, text: string, images: { mediaType: string; data: string }[], mentions: Mention[], file: string | null, line: number | null) =>
+    invoke<void>("agent_send", { session, agent, text, images, mentions, file, line }),
   agentCancel: (session: string) => invoke<void>("agent_cancel", { session }),
   /** 외부 에이전트 로그인 (에이전트가 브라우저를 여는 동안 기다린다) */
   acpAuthenticate: (session: string, agent: string, method: string) => invoke<void>("acp_authenticate", { session, agent, method }),

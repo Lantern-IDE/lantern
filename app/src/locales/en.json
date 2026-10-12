@@ -702,7 +702,8 @@
   "웹 페이지": "Web page",
   "이 사이트는 이번 작업에서 처음 엽니다. 주소에 코드나 비밀이 들어 있지 않은지 확인하세요": "This task opens this site for the first time. Check that the address doesn't contain code or secrets",
   "서버 오류로 잠시 기다렸다가 다시 보냈습니다": "Waited briefly after a server error and sent again",
-  "모델 입력 한도에 맞추려고 오래된 도구 결과와 지난 맥락을 줄였습니다. 지운 단계는 첫 요청에 요약으로 남깁니다.": "Older tool results and earlier context were shortened to fit the model's input limit. Removed steps are kept as a summary in the first request."
+  "모델 입력 한도에 맞추려고 오래된 도구 결과와 지난 맥락을 줄였습니다. 지운 단계는 첫 요청에 요약으로 남깁니다.": "Older tool results and earlier context were shortened to fit the model's input limit. Removed steps are kept as a summary in the first request.",
+  "집어 넣을 파일·심볼": "Files and symbols to add"
  },
  "templates": {
   "'{}'{}을(를) 휴지통으로 옮길까요?": "Move '{}'{} to Trash?",
@@ -851,6 +852,7 @@
   "MCP 서버 '{}'을(를) 설정에서 지울까요?": "Remove MCP server '{}' from the settings?",
   "{} · {}초 뒤 다시 보냅니다 ({}/{})": "{} · sending again in {}s ({}/{})",
   "대화가 길어 앞부분을 줄였습니다 · 약 {} → {} 토큰, 지난 단계 {}개는 요약으로": "Conversation shortened · about {} → {} tokens, {} earlier steps summarized",
-  "대화가 길어 오래된 결과를 줄였습니다 · 약 {} → {} 토큰": "Shortened older results · about {} → {} tokens"
+  "대화가 길어 오래된 결과를 줄였습니다 · 약 {} → {} 토큰": "Shortened older results · about {} → {} tokens",
+  "{} 빼기": "Remove {}"
  }
 }
