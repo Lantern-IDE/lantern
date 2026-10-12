@@ -23,6 +23,7 @@ export type AgentEvent = { session: string } & (
   | { kind: "request"; request_id: number; agent: string; model_key: string; model: string; system: string; context: string; context_tokens: number; tools: string[] }
   | { kind: "text"; text: string }
   | { kind: "tool_start"; name: string }
+  | { kind: "retry"; attempt: number; max: number; wait_secs: number; reason: string }
   | { kind: "tool_call"; id: string; name: string; input: Record<string, unknown> }
   | { kind: "tool_result"; id: string; name: string; content: string; is_error: boolean }
   | { kind: "approval"; id: string; approval_kind: "edit" | "command" | "secret" | "mcp" | "fetch"; title: string; detail: string }
