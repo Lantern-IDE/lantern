@@ -461,6 +461,14 @@ function handle(ev: AgentEvent) {
       else append(task, h("div", { class: "note retry waiting", role: "status" }, codicon("sync", "codicon-modifier-spin"), h("span", {}, text)));
       break;
     }
+    case "compacted":
+      endText(task);
+      append(task, h("div", { class: "note compacted", title: "모델 입력 한도에 맞추려고 오래된 도구 결과와 지난 맥락을 줄였습니다. 지운 단계는 첫 요청에 요약으로 남깁니다." },
+        codicon("fold"),
+        ev.dropped
+          ? `대화가 길어 앞부분을 줄였습니다 · 약 ${ev.before.toLocaleString()} → ${ev.after.toLocaleString()} 토큰, 지난 단계 ${ev.dropped}개는 요약으로`
+          : `대화가 길어 오래된 결과를 줄였습니다 · 약 ${ev.before.toLocaleString()} → ${ev.after.toLocaleString()} 토큰`));
+      break;
     case "tool_start":
       endText(task);
       task.pendingTool?.remove();
