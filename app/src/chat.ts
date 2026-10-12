@@ -419,7 +419,7 @@ function record(task: Task, ev: AgentEvent) {
   } else if (ev.kind === "request") {
     // 시스템 프롬프트는 매번 같아 기록하지 않는다
     task.log.push({ t: "ev", ev: { ...ev, system: "" } });
-  } else if (ev.kind !== "tool_start" && ev.kind !== "usage" && ev.kind !== "retry") {
+  } else if (ev.kind !== "tool_start" && ev.kind !== "usage" && ev.kind !== "retry" && ev.kind !== "plan_ready") {
     task.log.push({ t: "ev", ev });
   }
   persist(task);
@@ -460,6 +460,21 @@ function handle(ev: AgentEvent) {
       const last = task.body?.lastElementChild;
       if (last?.classList.contains("retry") && last.classList.contains("waiting")) last.lastChild!.textContent = text;
       else append(task, h("div", { class: "note retry waiting", role: "status" }, codicon("sync", "codicon-modifier-spin"), h("span", {}, text)));
+      break;
+    }
+    case "plan_ready": {
+      if (replaying) break;
+      endText(task);
+      const go = h("button", { class: "btn btn-primary" }, codicon("play"), "계획대로 진행");
+      go.addEventListener("click", () => void send(i18n.lang === "ko" ? "계획대로 진행해 주세요." : "Go ahead with the plan.", { plan: false }));
+      const revise = h("button", { class: "btn btn-secondary" }, codicon("edit"), "계획 고치기");
+      revise.addEventListener("click", () => {
+        const p = $<HTMLTextAreaElement>("#prompt");
+        p.placeholder = "계획에서 바꿀 점을 적어 주세요 (계획을 다시 받습니다)";
+        $<HTMLInputElement>("#plan-first").checked = true;
+        p.focus();
+      });
+      append(task, h("div", { class: "plan-actions" }, go, revise, h("span", { class: "hint" }, "진행하기 전에는 파일을 바꾸지 않았습니다")));
       break;
     }
     case "compacted":
@@ -670,7 +685,22 @@ export async function startTask(text: string, agent?: string) {
   await send(text);
 }
 
-async function send(text?: string) {
+/** 계획 먼저를 쓸 수 있는 에이전트인지 (파일을 고치는 내장 에이전트) */
+function canPlan(agentId: string): boolean {
+  const a = agents.find((x) => x.id === agentId);
+  return !!a && !agentId.startsWith("acp:") && a.tools.some((t) => t === "edit_file" || t === "write_file");
+}
+
+function syncPlanToggle() {
+  const box = document.querySelector<HTMLInputElement>("#plan-first");
+  if (!box) return;
+  const ok = canPlan($<HTMLSelectElement>("#agent-select").value);
+  box.disabled = !ok;
+  box.closest("label")?.classList.toggle("disabled", !ok);
+}
+
+/** opts.plan: 계획 먼저 (없으면 입력창의 선택을 따른다) */
+async function send(text?: string, opts: { plan?: boolean } = {}) {
   const input = $<HTMLTextAreaElement>("#prompt");
   const msg = (text ?? input.value).trim();
   // 이미지만 붙여 보내도 된다
@@ -692,9 +722,13 @@ async function send(text?: string) {
   task.lastPrompt = msg;
   if (task.title === NEW_TITLE && msg) task.title = msg.length > 48 ? `${msg.slice(0, 46)}…` : msg;
   const agent = $<HTMLSelectElement>("#agent-select").value;
+  const plan = opts.plan ?? (canPlan(agent) && $<HTMLInputElement>("#plan-first").checked);
+  // 새 요청을 보내면 지난 계획의 진행 버튼은 거둔다
+  task.el.querySelectorAll(".plan-actions").forEach((el) => el.remove());
   const useFocus = $<HTMLInputElement>("#focus-file").checked;
   const f = useFocus ? editor.focusInfo() : { file: null, line: null };
   if (!text) input.value = "";
+  input.placeholder = "코드에 대해 물어보거나 작업을 맡기세요";
   // 붙인 이미지는 입력창에서 보낼 때만 (다시 시도는 글만)
   const images = text ? [] : attach.take();
   const mentions = text ? [] : mention.take();
@@ -713,7 +747,7 @@ async function send(text?: string) {
   task.body = turn(task, "bot");
   setWorking(task.botMark, true);
   try {
-    await api.agentSend(task.id, agent, msg, images.map(({ mediaType, data }) => ({ mediaType, data })), mentions, f.file, f.line);
+    await api.agentSend(task.id, agent, msg, images.map(({ mediaType, data }) => ({ mediaType, data })), mentions, plan, f.file, f.line);
   } catch (e) {
     showError(task, errorText(e));
     task.body = null;
@@ -925,6 +959,7 @@ export async function loadAgents() {
   const saved = store.get<string>("agent", "ask");
   select.replaceChildren(...agents.map((a) => h("option", { value: a.id, title: a.description }, a.name)));
   select.value = agents.some((a) => a.id === saved) ? saved : agents[0]?.id ?? "";
+  syncPlanToggle();
 }
 
 /** 새 작업. 지금 작업이 비어 있으면 그대로 쓴다. */
@@ -1137,7 +1172,13 @@ export function init(h_: Hooks) {
   $("#btn-send").addEventListener("click", () => void send());
   $("#btn-stop").addEventListener("click", () => active && void api.agentCancel(active.id));
   $("#composer-model").addEventListener("click", () => hooks.pickModel($("#composer-model")));
-  $("#agent-select").addEventListener("change", (e) => store.set("agent", (e.target as HTMLSelectElement).value));
+  $("#agent-select").addEventListener("change", (e) => {
+    store.set("agent", (e.target as HTMLSelectElement).value);
+    syncPlanToggle();
+  });
+  const planBox = $<HTMLInputElement>("#plan-first");
+  planBox.checked = store.get<boolean>("planFirst", false);
+  planBox.addEventListener("change", () => store.set("planFirst", planBox.checked));
   attach.init(() => updateSendState());
   mention.init(() => updateSendState());
   const prompt = $<HTMLTextAreaElement>("#prompt");
