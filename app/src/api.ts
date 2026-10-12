@@ -26,6 +26,7 @@ export type AgentEvent = { session: string } & (
   | { kind: "tool_start"; name: string }
   | { kind: "retry"; attempt: number; max: number; wait_secs: number; reason: string }
   | { kind: "compacted"; before: number; after: number; dropped: number }
+  | { kind: "plan_ready" }
   | { kind: "tool_call"; id: string; name: string; input: Record<string, unknown> }
   | { kind: "tool_result"; id: string; name: string; content: string; is_error: boolean }
   | { kind: "approval"; id: string; approval_kind: "edit" | "command" | "secret" | "mcp" | "fetch"; title: string; detail: string }
@@ -105,8 +106,8 @@ export const api = {
   setEmbeddingsKey: (env: string, key: string) => invoke<void>("set_embeddings_key", { env, key }),
   listAgents: () => invoke<AgentDef[]>("list_agents"),
   modelInfo: () => invoke<ModelInfo>("model_info"),
-  agentSend: (session: string, agent: string, text: string, images: { mediaType: string; data: string }[], mentions: Mention[], file: string | null, line: number | null) =>
-    invoke<void>("agent_send", { session, agent, text, images, mentions, file, line }),
+  agentSend: (session: string, agent: string, text: string, images: { mediaType: string; data: string }[], mentions: Mention[], plan: boolean, file: string | null, line: number | null) =>
+    invoke<void>("agent_send", { session, agent, text, images, mentions, plan, file, line }),
   agentCancel: (session: string) => invoke<void>("agent_cancel", { session }),
   /** 외부 에이전트 로그인 (에이전트가 브라우저를 여는 동안 기다린다) */
   acpAuthenticate: (session: string, agent: string, method: string) => invoke<void>("acp_authenticate", { session, agent, method }),

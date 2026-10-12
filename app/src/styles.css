@@ -526,7 +526,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 #prompt:focus { border: none; }
 .composer-row { display: flex; align-items: center; gap: 4px; padding: 4px 6px 6px; min-width: 0; }
 #composer { container-type: inline-size; }
-@container (max-width: 380px) { .focus-toggle span, .iso-toggle span { display: none; } }
+@container (max-width: 380px) { .focus-toggle span, .iso-toggle span, .plan-toggle span { display: none; } }
 @container (max-width: 300px) { #composer-model span { display: none; } }
 #btn-attach { flex-shrink: 0; width: 22px; height: 22px; color: var(--muted); }
 #btn-attach .codicon { font-size: 13px; }
@@ -1089,6 +1089,12 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 /* ── 작업 저장·격리 ─────────────────────────────────── */
 .chip-btn.disabled { opacity: 0.55; cursor: default; }
 .iso-toggle input:checked ~ .codicon { color: var(--context); }
+.plan-toggle { cursor: pointer; }
+.plan-toggle input { display: none; }
+.plan-toggle:has(input:checked) { color: var(--fg-strong); }
+.plan-toggle:has(input:checked) { border-color: var(--focus); background: var(--accent-soft); }
+.plan-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--sunken); }
+.plan-actions .hint { color: var(--muted); font-size: 12px; }
 .iso-note { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; font-size: 11.5px; color: var(--context); background: var(--context-soft); padding: 2px 8px; border-radius: 10px; }
 .iso-box { margin-top: 8px; padding: 10px 12px; border: 1px solid var(--context-line); border-radius: var(--radius); background: var(--context-soft); display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; }
 .iso-box.done { background: var(--sunken); border-color: var(--border); color: var(--muted); }
