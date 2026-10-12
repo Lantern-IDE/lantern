@@ -12,6 +12,7 @@ mod semantic;
 mod mcp_client;
 mod verify;
 mod webfetch;
+mod compact;
 mod tasks;
 mod worktree;
 mod completion;
