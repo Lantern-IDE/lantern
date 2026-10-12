@@ -33,6 +33,8 @@ pub enum AgentEvent {
     },
     Text { session: String, text: String },
     ToolStart { session: String, name: String },
+    /// 일시적 오류로 기다렸다가 다시 보낸다 (attempt/max번째, wait_secs초 뒤)
+    Retry { session: String, attempt: u32, max: u32, wait_secs: u64, reason: String },
     ToolCall { session: String, id: String, name: String, input: Value },
     ToolResult { session: String, id: String, name: String, content: String, is_error: bool },
     Approval { session: String, id: String, approval_kind: String, title: String, detail: String },
@@ -395,6 +397,10 @@ When you finish editing, Lantern runs the tests related to the files you changed
             StreamEvent::ToolStart { name } => {
                 emit(app, AgentEvent::ToolStart { session: session.into(), name: name.into() })
             }
+            StreamEvent::Retry { attempt, max, wait_secs, reason } => emit(
+                app,
+                AgentEvent::Retry { session: session.into(), attempt, max, wait_secs, reason: reason.lines().next().unwrap_or("").into() },
+            ),
         };
         let resp = match llm::stream(
             &st.http,

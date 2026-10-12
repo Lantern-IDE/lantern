@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -142,8 +143,48 @@ pub struct ChatResponse {
 pub enum StreamEvent<'a> {
     Text(&'a str),
     ToolStart { name: &'a str },
+    /// 일시적 오류로 기다렸다가 다시 보낸다
+    Retry { attempt: u32, max: u32, wait_secs: u64, reason: &'a str },
 }
 
+/// 다시 보내면 될 수 있는 오류 (요청 한도, 과부하, 연결 끊김)
+#[derive(Debug)]
+pub struct Transient {
+    pub message: String,
+    pub retry_after: Option<Duration>,
+}
+
+impl std::fmt::Display for Transient {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
+impl std::error::Error for Transient {}
+
+pub(crate) fn transient(message: impl Into<String>) -> anyhow::Error {
+    anyhow::Error::new(Transient { message: message.into(), retry_after: None })
+}
+
+/// 보내기 실패: 연결·시간 초과는 다시 보낸다
+pub(crate) fn send_error(e: reqwest::Error, what: &str) -> anyhow::Error {
+    if e.is_connect() || e.is_timeout() || e.is_request() {
+        transient(format!("{what}: {e}"))
+    } else {
+        anyhow::anyhow!("{what}: {e}")
+    }
+}
+
+pub const MAX_RETRIES: u32 = 4;
+const MAX_WAIT: Duration = Duration::from_secs(60);
+
+/// 몇 번째 재시도에 얼마나 기다릴지 (2, 4, 8, 16초). 서버가 알려 준 시간이 있으면 그것을 쓴다
+pub fn retry_wait(attempt: u32, retry_after: Option<Duration>) -> Duration {
+    retry_after.unwrap_or_else(|| Duration::from_secs(1 << attempt.min(5))).min(MAX_WAIT)
+}
+
+/// 모델 호출. 응답을 하나도 보이기 전에 일시적 오류가 나면 기다렸다가 다시 보낸다
+/// (이미 글이 나온 뒤면 다시 보내면 중복되므로 그대로 오류).
 pub async fn stream(
     http: &reqwest::Client,
     m: &ModelConfig,
@@ -151,10 +192,39 @@ pub async fn stream(
     cancel: &Arc<AtomicBool>,
     on_event: &mut (dyn FnMut(StreamEvent<'_>) + Send),
 ) -> Result<ChatResponse> {
-    match m.provider.as_str() {
-        "anthropic" => anthropic::stream(http, m, req, cancel, on_event).await,
-        "openai" => openai::stream(http, m, req, cancel, on_event).await,
-        other => bail!("알 수 없는 provider: {other} (anthropic 또는 openai)"),
+    let mut attempt = 0u32;
+    loop {
+        let emitted = std::sync::atomic::AtomicBool::new(false);
+        let r = {
+            let mut wrapped = |ev: StreamEvent<'_>| {
+                emitted.store(true, Ordering::Relaxed);
+                on_event(ev)
+            };
+            match m.provider.as_str() {
+                "anthropic" => anthropic::stream(http, m, req, cancel, &mut wrapped).await,
+                "openai" => openai::stream(http, m, req, cancel, &mut wrapped).await,
+                other => bail!("알 수 없는 provider: {other} (anthropic 또는 openai)"),
+            }
+        };
+        let err = match r {
+            Ok(resp) => return Ok(resp),
+            Err(e) => e,
+        };
+        let Some(t) = err.downcast_ref::<Transient>() else { return Err(err) };
+        if emitted.load(Ordering::Relaxed) || attempt >= MAX_RETRIES || cancelled(cancel) {
+            return Err(err);
+        }
+        attempt += 1;
+        let wait = retry_wait(attempt, t.retry_after);
+        on_event(StreamEvent::Retry { attempt, max: MAX_RETRIES, wait_secs: wait.as_secs(), reason: &t.message });
+        // 기다리는 동안에도 중단할 수 있게 잘게 나눠 잔다
+        let until = std::time::Instant::now() + wait;
+        while std::time::Instant::now() < until {
+            if cancelled(cancel) {
+                bail!("사용자가 중단했습니다");
+            }
+            tokio::time::sleep(Duration::from_millis(200).min(until - std::time::Instant::now())).await;
+        }
     }
 }
 
@@ -165,6 +235,7 @@ pub(crate) fn cancelled(cancel: &Arc<AtomicBool>) -> bool {
 /// HTTP 오류 응답에서 사람이 읽을 메시지를 뽑는다.
 pub(crate) async fn http_error(resp: reqwest::Response) -> anyhow::Error {
     let status = resp.status();
+    let retry_after = retry_after_of(resp.headers());
     let body = resp.text().await.unwrap_or_default();
     let msg = serde_json::from_str::<Value>(&body)
         .ok()
@@ -175,9 +246,21 @@ pub(crate) async fn http_error(resp: reqwest::Response) -> anyhow::Error {
     let hint = match status.as_u16() {
         401 | 403 => " (API 키를 확인하세요)",
         429 => " (요청 한도 초과, 잠시 후 다시 시도하세요)",
+        529 => " (서버가 붐빕니다)",
         _ => "",
     };
-    anyhow::anyhow!("모델 API 오류 {status}: {msg}{hint}")
+    let message = format!("모델 API 오류 {status}: {msg}{hint}");
+    // 요청 한도·과부하·서버 쪽 일시 오류는 다시 보낸다
+    if matches!(status.as_u16(), 408 | 409 | 425 | 429 | 500 | 502 | 503 | 504 | 529) {
+        return anyhow::Error::new(Transient { message, retry_after });
+    }
+    anyhow::anyhow!("{message}")
+}
+
+/// retry-after(초) 또는 retry-after-ms
+fn retry_after_of(h: &reqwest::header::HeaderMap) -> Option<Duration> {
+    let get = |k: &str| h.get(k).and_then(|v| v.to_str().ok()).and_then(|v| v.trim().parse::<f64>().ok());
+    get("retry-after-ms").map(|ms| Duration::from_millis(ms.max(0.0) as u64)).or_else(|| get("retry-after").map(|s| Duration::from_millis((s.max(0.0) * 1000.0) as u64)))
 }
 
 #[cfg(test)]

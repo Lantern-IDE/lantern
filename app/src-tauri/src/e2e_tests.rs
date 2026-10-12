@@ -89,6 +89,7 @@ async fn anthropic_stream_with_thinking_text_and_tool() {
         &mut |ev| match ev {
             StreamEvent::Text(t) => streamed.push_str(t),
             StreamEvent::ToolStart { name } => tool_started.push(name.to_string()),
+            StreamEvent::Retry { .. } => {}
         },
     )
     .await
@@ -199,6 +200,80 @@ async fn http_errors_are_readable() {
     .unwrap_err()
     .to_string();
     assert!(err.contains("401") && err.contains("invalid x-api-key") && err.contains("API 키"), "{err}");
+}
+
+/// 첫 요청은 과부하(529)로 거절하고, 다시 보낸 요청에 답한다
+#[tokio::test]
+async fn retries_transient_errors_before_any_output() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let ok = sse(&[
+        ("message_start", json!({"type":"message_start","message":{"model":"claude-opus-5","usage":{"input_tokens":5}}})),
+        ("content_block_start", json!({"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}})),
+        ("content_block_delta", json!({"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"됐습니다"}})),
+        ("content_block_stop", json!({"type":"content_block_stop","index":0})),
+        ("message_delta", json!({"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":2}})),
+        ("message_stop", json!({"type":"message_stop"})),
+    ]);
+    let server = tokio::spawn(async move {
+        for i in 0..2 {
+            let (mut sock, _) = listener.accept().await.unwrap();
+            let mut tmp = [0u8; 16384];
+            let _ = sock.read(&mut tmp).await;
+            let resp = if i == 0 {
+                let body = r#"{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}"#;
+                format!("HTTP/1.1 529 Overloaded
+Content-Type: application/json
+retry-after: 0
+Content-Length: {}
+Connection: close
+
+{body}", body.len())
+            } else {
+                format!("HTTP/1.1 200 OK
+Content-Type: text/event-stream
+Connection: close
+
+{ok}")
+            };
+            sock.write_all(resp.as_bytes()).await.unwrap();
+            sock.shutdown().await.unwrap();
+        }
+    });
+    let mut m = config::load(None).unwrap().models["smart"].clone();
+    m.base_url = Some(format!("http://{addr}"));
+    m.api_key = Some("k".into());
+    m.api_key_env = None;
+    let msgs = vec![Message::user_text("hi")];
+    let mut retries = Vec::new();
+    let mut text = String::new();
+    let resp = llm::stream(
+        &reqwest::Client::new(),
+        &m,
+        &ChatRequest { system: "s", messages: &msgs, tools: &[] },
+        &Arc::new(AtomicBool::new(false)),
+        &mut |ev| match ev {
+            StreamEvent::Retry { attempt, wait_secs, reason, .. } => retries.push((attempt, wait_secs, reason.to_string())),
+            StreamEvent::Text(t) => text.push_str(t),
+            StreamEvent::ToolStart { .. } => {}
+        },
+    )
+    .await
+    .unwrap();
+    server.await.unwrap();
+    assert_eq!(retries.len(), 1);
+    assert_eq!((retries[0].0, retries[0].1), (1, 0), "서버가 알려 준 대기 시간(0초)을 쓴다");
+    assert!(retries[0].2.contains("529"), "{}", retries[0].2);
+    assert_eq!(text, "됐습니다");
+    assert_eq!(resp.stop_reason, StopReason::EndTurn);
+}
+
+#[test]
+fn retry_waits_grow_and_are_capped() {
+    use std::time::Duration;
+    assert_eq!(llm::retry_wait(1, None), Duration::from_secs(2));
+    assert_eq!(llm::retry_wait(4, None), Duration::from_secs(16));
+    assert_eq!(llm::retry_wait(2, Some(Duration::from_secs(300))), Duration::from_secs(60));
 }
 
 struct FakeApprover {
