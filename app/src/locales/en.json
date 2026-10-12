@@ -710,7 +710,15 @@
   "계획대로 진행해 주세요.": "Go ahead with the plan.",
   "계획에서 바꿀 점을 적어 주세요 (계획을 다시 받습니다)": "Say what to change in the plan (you'll get a new plan)",
   "진행하기 전에는 파일을 바꾸지 않았습니다": "No files have been changed yet",
-  "큰 작업에서, 파일을 고치기 전에 계획(바꿀 파일·순서·확인 방법)을 먼저 받아 보고 진행할지 정합니다. 파일을 고치는 에이전트에서만 씁니다.": "For bigger tasks: get a plan first (files to change, order, how to check) and decide whether to go ahead. Only for agents that edit files."
+  "큰 작업에서, 파일을 고치기 전에 계획(바꿀 파일·순서·확인 방법)을 먼저 받아 보고 진행할지 정합니다. 파일을 고치는 에이전트에서만 씁니다.": "For bigger tasks: get a plan first (files to change, order, how to check) and decide whether to go ahead. Only for agents that edit files.",
+  "GitHub PR 번호나 브랜치의 변경 전체를 같은 방식으로 검토합니다": "Review all changes in a GitHub PR or a branch the same way",
+  "PR 검토": "Review PR",
+  "PR 번호(예: 123) 또는 브랜치(예: origin/feature)": "PR number (e.g. 123) or branch (e.g. origin/feature)",
+  "PR 번호는 GitHub 원격(origin)에서 가져옵니다. 지금 체크아웃과의 공통 조상부터의 변경을 봅니다.": "PR numbers are fetched from the GitHub remote (origin). Shows the changes since the common ancestor with your current checkout.",
+  "PR·브랜치 검토": "Review a PR or branch",
+  "PR·브랜치를 검토하지 못했습니다": "Couldn't review the PR or branch",
+  "검토": "Review",
+  "검토할 PR 또는 브랜치": "PR or branch to review"
  },
  "templates": {
   "'{}'{}을(를) 휴지통으로 옮길까요?": "Move '{}'{} to Trash?",
@@ -860,6 +868,9 @@
   "{} · {}초 뒤 다시 보냅니다 ({}/{})": "{} · sending again in {}s ({}/{})",
   "대화가 길어 앞부분을 줄였습니다 · 약 {} → {} 토큰, 지난 단계 {}개는 요약으로": "Conversation shortened · about {} → {} tokens, {} earlier steps summarized",
   "대화가 길어 오래된 결과를 줄였습니다 · 약 {} → {} 토큰": "Shortened older results · about {} → {} tokens",
-  "{} 빼기": "Remove {}"
+  "{} 빼기": "Remove {}",
+  "{} 가져와 영향을 계산하는 중…": "Fetching {} and computing the impact…",
+  "{} 영향 검토": "{} impact review",
+  "{}: 지금 체크아웃과 다른 점이 없습니다": "{}: no differences from your current checkout"
  }
 }

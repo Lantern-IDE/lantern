@@ -3,7 +3,7 @@
 import type { Impact } from "../map";
 
 export interface FileReview { path: string; status: "modified" | "added" | "deleted"; added: number; removed: number; impact: Impact | null }
-export interface Review { files: FileReview[]; risk: "low" | "medium" | "high"; untested: string[]; framework: string[]; diff: string }
+export interface Review { files: FileReview[]; risk: "low" | "medium" | "high"; untested: string[]; framework: string[]; diff: string; title?: string; note?: string }
 
 const RISK = {
   ko: { low: "낮음", medium: "보통", high: "높음" },
