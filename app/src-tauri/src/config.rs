@@ -124,6 +124,9 @@ pub struct ModelConfig {
     pub price_input: Option<f64>,
     #[serde(default)]
     pub price_output: Option<f64>,
+    /// 모델이 한 번에 받는 토큰 수. 비우면 모델·주소를 보고 짐작한다 (긴 작업의 대화 줄이기 기준)
+    #[serde(default)]
+    pub context_window: Option<u32>,
 }
 
 fn default_max_tokens() -> u32 {
@@ -134,6 +137,26 @@ fn default_max_tokens() -> u32 {
 pub const KEYRING_SERVICE: &str = "lantern";
 
 impl ModelConfig {
+    /// 모델 입력 한도 (설정 > 이름·주소로 짐작). 모르면 보수적으로
+    pub fn context_window(&self) -> u32 {
+        if let Some(n) = self.context_window.filter(|n| *n > 0) {
+            return n;
+        }
+        let m = self.model.to_ascii_lowercase();
+        let local = self.base_url.as_deref().is_some_and(|u| u.contains("localhost") || u.contains("127.0.0.1"));
+        if self.provider == "anthropic" || m.starts_with("claude") {
+            200_000
+        } else if m.contains("gpt-4.1") || m.contains("gemini") {
+            1_000_000
+        } else if m.contains("gpt-5") {
+            400_000
+        } else if local {
+            32_768
+        } else {
+            128_000
+        }
+    }
+
     /// API 키 찾는 순서: 환경변수 → OS 자격 증명 저장소 → 설정 파일의 api_key
     pub fn resolve_api_key(&self) -> Option<String> {
         self.api_key_with_source().map(|(k, _)| k)

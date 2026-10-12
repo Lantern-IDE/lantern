@@ -33,6 +33,8 @@ pub enum AgentEvent {
     },
     Text { session: String, text: String },
     ToolStart { session: String, name: String },
+    /// 대화가 길어 줄였다 (토큰 추정치, 지운 단계 수)
+    Compacted { session: String, before: usize, after: usize, dropped: usize },
     /// 일시적 오류로 기다렸다가 다시 보낸다 (attempt/max번째, wait_secs초 뒤)
     Retry { session: String, attempt: u32, max: u32, wait_secs: u64, reason: String },
     ToolCall { session: String, id: String, name: String, input: Value },
@@ -366,6 +368,7 @@ When you finish editing, Lantern runs the tests related to the files you changed
         system
     };
     let mut verify_rounds = 0usize;
+    let mut overflow_retried = false;
     let mut checked = crate::verify::Checked::default();
     let save = |h: &Vec<Message>| {
         st.sessions.lock().unwrap().insert(session.to_string(), h.clone());
@@ -402,6 +405,12 @@ When you finish editing, Lantern runs the tests related to the files you changed
                 AgentEvent::Retry { session: session.into(), attempt, max, wait_secs, reason: reason.lines().next().unwrap_or("").into() },
             ),
         };
+        // 대화가 모델 입력 한도에 가까우면 줄인다 (출력 몫과 여유 10%를 뺀다)
+        let budget = (model.context_window() as usize).saturating_sub(model.max_tokens as usize) * 9 / 10;
+        if let Some(c) = crate::compact::compact(&mut history, &system, &tools, budget) {
+            emit(app, AgentEvent::Compacted { session: session.into(), before: c.before, after: c.after, dropped: c.dropped });
+            save(&history);
+        }
         let resp = match llm::stream(
             &st.http,
             &model,
@@ -412,11 +421,21 @@ When you finish editing, Lantern runs the tests related to the files you changed
         .await
         {
             Ok(r) => r,
+            // 짐작이 빗나가 공급자가 입력이 길다고 거절하면, 더 작게 줄여 한 번 더
+            Err(e) if crate::compact::is_context_overflow(&format!("{e:#}")) && !overflow_retried => {
+                overflow_retried = true;
+                if let Some(c) = crate::compact::compact(&mut history, &system, &tools, budget * 6 / 10) {
+                    emit(app, AgentEvent::Compacted { session: session.into(), before: c.before, after: c.after, dropped: c.dropped });
+                    save(&history);
+                }
+                continue;
+            }
             Err(e) => {
                 save(&history);
                 return Err(e);
             }
         };
+        overflow_retried = false;
 
         let cost = resp.usage.cost(&model);
         let month = state::record_usage(cost.unwrap_or(0.0), resp.usage.input_tokens, resp.usage.output_tokens);
