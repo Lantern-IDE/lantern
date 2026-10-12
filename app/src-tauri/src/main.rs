@@ -13,6 +13,7 @@ mod mcp_client;
 mod verify;
 mod webfetch;
 mod compact;
+mod mentions;
 mod tasks;
 mod worktree;
 mod completion;
@@ -523,21 +524,24 @@ async fn model_info(state: State<'_, AppState>) -> CmdResult<serde_json::Value> 
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 async fn agent_send(
     app: AppHandle,
     session: String,
     agent: String,
     text: String,
     images: Option<Vec<llm::ImageInput>>,
+    mentions: Option<Vec<mentions::Mention>>,
     file: Option<String>,
     line: Option<u32>,
 ) -> CmdResult<()> {
     let images = images.unwrap_or_default();
     llm::check_images(&images).map_err(err)?;
+    let mentions = mentions.unwrap_or_default();
     if agent.starts_with(acp::PREFIX) {
-        tauri::async_runtime::spawn(acp::run(app, session, agent, text, images, file, line));
+        tauri::async_runtime::spawn(acp::run(app, session, agent, text, images, mentions, file, line));
     } else {
-        tauri::async_runtime::spawn(agent::run(app, session, agent, text, images, file, line));
+        tauri::async_runtime::spawn(agent::run(app, session, agent, text, images, mentions, file, line));
     }
     Ok(())
 }
