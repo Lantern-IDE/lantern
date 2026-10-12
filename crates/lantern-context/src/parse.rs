@@ -455,6 +455,44 @@ record Token(String value) {}
     }
 
     #[test]
+    fn parses_kotlin() {
+        let src = "package shop\n\n/** 주문을 받는다 */\n@RestController\nclass OrderController(private val service: OrderService) {\n    @PostMapping(\"/orders\")\n    fun place(cart: Cart): Order {\n        validate(cart)\n        return service.save(Order(cart))\n    }\n}\n\nobject Money {\n    fun zero() = 0\n}\n\nfun validate(cart: Cart) { }\n\ntypealias Id = String\n";
+        let mut p = Parser::new().unwrap();
+        let out = p.parse(Lang::Kotlin, src.as_bytes()).unwrap();
+        let n = names(&out);
+        for (name, kind) in [("OrderController", "class"), ("place", "method"), ("Money", "class"), ("zero", "method"), ("validate", "function"), ("Id", "type")] {
+            assert!(n.contains(&(name.into(), kind.into())), "{name} {kind} 없음: {n:?}");
+        }
+        let place = out.symbols.iter().position(|s| s.name == "place").unwrap();
+        let calls: Vec<_> = out.refs.iter().filter(|r| r.enclosing == Some(place)).map(|r| r.name.as_str()).collect();
+        for expected in ["validate", "save", "Order"] {
+            assert!(calls.contains(&expected), "{expected} 없음: {calls:?}");
+        }
+        // 애너테이션이 시그니처에 들어가 프레임워크 진입점으로 알아본다
+        assert!(out.symbols[place].signature.contains("@PostMapping"), "{}", out.symbols[place].signature);
+    }
+
+    #[test]
+    fn parses_c_and_cpp() {
+        let c = "/* 버퍼를 비운다 */\nvoid flush(struct buf *b) {\n    reset(b);\n}\n\nstruct buf { int n; };\n";
+        let mut p = Parser::new().unwrap();
+        let out = p.parse(Lang::C, c.as_bytes()).unwrap();
+        let n = names(&out);
+        assert!(n.iter().any(|(name, _)| name == "flush"), "{n:?}");
+        let flush = out.symbols.iter().position(|s| s.name == "flush").unwrap();
+        assert!(out.refs.iter().any(|r| r.name == "reset" && r.enclosing == Some(flush)), "본문의 호출이 함수에 묶여야 한다");
+
+        let cpp = "namespace shop {\nclass Cart {\npublic:\n    int total() const { return sum(items); }\n};\nint Cart::count() { return size(); }\n}\n";
+        let out = p.parse(Lang::Cpp, cpp.as_bytes()).unwrap();
+        let n = names(&out);
+        for name in ["Cart", "total", "count"] {
+            assert!(n.iter().any(|(x, _)| x == name), "{name} 없음: {n:?}");
+        }
+        let count = out.symbols.iter().position(|s| s.name == "count").unwrap();
+        assert!(out.refs.iter().any(|r| r.name == "sum") && out.refs.iter().any(|r| r.name == "size" && r.enclosing == Some(count)), "{:?}", out.refs);
+    }
+
+    #[test]
     fn parses_javascript() {
         let src = b"function add(a, b) { return sum([a, b]); }\nconst mul = (a, b) => a * b;\n";
         let mut p = Parser::new().unwrap();

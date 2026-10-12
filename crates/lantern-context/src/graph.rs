@@ -896,6 +896,7 @@ mod tests {
         assert_eq!(framework_marks("@Override @EventListener(OrderPlaced.class) public void on(OrderPlaced e)"), ["@EventListener"]);
         assert_eq!(framework_marks("[HttpGet(\"{id}\")] [Authorize] public IActionResult Get(int id)"), ["[HttpGet]", "[Authorize]"]);
         assert_eq!(framework_marks("#[tauri::command] #[allow(dead_code)] fn git_repos(state: State)"), ["#[tauri::command]"]);
+        assert_eq!(framework_marks("@GetMapping(\"/orders/{id}\") fun get(@PathVariable id: Long): Order"), ["@GetMapping"]);
         assert_eq!(framework_marks("@app.get(\"/items/{id}\") async def read_item(id: int)"), ["@app.get"]);
         assert!(framework_marks("@Override public String toString()").is_empty());
         assert!(framework_marks("@staticmethod def parse(raw)").is_empty());
@@ -909,7 +910,7 @@ mod tests {
         std::fs::create_dir_all(r.join("src")).unwrap();
         std::fs::write(r.join("src/OwnerController.java"), "package app;\n\npublic class OwnerController {\n    @GetMapping(\"/owners\")\n    public String list(Model model) {\n        return \"owners\";\n    }\n}\n").unwrap();
         std::fs::write(r.join("src/api.py"), "@app.get(\"/items\")\ndef list_items():\n    return []\n").unwrap();
-        std::fs::write(r.join("src/Owner.kt"), "class Owner(val name: String)\n").unwrap();
+        std::fs::write(r.join("src/owner.rb"), "class Owner\n  def name = @name\nend\n").unwrap();
         let mut e = Engine::open(r).unwrap();
         e.refresh().unwrap();
 
@@ -919,7 +920,7 @@ mod tests {
         let p = impact(&e.store, "src/api.py", &[(3, 3)]).unwrap();
         assert_eq!(p.framework, ["@app.get"]);
         // 분석하지 않는 언어: 0은 '없음'이 아니라 '모름'
-        let k = impact(&e.store, "src/Owner.kt", &[(1, 1)]).unwrap();
+        let k = impact(&e.store, "src/owner.rb", &[(1, 1)]).unwrap();
         assert!(!k.supported && k.touched.is_empty());
     }
 
