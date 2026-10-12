@@ -33,6 +33,8 @@ pub enum AgentEvent {
     },
     Text { session: String, text: String },
     ToolStart { session: String, name: String },
+    /// 계획 먼저: 읽기만 해서 계획을 냈다. 진행할지 사용자가 정한다
+    PlanReady { session: String },
     /// 대화가 길어 줄였다 (토큰 추정치, 지운 단계 수)
     Compacted { session: String, before: usize, after: usize, dropped: usize },
     /// 일시적 오류로 기다렸다가 다시 보낸다 (attempt/max번째, wait_secs초 뒤)
@@ -196,12 +198,13 @@ pub async fn run(
     text: String,
     images: Vec<ImageInput>,
     mentions: Vec<crate::mentions::Mention>,
+    plan: bool,
     file: Option<String>,
     line: Option<u32>,
 ) {
     let cancel = Arc::new(AtomicBool::new(false));
     app.state::<AppState>().cancels.lock().unwrap().insert(session.clone(), cancel.clone());
-    let result = run_inner(&app, &session, &agent_id, text, images, mentions, file, line, &cancel).await;
+    let result = run_inner(&app, &session, &agent_id, text, images, mentions, plan, file, line, &cancel).await;
     let st = app.state::<AppState>();
     st.cancels.lock().unwrap().remove(&session);
     if let Some(h) = st.sessions.lock().unwrap().get_mut(&session) {
@@ -213,13 +216,23 @@ pub async fn run(
         }
     }
     match result {
-        Ok((changed, checkpoint)) => emit(&app, AgentEvent::Done { session, changed, checkpoint }),
+        Ok((changed, checkpoint)) => {
+            if plan {
+                emit(&app, AgentEvent::PlanReady { session: session.clone() });
+            }
+            emit(&app, AgentEvent::Done { session, changed, checkpoint })
+        }
         Err(e) => {
             crate::applog::error(&format!("에이전트 오류: {e:#}"));
             emit(&app, AgentEvent::Error { session, message: format!("{e:#}") })
         }
     }
 }
+
+const PLAN_PROMPT: &str = "## Plan first\n\
+The user wants a plan before any change. In this turn you can only read: look at the code you need, then reply with a short plan \
+and stop. The plan has: the files you will change and why (path and the function or part), the order of the steps, \
+and how you will check the result (which tests or commands). Do not write the code yet. The user will approve the plan or ask for changes.";
 
 /// 고친 파일과 연결된 테스트를 돌린다. 실패하면 모델에 돌려줄 글을, 통과·건너뜀·같은 실패 반복이면 None을 돌려준다.
 /// 화면에는 명령 도구 카드로 보인다.
@@ -306,6 +319,7 @@ async fn run_inner(
     text: String,
     images: Vec<ImageInput>,
     mentions: Vec<crate::mentions::Mention>,
+    plan: bool,
     file: Option<String>,
     line: Option<u32>,
     cancel: &Arc<AtomicBool>,
@@ -342,11 +356,13 @@ async fn run_inner(
     let rules = if project.is_trusted() { project_rules(&project.root) } else { None };
     let system = system_prompt(&project.root, &agent, rules.as_deref());
     // 제한 모드에서는 읽기 도구만 쓴다 (파일 수정, 명령 실행, 메모리 쓰기 불가).
-    let allowed: Vec<String> = if project.is_trusted() {
+    // 계획 먼저: 이번 요청은 읽기만 하고 계획을 낸다
+    let allowed: Vec<String> = if project.is_trusted() && !plan {
         agent.tools.clone()
     } else {
         agent.tools.iter().filter(|t| agents::READ_TOOLS.contains(&t.as_str())).cloned().collect()
     };
+    let system = if plan { format!("{system}\n{PLAN_PROMPT}") } else { system };
     let mut tools = crate::tools::specs(&allowed);
     // 외부 MCP 서버의 도구 ('mcp'를 허용한 에이전트, 신뢰한 폴더에서만). 못 띄운 서버는 알리고 계속한다
     let mcp = if allowed.iter().any(|t| t == "mcp") && !config.mcp.is_empty() {
