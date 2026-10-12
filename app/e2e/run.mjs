@@ -74,7 +74,7 @@ const file = (rel) => fs.readFileSync(path.join(DIRS.proj, rel), "utf8");
 
 // ── 모의 모델 (OpenAI 호환, 스트리밍) ────────────────────────
 // 1차: read_file → 2차: edit_file → 3차: 완료. 무엇을 읽고 고칠지는 시나리오가 정한다.
-const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "", toolNames: [], verifyFailure: "", fetched: [], fetchResult: "", mentionPrompt: "" };
+const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "", toolNames: [], verifyFailure: "", fetched: [], fetchResult: "", mentionPrompt: "", planTools: [], planSystem: "" };
 const mockServer = http.createServer((req, res) => {
   let body = "";
   req.on("data", (c) => (body += c));
@@ -137,6 +137,20 @@ const mockServer = http.createServer((req, res) => {
       return done("stop");
     }
     const first = String(j.messages.find((m) => m.role === "user")?.content ?? "");
+    // 계획 먼저: 첫 요청은 읽기 도구만, 진행하면 다시 모든 도구
+    if (first.includes("계획 시나리오")) {
+      const names = (j.tools ?? []).map((t) => t.function?.name);
+      const lastUser = String([...j.messages].reverse().find((m) => m.role === "user")?.content ?? "");
+      if (lastUser.includes("계획대로 진행")) {
+        mock.planTools.push(names);
+        send({ choices: [{ index: 0, delta: { content: "계획대로 진행했습니다." } }] });
+        return done("stop");
+      }
+      mock.planTools.push(names);
+      mock.planSystem = String(j.messages.find((m) => m.role === "system")?.content ?? "");
+      send({ choices: [{ index: 0, delta: { content: "계획: 1) src/auth/session.ts의 signCookie를 고칩니다 2) 테스트로 확인합니다" } }] });
+      return done("stop");
+    }
     // @로 집어 넣은 파일·심볼이 맥락에 붙었는지
     if (first.includes("멘션 확인")) {
       mock.mentionPrompt = first;
@@ -1066,6 +1080,37 @@ scenario("@로 파일·심볼 집어 넣기: 후보 → 칩 → 맥락에 꼭 �
     left: document.querySelectorAll("#mentions .mention-chip").length,
   }));
   if (ui2.sent.join() !== "@session.ts,@issueSession" || ui2.left !== 0) throw new Error(`보낸 뒤 칩: ${JSON.stringify(ui2)}`);
+});
+
+scenario("계획 먼저: 읽기만 해서 계획 → 계획대로 진행하면 모든 도구", async () => {
+  await run(() => {
+    document.querySelector("#btn-new-task").click();
+    const sel = document.querySelector("#agent-select");
+    sel.value = "code";
+    sel.dispatchEvent(new Event("change"));
+    const box = document.querySelector("#plan-first");
+    if (!box.checked) box.click();
+    return true;
+  });
+  await run(ui.sendTask, "계획 시나리오: 서명 바꾸기", "code", false);
+  await waitFor(() => !!document.querySelector(".task-log:not(.hidden) .plan-actions"), 20000, "계획과 진행 버튼");
+  const [planTools] = mock.planTools;
+  if (planTools.includes("edit_file") || planTools.includes("run_command") || !planTools.includes("read_file")) throw new Error(`계획 단계 도구: ${planTools}`);
+  if (!mock.planSystem.includes("Plan first")) throw new Error("계획 지시가 시스템 프롬프트에 없음");
+  await run(() => {
+    [...document.querySelectorAll(".task-log:not(.hidden) .plan-actions button")].find((b) => b.textContent.includes("계획대로 진행")).click();
+    return true;
+  });
+  await waitFor(() => document.querySelector(".task-log:not(.hidden)")?.innerText.includes("계획대로 진행했습니다"), 20000, "진행");
+  const goTools = mock.planTools[1];
+  if (!goTools?.includes("edit_file")) throw new Error(`진행 단계 도구: ${goTools}`);
+  const left = await run(() => document.querySelectorAll(".task-log:not(.hidden) .plan-actions").length);
+  if (left) throw new Error("진행한 뒤에도 진행 버튼이 남음");
+  await run(() => {
+    const box = document.querySelector("#plan-first");
+    if (box.checked) box.click();
+    return true;
+  });
 });
 
 scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
