@@ -105,7 +105,7 @@ pub fn command(root: &Path, tests: &[String], template: Option<&str>) -> Option<
             has("go.mod").then(|| format!("go test {}", pkgs.join(" ")))
         }
         "rs" => has("Cargo.toml").then(|| "cargo test".into()),
-        "java" => {
+        "java" | "kt" | "kts" => {
             let classes: Vec<String> = tests.iter().filter_map(|t| Path::new(t).file_stem().map(|s| s.to_string_lossy().into_owned())).collect();
             if has("pom.xml") {
                 Some(format!("mvn -q test -Dtest={} -Dsurefire.failIfNoSpecifiedTests=false", classes.join(",")))
