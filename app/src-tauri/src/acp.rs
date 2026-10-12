@@ -667,10 +667,20 @@ pub fn close(st: &AppState, session: Option<&str>) {
     }
 }
 
-pub async fn run(app: AppHandle, session: String, agent_id: String, text: String, images: Vec<ImageInput>, file: Option<String>, line: Option<u32>) {
+#[allow(clippy::too_many_arguments)]
+pub async fn run(
+    app: AppHandle,
+    session: String,
+    agent_id: String,
+    text: String,
+    images: Vec<ImageInput>,
+    mentions: Vec<crate::mentions::Mention>,
+    file: Option<String>,
+    line: Option<u32>,
+) {
     let cancel = Arc::new(AtomicBool::new(false));
     app.state::<AppState>().cancels.lock().unwrap().insert(session.clone(), cancel.clone());
-    let result = run_inner(&app, &session, &agent_id, text, images, file, line, &cancel).await;
+    let result = run_inner(&app, &session, &agent_id, text, images, mentions, file, line, &cancel).await;
     app.state::<AppState>().cancels.lock().unwrap().remove(&session);
     match result {
         Ok((changed, checkpoint)) => agent::emit(&app, AgentEvent::Done { session, changed, checkpoint }),
@@ -688,6 +698,7 @@ async fn run_inner(
     agent_id: &str,
     text: String,
     images: Vec<ImageInput>,
+    mentions: Vec<crate::mentions::Mention>,
     file: Option<String>,
     line: Option<u32>,
     cancel: &Arc<AtomicBool>,
@@ -716,12 +727,15 @@ async fn run_inner(
     let engine = project.engine.clone();
     let req = ContextRequest { query: text.clone(), file, line, budget_tokens: cfg.context.budget_tokens };
     let emb = cfg.embedder();
+    let pinned_root = project.root.clone();
     let (ctx, ctx_tokens) = tokio::task::spawn_blocking(move || -> Result<(String, usize)> {
         let q = crate::semantic::query_vector(emb.as_ref(), &req.query);
         let mut e = engine.lock().unwrap();
         e.refresh()?;
         let r = crate::semantic::context(&e, &req, q.as_ref())?;
-        Ok((r.to_markdown(), r.used_tokens))
+        // @로 집어 넣은 파일·심볼은 엔진이 고른 것 앞에 꼭 붙인다
+        let (pinned, pinned_tokens) = crate::mentions::pinned(&e, &pinned_root, &mentions, req.budget_tokens);
+        Ok((format!("{pinned}{}", r.to_markdown()), r.used_tokens + pinned_tokens))
     })
     .await??;
     agent::emit(
