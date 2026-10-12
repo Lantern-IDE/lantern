@@ -41,7 +41,15 @@ const DIRS = { data: path.join(TMP, "data"), home: path.join(TMP, "home"), wv: p
 for (const d of Object.values(DIRS)) fs.mkdirSync(d, { recursive: true });
 
 function git(...args) {
-  return execFileSync("git", ["-C", DIRS.proj, ...args], { encoding: "utf8" });
+  // 앱도 같은 저장소에서 git을 돌리므로(파일 감시 → 상태 새로 고침) index.lock이 겹치면 잠깐 뒤 다시
+  for (let i = 0; ; i++) {
+    try {
+      return execFileSync("git", ["-C", DIRS.proj, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    } catch (e) {
+      if (i >= 8 || !String(e.stderr ?? e.message).includes("index.lock")) throw e;
+      execFileSync(process.execPath, ["-e", "setTimeout(() => {}, 250)"]);
+    }
+  }
 }
 
 function makeProject() {
@@ -1109,6 +1117,47 @@ scenario("계획 먼저: 읽기만 해서 계획 → 계획대로 진행하면 �
   await run(() => {
     const box = document.querySelector("#plan-first");
     if (box.checked) box.click();
+    return true;
+  });
+});
+
+scenario("PR·브랜치 검토: 다른 브랜치의 변경 전체 영향 반경", async () => {
+  // 앞 시나리오가 남긴 변경(외부 에이전트의 api.ts 등)은 잠시 치워 두고 끝나면 되돌린다
+  const stashed = !!git("status", "--porcelain", "--untracked-files=no").trim();
+  if (stashed) git("stash", "push", "-q");
+  git("checkout", "-q", "-b", "e2e/pr");
+  fs.writeFileSync(path.join(DIRS.proj, "src/auth/login.ts"), file("src/auth/login.ts").replace("return s;", "return s.trim();"));
+  git("commit", "-qam", "trim session");
+  git("checkout", "-q", "main");
+  await run(() => {
+    document.querySelector('.ab-item[data-view="scm"]').click();
+    return true;
+  });
+  await waitFor(() => !document.querySelector("#scm-commit").classList.contains("hidden"), 15000, "소스 제어");
+  await run(() => {
+    document.querySelector("#scm-pr-btn").click();
+    return true;
+  });
+  await waitFor(() => !!document.querySelector("#scm-review .rv-target"), 5000, "PR 입력칸");
+  await run(() => {
+    const i = document.querySelector("#scm-review .rv-target");
+    i.value = "e2e/pr";
+    i.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    return true;
+  });
+  const rv = await waitFor(() => {
+    const box = document.querySelector("#scm-review:not(.hidden)");
+    const rows = box ? [...box.querySelectorAll(".rv-file")].map((r) => r.innerText.replace(/\s+/g, " ")) : [];
+    return rows.length ? { head: box.querySelector(".rv-head").innerText, rows } : null;
+  }, 20000, "브랜치 검토 결과");
+  const row = rv.rows.find((r) => r.includes("login.ts"));
+  if (!rv.head.includes("e2e/pr") || !row || !/직접 1/.test(row) || !/테스트 없음/.test(row)) throw new Error(`브랜치 검토: ${JSON.stringify(rv)}`);
+  if (!file("src/auth/login.ts").includes("return s;")) throw new Error("검토가 작업 트리를 바꿈");
+  git("branch", "-D", "e2e/pr");
+  if (stashed) git("stash", "pop", "-q");
+  await run(() => {
+    document.querySelector("#scm-review .rv-head .codicon-close")?.closest("button")?.click();
+    document.querySelector('.ab-item[data-view="tasks"]').click();
     return true;
   });
 });
