@@ -99,6 +99,12 @@ const mockServer = http.createServer((req, res) => {
       return res.end(JSON.stringify({ data: input.map((t, index) => ({ index, embedding: vec(t) })) }));
     }
     mock.requests++;
+    // 일시적 오류: 처음 한 번은 과부하로 거절한다
+    if (JSON.stringify(j.messages).includes("재시도 확인") && !mock.overloaded) {
+      mock.overloaded = true;
+      res.writeHead(529, { "content-type": "application/json", "retry-after": "0" });
+      return res.end(JSON.stringify({ error: { message: "Overloaded" } }));
+    }
     res.writeHead(200, { "content-type": "text/event-stream" });
     const send = (o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
     const done = (reason) => {
@@ -966,6 +972,20 @@ scenario("웹 문서 가져오기: 처음 여는 사이트만 승인 → 본문 
   const approvals = await run(() => document.querySelectorAll(".task-log:not(.hidden) .approval").length);
   if (approvals !== 1 || mock.fetched.join() !== "/docs/cookie,/docs/session") throw new Error(`승인 ${approvals}개, 가져온 곳 ${mock.fetched}`);
   if (!mock.fetchResult.includes("Cookie signing") || !mock.fetchResult.includes("HMAC") || mock.fetchResult.includes("steal()") || mock.fetchResult.includes("<p>")) throw new Error(`본문: ${mock.fetchResult}`);
+});
+
+scenario("일시적 오류: 과부하(529)면 기다렸다가 다시 보내 답을 받는다", async () => {
+  await run(() => {
+    document.querySelector("#btn-new-task").click();
+    return true;
+  });
+  await run(ui.sendTask, "재시도 확인", "ask", false);
+  const r = await waitFor(() => {
+    const log = document.querySelector(".task-log:not(.hidden)");
+    const note = log?.querySelector(".note.retry:not(.waiting)");
+    return note && log.querySelector(".md") && { note: note.textContent, done: !log.querySelector(".err-box") };
+  }, 20000, "다시 보낸 뒤 답");
+  if (!mock.overloaded || !r.note.includes("다시 보냈습니다") || !r.done) throw new Error(`재시도: ${JSON.stringify(r)}`);
 });
 
 scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
