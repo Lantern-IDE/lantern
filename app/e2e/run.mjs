@@ -137,6 +137,18 @@ const mockServer = http.createServer((req, res) => {
       return done("stop");
     }
     const first = String(j.messages.find((m) => m.role === "user")?.content ?? "");
+    // 긴 작업: 큰 파일을 여러 번 읽어 모델 입력 한도(로컬 모델 짐작 32k)를 넘긴다
+    if (first.includes("긴 작업 확인")) {
+      const all = JSON.stringify(j.messages);
+      mock.compactSeen ||= all.includes("줄였습니다");
+      mock.compactMax = Math.max(mock.compactMax ?? 0, all.length);
+      if (tools < 8) {
+        send({ choices: [{ index: 0, delta: { tool_calls: [{ index: 0, id: `call_big${tools}`, type: "function", function: { name: "read_file", arguments: JSON.stringify({ path: "big.txt" }) } }] } }] });
+        return done("tool_calls");
+      }
+      send({ choices: [{ index: 0, delta: { content: "다 읽었습니다." } }] });
+      return done("stop");
+    }
     // 고친 뒤 확인: 일부러 틀리게 고치고, 테스트 실패를 받으면 되돌려 고친다
     if (first.includes("검증 시나리오")) {
       const last = j.messages.at(-1);
@@ -986,6 +998,25 @@ scenario("일시적 오류: 과부하(529)면 기다렸다가 다시 보내 답�
     return note && log.querySelector(".md") && { note: note.textContent, done: !log.querySelector(".err-box") };
   }, 20000, "다시 보낸 뒤 답");
   if (!mock.overloaded || !r.note.includes("다시 보냈습니다") || !r.done) throw new Error(`재시도: ${JSON.stringify(r)}`);
+});
+
+scenario("긴 작업: 대화가 모델 입력 한도에 가까우면 줄이고 계속한다", async () => {
+  const big = path.join(DIRS.proj, "big.txt");
+  fs.writeFileSync(big, Array.from({ length: 4000 }, (_, i) => `line ${i} ${"lorem ipsum ".repeat(4)}`).join("\n"));
+  await run(() => {
+    document.querySelector("#btn-new-task").click();
+    return true;
+  });
+  await run(ui.sendTask, "긴 작업 확인", "ask", false);
+  const r = await waitFor(() => {
+    const log = document.querySelector(".task-log:not(.hidden)");
+    return log?.innerText.includes("다 읽었습니다") && { note: log.querySelector(".note.compacted")?.textContent ?? "", err: !!log.querySelector(".err-box") };
+  }, 60000, "긴 작업 끝");
+  fs.rmSync(big);
+  if (!r.note.includes("줄였습니다") || r.err) throw new Error(`대화 줄이기: ${JSON.stringify(r)}`);
+  if (!mock.compactSeen) throw new Error("줄인 표시가 모델에 가지 않음");
+  // 8번 × 2만 자를 그대로 보냈다면 16만 자를 넘는다
+  if (mock.compactMax > 140000) throw new Error(`줄인 뒤에도 요청이 큼: ${mock.compactMax}자`);
 });
 
 scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
