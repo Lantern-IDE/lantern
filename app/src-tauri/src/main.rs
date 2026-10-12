@@ -532,6 +532,7 @@ async fn agent_send(
     text: String,
     images: Option<Vec<llm::ImageInput>>,
     mentions: Option<Vec<mentions::Mention>>,
+    plan: Option<bool>,
     file: Option<String>,
     line: Option<u32>,
 ) -> CmdResult<()> {
@@ -541,7 +542,7 @@ async fn agent_send(
     if agent.starts_with(acp::PREFIX) {
         tauri::async_runtime::spawn(acp::run(app, session, agent, text, images, mentions, file, line));
     } else {
-        tauri::async_runtime::spawn(agent::run(app, session, agent, text, images, mentions, file, line));
+        tauri::async_runtime::spawn(agent::run(app, session, agent, text, images, mentions, plan.unwrap_or(false), file, line));
     }
     Ok(())
 }
