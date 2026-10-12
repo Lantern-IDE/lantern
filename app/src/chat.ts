@@ -399,6 +399,15 @@ function str(v: unknown): string {
   return typeof v === "string" ? v : "";
 }
 
+/** 재시도 안내를 끝난 상태로: 다음 응답이 오면 '다시 보냈습니다', 오류로 끝나면 그대로 둔다 */
+function settleRetry(task: Task, failed: boolean) {
+  const note = task.body?.querySelector<HTMLElement>(".note.retry.waiting");
+  if (!note) return;
+  note.classList.remove("waiting");
+  note.querySelector(".codicon")?.replaceWith(codicon(failed ? "warning" : "check"));
+  if (!failed) note.lastChild!.textContent = "서버 오류로 잠시 기다렸다가 다시 보냈습니다";
+}
+
 function record(task: Task, ev: AgentEvent) {
   if (replaying) return;
   const last = task.log.at(-1);
@@ -409,7 +418,7 @@ function record(task: Task, ev: AgentEvent) {
   } else if (ev.kind === "request") {
     // 시스템 프롬프트는 매번 같아 기록하지 않는다
     task.log.push({ t: "ev", ev: { ...ev, system: "" } });
-  } else if (ev.kind !== "tool_start" && ev.kind !== "usage") {
+  } else if (ev.kind !== "tool_start" && ev.kind !== "usage" && ev.kind !== "retry") {
     task.log.push({ t: "ev", ev });
   }
   persist(task);
@@ -419,6 +428,7 @@ function handle(ev: AgentEvent) {
   const task = tasks.find((t) => t.id === ev.session);
   if (!task) return;
   record(task, ev);
+  if (ev.kind !== "retry") settleRetry(task, ev.kind === "error");
   switch (ev.kind) {
     case "request":
       if (ev.context) {
@@ -443,6 +453,14 @@ function handle(ev: AgentEvent) {
         });
       }
       break;
+    case "retry": {
+      // 같은 요청의 재시도는 한 줄을 고쳐 쓴다 (기록에는 남기지 않는다)
+      const text = `${ev.reason} · ${ev.wait_secs}초 뒤 다시 보냅니다 (${ev.attempt}/${ev.max})`;
+      const last = task.body?.lastElementChild;
+      if (last?.classList.contains("retry") && last.classList.contains("waiting")) last.lastChild!.textContent = text;
+      else append(task, h("div", { class: "note retry waiting", role: "status" }, codicon("sync", "codicon-modifier-spin"), h("span", {}, text)));
+      break;
+    }
     case "tool_start":
       endText(task);
       task.pendingTool?.remove();
