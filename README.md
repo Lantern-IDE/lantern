@@ -24,7 +24,7 @@ Most AI editors are organised around files and a chat box. Once you let an agent
 
 The core is a local context engine (`crates/lantern-context`, Rust + tree-sitter + SQLite FTS5). For every question it assembles relevant code from the symbol graph, full-text search, git co-change history, and project memory within a token budget.
 
-Languages the engine understands (symbols, calls, map, impact radius): Rust, Python, TypeScript/JavaScript, Java, Go, C#. Other files still open with syntax colors, but have no symbols.
+Languages the engine understands (symbols, calls, map, impact radius): Rust, Python, TypeScript/JavaScript, Java, Kotlin, Go, C#, C/C++. Other files still open with syntax colors, but have no symbols.
 
 **Public benchmark.** 60 real commits from [Flask](https://github.com/pallets/flask) (Python), [Hono](https://github.com/honojs/hono) (TypeScript), and [Apache Commons Lang](https://github.com/apache/commons-lang) (Java). The question is the commit message, the answer files are the code files that commit changed, and each question is measured at the commit's parent. Nobody hand-picks the answers. Same 8,000-token budget, no model calls:
 

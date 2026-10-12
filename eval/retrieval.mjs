@@ -54,7 +54,7 @@ function checkout(rev) {
 }
 
 // ── 프로젝트 파일 (맥락 엔진과 같은 기준: 코드 파일, 무시 폴더 제외) ─────────
-const CODE = /\.(ts|tsx|js|jsx|mjs|cjs|py|rs|java|go|cs)$/;
+const CODE = /\.(ts|tsx|js|jsx|mjs|cjs|py|rs|java|go|cs|kt|kts|c|h|cpp|cc|cxx|hpp|hh|hxx|ipp)$/;
 const IGNORE = new Set([".git", "node_modules", "target", "dist", "build", ".next", ".lantern", "coverage", ".turbo", ".venv", "__pycache__"]);
 function* walk(dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
