@@ -108,7 +108,7 @@ pub async fn stream(
         .json(&build_body(m, req))
         .send()
         .await
-        .with_context(|| format!("{base} 연결 실패 (서버가 실행 중인지 확인하세요)"))?;
+        .map_err(|e| super::send_error(e, &format!("{base} 연결 실패 (서버가 실행 중인지 확인하세요)")))?;
     if !resp.status().is_success() {
         return Err(http_error(resp).await);
     }

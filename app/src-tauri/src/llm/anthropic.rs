@@ -103,7 +103,7 @@ pub async fn stream(
     if m.fallbacks.is_some() {
         rb = rb.header("anthropic-beta", FALLBACK_BETA);
     }
-    let resp = rb.json(&build_body(m, req)).send().await.context("모델 API 연결 실패")?;
+    let resp = rb.json(&build_body(m, req)).send().await.map_err(|e| super::send_error(e, "모델 API 연결 실패"))?;
     if !resp.status().is_success() {
         return Err(http_error(resp).await);
     }
@@ -194,6 +194,10 @@ pub async fn stream(
                 "message_stop" => break 'outer,
                 "error" => {
                     let msg = v["error"]["message"].as_str().unwrap_or("알 수 없는 오류");
+                    // 과부하·서버 오류는 응답이 나오기 전이면 다시 보낸다
+                    if matches!(v["error"]["type"].as_str(), Some("overloaded_error" | "api_error" | "rate_limit_error")) {
+                        return Err(super::transient(format!("모델 스트림 오류: {msg}")));
+                    }
                     return Err(anyhow!("모델 스트림 오류: {msg}"));
                 }
                 _ => {}
