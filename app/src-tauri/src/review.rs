@@ -38,12 +38,20 @@ pub struct Review {
     pub framework: Vec<String>,
     /// AI 리뷰에 붙일 변경 내용 (비밀로 보이는 값은 가리고, 길면 자름)
     pub diff: String,
+    /// PR·브랜치 검토면 그 이름 (예: "PR #123")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+    /// 결과를 읽을 때 알아 둘 점
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
 }
 
 /// 줄 단위 diff 한 파일의 바뀐 범위 (새 파일 기준 줄 번호, 1부터, 양끝 포함)
 #[derive(Debug, Default, PartialEq)]
 pub struct Changed {
     pub ranges: Vec<(u32, u32)>,
+    /// 원래 파일 기준 범위 (PR 검토: 인덱스가 기준 코드일 때)
+    pub old_ranges: Vec<(u32, u32)>,
     pub added: u32,
     pub removed: u32,
     pub new_file: bool,
@@ -76,7 +84,7 @@ pub fn parse_diff(text: &str) -> BTreeMap<String, Changed> {
                 let (a, b) = s.split_once(',').unwrap_or((s, "1"));
                 (a.parse().unwrap_or(0), b.parse().unwrap_or(1))
             };
-            let (_, removed) = count(old);
+            let (old_start, removed) = count(old);
             let (start, len) = count(new);
             let e = out.get_mut(path).expect("파일 머리가 먼저 온다");
             e.added += len;
@@ -84,6 +92,11 @@ pub fn parse_diff(text: &str) -> BTreeMap<String, Changed> {
             if !e.deleted {
                 let s = start.max(1);
                 e.ranges.push((s, s + len.max(1) - 1));
+            }
+            if !e.new_file {
+                // 넣기만 한 덩어리(-a,0)는 그 앞 줄
+                let s = old_start.max(1);
+                e.old_ranges.push((s, s + removed.max(1) - 1));
             }
         }
     }
@@ -120,6 +133,47 @@ fn working_diff(repo: &Path) -> Result<String> {
 /// - `strip`: 저장소 기준 연 폴더 경로 (연 폴더가 저장소의 하위 폴더일 때). 그 밖의 파일은 뺀다
 pub fn review(store: &lantern_context::store::Store, repo: &Path, prefix: &str, strip: &str) -> Result<Review> {
     let changed = parse_diff(&working_diff(repo)?);
+    let full = git(repo, &["diff", "HEAD", "--no-ext-diff", "--no-color"]).unwrap_or_default();
+    build(store, prefix, strip, changed, false, &full)
+}
+
+/// PR(번호) 또는 브랜치의 변경 전체의 영향 반경. 지금 체크아웃과의 공통 조상부터 그쪽까지(`HEAD...대상`).
+/// 인덱스는 지금 체크아웃 기준이라 원래 파일 쪽 줄 범위로 잰다.
+pub fn review_target(store: &lantern_context::store::Store, repo: &Path, prefix: &str, strip: &str, target: &str) -> Result<Review> {
+    let t = target.trim().trim_start_matches('#').trim();
+    if t.is_empty() || t.starts_with('-') || t.contains(char::is_whitespace) {
+        anyhow::bail!("PR 번호(예: 123)나 브랜치 이름(예: origin/feature)을 적어 주세요");
+    }
+    let (rev, title) = if t.chars().all(|c| c.is_ascii_digit()) {
+        git(repo, &["fetch", "--no-tags", "--quiet", "origin", &format!("pull/{t}/head")])
+            .map_err(|e| anyhow::anyhow!("PR #{t}을 가져오지 못했습니다. GitHub 저장소를 origin으로 연결했는지 확인하세요 ({e})"))?;
+        ("FETCH_HEAD".to_string(), format!("PR #{t}"))
+    } else {
+        git(repo, &["rev-parse", "--verify", "-q", &format!("{t}^{{commit}}")]).map_err(|_| anyhow::anyhow!("'{t}' 브랜치나 커밋을 찾지 못했습니다"))?;
+        (t.to_string(), t.to_string())
+    };
+    let range = format!("HEAD...{rev}");
+    let changed = parse_diff(&git(repo, &["diff", &range, "-U0", "--no-ext-diff", "--no-color", "--no-renames"])?);
+    let full = git(repo, &["diff", &range, "--no-ext-diff", "--no-color"])?;
+    let mut r = build(store, prefix, strip, changed, true, &full)?;
+    let base = git(repo, &["merge-base", "HEAD", &rev]).unwrap_or_default();
+    let head = git(repo, &["rev-parse", "HEAD"]).unwrap_or_default();
+    if base.trim() != head.trim() {
+        r.note = Some("지금 체크아웃이 이 변경의 기준과 달라, 영향 반경은 지금 코드 기준이라 조금 다를 수 있습니다".into());
+    }
+    r.title = Some(title);
+    Ok(r)
+}
+
+/// 파일별 바뀐 범위 → 영향 반경. `old_side`면 원래 파일 쪽 줄 범위로 잰다 (새로 만든 파일은 인덱스에 없어 빼고)
+fn build(
+    store: &lantern_context::store::Store,
+    prefix: &str,
+    strip: &str,
+    changed: BTreeMap<String, Changed>,
+    old_side: bool,
+    full: &str,
+) -> Result<Review> {
     let mut files = Vec::new();
     for (rel, c) in changed {
         let rel = if strip.is_empty() {
@@ -132,7 +186,12 @@ pub fn review(store: &lantern_context::store::Store, repo: &Path, prefix: &str, 
         };
         let path = if prefix.is_empty() { rel.clone() } else { format!("{prefix}/{rel}") };
         let status = if c.deleted { "deleted" } else if c.new_file { "added" } else { "modified" };
-        let impact = if c.deleted || c.ranges.is_empty() { None } else { Some(lantern_context::graph::impact(store, &path, &c.ranges)?) };
+        let ranges = if old_side { &c.old_ranges } else { &c.ranges };
+        let impact = if c.deleted || ranges.is_empty() || (old_side && c.new_file) {
+            None
+        } else {
+            Some(lantern_context::graph::impact(store, &path, ranges)?)
+        };
         files.push(FileReview { path, status: status.into(), added: c.added, removed: c.removed, impact });
     }
     // 위험한 것부터
@@ -148,9 +207,8 @@ pub fn review(store: &lantern_context::store::Store, repo: &Path, prefix: &str, 
         .map(|f| f.path.clone())
         .collect();
     let framework = files.iter().filter(|f| f.impact.as_ref().is_some_and(|i| !i.framework.is_empty())).map(|f| f.path.clone()).collect();
-    let full = git(repo, &["diff", "HEAD", "--no-ext-diff", "--no-color"]).unwrap_or_default();
-    let diff = clip(&lantern_context::secrets::redact(&full).0, DIFF_LIMIT);
-    Ok(Review { files, risk, untested, framework, diff })
+    let diff = clip(&lantern_context::secrets::redact(full).0, DIFF_LIMIT);
+    Ok(Review { files, risk, untested, framework, diff, title: None, note: None })
 }
 
 fn clip(s: &str, n: usize) -> String {
@@ -227,7 +285,8 @@ mod tests {
         let a = &c["src/a.ts"];
         assert_eq!(a.ranges, [(3, 3), (10, 10), (19, 21)], "지운 줄만 있는 덩어리는 그 자리 줄");
         assert_eq!((a.added, a.removed, a.new_file, a.deleted), (4, 3, false, false));
-        assert!(c["src/new.ts"].new_file && c["src/new.ts"].ranges == [(1, 4)]);
+        assert_eq!(a.old_ranges, [(3, 3), (10, 11), (20, 20)], "원래 파일 쪽: 지운 줄, 넣은 자리");
+        assert!(c["src/new.ts"].new_file && c["src/new.ts"].ranges == [(1, 4)] && c["src/new.ts"].old_ranges.is_empty());
         assert!(c["old.ts"].deleted && c["old.ts"].ranges.is_empty() && c["old.ts"].removed == 5);
     }
 
@@ -258,5 +317,21 @@ mod tests {
         assert!(rv.files.iter().any(|f| f.path == "src/extra.ts" && f.status == "added"));
         assert_eq!(rv.untested, ["src/session.ts"], "호출자는 있는데 테스트가 없다");
         assert_eq!(rv.files[0].path, "src/session.ts", "위험한 파일이 먼저");
+
+        // 브랜치 검토: 커밋한 뒤 다른 브랜치에서 sign을 고치면, main에서 그 브랜치의 영향 반경을 본다
+        g(&["add", "-A"]);
+        g(&["commit", "-qm", "work"]);
+        g(&["checkout", "-q", "-b", "feature"]);
+        std::fs::write(r.join("src/session.ts"), "export function sign(v: string) {\n  return v + '.v2';\n}\n").unwrap();
+        g(&["commit", "-qam", "v2"]);
+        g(&["checkout", "-q", "main"]);
+        e.refresh().unwrap();
+        let pr = review_target(&e.store, r, "", "", "feature").unwrap();
+        assert_eq!(pr.title.as_deref(), Some("feature"));
+        let s = pr.files.iter().find(|f| f.path == "src/session.ts").unwrap();
+        assert_eq!(s.impact.as_ref().unwrap().touched, ["sign"]);
+        assert!(pr.note.is_none(), "main이 기준이라 안내 없음");
+        assert!(review_target(&e.store, r, "", "", "--output=x").is_err(), "옵션처럼 보이는 입력은 거절");
+        assert!(review_target(&e.store, r, "", "", "nope").is_err());
     }
 }

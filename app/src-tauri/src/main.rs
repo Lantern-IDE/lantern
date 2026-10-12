@@ -483,6 +483,21 @@ async fn review_changes(state: State<'_, AppState>, repo: Option<String>) -> Cmd
     with_engine(&state, move |e, _| review::review(&e.store, &dir, &prefix, &strip)).await
 }
 
+/// PR(번호)·브랜치의 영향 검토
+#[tauri::command]
+async fn review_target(state: State<'_, AppState>, repo: Option<String>, target: String) -> CmdResult<review::Review> {
+    let dir = git_repo(&state, repo.as_deref().unwrap_or("")).map_err(anyhow_err)?;
+    let root = state.project().map_err(anyhow_err)?.root.clone();
+    let prefix = gitops::rel_path(&root, &dir);
+    let strip = if prefix.is_empty() && dir != root {
+        gitops::git(&root, &["rev-parse", "--show-prefix"]).unwrap_or_default().trim().trim_end_matches('/').to_string()
+    } else {
+        String::new()
+    };
+    // PR 번호면 원격에서 가져온 뒤(fetch) 지금 인덱스로 영향 반경을 잰다
+    with_engine(&state, move |e, _| review::review_target(&e.store, &dir, &prefix, &strip, &target)).await
+}
+
 /// 스테이징된 변경(없으면 전체)으로 커밋 메시지를 만든다 (기본 모델)
 #[tauri::command]
 async fn commit_message(state: State<'_, AppState>, repo: Option<String>) -> CmdResult<String> {
@@ -1090,6 +1105,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             acp_authenticate,
             review_changes,
+            review_target,
             commit_message,
             inline_edit,
             test_examples,

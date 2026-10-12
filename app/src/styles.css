@@ -1110,3 +1110,5 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .task.s-stopped .task-status { color: var(--muted); }
 .stopped-note { margin: 8px 16px; color: var(--muted); }
 .lsp-ok { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--ok); }
+.rv-target-row { display: flex; gap: 6px; padding: 0 0 6px; }
+.rv-target-row .rv-target { flex: 1; min-width: 0; font-family: var(--code-font); font-size: 12px; }

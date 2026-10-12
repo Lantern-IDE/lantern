@@ -530,6 +530,7 @@ function renderReview(box: HTMLElement, r: Review) {
   });
   const notes: HTMLElement[] = [];
   if (r.untested.length) notes.push(h("div", { class: "rv-note warn" }, codicon("warning"), `호출하는 곳은 있는데 테스트가 없는 파일 ${r.untested.length}개`));
+  if (r.note) notes.push(h("div", { class: "rv-note" }, codicon("info"), r.note));
   if (r.framework.length) notes.push(h("div", { class: "rv-note warn" }, codicon("info"), `프레임워크가 부르는 코드를 고친 파일 ${r.framework.length}개 (호출자가 안 보일 수 있음)`));
   const rows = r.files.map((f) => {
     const i = f.impact;
@@ -549,7 +550,7 @@ function renderReview(box: HTMLElement, r: Review) {
     return row;
   });
   box.replaceChildren(
-    h("div", { class: "rv-head" }, codicon("pulse"), h("span", {}, "영향 검토"), h("span", { class: `risk risk-${r.risk}` }, `위험도 ${RISK[r.risk]}`), h("span", { class: "badge" }, String(r.files.length)), close),
+    h("div", { class: "rv-head" }, codicon(r.title ? "git-pull-request" : "pulse"), h("span", {}, r.title ? `${r.title} 영향 검토` : "영향 검토"), h("span", { class: `risk risk-${r.risk}` }, `위험도 ${RISK[r.risk]}`), h("span", { class: "badge" }, String(r.files.length)), close),
     ...notes,
     h("div", { class: "rv-files" }, ...rows),
     h("div", { class: "rv-actions" }, make, ask));
@@ -570,6 +571,44 @@ async function runReview() {
   } catch (e) {
     box.classList.add("hidden");
     toast.error("영향 검토를 하지 못했습니다", errorText(e));
+  }
+}
+
+/** PR 번호나 브랜치를 받아 같은 검토 화면으로 */
+function askReviewTarget() {
+  const box = $("#scm-review");
+  box.classList.remove("hidden");
+  const input = h("input", { class: "rv-target", placeholder: "PR 번호(예: 123) 또는 브랜치(예: origin/feature)", "aria-label": "검토할 PR 또는 브랜치", spellcheck: "false" }) as HTMLInputElement;
+  const go = h("button", { class: "btn btn-primary" }, "검토") as HTMLButtonElement;
+  const run = () => {
+    const t = input.value.trim();
+    if (t) void runTargetReview(t);
+  };
+  go.addEventListener("click", run);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") run();
+    else if (e.key === "Escape") box.classList.add("hidden");
+  });
+  box.replaceChildren(
+    h("div", { class: "rv-head" }, codicon("git-pull-request"), h("span", {}, "PR·브랜치 검토"), iconButton("close", "닫기", () => box.classList.add("hidden"))),
+    h("div", { class: "rv-target-row" }, input, go),
+    h("div", { class: "rv-note" }, codicon("info"), "PR 번호는 GitHub 원격(origin)에서 가져옵니다. 지금 체크아웃과의 공통 조상부터의 변경을 봅니다."));
+  input.focus();
+}
+
+async function runTargetReview(target: string) {
+  const box = $("#scm-review");
+  box.replaceChildren(h("div", { class: "rv-head" }, codicon("loading", "codicon-modifier-spin"), h("span", {}, `${target} 가져와 영향을 계산하는 중…`)));
+  try {
+    const r = await invoke<Review>("review_target", { repo: active, target });
+    if (!r.files.length) {
+      box.replaceChildren(h("div", { class: "rv-head" }, codicon("pass"), h("span", {}, `${r.title ?? target}: 지금 체크아웃과 다른 점이 없습니다`), iconButton("close", "닫기", () => box.classList.add("hidden"))));
+      return;
+    }
+    renderReview(box, r);
+  } catch (e) {
+    askReviewTarget();
+    toast.error("PR·브랜치를 검토하지 못했습니다", errorText(e));
   }
 }
 
@@ -602,6 +641,7 @@ export function init(opts: {
   onAskReview = opts.onAskReview;
   onCreateTests = opts.onCreateTests;
   $("#scm-review-btn").addEventListener("click", () => void runReview());
+  $("#scm-pr-btn").addEventListener("click", askReviewTarget);
   $("#scm-gen-msg").addEventListener("click", () => void generateMessage());
   $("#scm-commit-btn").addEventListener("click", () => void commit());
   $("#scm-message").addEventListener("keydown", (e) => {
