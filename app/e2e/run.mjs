@@ -74,7 +74,7 @@ const file = (rel) => fs.readFileSync(path.join(DIRS.proj, rel), "utf8");
 
 // ── 모의 모델 (OpenAI 호환, 스트리밍) ────────────────────────
 // 1차: read_file → 2차: edit_file → 3차: 완료. 무엇을 읽고 고칠지는 시나리오가 정한다.
-const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "", toolNames: [], verifyFailure: "", fetched: [], fetchResult: "" };
+const mock = { read: "src/auth/login.ts", edit: "src/auth/session.ts", old: "v + '.sig'", new: "v + '.signed'", requests: 0, testPrompt: "", image: null, embedded: 0, semanticPrompt: "", toolNames: [], verifyFailure: "", fetched: [], fetchResult: "", mentionPrompt: "" };
 const mockServer = http.createServer((req, res) => {
   let body = "";
   req.on("data", (c) => (body += c));
@@ -137,6 +137,12 @@ const mockServer = http.createServer((req, res) => {
       return done("stop");
     }
     const first = String(j.messages.find((m) => m.role === "user")?.content ?? "");
+    // @로 집어 넣은 파일·심볼이 맥락에 붙었는지
+    if (first.includes("멘션 확인")) {
+      mock.mentionPrompt = first;
+      send({ choices: [{ index: 0, delta: { content: "지정한 코드를 받았습니다." } }] });
+      return done("stop");
+    }
     // 긴 작업: 큰 파일을 여러 번 읽어 모델 입력 한도(로컬 모델 짐작 32k)를 넘긴다
     if (first.includes("긴 작업 확인")) {
       const all = JSON.stringify(j.messages);
@@ -1017,6 +1023,49 @@ scenario("긴 작업: 대화가 모델 입력 한도에 가까우면 줄이고 �
   if (!mock.compactSeen) throw new Error("줄인 표시가 모델에 가지 않음");
   // 8번 × 2만 자를 그대로 보냈다면 16만 자를 넘는다
   if (mock.compactMax > 140000) throw new Error(`줄인 뒤에도 요청이 큼: ${mock.compactMax}자`);
+});
+
+scenario("@로 파일·심볼 집어 넣기: 후보 → 칩 → 맥락에 꼭 붙음", async () => {
+  await run(() => {
+    document.querySelector("#btn-new-task").click();
+    return true;
+  });
+  const typeAt = (text) => run((t) => {
+    const p = document.querySelector("#prompt");
+    p.focus();
+    p.value = t;
+    p.setSelectionRange(t.length, t.length);
+    p.dispatchEvent(new Event("input", { bubbles: true }));
+    return true;
+  }, text);
+  const pick = async (want) => {
+    await waitFor((w) => [...document.querySelectorAll("#mention-pop:not(.hidden) .mention-item")].some((i) => i.textContent.includes(w)), 10000, `후보 ${want}`, want);
+    await run((w) => {
+      const items = [...document.querySelectorAll("#mention-pop .mention-item")];
+      const i = items.findIndex((x) => x.querySelector(".mi-label").textContent === w);
+      const p = document.querySelector("#prompt");
+      for (let k = 0; k < i; k++) p.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+      p.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+      return true;
+    }, want);
+  };
+  await typeAt("멘션 확인 @sess");
+  await pick("session.ts");
+  await typeAt("멘션 확인 @session.ts @issueS");
+  await pick("issueSession");
+  const chipsBefore = await run(() => [...document.querySelectorAll("#mentions .mention-chip")].map((c) => c.textContent));
+  if (chipsBefore.join() !== "@session.ts,@issueSession") throw new Error(`칩: ${chipsBefore}`);
+  // Enter가 후보 고르기에 쓰였고 아직 보내지 않았다
+  if (mock.mentionPrompt) throw new Error("후보를 고르는 Enter에 메시지가 나감");
+  await run(ui.sendTask, "멘션 확인 @session.ts @issueSession ", "ask", false);
+  await waitFor(() => document.querySelector(".task-log:not(.hidden)")?.innerText.includes("지정한 코드를 받았습니다"), 20000, "답");
+  const p = mock.mentionPrompt;
+  if (!p.includes("# 사용자가 지정한 코드") || !p.includes("### `session.ts` (file, L1-") || !/### `issueSession` \(function, L\d+-\d+\) — 사용자가 지정/.test(p)) throw new Error(`맥락: ${p.slice(0, 800)}`);
+  const ui2 = await run(() => ({
+    sent: [...document.querySelectorAll(".task-log:not(.hidden) .user-mentions .mention-chip")].map((c) => c.textContent),
+    left: document.querySelectorAll("#mentions .mention-chip").length,
+  }));
+  if (ui2.sent.join() !== "@session.ts,@issueSession" || ui2.left !== 0) throw new Error(`보낸 뒤 칩: ${JSON.stringify(ui2)}`);
 });
 
 scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 → 되돌리기", async () => {
