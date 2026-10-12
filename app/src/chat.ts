@@ -20,12 +20,13 @@ export { parseContext } from "./lib/context";
 import * as lsp from "./lsp";
 import * as toast from "./toast";
 import * as attach from "./attach";
+import * as mention from "./mention";
 
 export type TaskStatus = "idle" | "running" | "approval" | "done" | "error" | "stopped";
 
 /** 저장·복원용 기록 한 줄 */
 type Entry =
-  | { t: "user"; text: string; images?: number }
+  | { t: "user"; text: string; images?: number; mentions?: { label: string; title: string }[] }
   | { t: "ev"; ev: AgentEvent }
   | { t: "touched"; id: string; names: string[] }
   | { t: "iso-done" };
@@ -696,12 +697,15 @@ async function send(text?: string) {
   if (!text) input.value = "";
   // 붙인 이미지는 입력창에서 보낼 때만 (다시 시도는 글만)
   const images = text ? [] : attach.take();
+  const mentions = text ? [] : mention.take();
+  const shown = mention.describe(mentions);
   const u = turn(task, "user");
   if (msg) u.append(h("div", { class: "user-text" }, msg));
+  if (shown.length) u.append(mention.chips(shown));
   if (images.length) u.append(attach.thumbs(images));
   if (first && task.isolated) u.append(isolationNote(task.isolated));
   // 작업 기록에는 이미지 자체 대신 장수만 남긴다 (모델 대화 기록에는 그대로 있다)
-  task.log.push(images.length ? { t: "user", text: msg, images: images.length } : { t: "user", text: msg });
+  task.log.push({ t: "user", text: msg, ...(images.length ? { images: images.length } : {}), ...(shown.length ? { mentions: shown } : {}) });
   persist(task);
   syncIsolateToggle();
   task.footprint.last = null;
@@ -709,7 +713,7 @@ async function send(text?: string) {
   task.body = turn(task, "bot");
   setWorking(task.botMark, true);
   try {
-    await api.agentSend(task.id, agent, msg, images.map(({ mediaType, data }) => ({ mediaType, data })), f.file, f.line);
+    await api.agentSend(task.id, agent, msg, images.map(({ mediaType, data }) => ({ mediaType, data })), mentions, f.file, f.line);
   } catch (e) {
     showError(task, errorText(e));
     task.body = null;
@@ -1004,6 +1008,7 @@ function restore(data: SavedTask) {
       if (e.t === "user") {
         const u = turn(task, "user");
         u.append(h("div", { class: "user-text" }, e.text));
+        if (e.mentions?.length) u.append(mention.chips(e.mentions));
         if (e.images) u.append(h("div", { class: "user-images-note" }, codicon("file-media"), `이미지 ${e.images}장`));
         if (task.isolated && e === task.log.find((x) => x.t === "user")) u.append(isolationNote(task.isolated));
         task.lastPrompt = e.text;
@@ -1134,6 +1139,7 @@ export function init(h_: Hooks) {
   $("#composer-model").addEventListener("click", () => hooks.pickModel($("#composer-model")));
   $("#agent-select").addEventListener("change", (e) => store.set("agent", (e.target as HTMLSelectElement).value));
   attach.init(() => updateSendState());
+  mention.init(() => updateSendState());
   const prompt = $<HTMLTextAreaElement>("#prompt");
   prompt.addEventListener("input", () => {
     updateSendState();

@@ -17,6 +17,7 @@ import * as terminal from "./terminal";
 import * as chat from "./chat";
 import * as inspector from "./inspector";
 import * as quickopen from "./quickopen";
+import * as mention from "./mention";
 import * as search from "./search";
 import * as prefs from "./prefs";
 import * as toast from "./toast";
@@ -304,6 +305,7 @@ async function openProject(path: string) {
   tree.reset();
   await tree.refresh();
   quickopen.invalidate();
+  mention.invalidate();
   search.clear();
   await terminal.restart();
   if (layout.panel && $("#terminal").classList.contains("active")) void terminal.show();
@@ -511,6 +513,7 @@ let treeTimer: number | undefined;
 on<{ paths: string[] }>("fs-change", ({ paths }) => {
   for (const p of paths) void editor.reloadIfClean(p);
   quickopen.invalidate();
+  mention.invalidate();
   clearTimeout(treeTimer);
   treeTimer = window.setTimeout(() => {
     void tree.refresh();
@@ -694,6 +697,7 @@ function init() {
     if (ev.kind === "rename") void editor.pathRenamed(ev.from, ev.to!);
     else void editor.pathDeleted(ev.from);
     quickopen.invalidate();
+    mention.invalidate();
   });
   inspector.init();
   settingsPage.init({
@@ -723,6 +727,7 @@ function init() {
   search.onChanged(() => {
     void scm.refresh();
     quickopen.invalidate();
+    mention.invalidate();
   });
   editor.onActiveChange((p) => {
     // 파일을 열면 가운데는 편집기로
@@ -746,6 +751,7 @@ function init() {
       for (const p of paths) void editor.reloadIfClean(p);
       void tree.refresh();
       quickopen.invalidate();
+      mention.invalidate();
       if (!layout.auxbar) toast.show({ kind: "success", message: `Lantern이 파일 ${new Set(paths).size}개를 바꿨습니다`, actions: [{ label: "작업 보기", run: () => showAux("chat") }] });
       map.refreshSoon();
     },
@@ -812,6 +818,7 @@ function init() {
 
   $("#btn-refresh-tree").addEventListener("click", () => {
     quickopen.invalidate();
+    mention.invalidate();
     void tree.refresh();
   });
   $("#btn-collapse-tree").addEventListener("click", () => tree.collapseAll());
