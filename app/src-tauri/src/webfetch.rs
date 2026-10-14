@@ -130,6 +130,15 @@ pub fn to_text(ctype: &str, body: &[u8]) -> Result<String> {
     bail!("글이 아닌 문서라 읽지 않습니다 ({ctype})")
 }
 
+/// 주소에 데이터가 실려 있을 만한지 (긴 쿼리 값·긴 경로 조각). 그렇다면 허용한 사이트라도 다시 묻는다:
+/// 저장소 문서에 숨긴 지시가 에이전트를 시켜 코드나 비밀을 주소에 실어 보내는 것을 막으려고
+pub fn carries_data(url: &reqwest::Url) -> bool {
+    let query = url.query().unwrap_or("");
+    let long_value = url.query_pairs().any(|(_, v)| v.chars().count() > 40);
+    let long_segment = url.path_segments().is_some_and(|mut s| s.any(|p| p.chars().count() > 80));
+    query.len() > 120 || long_value || long_segment || url.fragment().is_some_and(|f| f.len() > 80)
+}
+
 /// 이 호스트를 승인 없이 열어도 되는지 (설정의 허용 목록: 도메인과 그 하위 도메인)
 pub fn host_allowed(host: &str, allowed: &[String]) -> bool {
     let host = host.to_ascii_lowercase();
@@ -159,6 +168,10 @@ mod tests {
         let allowed = vec!["docs.rs".to_string(), "*.mozilla.org".to_string()];
         assert!(host_allowed("docs.rs", &allowed) && host_allowed("developer.mozilla.org", &allowed));
         assert!(!host_allowed("evil-docs.rs", &allowed) && !host_allowed("example.com", &allowed));
+        let u = |s: &str| reqwest::Url::parse(s).unwrap();
+        assert!(!carries_data(&u("https://docs.rs/serde/latest/serde/?search=Deserialize")));
+        assert!(carries_data(&u(&format!("https://docs.rs/?q={}", "c2stYW50LWFwaTAzLXNlY3JldA".repeat(3)))));
+        assert!(carries_data(&u(&format!("https://docs.rs/{}", "a".repeat(120)))));
     }
 
     #[test]

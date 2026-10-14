@@ -262,7 +262,10 @@ impl ToolCtx<'_> {
                 let url = crate::webfetch::check_url(s(input, "url")?)?;
                 let host = url.host_str().unwrap_or_default().to_ascii_lowercase();
                 let known = crate::webfetch::host_allowed(&host, &self.config.agent.allowed_domains) || self.fetched_hosts.lock().unwrap().contains(&host);
-                if !known && !self.approver.ask("fetch", &format!("웹 페이지 가져오기: {host}"), url.as_str()).await {
+                // 주소에 긴 값이 실려 있으면 허용한 사이트라도 다시 묻는다
+                let data = crate::webfetch::carries_data(&url);
+                let title = if data { format!("웹 페이지 가져오기 (주소에 긴 값): {host}") } else { format!("웹 페이지 가져오기: {host}") };
+                if (!known || data) && !self.approver.ask("fetch", &title, url.as_str()).await {
                     bail!("사용자가 {host} 접속을 거절했습니다");
                 }
                 self.fetched_hosts.lock().unwrap().insert(host);
