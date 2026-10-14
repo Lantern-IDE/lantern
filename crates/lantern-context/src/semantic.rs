@@ -177,16 +177,20 @@ pub fn update(store: &Store, root: &Path, emb: &Embedder, max_new: usize) -> Res
 /// 질문과 뜻이 가까운 파일 순서 (파일 점수 = 가장 가까운 조각). 각 파일에서 가장 가까운 조각의 시작 줄도 준다
 pub fn rank_files(store: &Store, model: &str, query: &[f32], limit: usize) -> Result<Vec<(String, u32, f32)>> {
     let mut best: HashMap<String, (u32, f32)> = HashMap::new();
-    for (path, line, v) in store.chunk_vectors(model)? {
-        if v.len() != query.len() {
-            continue;
+    store.for_each_vector(model, |path, line, bytes| {
+        if bytes.len() != query.len() * 4 {
+            return;
         }
-        let s: f32 = v.iter().zip(query).map(|(a, b)| a * b).sum();
-        let e = best.entry(path).or_insert((line, f32::MIN));
-        if s > e.1 {
-            *e = (line, s);
+        // (CI의 새 clippy가 고정 크기 chunks_exact를 막아 인덱스로 읽는다)
+        let s: f32 = query.iter().enumerate().map(|(i, q)| f32::from_le_bytes([bytes[4 * i], bytes[4 * i + 1], bytes[4 * i + 2], bytes[4 * i + 3]]) * q).sum();
+        match best.get_mut(path) {
+            Some(e) if s > e.1 => *e = (line, s),
+            Some(_) => {}
+            None => {
+                best.insert(path.to_string(), (line, s));
+            }
         }
-    }
+    })?;
     let mut v: Vec<(String, u32, f32)> = best.into_iter().map(|(p, (l, s))| (p, l, s)).collect();
     v.sort_by(|a, b| b.2.total_cmp(&a.2).then(a.0.cmp(&b.0)));
     v.truncate(limit);
