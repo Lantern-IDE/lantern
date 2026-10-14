@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { errorText } from "./api";
 import * as toast from "./toast";
 
-interface UpdateInfo { version: string; notes: string | null }
+interface UpdateInfo { version: string; notes: string | null; managed: string | null }
 const HOURS = 60 * 60 * 1000;
 /** 켜 둔 동안 다시 확인하는 간격 */
 const RECHECK = 6 * HOURS;
@@ -33,6 +33,11 @@ export async function check(manual: boolean) {
     }
     if (!manual && shown.has(u.version)) return;
     shown.add(u.version);
+    // 패키지 관리자(Scoop)로 설치했으면 그쪽으로 업데이트하게 한다
+    if (u.managed) {
+      toast.show({ kind: "info", message: `새 버전 Lantern ${u.version}이(가) 있습니다`, detail: `터미널에서 ${u.managed} update lantern 으로 받으세요.`, timeout: 0 });
+      return;
+    }
     toast.show({
       kind: "info",
       message: `새 버전 Lantern ${u.version}이(가) 있습니다`,

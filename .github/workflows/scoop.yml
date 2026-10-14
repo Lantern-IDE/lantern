@@ -1,0 +1,38 @@
+# Scoop 매니페스트(bucket/lantern.json)로 실제로 설치·삭제해 본다.
+# 매니페스트를 바꾸는 PR과, 손으로 돌릴 때(workflow_dispatch) 돈다.
+name: Scoop
+
+on:
+  pull_request:
+    paths: ["bucket/**", "scripts/scoop_manifest.mjs", ".github/workflows/scoop.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: Scoop 설치 확인
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Scoop 설치
+        shell: pwsh
+        run: |
+          iex "& {$(irm get.scoop.sh)} -RunAsAdmin"
+          Join-Path (Resolve-Path ~).Path "scoop\shims" >> $Env:GITHUB_PATH
+
+      - name: 매니페스트로 설치
+        shell: pwsh
+        run: |
+          scoop install .\bucket\lantern.json
+          $dir = scoop prefix lantern
+          Get-ChildItem $dir | Format-Table Name, Length
+          if (-not (Test-Path "$dir\Lantern.exe")) { throw "Lantern.exe가 없습니다" }
+          if (Test-Path "$dir\`$PLUGINSDIR") { throw "설치 프로그램 부속물이 남았습니다" }
+          Get-Command lantern-ide
+
+      - name: 삭제
+        shell: pwsh
+        run: scoop uninstall lantern

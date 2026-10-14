@@ -8,6 +8,14 @@ use tauri::AppHandle;
 pub(crate) struct UpdateInfo {
     version: String,
     notes: Option<String>,
+    /// 패키지 관리자가 설치한 경우 그 이름 (예: "scoop"). 그때는 앱이 스스로 설치하지 않는다
+    managed: Option<&'static str>,
+}
+
+/// Scoop처럼 패키지 관리자가 설치·업데이트하는 경우 (앱이 덮어쓰면 관리자가 모르는 판이 된다)
+fn package_manager() -> Option<&'static str> {
+    let exe = std::env::current_exe().ok()?.to_string_lossy().to_ascii_lowercase().replace('/', "\\");
+    exe.contains("\\scoop\\apps\\").then_some("scoop")
 }
 
 /// 새 버전이 있으면 알려준다. 배포 주소가 아직 없거나 오프라인이면 오류 대신 None.
@@ -16,7 +24,7 @@ pub(crate) async fn check_update(app: AppHandle) -> CmdResult<Option<UpdateInfo>
     use tauri_plugin_updater::UpdaterExt;
     let updater = app.updater().map_err(err)?;
     match updater.check().await {
-        Ok(Some(u)) => Ok(Some(UpdateInfo { version: u.version.clone(), notes: u.body.clone() })),
+        Ok(Some(u)) => Ok(Some(UpdateInfo { version: u.version.clone(), notes: u.body.clone(), managed: package_manager() })),
         Ok(None) => Ok(None),
         Err(e) => {
             applog::info(&format!("업데이트 확인 실패: {e}"));
@@ -28,6 +36,9 @@ pub(crate) async fn check_update(app: AppHandle) -> CmdResult<Option<UpdateInfo>
 /// 내려받아 설치하고 다시 시작한다 (서명이 맞지 않으면 설치하지 않는다).
 #[tauri::command]
 pub(crate) async fn install_update(app: AppHandle) -> CmdResult<()> {
+    if let Some(pm) = package_manager() {
+        return Err(format!("{pm}로 설치했습니다. 터미널에서 `{pm} update lantern`으로 업데이트하세요"));
+    }
     use tauri_plugin_updater::UpdaterExt;
     let update = app.updater().map_err(err)?.check().await.map_err(err)?.ok_or("설치할 새 버전이 없습니다")?;
     applog::info(&format!("업데이트 설치: {}", update.version));
