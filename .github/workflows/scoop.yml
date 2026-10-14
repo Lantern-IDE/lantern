@@ -29,7 +29,7 @@ jobs:
           scoop install .\bucket\lantern.json
           $dir = scoop prefix lantern
           Get-ChildItem $dir | Format-Table Name, Length
-          if (-not (Test-Path "$dir\Lantern.exe")) { throw "Lantern.exe가 없습니다" }
+          if (-not (Test-Path "$dir\lantern-app.exe")) { throw "lantern-app.exe가 없습니다" }
           if (Test-Path "$dir\`$PLUGINSDIR") { throw "설치 프로그램 부속물이 남았습니다" }
           Get-Command lantern-ide
 

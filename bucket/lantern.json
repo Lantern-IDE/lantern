@@ -18,13 +18,13 @@
   ],
   "bin": [
     [
-      "Lantern.exe",
+      "lantern-app.exe",
       "lantern-ide"
     ]
   ],
   "shortcuts": [
     [
-      "Lantern.exe",
+      "lantern-app.exe",
       "Lantern"
     ]
   ],
