@@ -59,6 +59,7 @@ claude mcp add lantern -- <path-to-lantern> mcp <project>
 Download from [Releases](https://github.com/Lantern-IDE/lantern/releases). Builds are not code-signed yet:
 
 - **Windows** (`*-setup.exe`): when SmartScreen warns you, choose **More info → Run anyway**.
+  Or with [Scoop](https://scoop.sh): `scoop bucket add lantern https://github.com/Lantern-IDE/lantern` then `scoop install lantern/lantern` (update with `scoop update lantern`).
 - **macOS** (`*.dmg`, Apple Silicon and Intel, untested): drag Lantern to Applications, then run `xattr -cr /Applications/Lantern.app` or allow it in **System Settings → Privacy & Security → Open Anyway**.
 - **Linux** (`*.AppImage`, `*.deb`, untested).
 

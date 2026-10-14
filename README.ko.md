@@ -59,6 +59,7 @@ claude mcp add lantern -- <lantern 경로> mcp <프로젝트>
 [Releases](https://github.com/Lantern-IDE/lantern/releases)에서 받으세요. 아직 코드 서명이 없습니다.
 
 - **Windows** (`*-setup.exe`): SmartScreen 경고가 뜨면 **추가 정보 → 실행**.
+  [Scoop](https://scoop.sh)으로도 설치할 수 있습니다: `scoop bucket add lantern https://github.com/Lantern-IDE/lantern` 뒤 `scoop install lantern/lantern` (업데이트는 `scoop update lantern`).
 - **macOS** (`*.dmg`, Apple Silicon·Intel, 아직 실사용 확인 전): 응용 프로그램 폴더로 옮긴 뒤 터미널에서 `xattr -cr /Applications/Lantern.app`, 또는 **시스템 설정 → 개인정보 보호 및 보안 → 그래도 열기**.
 - **Linux** (`*.AppImage`, `*.deb`, 아직 실사용 확인 전).
 
