@@ -109,6 +109,8 @@ cd app && npx tauri build --no-bundle && npm run e2e   # drives the real app (Wi
 python scripts/i18n_check.py               # missing English strings
 ```
 
+E2E uses a mock model. Before a release, `app/e2e/smoke.mjs` runs a few short scenarios against a real model (question, plan first → related tests, MCP tool, web page) with a spend cap (default $0.50). The key is read only from an environment variable: `ANTHROPIC_API_KEY=… node e2e/smoke.mjs --yes` (without `--yes` it only prints what it would do).
+
 ## Project layout
 
 | Path | What |
