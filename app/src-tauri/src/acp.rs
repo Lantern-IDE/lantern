@@ -725,13 +725,14 @@ async fn run_inner(
 
     // 기존 에이전트와 같은 맥락 카드: 질문마다 Lantern이 고른 코드를 붙인다
     let engine = project.engine.clone();
+    let proj = project.clone();
     let req = ContextRequest { query: text.clone(), file, line, budget_tokens: cfg.context.budget_tokens };
     let emb = cfg.embedder();
     let pinned_root = project.root.clone();
     let (ctx, ctx_tokens) = tokio::task::spawn_blocking(move || -> Result<(String, usize)> {
         let q = crate::semantic::query_vector(emb.as_ref(), &req.query);
         let mut e = engine.lock().unwrap();
-        e.refresh()?;
+        proj.refresh_index(&mut e)?;
         let r = crate::semantic::context(&e, &req, q.as_ref())?;
         // @로 집어 넣은 파일·심볼은 엔진이 고른 것 앞에 꼭 붙인다
         let (pinned, pinned_tokens) = crate::mentions::pinned(&e, &pinned_root, &mentions, req.budget_tokens);

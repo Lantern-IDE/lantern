@@ -337,6 +337,7 @@ async fn run_inner(
 
     // 1. 맥락 조립
     let engine = project.engine.clone();
+    let proj = project.clone();
     let req = ContextRequest { query: text.clone(), file, line, budget_tokens: config.context.budget_tokens };
     let emb = config.embedder();
     let pinned_root = project.root.clone();
@@ -344,7 +345,7 @@ async fn run_inner(
         // 질문 벡터는 잠금 밖에서 (임베딩 서버가 느려도 다른 작업을 막지 않게)
         let q = crate::semantic::query_vector(emb.as_ref(), &req.query);
         let mut e = engine.lock().unwrap();
-        e.refresh()?;
+        proj.refresh_index(&mut e)?;
         let r = crate::semantic::context(&e, &req, q.as_ref())?;
         // @로 집어 넣은 파일·심볼은 엔진이 고른 것 앞에 꼭 붙인다
         let (pinned, pinned_tokens) = crate::mentions::pinned(&e, &pinned_root, &mentions, req.budget_tokens);

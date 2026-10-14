@@ -6,7 +6,8 @@ use notify::{recommended_watcher, Event, RecommendedWatcher, RecursiveMode, Watc
 use serde_json::json;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 
@@ -18,7 +19,9 @@ fn ignored(rel: &str) -> bool {
 }
 
 /// 감시를 시작한다. 돌려받은 값을 버리면(drop) 감시가 멈춘다.
-pub fn watch(app: AppHandle, root: &Path) -> notify::Result<RecommendedWatcher> {
+/// `dirty`: 프로젝트 파일이 바뀌면 바로 켠다 (다음 질문 때 인덱스를 갱신하라는 표시).
+/// 브랜치를 바꾸거나 커밋하면 함께 바뀐 이력도 다시 세야 해서 `.git/HEAD`도 본다.
+pub fn watch(app: AppHandle, root: &Path, dirty: Arc<AtomicBool>) -> notify::Result<RecommendedWatcher> {
     let (tx, rx) = mpsc::channel::<notify::Result<Event>>();
     let mut watcher = recommended_watcher(tx)?;
     watcher.watch(root, RecursiveMode::Recursive)?;
@@ -32,7 +35,10 @@ pub fn watch(app: AppHandle, root: &Path) -> notify::Result<RecommendedWatcher> 
                     for p in ev.paths {
                         let rel = rel_path(&root, &p);
                         if !ignored(&rel) {
+                            dirty.store(true, Ordering::SeqCst);
                             paths.insert(rel);
+                        } else if rel == ".git/HEAD" || rel.starts_with(".git/refs/heads/") {
+                            dirty.store(true, Ordering::SeqCst);
                         }
                     }
                 }
