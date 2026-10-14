@@ -46,7 +46,7 @@ pub fn changed_ranges(old: &str, new: &str, new_side: bool) -> Vec<(u32, u32)> {
 pub fn related_tests(project: &Project, root: &Path, changed: &[String], originals: &[(PathBuf, Option<String>)], isolated: bool) -> Vec<String> {
     let mut tests = BTreeSet::new();
     let mut engine = project.engine.lock().unwrap();
-    let _ = engine.refresh();
+    let _ = project.refresh_index(&mut engine);
     for rel in changed {
         if graph::is_test_path(rel) {
             if root.join(rel).exists() {

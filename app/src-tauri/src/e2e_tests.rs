@@ -293,11 +293,7 @@ fn project(dir: &std::path::Path) -> Arc<Project> {
     std::fs::create_dir_all(dir.join("src")).unwrap();
     std::fs::write(dir.join("src/lib.rs"), "/// 인사말을 만든다\npub fn greet(name: &str) -> String {\n    format!(\"hi {name}\")\n}\n").unwrap();
     let engine = lantern_context::Engine::open(dir).unwrap();
-    Arc::new(Project {
-        root: dir.to_path_buf(),
-        engine: Arc::new(Mutex::new(engine)),
-        trusted: std::sync::atomic::AtomicBool::new(true),
-    })
+    Arc::new(Project::new(dir.to_path_buf(), engine, true))
 }
 
 #[tokio::test]

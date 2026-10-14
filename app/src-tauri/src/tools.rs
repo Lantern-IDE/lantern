@@ -137,13 +137,14 @@ impl ToolCtx<'_> {
         match name {
             "get_context" | "search_symbols" | "get_symbol" | "find_references" => {
                 let engine = self.project.engine.clone();
+                let proj = self.project.clone();
                 let budget = self.config.context.budget_tokens;
                 let emb = self.config.embedder();
                 let (name, input) = (name.to_string(), input.clone());
                 tokio::task::spawn_blocking(move || -> Result<String> {
                     let q = if name == "get_context" { crate::semantic::query_vector(emb.as_ref(), s(&input, "query").unwrap_or("")) } else { None };
                     let mut e = engine.lock().unwrap();
-                    e.refresh()?;
+                    proj.refresh_index(&mut e)?;
                     match name.as_str() {
                         "get_context" => Ok(crate::semantic::context(
                             &e,

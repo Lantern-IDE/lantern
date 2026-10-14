@@ -37,7 +37,7 @@ use lantern_context::Engine;
 use serde::Serialize;
 use serde_json::json;
 use state::{file_uri, resolve_in_root, AppState, Project};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager, State};
 
@@ -85,16 +85,15 @@ async fn open_project(app: AppHandle, state: State<'_, AppState>, path: String) 
     mcp_client::close_all(&state);
 
     let trusted = state::is_trusted(&root);
-    let project = Arc::new(Project {
-        root: root.clone(),
-        engine: Arc::new(Mutex::new(engine)),
-        trusted: std::sync::atomic::AtomicBool::new(trusted),
-    });
+    let project = Arc::new(Project::new(root.clone(), engine, trusted));
     *state.project.lock().unwrap() = Some(project.clone());
 
     // 외부 변경 감시 (실패해도 앱은 계속 쓴다)
-    *state.watcher.lock().unwrap() = match fswatch::watch(app.clone(), &root) {
-        Ok(w) => Some(w),
+    *state.watcher.lock().unwrap() = match fswatch::watch(app.clone(), &root, project.index_dirty.clone()) {
+        Ok(w) => {
+            project.watched.store(true, std::sync::atomic::Ordering::Relaxed);
+            Some(w)
+        }
         Err(e) => {
             applog::error(&format!("파일 감시를 시작하지 못했습니다: {e}"));
             None
@@ -105,7 +104,11 @@ async fn open_project(app: AppHandle, state: State<'_, AppState>, path: String) 
     let _ = app.emit("index", json!({ "status": "running" }));
     let app2 = app.clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let r = project.engine.lock().unwrap().refresh();
+        let r = {
+            let mut e = project.engine.lock().unwrap();
+            project.index_dirty.store(false, std::sync::atomic::Ordering::SeqCst);
+            e.refresh()
+        };
         semantic::spawn_background(app2.clone(), project.clone());
         let payload = match r {
             Ok(s) => json!({ "status": "done", "stats": s }),
@@ -715,12 +718,13 @@ async fn inline_edit(
     let rel = assemble_rel(&p.root, &path);
     // 지시에 맞는 코드를 맥락 엔진이 조금 붙인다 (예산은 에이전트보다 작게)
     let engine = p.engine.clone();
+    let proj = p.clone();
     let req = ContextRequest { query: instruction.clone(), file: Some(rel.clone()), line: Some(line), budget_tokens: (cfg.context.budget_tokens / 3).max(1500) };
     let emb = cfg.embedder();
     let context = tauri::async_runtime::spawn_blocking(move || -> anyhow::Result<String> {
         let q = semantic::query_vector(emb.as_ref(), &req.query);
         let mut e = engine.lock().unwrap();
-        e.refresh()?;
+        proj.refresh_index(&mut e)?;
         Ok(semantic::context(&e, &req, q.as_ref())?.to_markdown())
     })
     .await
@@ -889,7 +893,7 @@ async fn with_engine<T: Send + 'static>(
     let p = state.project().map_err(anyhow_err)?;
     tauri::async_runtime::spawn_blocking(move || {
         let mut e = p.engine.lock().unwrap();
-        let _ = e.refresh();
+        let _ = p.refresh_index(&mut e);
         f(&e, &p.root)
     })
     .await
@@ -944,7 +948,7 @@ async fn context_preview(
     tauri::async_runtime::spawn_blocking(move || {
         let q = semantic::query_vector(emb.as_ref(), &req.query);
         let mut e = p.engine.lock().unwrap();
-        e.refresh()?;
+        p.refresh_index(&mut e)?;
         let r = semantic::context(&e, &req, q.as_ref())?;
         Ok::<_, anyhow::Error>(json!({ "markdown": r.to_markdown(), "used_tokens": r.used_tokens, "elapsed_ms": r.elapsed_ms, "items": r.items.len() }))
     })

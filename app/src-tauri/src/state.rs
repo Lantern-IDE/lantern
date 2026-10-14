@@ -18,9 +18,33 @@ pub struct Project {
     /// 프로젝트 설정·에이전트를 읽지 않고(모델 주소를 바꿔 키를 빼돌리는 공격 방지),
     /// 파일 수정·명령 실행·훅을 막는다.
     pub trusted: AtomicBool,
+    /// 마지막 인덱스 갱신 뒤로 파일이 바뀌었을 수 있음 (파일 감시가 켠다)
+    pub index_dirty: Arc<AtomicBool>,
+    /// 파일 감시가 돌고 있음. 아니면 질문마다 갱신한다
+    pub watched: AtomicBool,
 }
 
 impl Project {
+    pub fn new(root: PathBuf, engine: Engine, trusted: bool) -> Self {
+        Self {
+            root,
+            engine: Arc::new(Mutex::new(engine)),
+            trusted: AtomicBool::new(trusted),
+            index_dirty: Arc::new(AtomicBool::new(true)),
+            watched: AtomicBool::new(false),
+        }
+    }
+
+    /// 인덱스 증분 갱신. 파일 감시가 돌고 있고 그사이 바뀐 파일이 없으면 건너뛴다
+    /// (큰 저장소에서 질문마다 전체 파일을 훑는 1~2초를 아낀다).
+    pub fn refresh_index(&self, e: &mut Engine) -> anyhow::Result<()> {
+        use std::sync::atomic::Ordering;
+        if self.watched.load(Ordering::Relaxed) && !self.index_dirty.swap(false, Ordering::SeqCst) {
+            return Ok(());
+        }
+        e.refresh().map(|_| ()).inspect_err(|_| self.index_dirty.store(true, Ordering::SeqCst))
+    }
+
     /// 프로젝트 설정(.lantern/)을 읽어도 되면 루트, 제한 모드면 None
     pub fn config_root(&self) -> Option<&Path> {
         self.is_trusted().then_some(self.root.as_path())
