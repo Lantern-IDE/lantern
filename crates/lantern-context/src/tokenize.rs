@@ -271,6 +271,13 @@ const KO_EN: &[(&str, &[&str])] = &[
     ("길이", &["length", "len"]),
     ("개수", &["count", "len"]),
     ("문자열", &["string", "str"]),
+    ("문자", &["char", "character"]),
+    ("줄", &["line"]),
+    ("줄바꿈", &["newline", "eol", "linebreak"]),
+    ("개행", &["newline", "eol"]),
+    ("공백", &["whitespace", "space"]),
+    ("들여쓰기", &["indent"]),
+    ("인코딩", &["encoding"]),
     ("배열", &["array", "vec", "list"]),
     ("키", &["key"]),
     ("값", &["value"]),
@@ -298,6 +305,17 @@ const KO_EN: &[(&str, &[&str])] = &[
     ("소켓", &["socket"]),
     // 편집기·화면
     ("편집기", &["editor"]),
+    ("에디터", &["editor"]),
+    ("커서", &["cursor"]),
+    ("선택", &["select", "selection"]),
+    ("자동완성", &["completion", "autocomplete"]),
+    ("미리보기", &["preview"]),
+    ("확장", &["extension"]),
+    ("플러그인", &["plugin"]),
+    ("컴포넌트", &["component"]),
+    ("렌더링", &["render"]),
+    ("템플릿", &["template"]),
+    ("라우터", &["router"]),
     ("터미널", &["terminal"]),
     ("창", &["window"]),
     ("탭", &["tab"]),
@@ -367,6 +385,7 @@ const KO_VERB: &[(&[&str], &[&str])] = &[
     (&["넣는", "넣어", "넣을", "넣기", "넣은"], &["insert", "add", "put"]),
     (&["빼는", "빼고", "빼", "뺄", "뺀"], &["remove", "exclude"]),
     (&["옮기", "옮겨", "옮길"], &["move"]),
+    (&["정하", "정해", "정할", "정한"], &["set", "resolve", "determine"]),
     (&["막아", "막는", "막을", "막기"], &["block", "prevent", "guard"]),
     (&["세는", "셀", "세어", "세기"], &["count"]),
     (&["느려", "느리", "느린"], &["slow", "performance"]),
@@ -385,6 +404,20 @@ fn english_for(stem: &str) -> &'static [&'static str] {
         .max_by_key(|(k, _)| k.len())
         .map(|(_, v)| *v)
         .unwrap_or(&[])
+}
+
+/// 낱말에서 부탁하는 끝말과 조사를 뗀다: (끝말만 뗀 낱말, 어간).
+/// 조사를 떼고 한 글자만 남으면 사전에 있는 낱말일 때만 뗀다 ("줄을" → "줄", "키를" → "키")
+fn ko_stem(word: &str) -> (&str, &str) {
+    let word = KO_REQUEST.iter().find_map(|r| word.strip_suffix(r).filter(|w| !w.is_empty())).unwrap_or(word);
+    for suf in KO_SUFFIX {
+        if let Some(s) = word.strip_suffix(suf) {
+            if s.chars().count() >= 2 || (!s.is_empty() && KO_EN.iter().any(|(k, _)| *k == s)) {
+                return (word, s);
+            }
+        }
+    }
+    (word, word)
 }
 
 fn verb_english(word: &str) -> &'static [&'static str] {
@@ -430,23 +463,17 @@ pub fn query_terms(query: &str) -> Vec<QueryTerm> {
 
     // 한국어: 어간을 그대로 찾고(한국어 주석·문서), 개발 용어면 영어 단어도 함께 찾는다
     let mut english: Vec<&str> = Vec::new();
-    for word in query.split(|c: char| !is_hangul(c)).filter(|w| !w.is_empty()) {
-        let word = KO_REQUEST.iter().find_map(|r| word.strip_suffix(r).filter(|w| !w.is_empty())).unwrap_or(word);
-        let mut stem = word;
-        for suf in KO_SUFFIX {
-            if let Some(s) = stem.strip_suffix(suf) {
-                if s.chars().count() >= 2 {
-                    stem = s;
-                    break;
-                }
-            }
-        }
+    let words: Vec<(&str, &str)> = query.split(|c: char| !is_hangul(c)).filter(|w| !w.is_empty()).map(ko_stem).collect();
+    for (i, &(word, stem)) in words.iter().enumerate() {
         if (stem.chars().count() >= 2 || !english_for(stem).is_empty()) && !KO_STOP.contains(&stem) {
             push(stem.to_string(), true, false, &mut out);
         }
         // "위험도"처럼 사전에 그대로 있거나, 조사를 떼기 전 낱말이 사전에 있으면
         let found = [stem, word].into_iter().flat_map(english_for).chain(verb_english(word));
-        for en in found {
+        // 띄어 쓴 합성어: "줄 바꿈" → "줄바꿈"
+        let joined = words.get(i + 1).map(|(_, next)| format!("{word}{next}")).unwrap_or_default();
+        let joined = KO_EN.iter().find(|(k, _)| *k == joined).map(|(_, v)| *v).unwrap_or(&[]);
+        for en in found.chain(joined.iter()) {
             if !english.contains(en) {
                 english.push(en);
             }
@@ -553,6 +580,19 @@ mod tests {
         // '찾아 달라'는 부탁은 기능 설명이 아니다
         assert!(!texts("로그인 코드 찾아줘").contains(&"search".to_string()));
         assert!(texts("주인을 찾을 때").contains(&"find".to_string()));
+    }
+
+    #[test]
+    fn korean_spacing_and_short_nouns() {
+        // #106: 사전에 없던 말, 띄어 쓴 합성어("줄 바꿈"), 한 글자 낱말 + 조사("키를")
+        let t = texts("에디터에서 줄 바꿈 문자를 정하는 곳");
+        for w in ["editor", "line", "newline", "eol", "char", "set"] {
+            assert!(t.contains(&w.to_string()), "{w} 없음: {t:?}");
+        }
+        assert!(texts("키를 바꿀 때").contains(&"key".to_string()));
+        // 동사 '줄이다'는 줄(line)이 아니다
+        let t = texts("할당을 줄이는 곳");
+        assert!(t.contains(&"reduce".to_string()) && !t.contains(&"line".to_string()), "{t:?}");
     }
 
     #[test]

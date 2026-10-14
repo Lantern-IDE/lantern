@@ -560,7 +560,12 @@ impl ContextResult {
         if self.redacted > 0 {
             let _ = writeln!(out, "비밀로 보이는 값 {}개를 «가려진 비밀»로 바꿨습니다.", self.redacted);
         }
-        let _ = writeln!(out, "시그니처만 있는 항목은 필요하면 get_symbol로 본문을 요청하세요.\n");
+        if self.items.is_empty() {
+            // 질문의 말이 코드에 없을 때 (사전에 없는 한국어 등): 빈 맥락만 주면 모델이 추측으로 답한다
+            let _ = writeln!(out, "질문의 단어로 찾은 코드가 없습니다. search_symbols에 관련 있을 만한 영어 식별자를 넣어 직접 찾아보세요.\n");
+        } else {
+            let _ = writeln!(out, "시그니처만 있는 항목은 필요하면 get_symbol로 본문을 요청하세요.\n");
+        }
 
         if !self.memory.is_empty() {
             let _ = writeln!(out, "## 프로젝트 메모리\n");
