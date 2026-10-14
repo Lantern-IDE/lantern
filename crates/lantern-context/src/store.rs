@@ -386,16 +386,20 @@ impl Store {
         Ok(())
     }
 
-    /// 벡터가 있는 조각 전부 (경로, 시작 줄, 벡터)
-    pub fn chunk_vectors(&self, model: &str) -> Result<Vec<(String, u32, Vec<f32>)>> {
+    /// 벡터가 있는 조각을 하나씩 넘긴다 (경로, 시작 줄, 벡터 바이트 f32 LE).
+    /// 전부 메모리에 올리지 않아, 조각이 수만 개여도 질문마다 메모리가 크게 늘지 않는다.
+    pub fn for_each_vector(&self, model: &str, mut f: impl FnMut(&str, u32, &[u8])) -> Result<()> {
         let mut stmt = self.conn.prepare_cached(
             "SELECT c.path, c.start_line, v.vec FROM chunks c JOIN vectors v ON v.model = ?1 AND v.hash = c.hash",
         )?;
-        let rows = stmt.query_map([model], |r| {
-            let b: Vec<u8> = r.get(2)?;
-            Ok((r.get(0)?, r.get(1)?, (0..b.len() / 4).map(|i| f32::from_le_bytes([b[4 * i], b[4 * i + 1], b[4 * i + 2], b[4 * i + 3]])).collect()))
-        })?;
-        Ok(rows.collect::<rusqlite::Result<_>>()?)
+        let mut rows = stmt.query([model])?;
+        while let Some(r) = rows.next()? {
+            let path = r.get_ref(0)?.as_str()?;
+            let line: u32 = r.get(1)?;
+            let vec = r.get_ref(2)?.as_blob()?;
+            f(path, line, vec);
+        }
+        Ok(())
     }
 
     // ── 읽기 ────────────────────────────────────────────────
