@@ -37,6 +37,12 @@ const SEMANTIC_NEW_FILES: usize = 10;
 const SEMANTIC_NEW_SYMBOLS: usize = 1;
 const SINGLE_ITEM_SHARE: usize = 35; // %
 const ITEM_OVERHEAD_TOKENS: usize = 25;
+/// 보관용 사본으로 보는 기준: 같은 경로에 내용까지 같은 파일이 이만큼 이상이고, 작은 쪽 폴더의 절반 이상
+const COPY_MIN_SAME: usize = 20;
+/// 두 사본의 가장 최근 수정 시각이 이보다 벌어져야 어느 쪽이 보관용인지 정한다 (갓 받은 저장소는 모두 같아 손대지 않음)
+const COPY_STALE_NS: i64 = 86_400 * 1_000_000_000;
+/// 보관용 사본에서 내용이 달라진 파일의 점수 배율 (같은 파일은 아예 뺀다)
+const COPY_DEMOTE: f64 = 0.3;
 
 pub const DEFAULT_BUDGET: usize = 8000;
 
@@ -280,6 +286,9 @@ pub fn assemble_with(store: &Store, root: &Path, req: &ContextRequest, semantic:
         }
     }
 
+    // 3-3. 보관용 사본: 같은 코드가 예산을 나눠 먹지 않게 오래 손대지 않은 쪽을 빼거나 낮춘다
+    demote_stale_copies(store, &mut cands)?;
+
     // 4~5. 순위와 예산 내 압축
     let budget = req.budget_tokens.max(500);
     let mut used = 0usize;
@@ -372,6 +381,98 @@ pub fn assemble_with(store: &Store, root: &Path, req: &ContextRequest, semantic:
         elapsed_ms: started.elapsed().as_secs_f64() * 1000.0,
         redacted,
     })
+}
+
+/// `BackEnd/`와 `BackEnd_V2/`처럼 한 단계만 이름이 다르고 같은 파일이 많은 두 폴더가 함께 후보에 오르면,
+/// 가장 최근 수정이 오래된 쪽을 보관용 사본으로 본다. 그쪽 후보 가운데 최신 쪽과 내용이 같은 파일은 빼고,
+/// 달라진 파일은 점수를 낮춘다. 수정 시각으로 가릴 수 없으면 그대로 둔다.
+fn demote_stale_copies(store: &Store, cands: &mut Candidates) -> Result<()> {
+    // 경로의 한 단계를 *로 바꾼 열쇠가 같은 두 경로는 그 단계의 폴더만 다르다
+    let mut paths: Vec<&str> = cands.0.values().map(|c| c.sym.path.as_str()).collect();
+    paths.sort_unstable();
+    paths.dedup();
+    let mut by_key: HashMap<String, Vec<String>> = HashMap::new();
+    for p in &paths {
+        let parts: Vec<&str> = p.split('/').collect();
+        for i in 0..parts.len().saturating_sub(1) {
+            let key: Vec<&str> = parts.iter().enumerate().map(|(j, s)| if j == i { "*" } else { *s }).collect();
+            by_key.entry(format!("{i}:{}", key.join("/"))).or_default().push(parts[..=i].join("/"));
+        }
+    }
+    // 후보 파일 두 개 이상이 짝을 이룬 폴더 쌍만 살펴본다 (index.ts 하나 겹치는 우연은 건너뜀)
+    let mut pairs: HashMap<(String, String), usize> = HashMap::new();
+    for roots in by_key.values().filter(|r| r.len() > 1) {
+        for (i, a) in roots.iter().enumerate() {
+            for b in &roots[i + 1..] {
+                if a != b {
+                    let k = if a < b { (a.clone(), b.clone()) } else { (b.clone(), a.clone()) };
+                    *pairs.entry(k).or_default() += 1;
+                }
+            }
+        }
+    }
+    let mut pairs: Vec<(String, String)> = pairs.into_iter().filter(|(_, n)| *n >= 2).map(|(k, _)| k).collect();
+    pairs.sort();
+
+    let mut under: HashMap<String, HashMap<String, (String, i64)>> = HashMap::new();
+    let mut handled: std::collections::HashSet<i64> = std::collections::HashSet::new();
+    for (a, b) in pairs {
+        for dir in [&a, &b] {
+            if !under.contains_key(dir) {
+                let files = store.files_under(dir)?.into_iter().map(|(rel, hash, mtime)| (rel, (hash, mtime))).collect();
+                under.insert(dir.clone(), files);
+            }
+        }
+        let (fa, fb) = (&under[&a], &under[&b]);
+        let same = fa.iter().filter(|(rel, (h, _))| fb.get(*rel).is_some_and(|(h2, _)| h2 == h)).count();
+        if same < COPY_MIN_SAME || same * 2 < fa.len().min(fb.len()) {
+            continue;
+        }
+        let newest = |f: &HashMap<String, (String, i64)>| f.values().map(|(_, m)| *m).max().unwrap_or(0);
+        let (na, nb) = (newest(fa), newest(fb));
+        let (stale, fresh) = if na + COPY_STALE_NS < nb {
+            (&a, &b)
+        } else if nb + COPY_STALE_NS < na {
+            (&b, &a)
+        } else {
+            continue;
+        };
+        let (fs, ff) = (&under[stale], &under[fresh]);
+        let prefix = format!("{stale}/");
+        let mut moves = Vec::new();
+        for c in cands.0.values_mut() {
+            let Some(rel) = c.sym.path.strip_prefix(&prefix) else { continue };
+            let Some((fresh_hash, _)) = ff.get(rel) else { continue };
+            if !handled.insert(c.sym.id) {
+                continue;
+            }
+            if fs.get(rel).is_some_and(|(h, _)| h == fresh_hash) {
+                moves.push((c.sym.id, format!("{fresh}/{rel}")));
+            } else {
+                c.score *= COPY_DEMOTE;
+                c.reasons.push(format!("보관용 사본으로 보임 (`{fresh}/`가 더 최근)"));
+            }
+        }
+        // 내용이 같은 파일은 최신 쪽의 같은 심볼로 옮긴다 (둘 다 후보면 높은 점수 하나만)
+        let mut twins: HashMap<String, Vec<SymbolRow>> = HashMap::new();
+        for (id, path) in moves {
+            let Some(old) = cands.0.remove(&id) else { continue };
+            if !twins.contains_key(&path) {
+                twins.insert(path.clone(), store.symbols_in_file(&path)?);
+            }
+            let Some(twin) = twins[&path].iter().find(|s| s.name == old.sym.name && s.start_line == old.sym.start_line) else {
+                continue;
+            };
+            let c = cands.0.entry(twin.id).or_insert(Candidate { sym: twin.clone(), score: 0.0, reasons: Vec::new() });
+            c.score = c.score.max(old.score);
+            for r in old.reasons {
+                if !c.reasons.contains(&r) {
+                    c.reasons.push(r);
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 /// 키워드·그래프 순위와 의미 검색 파일 순위를 합친다 (Reciprocal Rank Fusion).
@@ -531,5 +632,39 @@ mod tests {
         let s = r2.items.iter().find(|i| i.path == "src/session.rs").expect("의미 검색 후보");
         assert!(s.reasons.iter().any(|x| x == "뜻이 가까움 (1위)"), "{:?}", s.reasons);
         assert!(r2.items.iter().any(|i| i.path == "src/cookie.rs"), "키워드 후보는 그대로");
+    }
+
+    /// `BackEnd/`(보관용)와 `BackEnd_V2/`에 같은 파일 24개를 만든다. `stale`이면 BackEnd 쪽을 한 달 전 수정으로
+    fn two_copies(stale: bool) -> (tempfile::TempDir, Engine) {
+        let dir = tempfile::tempdir().unwrap();
+        let month_ago = std::time::SystemTime::now() - std::time::Duration::from_secs(30 * 86_400);
+        for root in ["BackEnd", "BackEnd_V2"] {
+            for i in 0..24 {
+                let p = dir.path().join(root).join("src").join(format!("cookie{i}.ts"));
+                std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+                std::fs::write(&p, format!("export function signCookie{i}(v: string) {{\n  return v + '.sig';\n}}\n")).unwrap();
+                if stale && root == "BackEnd" {
+                    std::fs::File::options().write(true).open(&p).unwrap().set_modified(month_ago).unwrap();
+                }
+            }
+        }
+        let mut e = Engine::open(dir.path()).unwrap();
+        e.refresh().unwrap();
+        (dir, e)
+    }
+
+    #[test]
+    fn stale_copies_give_way_to_the_fresh_one() {
+        // #9: 오래 손대지 않은 사본은 빠지고 최신 쪽이 자리를 차지한다
+        let (dir, e) = two_copies(true);
+        let r = assemble(&e.store, dir.path(), &ContextRequest::new("signCookie3 cookie sign")).unwrap();
+        let paths: Vec<&str> = r.items.iter().map(|i| i.path.as_str()).collect();
+        assert!(paths.contains(&"BackEnd_V2/src/cookie3.ts"), "{paths:?}");
+        assert!(paths.iter().all(|p| !p.starts_with("BackEnd/")), "{paths:?}");
+
+        // 수정 시각으로 가릴 수 없으면 (갓 받은 저장소) 그대로 둔다
+        let (dir, e) = two_copies(false);
+        let r = assemble(&e.store, dir.path(), &ContextRequest::new("signCookie3 cookie sign")).unwrap();
+        assert!(r.items.iter().any(|i| i.path.starts_with("BackEnd/")));
     }
 }

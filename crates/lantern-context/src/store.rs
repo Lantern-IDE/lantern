@@ -536,6 +536,17 @@ impl Store {
         Ok(rows.collect::<rusqlite::Result<_>>()?)
     }
 
+    /// `dir/` 아래 파일들: (dir 기준 나머지 경로, 내용 해시, 수정 시각). 보관용 사본을 가릴 때 쓴다
+    pub fn files_under(&self, dir: &str) -> Result<Vec<(String, String, i64)>> {
+        let prefix = format!("{dir}/");
+        let n = prefix.chars().count() as i64;
+        let mut stmt = self
+            .conn
+            .prepare_cached("SELECT substr(path, ?1 + 1), hash, mtime FROM files WHERE substr(path, 1, ?1) = ?2")?;
+        let rows = stmt.query_map(params![n, prefix], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
+        Ok(rows.collect::<rusqlite::Result<_>>()?)
+    }
+
     /// 이름이 심볼로 정의되어 있는지 (기억 연결용)
     pub fn has_symbol(&self, name: &str) -> Result<bool> {
         Ok(self.count_defs(name)? > 0)
