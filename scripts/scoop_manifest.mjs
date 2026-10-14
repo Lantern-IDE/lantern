@@ -36,8 +36,8 @@ const manifest = {
   },
   // NSIS 설치 파일을 풀면 설치 프로그램 부속물이 함께 나온다
   pre_install: ["Remove-Item \"$dir\\`$PLUGINSDIR\", \"$dir\\uninstall.exe\" -Recurse -Force -ErrorAction SilentlyContinue"],
-  bin: [["Lantern.exe", "lantern-ide"]],
-  shortcuts: [["Lantern.exe", "Lantern"]],
+  bin: [["lantern-app.exe", "lantern-ide"]],
+  shortcuts: [["lantern-app.exe", "Lantern"]],
   checkver: { github: "https://github.com/Lantern-IDE/lantern" },
   autoupdate: {
     architecture: {
