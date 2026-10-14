@@ -88,6 +88,7 @@ export const api = {
   openProject: (path: string) => invoke<ProjectInfo>("open_project", { path }),
   startupPath: () => invoke<string | null>("startup_path"),
   setTrust: (trusted: boolean) => invoke<void>("set_trust", { trusted }),
+  configIgnored: () => invoke<string[]>("config_ignored"),
   listDir: (path: string) => invoke<Entry[]>("list_dir", { path }),
   listFiles: () => invoke<string[]>("list_files"),
   readFile: (path: string) => invoke<string>("read_file", { path }),

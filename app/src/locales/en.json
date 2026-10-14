@@ -718,7 +718,9 @@
   "PR·브랜치 검토": "Review a PR or branch",
   "PR·브랜치를 검토하지 못했습니다": "Couldn't review the PR or branch",
   "검토": "Review",
-  "검토할 PR 또는 브랜치": "PR or branch to review"
+  "검토할 PR 또는 브랜치": "PR or branch to review",
+  "설정 파일 열기": "Open settings file",
+  "프로젝트 설정의 일부 값은 쓰지 않았습니다": "Some project settings were ignored"
  },
  "templates": {
   "'{}'{}을(를) 휴지통으로 옮길까요?": "Move '{}'{} to Trash?",
@@ -871,6 +873,7 @@
   "{} 빼기": "Remove {}",
   "{} 가져와 영향을 계산하는 중…": "Fetching {} and computing the impact…",
   "{} 영향 검토": "{} impact review",
-  "{}: 지금 체크아웃과 다른 점이 없습니다": "{}: no differences from your current checkout"
+  "{}: 지금 체크아웃과 다른 점이 없습니다": "{}: no differences from your current checkout",
+  "{} — 저장소에 든 설정이 API 키를 다른 서버로 보내거나 승인을 느슨하게 하지 못하게, 이 값들은 사용자 설정에서만 바꿀 수 있습니다.": "{} — so that settings shipped inside a repository can't send your API keys to another server or loosen approvals, these values can only be changed in your user settings."
  }
 }
