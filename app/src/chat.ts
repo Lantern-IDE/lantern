@@ -7,17 +7,20 @@ import { marked } from "marked";
 import { invoke } from "@tauri-apps/api/core";
 import { ask } from "./dialog";
 import DOMPurify from "dompurify";
-import { api, errorText, on, type AgentDef, type AgentEvent, type AuthMethod } from "./api";
-import { $, basename, dirname, h, renderDiff, store } from "./dom";
+import { api, errorText, on, type AgentDef, type AgentEvent } from "./api";
+import { $, basename, h, renderDiff, store } from "./dom";
 import { codicon, fileIcon, hex, setWorking } from "./icons";
 import * as editor from "./editor";
-import { emptyFootprint, type Footprint, type GNode, type Impact } from "./map";
+import { emptyFootprint, type Footprint, type Impact } from "./map";
 import { parseContext } from "./lib/context";
 import { diffTarget } from "./lib/diff";
-import { isTestPath, testPrompt, type TestTarget } from "./lib/testPrompt";
+import { testPrompt, type TestTarget } from "./lib/testPrompt";
 import * as i18n from "./i18n";
 export { parseContext } from "./lib/context";
-import * as lsp from "./lsp";
+import { impactRow } from "./impact";
+import * as impact from "./impact";
+import { approvalTitle, authCard, contextCard, toolLabel, toolSummary } from "./chatCards";
+export { impactRow } from "./impact";
 import * as toast from "./toast";
 import * as attach from "./attach";
 import * as mention from "./mention";
@@ -148,19 +151,6 @@ function endText(task: Task) {
   task.current = null;
 }
 
-/** mcp__서버__도구 → "서버 · 도구" */
-function toolLabel(name: string): string {
-  if (name === "run_tests") return "관련 테스트로 확인";
-  if (name === "fetch_url") return "웹 페이지";
-  const m = name.match(/^mcp__(.+?)__(.+)$/);
-  return m ? `${m[1]} · ${m[2]}` : name;
-}
-
-function toolSummary(input: Record<string, unknown>): string {
-  const v = input.path ?? input.query ?? input.name ?? input.command ?? input.url ?? input.topic ?? "";
-  return typeof v === "string" ? v : JSON.stringify(v);
-}
-
 function isRunning(task: Task | null): boolean {
   return !!task && (task.status === "running" || task.status === "approval");
 }
@@ -216,155 +206,6 @@ function addContext(task: Task, md: string) {
   for (const m of memory) task.footprint.memory.add(m);
   if (files[0]) task.footprint.last = files[0].path;
   emitFootprint(task);
-}
-
-// ── Lantern이 본 코드 ────────────────────────────────────
-
-function contextCard(md: string, tokens: number, requestId: number): HTMLElement {
-  const { files, memory } = parseContext(md);
-  const symbols = files.reduce((n, f) => n + f.symbols.length, 0);
-  const list = h("div", { class: "ctx-files" });
-  for (const m of memory) {
-    list.append(h("div", { class: "ctx-file" }, codicon("book"), h("span", {}, basename(m)), h("span", { class: "dir" }, "프로젝트 메모리")));
-  }
-  for (const f of files) {
-    list.append(h("div", { class: "ctx-file" }, fileIcon(f.path), h("span", {}, basename(f.path)), h("span", { class: "dir" }, dirname(f.path))));
-    for (const s of f.symbols) {
-      const row = h("div", { class: "ctx-sym", title: `${f.path}:${s.line} · ${s.why}` },
-        h("span", { class: "name" }, s.name, s.signatureOnly ? h("span", { class: "sig" }, " 시그니처") : null),
-        h("span", { class: "why" }, s.why));
-      row.addEventListener("click", () => void editor.openFile(f.path, s.line));
-      list.append(row);
-    }
-  }
-  const more = h("span", { class: "link small" }, "인스펙터에서 전문 보기");
-  more.addEventListener("click", () => hooks.showInspector(requestId));
-  const map = h("span", { class: "link small" }, "지도에서 보기");
-  map.addEventListener("click", () => hooks.showOnMap());
-  list.append(h("div", { class: "ctx-foot" }, map, more));
-  return h("details", { class: "ctx-card" },
-    h("summary", {},
-      hex("plain"),
-      h("span", { class: "title" }, "Lantern이 본 코드"),
-      h("span", { class: "meta" }, `파일 ${files.length} · 심볼 ${symbols}${memory.length ? ` · 메모리 ${memory.length}` : ""}`),
-      h("span", { class: "tokens" }, `약 ${tokens.toLocaleString()} 토큰`),
-      codicon("chevron-right", "chev")),
-    list);
-}
-
-// ── 변경 영향 반경 ─────────────────────────────────────────
-
-const RISK_LABEL: Record<string, string> = { low: "낮음", medium: "보통", high: "높음" };
-
-/**
- * 언어 서버가 켜져 있으면 바뀌는 심볼의 참조를 다시 센다.
- * - 이름이 여러 곳에 정의되어 있으면 언어 서버 결과를 쓴다 (같은 이름의 다른 심볼을 구분)
- * - 한 곳에만 정의되어 있으면 이름 기준과 합친다. 언어 서버는 열린 파일·설정된 프로젝트만 보고
- *   (예: tsconfig 없는 TypeScript) 일부를 놓치기도 하므로, 결과가 줄어들게 두지 않는다.
- */
-async function lspCallers(i: Impact): Promise<{ callers: number; files: number; lspOnly: number } | null> {
-  const lang = editor.langOf(i.path)?.lsp;
-  if (!lang) return null;
-  const touched = i.graph.nodes.filter((n) => n.depth === 0 && n.line).slice(0, 3);
-  if (!touched.length) return null;
-  const text = await api.readFile(i.path).catch(() => "");
-  const lines = text.split("\n");
-  const found = new Map<string, GNode>();
-  const touchedIds = new Set(touched.map((n) => n.id));
-  for (const n of touched) {
-    // 정의 줄(또는 그 아래 몇 줄)에서 이름이 시작하는 열
-    let pos: { line: number; col: number } | null = null;
-    for (let l = n.line! - 1; l < Math.min(lines.length, n.line! + 3); l++) {
-      const col = lines[l]?.search(new RegExp(`\\b${n.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`));
-      if (col !== undefined && col >= 0) {
-        pos = { line: l, col };
-        break;
-      }
-    }
-    if (!pos) return null;
-    const refs = await lsp.references(lang, i.path, pos.line, pos.col);
-    if (!refs) return null;
-    const enclosing = await invoke<(GNode | null)[]>("graph_enclosing", { locations: refs.map((r) => [r.path, r.line]) }).catch(() => null);
-    if (!enclosing) return null;
-    for (const e of enclosing) if (e && !touchedIds.has(e.id)) found.set(e.id, e);
-  }
-  const lspOnly = [...found.keys()].filter((id) => !i.graph.nodes.some((n) => n.id === id && n.depth === 1)).length;
-  if (i.unique) for (const n of i.graph.nodes) if (n.depth === 1) found.set(n.id, n);
-  return { callers: found.size, files: new Set([...found.values()].map((n) => n.path).filter((p) => p !== i.path)).size, lspOnly };
-}
-
-export function impactRow(diff: string, onTouched: (names: string[]) => void = () => {}): HTMLElement | null {
-  const target = diffTarget(diff);
-  if (!target) return null;
-  const row = h("div", { class: "impact loading" }, codicon("loading", "codicon-modifier-spin"), h("span", {}, "영향 반경 계산 중…"));
-  void invoke<Impact>("graph_impact", { path: target.path, ranges: target.ranges }).then((i) => {
-    onTouched(i.touched);
-    row.classList.remove("loading");
-    const nothing = !i.touched.length && !i.callers && !i.cochanged.length;
-    const stats: HTMLElement[] = [];
-    const stat = (n: number, label: string) => stats.push(h("span", { class: "istat" }, h("b", {}, String(n)), label));
-    if (i.touched.length) stats.push(h("span", { class: "itouch", title: i.touched.join(", ") }, codicon("symbol-method"), i.touched.slice(0, 2).join(", ") + (i.touched.length > 2 ? ` 외 ${i.touched.length - 2}` : "")));
-    stat(i.callers, "직접 호출");
-    if (i.callers2) stat(i.callers2, "간접 호출");
-    if (i.files) stat(i.files, "파일에 걸침");
-    if (i.cochanged.length) stat(i.cochanged.length, "함께 바뀌던 파일");
-    stats.push(h("span", { class: `istat ${i.tests.length ? "tests" : "no-tests"}` }, codicon(i.tests.length ? "beaker" : "warning"), i.tests.length ? `테스트 ${i.tests.length}` : "테스트 없음"));
-    if (!i.tests.length && i.touched.length && !isTestPath(target.path)) {
-      const make = h("button", { class: "istat-action", title: "기존 테스트 형식을 따라 이 코드의 테스트를 새 작업으로 만듭니다" }, codicon("beaker"), "테스트 만들기");
-      make.addEventListener("click", () => {
-        make.disabled = true;
-        void createTests([{ path: target.path, symbols: i.touched }]);
-      });
-      stats.push(make);
-    }
-    const view = h("button", { class: "btn btn-ghost", title: "영향 범위를 지도에서 보기" }, codicon("type-hierarchy"), "지도에서 보기");
-    view.addEventListener("click", () => hooks.showImpact(i));
-    // 숫자를 사실로 믿지 않게: 무엇을 기준으로 셌고 무엇을 놓치는지
-    const basis = h("span", { class: "ibasis", title: "이름으로 찾은 호출 관계(정적 분석)입니다. DI·리플렉션·이벤트·라우팅처럼 실행 중에 정해지는 호출과, URL로 부르는 테스트는 세지 않습니다." }, codicon("info"));
-    row.replaceChildren(...([
-      h("div", { class: "ihead" },
-        codicon("pulse"),
-        h("span", { class: "ititle" }, "영향 반경"),
-        basis,
-        i.supported ? h("span", { class: `risk risk-${i.risk}` }, `위험도 ${RISK_LABEL[i.risk]}`) : null,
-        i.graph.nodes.length > 1 ? view : null),
-      !i.supported
-        ? h("div", { class: "inote" }, "이 언어는 호출 관계를 분석하지 않아 영향 범위를 알 수 없습니다. 바뀌는 곳을 직접 확인하세요.")
-        : nothing
-          ? h("div", { class: "inote" }, "이 변경을 호출하는 다른 코드를 찾지 못했습니다.")
-          : h("div", { class: "istats" }, ...stats),
-      i.framework.length ? h("div", { class: "inote framework" }, codicon("warning"), `${i.framework.join(", ")}: 프레임워크가 부르는 코드라 호출자·테스트 수에 잡히지 않을 수 있습니다`) : null,
-      i.ambiguous.length ? h("div", { class: "inote ambiguous" }, `이름이 흔해 호출자를 셀 수 없음: ${i.ambiguous.join(", ")}`) : null,
-    ].filter(Boolean) as Node[]));
-    if (i.supported) row.classList.add(`risk-${i.risk}`);
-    // 언어 서버로 다시 확인 (켜져 있을 때만). 이름 기준 결과와 다르면 고쳐 보여준다.
-    void lspCallers(i).then((r) => {
-      if (!r) return;
-      const direct = row.querySelector(".istat b");
-      if (direct) direct.textContent = String(r.callers);
-      row.querySelector(".inote.ambiguous")?.remove();
-      const note = r.callers === i.callers ? "언어 서버로 확인함" : `언어 서버로 확인함 (이름 기준 ${i.callers})`;
-      if (r.lspOnly && i.unique) row.querySelector(".istats")?.append(h("span", { class: "istat" }, h("b", {}, `+${r.lspOnly}`), "언어 서버가 더 찾음"));
-      row.querySelector(".ihead")!.insertBefore(h("span", { class: "lsp-ok", title: "언어 서버의 참조 찾기로 다시 센 직접 호출 수입니다" }, codicon("verified"), note), row.querySelector(".ihead .btn"));
-    });
-  }).catch(() => row.remove());
-  return row;
-}
-
-/**
- * 승인 카드 제목. 파일 수정은 "파일 수정: 경로"를 이름과 폴더로 나눠, 이름은 한 덩어리로 두고
- * 폴더는 흐리게 `/` 뒤에서만 줄을 바꾼다 (글자 중간에서 "tokenize.r / s"로 꺾이지 않게).
- */
-function approvalTitle(title: string, isEdit: boolean): HTMLElement {
-  const m = isEdit ? title.match(/^(.+?): (.+)$/) : null;
-  if (!m) return h("span", { class: "atitle" }, title);
-  const [, label, path] = m;
-  const dir = dirname(path);
-  const parts = dir ? dir.split("/").flatMap((p) => [p + "/", h("wbr")]) : [];
-  return h("span", { class: "atitle", title: path },
-    h("span", { class: "alabel" }, label), " ",
-    h("span", { class: "aname" }, basename(path)),
-    dir ? h("span", { class: "adir" }, ...parts) : null);
 }
 
 /** 되돌리기. 그 뒤로 다른 곳에서 바뀐 파일이 있으면 한 번 더 묻는다. 취소하면 null */
@@ -433,7 +274,7 @@ function handle(ev: AgentEvent) {
   switch (ev.kind) {
     case "request":
       if (ev.context) {
-        append(task, contextCard(ev.context, ev.context_tokens, ev.request_id));
+        append(task, contextCard(ev.context, ev.context_tokens, ev.request_id, { inspector: (id) => hooks.showInspector(id), map: () => hooks.showOnMap() }));
         addContext(task, ev.context);
         const m = ev.context.match(/토큰 약 (\d+)\/(\d+)/);
         if (m && task === active && !replaying) hooks.onContext(Number(m[1]), Number(m[2]));
@@ -576,7 +417,7 @@ function handle(ev: AgentEvent) {
       if (!replaying) hooks.onUsage();
       break;
     case "auth_required":
-      append(task, authCard(task, ev.agent, ev.agent_name, ev.methods));
+      append(task, authCard(task.id, ev.agent, ev.agent_name, ev.methods, () => void send(task.lastPrompt)));
       break;
     case "done":
       if (ev.changed.length) {
@@ -636,37 +477,6 @@ function handle(ev: AgentEvent) {
  * 외부 에이전트(Gemini CLI, Codex 등)가 로그인을 요구할 때. 로그인은 그 에이전트가 직접 하고(대개 브라우저),
  * Lantern은 로그인 정보를 보지 않는다. 환경변수로 하는 방법은 버튼 대신 안내로만 보인다.
  */
-function authCard(task: Task, agent: string, name: string, methods: AuthMethod[]): HTMLElement {
-  const line = h("div", { class: "auth-status" });
-  const buttons = methods
-    .filter((m) => m.type !== "env_var")
-    .map((m) => {
-      const b = h("button", { class: "btn btn-secondary", title: m.description ?? "" }, codicon("account"), m.name) as HTMLButtonElement;
-      b.addEventListener("click", async () => {
-        for (const x of card.querySelectorAll("button")) x.disabled = true;
-        line.replaceChildren(codicon("loading", "codicon-modifier-spin"), `${name}이(가) 연 브라우저에서 로그인을 마치세요…`);
-        try {
-          await api.acpAuthenticate(task.id, agent, m.id);
-          const again = h("button", { class: "btn btn-primary" }, codicon("debug-restart"), "다시 보내기");
-          again.addEventListener("click", () => void send(task.lastPrompt));
-          line.replaceChildren(codicon("pass"), "로그인되었습니다", again);
-        } catch (e) {
-          line.replaceChildren(codicon("error"), errorText(e));
-          for (const x of card.querySelectorAll("button")) x.disabled = false;
-        }
-      });
-      return b;
-    });
-  const envOnly = methods.filter((m) => m.type === "env_var").map((m) => m.name);
-  const card = h("div", { class: "auth-card" },
-    h("div", { class: "auth-head" }, codicon("lock"), `${name}에 로그인해야 합니다`),
-    h("p", {}, "로그인은 이 에이전트가 직접 합니다. Lantern은 로그인 정보를 보거나 저장하지 않습니다."),
-    h("div", { class: "row" }, ...buttons),
-    envOnly.length ? h("p", { class: "muted" }, `또는 환경변수로: ${envOnly.join(", ")}`) : null,
-    line);
-  return card;
-}
-
 /** 테스트가 없는 코드의 테스트를 새 작업으로 만든다. 기존 테스트 파일을 예시로 붙인다 */
 export async function createTests(targets: TestTarget[]) {
   if (!targets.length) return;
@@ -1167,6 +977,7 @@ export function setModelLabel(text: string, warn: boolean) {
 
 export function init(h_: Hooks) {
   hooks = h_;
+  impact.configure({ showImpact: (i) => hooks.showImpact(i), createTests });
   on<AgentEvent>("agent", handle);
   activate(newTask());
   $("#btn-send").addEventListener("click", () => void send());
