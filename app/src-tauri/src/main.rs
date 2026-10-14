@@ -138,6 +138,16 @@ async fn set_trust(state: State<'_, AppState>, trusted: bool) -> CmdResult<()> {
     Ok(())
 }
 
+/// 프로젝트 설정에서 쓰지 않은 값 (신뢰한 폴더에서만 프로젝트 설정을 읽는다)
+#[tauri::command]
+async fn config_ignored(state: State<'_, AppState>) -> CmdResult<Vec<String>> {
+    let p = state.project().map_err(anyhow_err)?;
+    if !p.is_trusted() {
+        return Ok(Vec::new());
+    }
+    Ok(config::load_with_ignored(Some(&p.root)).map(|r| r.1).unwrap_or_default())
+}
+
 /// `lantern-app <폴더>`로 실행했을 때 그 폴더
 #[tauri::command]
 fn startup_path() -> Option<String> {
@@ -1106,6 +1116,7 @@ fn main() {
             acp_authenticate,
             review_changes,
             review_target,
+            config_ignored,
             commit_message,
             inline_edit,
             test_examples,

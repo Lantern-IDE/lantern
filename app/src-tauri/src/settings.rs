@@ -74,6 +74,7 @@ pub fn set_in_doc(doc: &mut DocumentMut, path: &str, value: &Value) -> Result<()
 pub fn set_setting(scope: &str, root: Option<&Path>, changes: &[(String, Value)]) -> Result<()> {
     let path = scope_path(scope, root)?;
     let original = std::fs::read_to_string(&path).ok();
+    let ignored_before = if scope == "project" { config::load_with_ignored(root).map(|r| r.1).unwrap_or_default() } else { Vec::new() };
     let mut doc: DocumentMut = original
         .as_deref()
         .unwrap_or("")
@@ -91,12 +92,32 @@ pub fn set_setting(scope: &str, root: Option<&Path>, changes: &[(String, Value)]
         text = format!("{header}{text}");
     }
     std::fs::write(&path, text)?;
-    if let Err(e) = config::load(root) {
+    let restore = |original: Option<String>| -> Result<()> {
         match original {
             Some(o) => std::fs::write(&path, o)?,
             None => std::fs::remove_file(&path)?,
         }
-        return Err(e.context("저장하지 않았습니다"));
+        Ok(())
+    };
+    match config::load_with_ignored(root) {
+        Err(e) => {
+            restore(original)?;
+            return Err(e.context("저장하지 않았습니다"));
+        }
+        // 프로젝트 설정으로는 키를 다른 곳으로 보내거나 승인을 느슨하게 할 수 없다
+        // 새로 무시되는 값이 생기거나, 지금 바꾼 값이 무시되는 값이면 저장하지 않는다
+        Ok((_, ignored))
+            if scope == "project"
+                && ignored.iter().any(|k| !ignored_before.contains(k) || changes.iter().any(|(c, _)| c == k || c.starts_with(&format!("{k}.")) || k.starts_with(&format!("{c}.")))) =>
+        {
+            restore(original)?;
+            let new: Vec<&String> = ignored.iter().filter(|k| !ignored_before.contains(k) || changes.iter().any(|(c, _)| c == *k || c.starts_with(&format!("{k}.")) || k.starts_with(&format!("{c}.")))).collect();
+            bail!(
+                "{}은(는) 사용자 설정에서만 바꿀 수 있습니다. 저장소에 든 프로젝트 설정이 API 키를 다른 서버로 보내거나 승인을 느슨하게 하지 못하게 막아 둔 값입니다",
+                new.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", ")
+            );
+        }
+        Ok(_) => {}
     }
     Ok(())
 }
