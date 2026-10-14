@@ -278,6 +278,7 @@ async function openProject(path: string) {
     }
   }
   renderTrust();
+  void warnIgnoredConfig();
   if (project.migrated) {
     toast.info("설정 폴더 이름을 .lantern으로 바꿨습니다", "제품 이름이 Lantern으로 바뀌어 예전 .khala 폴더를 옮겼습니다. git에 올려 두었다면 이름 바뀜으로 보입니다.");
   }
@@ -344,6 +345,7 @@ async function toggleTrust() {
     void refreshModelInfo();
     settingsPage.refreshIfOpen();
     toast.info(next ? "이 폴더를 신뢰합니다" : "제한 모드로 바꿨습니다");
+    if (next) void warnIgnoredConfig();
   } catch (e) {
     toast.error("신뢰 설정을 바꾸지 못했습니다", errorText(e));
   }
@@ -418,6 +420,18 @@ ${ev.error}`;
   label.textContent = `의미 검색 준비 ${Math.floor((done / Math.max(total, 1)) * 100)}%`;
   el.title = `코드 조각 ${done.toLocaleString()} / ${total.toLocaleString()}개를 임베딩했습니다. 끝나기 전에도 만든 만큼은 맥락 조립에 씁니다.`;
 });
+
+/** 프로젝트 설정 중 쓰지 않은 값 (키를 다른 서버로 보내거나 승인을 느슨하게 하는 값) */
+async function warnIgnoredConfig() {
+  const ignored = await api.configIgnored().catch(() => [] as string[]);
+  if (!ignored.length) return;
+  toast.show({
+    kind: "warn",
+    message: "프로젝트 설정의 일부 값은 쓰지 않았습니다",
+    detail: `${ignored.join(", ")} — 저장소에 든 설정이 API 키를 다른 서버로 보내거나 승인을 느슨하게 하지 못하게, 이 값들은 사용자 설정에서만 바꿀 수 있습니다.`,
+    actions: [{ label: "설정 파일 열기", run: () => void openConfigFile() }],
+  });
+}
 
 /** 채팅 입력창의 모델 버튼: 연결해 둔 모델 중에서 기본 모델을 바로 바꾼다 */
 async function pickModel(anchor: HTMLElement) {
