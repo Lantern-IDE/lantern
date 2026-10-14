@@ -109,6 +109,8 @@ cd app && npx tauri build --no-bundle && npm run e2e   # 실제 앱 E2E (Windows
 python scripts/i18n_check.py               # 영어 번역 누락
 ```
 
+E2E는 가짜 모델로 돕니다. 릴리스 전에는 `app/e2e/smoke.mjs`로 실제 모델에 짧은 시나리오(질문, 계획 먼저 → 관련 테스트, MCP 도구, 웹 문서)를 비용 한도(기본 $0.5)를 걸고 돌립니다. 키는 환경변수로만 받습니다: `ANTHROPIC_API_KEY=… node e2e/smoke.mjs --yes` (`--yes`가 없으면 할 일만 보이고 끝냄).
+
 ## 문서
 
 - 맥락 엔진 설계와 검증: [docs/Phase0_맥락엔진_설계.md](docs/Phase0_맥락엔진_설계.md), [eval/결과.md](eval/결과.md)
