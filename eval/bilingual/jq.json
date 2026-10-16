@@ -1,0 +1,340 @@
+{
+  "project": "jq",
+  "url": "https://github.com/jqlang/jq",
+  "ref": "6b53f8031161db96387b64b5f412845cd23491f6",
+  "made_by": "eval/bench/make.mjs",
+  "questions": [
+    {
+      "q": "Fix strftime/1 and strflocaltime/1 to allow an empty result",
+      "q_ko": null,
+      "golden": [
+        "src/builtin.c"
+      ],
+      "commit": "6b53f8031161db96387b64b5f412845cd23491f6",
+      "parent": "80fc7a169d3a3942a07f587abc4346d119fc525d",
+      "date": "2026-10-13"
+    },
+    {
+      "q": "Skip to the next RS after a parse error in --seq mode",
+      "q_ko": null,
+      "golden": [
+        "src/jv_parse.c"
+      ],
+      "commit": "80fc7a169d3a3942a07f587abc4346d119fc525d",
+      "parent": "611c575a97f0fbaaea9c334b2c70ffe3fa733f41",
+      "date": "2026-10-12"
+    },
+    {
+      "q": "Improve performance of string output",
+      "q_ko": null,
+      "golden": [
+        "src/jv_print.c"
+      ],
+      "commit": "b904884b94ca48e025a12697ab172711e6c134d8",
+      "parent": "a5323a369c904b34d7e5c2c81d2066b81bcf6a6f",
+      "date": "2026-10-10"
+    },
+    {
+      "q": "Fix assertion failure on too many parameters in a nested function",
+      "q_ko": null,
+      "golden": [
+        "src/compile.c"
+      ],
+      "commit": "a5323a369c904b34d7e5c2c81d2066b81bcf6a6f",
+      "parent": "04042494cfd9d3bb1f4aa6895177dadd6f5abc67",
+      "date": "2026-10-10"
+    },
+    {
+      "q": "Exit with the given status for negative `halt_error` codes",
+      "q_ko": null,
+      "golden": [
+        "src/main.c"
+      ],
+      "commit": "04042494cfd9d3bb1f4aa6895177dadd6f5abc67",
+      "parent": "a8e6d5f8714ad470ae1dbbf6198dec03092d954c",
+      "date": "2026-10-10"
+    },
+    {
+      "q": "Fix undefined behavior on out-of-range array index in has() and del()",
+      "q_ko": null,
+      "golden": [
+        "src/jv_aux.c"
+      ],
+      "commit": "a8e6d5f8714ad470ae1dbbf6198dec03092d954c",
+      "parent": "dbbae0dee3e18e8cc1b545cda108b9a04110b561",
+      "date": "2026-10-09"
+    },
+    {
+      "q": "Strip UTF-8 BOM at the start of each input file",
+      "q_ko": null,
+      "golden": [
+        "src/jv_file.c",
+        "src/jv_parse.c",
+        "src/util.c"
+      ],
+      "commit": "e001deb4cfb735a6b14a802398a41bfa03df5a2a",
+      "parent": "17b87d25c77c4c07f8b7f8a26ea5b72b05ae46a4",
+      "date": "2026-10-08"
+    },
+    {
+      "q": "Prefer getentropy() over arc4random() to seed the string hash",
+      "q_ko": null,
+      "golden": [
+        "src/jv.c"
+      ],
+      "commit": "32580f5d83f4321588a1ebf8e3893f7fbecefe4e",
+      "parent": "df24981307658868759faaea76b817cc62dd6be0",
+      "date": "2026-09-25"
+    },
+    {
+      "q": "Fix reduce to preserve its input across init backtracking",
+      "q_ko": null,
+      "golden": [
+        "src/compile.c",
+        "src/execute.c",
+        "src/opcode_list.h"
+      ],
+      "commit": "df24981307658868759faaea76b817cc62dd6be0",
+      "parent": "4beed4e01ad0d390f279a63bb20d61a262b9567f",
+      "date": "2026-09-19"
+    },
+    {
+      "q": "Implement `range/3` in C for consistent error handling",
+      "q_ko": null,
+      "golden": [
+        "src/builtin.c",
+        "src/execute.c"
+      ],
+      "commit": "e371bfaa923f7f4286810984cd75135efd7d9f87",
+      "parent": "dd409de28d5868691992027bffa464d4c4575898",
+      "date": "2026-09-18"
+    },
+    {
+      "q": "Use WriteConsoleW() in priv_fwrite() too",
+      "q_ko": null,
+      "golden": [
+        "src/jv_print.c",
+        "src/util.h"
+      ],
+      "commit": "dd409de28d5868691992027bffa464d4c4575898",
+      "parent": "7422e8c914d9b834698d5b0a6de1a2539d175b87",
+      "date": "2026-09-18"
+    },
+    {
+      "q": "Fix gmtime and localtime on negative timestamps with fractional seconds",
+      "q_ko": null,
+      "golden": [
+        "src/builtin.c"
+      ],
+      "commit": "6aeafff056a988c20672ac1359b2beea13fb9315",
+      "parent": "57f5976edf6ca0132bf2fc4ef19732ddbd2a862b",
+      "date": "2026-09-18"
+    },
+    {
+      "q": "Reject raw NUL bytes in the parser instead of silently truncating tokens",
+      "q_ko": null,
+      "golden": [
+        "src/jv_parse.c"
+      ],
+      "commit": "fbee8f48bac154aeb6edfbd79792181ac19914a3",
+      "parent": "8cf81cb80c05cf9c480470f477af7f700f6a3c27",
+      "date": "2026-08-24"
+    },
+    {
+      "q": "Cast char to unsigned char before passing to isspace",
+      "q_ko": null,
+      "golden": [
+        "src/main.c"
+      ],
+      "commit": "579e6f76cffd7643ba4002a2c3618a5ea710589a",
+      "parent": "42d4035d4fe8028008c95d4efb0ac4f2a36a5932",
+      "date": "2026-07-02"
+    },
+    {
+      "q": "Tighten string length bounds and propagate invalid jv in implode",
+      "q_ko": null,
+      "golden": [
+        "src/builtin.c",
+        "src/jv.c"
+      ],
+      "commit": "46d1da30944ce93dd671ac72b6513fc0eb747837",
+      "parent": "e987df0d463d85fd70825e042a082427e8275b86",
+      "date": "2026-06-16"
+    },
+    {
+      "q": "Fix heap-buffer-overflow in raw file loading",
+      "q_ko": null,
+      "golden": [
+        "src/jv_file.c"
+      ],
+      "commit": "e987df0d463d85fd70825e042a082427e8275b86",
+      "parent": "985abe534fdd48186015e169da7786c05fd7f868",
+      "date": "2026-06-08"
+    },
+    {
+      "q": "Fix undefined pointer arithmetic in UTF-8 helpers",
+      "q_ko": null,
+      "golden": [
+        "src/jv_unicode.c"
+      ],
+      "commit": "df924eae91af10cc236a907cdadd97813827aa1f",
+      "parent": "a829f678f340da83a75fb35457d918c98524fdc7",
+      "date": "2026-05-23"
+    },
+    {
+      "q": "Guard deep structural equality and comparison recursion",
+      "q_ko": null,
+      "golden": [
+        "src/builtin.c",
+        "src/jv.c",
+        "src/jv_aux.c"
+      ],
+      "commit": "7122866869960b55cea3646bc91334ef55787831",
+      "parent": "f58787c41835d9b17795730cb04925fdba25c71c",
+      "date": "2026-05-22"
+    },
+    {
+      "q": "Detect circular module imports to prevent stack overflow",
+      "q_ko": null,
+      "golden": [
+        "src/linker.c"
+      ],
+      "commit": "f58787c41835d9b17795730cb04925fdba25c71c",
+      "parent": "9d223f153c3632a207fa071caaa6292da33ae361",
+      "date": "2026-05-11"
+    },
+    {
+      "q": "Reject numeric literals longer than DEC_MAX_DIGITS (999999999)",
+      "q_ko": null,
+      "golden": [
+        "src/jv.c",
+        "src/jv_print.c"
+      ],
+      "commit": "9761ceb7d6cc48c16b25f0ab1baaef0e701927e4",
+      "parent": "532ccea6080ed6758f39fe9f6208a44b665023d2",
+      "date": "2026-05-06"
+    },
+    {
+      "q": "Limit recursive object merge depth to prevent stack overflow",
+      "q_ko": null,
+      "golden": [
+        "src/jv.c"
+      ],
+      "commit": "532ccea6080ed6758f39fe9f6208a44b665023d2",
+      "parent": "33d7bce3218ec718139342e5b48b475c4dea715f",
+      "date": "2026-05-05"
+    },
+    {
+      "q": "Fix signed-int overflow in `stack_reallocate`",
+      "q_ko": null,
+      "golden": [
+        "src/exec_stack.h"
+      ],
+      "commit": "01b3cded76daacbfddb7f8763700b0803bcb5c6f",
+      "parent": "d1a12569d91641135976a8536776a4a329c02cc2",
+      "date": "2026-04-24"
+    },
+    {
+      "q": "Limit the containment check depth",
+      "q_ko": null,
+      "golden": [
+        "src/builtin.c",
+        "src/jv.c"
+      ],
+      "commit": "d1a12569d91641135976a8536776a4a329c02cc2",
+      "parent": "870207323d178f5aaf926995b72fe50dc2043447",
+      "date": "2026-04-24"
+    },
+    {
+      "q": "Limit path depth to prevent stack overflow",
+      "q_ko": null,
+      "golden": [
+        "src/jv_aux.c"
+      ],
+      "commit": "fb59f1491058d58bdc3e8dd28f1773d1ac690a1f",
+      "parent": "2f09060afab23fe9390cce7cb860b10416e1bf5f",
+      "date": "2026-04-13"
+    },
+    {
+      "q": "Fix NUL truncation in the JSON parser",
+      "q_ko": null,
+      "golden": [
+        "src/util.c"
+      ],
+      "commit": "6374ae0bcdfe33a18eb0ae6db28493b1f34a0a5b",
+      "parent": "fdf8ef0f0810e3d365cdd5160de43db46f57ed03",
+      "date": "2026-04-13"
+    },
+    {
+      "q": "Fix use-after-free in args2obj() array argument path",
+      "q_ko": null,
+      "golden": [
+        "src/execute.c"
+      ],
+      "commit": "3985b80ce50bd75c6eb5a97cb3348c3f835ca8e0",
+      "parent": "3cd7e0da00f2a65e544d8f8bb8a42edf822bb5a2",
+      "date": "2026-03-09"
+    },
+    {
+      "q": "Fix crash when importing a module with errors twice",
+      "q_ko": null,
+      "golden": [
+        "src/linker.c"
+      ],
+      "commit": "3cd7e0da00f2a65e544d8f8bb8a42edf822bb5a2",
+      "parent": "ed3c7f214b192024ade9b5c501f32800a87984b5",
+      "date": "2026-03-06"
+    },
+    {
+      "q": "Limit number of function parameters and definitions to prevent SEGV",
+      "q_ko": null,
+      "golden": [
+        "src/compile.c"
+      ],
+      "commit": "a2741ee0a8022fd3e47ddc6b8b87db359673cea8",
+      "parent": "b33a7634ba34ffa7ce7368cc0ebf5ca40b54c7e6",
+      "date": "2026-02-25"
+    },
+    {
+      "q": "Fix slurping raw input not to corrupt multi-byte characters (fix #3389)",
+      "q_ko": null,
+      "golden": [
+        "src/jv_file.c",
+        "src/util.c"
+      ],
+      "commit": "55297882922c3def24cbddc3ea24d4c304cf3a42",
+      "parent": "8d9a3c3ab3e6e964fd5c013e209dece0cda07650",
+      "date": "2025-10-31"
+    },
+    {
+      "q": "Increase the maximum printing depth from 256 to 10000 (fixes #3413)",
+      "q_ko": null,
+      "golden": [
+        "src/jv_print.c"
+      ],
+      "commit": "b29504b4e191a4b1028bd1c252aaab0c62fbdbfa",
+      "parent": "589a6947fa5e6f6f1d3f340053a8c92fa8b9f445",
+      "date": "2025-10-14"
+    },
+    {
+      "q": "Use jv_mem_alloc to allocate dtoa_context in tsd_dtoa_context_get",
+      "q_ko": null,
+      "golden": [
+        "src/jv_dtoa_tsd.c"
+      ],
+      "commit": "2e6987967e9cbea933619c4a5f78b226acb49c13",
+      "parent": "0b1ef469734f0621283a056aa1e8f2080110b493",
+      "date": "2025-06-30"
+    },
+    {
+      "q": "Fix syntax error assertion failure (fix #3348)",
+      "q_ko": null,
+      "golden": [
+        "src/locfile.c"
+      ],
+      "commit": "a587ddc5a390563b837b0c53610cae6a4a5363d8",
+      "parent": "78045d8aa9d155ec0f82ab102aa752300c2349f1",
+      "date": "2025-06-17"
+    }
+  ]
+}

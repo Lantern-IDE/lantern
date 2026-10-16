@@ -1,0 +1,333 @@
+{
+  "project": "vite",
+  "url": "https://github.com/vitejs/vite",
+  "ref": "74ae7099f9fd1d5cd1adcd32bcbb2c92d8937007",
+  "made_by": "eval/bench/make.mjs",
+  "questions": [
+    {
+      "q": "handle missing chunk import maps",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/css.ts",
+        "packages/vite/src/node/plugins/html.ts",
+        "packages/vite/src/node/plugins/importAnalysisBuild.ts"
+      ],
+      "commit": "8d7623d9b5647714a5b20cbd787a5401ca846229",
+      "parent": "5b73935881424ed5919571036dd89d3868590f92",
+      "date": "2026-10-15"
+    },
+    {
+      "q": "don't fail on a literal `%` in `url()`",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/css.ts"
+      ],
+      "commit": "50b382d31835b8b4bc8b6964738ac03146e44261",
+      "parent": "d112dad9392efdb38eafc2c36fd27b54e614efca",
+      "date": "2026-10-15"
+    },
+    {
+      "q": "skip patches dir hash for nub lockfile",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/optimizer/index.ts"
+      ],
+      "commit": "a7d56967ef0050a09c0507e63a18164bc7a0d486",
+      "parent": "b65a4b55a8d3fc4674ebda272f6612c29b01de84",
+      "date": "2026-10-15"
+    },
+    {
+      "q": "map forwarded error stacks through the bundle source maps",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/forwardConsole.ts"
+      ],
+      "commit": "11fe1e46ff0c136cb90fbe263ba03993bc94df18",
+      "parent": "c2c9ef4dcd05b3e4d88844ea3a13dc23819ca2a5",
+      "date": "2026-10-15"
+    },
+    {
+      "q": "handle socket errors on upgrade requests not taken by the HMR server",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/server/ws.ts"
+      ],
+      "commit": "c2c9ef4dcd05b3e4d88844ea3a13dc23819ca2a5",
+      "parent": "4ea708a3ae9a324c6aabca59fade4082bf72f3e5",
+      "date": "2026-10-14"
+    },
+    {
+      "q": "fall back to yarn.lock for lockfile hash",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/optimizer/index.ts"
+      ],
+      "commit": "f20609630faa93026924275115d1426fdc08629e",
+      "parent": "a4bfdb11766696af26186207f686fe8be2e1472d",
+      "date": "2026-10-09"
+    },
+    {
+      "q": "normalize served output files",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/server/bundledDev.ts"
+      ],
+      "commit": "df4e02cc8317a62f21edefc79a9690571ffed1f3",
+      "parent": "52ba877693c8633458d163117504a8259beb3cf5",
+      "date": "2026-10-09"
+    },
+    {
+      "q": "correct preloads when chunkImportMap is enabled with non-root base",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/html.ts"
+      ],
+      "commit": "2a8c0f05c76e35c43ab3560984a5103c8db8dbcd",
+      "parent": "18f9e07e85c172252c3ec27da1b33a4d728b4e16",
+      "date": "2026-10-08"
+    },
+    {
+      "q": "avoid adding filesystem root to watcher",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/server/middlewares/indexHtml.ts"
+      ],
+      "commit": "3a7f2aea757d59bae66ad6edf6b321d26a7e6778",
+      "parent": "facc2fb1fffce03d9e2dd7011d0bd0eeddc7d0f6",
+      "date": "2026-10-08"
+    },
+    {
+      "q": "remove input option unescaping for now",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/config.ts"
+      ],
+      "commit": "facc2fb1fffce03d9e2dd7011d0bd0eeddc7d0f6",
+      "parent": "70d56ea1848909edab416934f3f68ce14343eb73",
+      "date": "2026-10-08"
+    },
+    {
+      "q": "a restart requested during a restart used to be dropped (fix #23392)",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/server/index.ts"
+      ],
+      "commit": "70d56ea1848909edab416934f3f68ce14343eb73",
+      "parent": "cf52011c46409a4a45f3d74bba631b8f005c4bc9",
+      "date": "2026-10-08"
+    },
+    {
+      "q": "don't treat modules ending with js-like query as js",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/oxc.ts"
+      ],
+      "commit": "fcb6f1252a95857823d935f98554b938888d41a0",
+      "parent": "8579189bae8626b6ddab55a09325e209d62e027e",
+      "date": "2026-10-08"
+    },
+    {
+      "q": "wait for in-flight stylesheets in preload helper (fix #23652)",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/importAnalysisBuild.ts"
+      ],
+      "commit": "036b74599b2fe1d8c61475371b856ceb88d26963",
+      "parent": "574d5e351905fe99891364d03c2440531378f7fd",
+      "date": "2026-10-08"
+    },
+    {
+      "q": "avoid mutating hmr defaults (fix #23575)",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/utils.ts"
+      ],
+      "commit": "574d5e351905fe99891364d03c2440531378f7fd",
+      "parent": "15d82f7dc679ab9c18d5ce2c3711157c2365ddd1",
+      "date": "2026-10-08"
+    },
+    {
+      "q": "skip caching CSS of chunks in a cycle (fix #23628)",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/html.ts"
+      ],
+      "commit": "15d82f7dc679ab9c18d5ce2c3711157c2365ddd1",
+      "parent": "3d674869a50a0bca84a8cc8dc55bd35d57100e37",
+      "date": "2026-10-08"
+    },
+    {
+      "q": "skip cloning call sites that have no source map",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/module-runner/sourcemap/interceptor.ts"
+      ],
+      "commit": "3d674869a50a0bca84a8cc8dc55bd35d57100e37",
+      "parent": "8a4c19cfc035f2dd203f2fa6d00ab9256a5e77c9",
+      "date": "2026-10-08"
+    },
+    {
+      "q": "normalize file before root check in `ensureWatchedFile`",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/utils.ts"
+      ],
+      "commit": "12bb28c22379c8d2fe90088fa0eefbfa2ab3fb80",
+      "parent": "fea5b21dd9524ed7308632407b996f1fe5942c9c",
+      "date": "2026-10-07"
+    },
+    {
+      "q": "check `fs.serve` for `?vite-wasm-instance`",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/server/middlewares/transform.ts"
+      ],
+      "commit": "ba8b7ab43b4afa5d0292ab4b6e3a7b5033cc9c73",
+      "parent": "22fd1d5238cce2ee9db0eb4122f9e8feb6b06097",
+      "date": "2026-10-06"
+    },
+    {
+      "q": "avoid encoding intermediate source maps",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/importAnalysisBuild.ts",
+        "packages/vite/src/node/ssr/ssrTransform.ts"
+      ],
+      "commit": "89574f6d940a7273a53c5122a4477285801a696a",
+      "parent": "5a3a010eea4c9ebbdcc080819f93068d4e035bd4",
+      "date": "2026-10-01"
+    },
+    {
+      "q": "release previous environments after initialization",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/server/index.ts"
+      ],
+      "commit": "5a3a010eea4c9ebbdcc080819f93068d4e035bd4",
+      "parent": "1929b4cc5f38ad53781e3b07b8bdaa32cf18da07",
+      "date": "2026-10-01"
+    },
+    {
+      "q": "avoid quadratic link scan in the preload helper",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/importAnalysisBuild.ts"
+      ],
+      "commit": "cf5c0288d526824aead1b24e977400f13c527927",
+      "parent": "bba3bb8beedd185948956e02667d450672632d79",
+      "date": "2026-09-30"
+    },
+    {
+      "q": "pass queries to `renderBuiltUrl`",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/asset.ts",
+        "packages/vite/src/node/plugins/css.ts",
+        "packages/vite/src/node/plugins/html.ts"
+      ],
+      "commit": "744269e5b2a155074910ddd275aecf2b83938496",
+      "parent": "a2bd6fa897c35c8a691671a7d70061c1cdd5c688",
+      "date": "2026-09-29"
+    },
+    {
+      "q": "serve lazy chunk sourcemaps",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/server/bundledDev.ts"
+      ],
+      "commit": "eb7aa9a8816a1e926d5d9b4cbe7e796b61314ce2",
+      "parent": "24339f4339d64fd8b5bc37654ac14ccff5aee584",
+      "date": "2026-09-29"
+    },
+    {
+      "q": "use `tinyexec` instead of `cross-spawn`",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/server/openBrowser.ts"
+      ],
+      "commit": "db915e5c0edbe1359dcf0cea340c9571dc7f4ad9",
+      "parent": "bbc88129c967a8b8eedebd93acc82bee63b86b2a",
+      "date": "2026-09-25"
+    },
+    {
+      "q": "skip URL source roots when injecting sources content",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/server/sourcemap.ts"
+      ],
+      "commit": "04fc30a4b91870e65a436b3420620a2e02a94a41",
+      "parent": "5f894339d27882fedc86bf6b1076fa6d92e404f3",
+      "date": "2026-09-24"
+    },
+    {
+      "q": "resolve pending discovered dep processing on close before init",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/optimizer/optimizer.ts"
+      ],
+      "commit": "5f894339d27882fedc86bf6b1076fa6d92e404f3",
+      "parent": "6e09961181a1047ef78d37b1a23fb0e7488c8980",
+      "date": "2026-09-24"
+    },
+    {
+      "q": "add router only options for tanstack router/start",
+      "q_ko": null,
+      "golden": [
+        "packages/create-vite/src/index.ts"
+      ],
+      "commit": "f155b62ceabbaaf71abbf59933968787e3961c56",
+      "parent": "af7cdf6964f124f58d66037e808fe687654948e2",
+      "date": "2026-09-23"
+    },
+    {
+      "q": "replace `find` with `some`",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/plugins/preAlias.ts"
+      ],
+      "commit": "af7cdf6964f124f58d66037e808fe687654948e2",
+      "parent": "1544bb1b7ac92f775e9d0dea97954c99cc6cbd43",
+      "date": "2026-09-23"
+    },
+    {
+      "q": "don't skip imports whose binding starts with type",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/optimizer/scan.ts"
+      ],
+      "commit": "39330f489a0ae08923557f0ce10a307d6662a3f5",
+      "parent": "bd97903e326c4caf022405f7c1d5f3eb624a931f",
+      "date": "2026-09-22"
+    },
+    {
+      "q": "assets regexp use non-capture",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/constants.ts"
+      ],
+      "commit": "f4b4431a2f9097fd9bbb7aaebbf1b63c4b54dea1",
+      "parent": "6a84c72100da4e4be4badb2d9a0026279b4df136",
+      "date": "2026-09-18"
+    },
+    {
+      "q": "pre-compile context matchers at server creation",
+      "q_ko": null,
+      "golden": [
+        "packages/vite/src/node/server/middlewares/proxy.ts"
+      ],
+      "commit": "8abf700eeb2411d8402d08f8e2696effafdbe774",
+      "parent": "ef0dc17ada53d1169ae5a89cb8f6482831466755",
+      "date": "2026-09-10"
+    },
+    {
+      "q": "add nub package manager support",
+      "q_ko": null,
+      "golden": [
+        "packages/create-vite/src/index.ts"
+      ],
+      "commit": "c31c499ca04c7557d9093291b08b6e3087df0542",
+      "parent": "76e8082c56a2872dc8017c5672bc36cba8dcf75d",
+      "date": "2026-08-24"
+    }
+  ]
+}
