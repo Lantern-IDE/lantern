@@ -1,8 +1,10 @@
 // 공개 벤치마크 한 번에 돌리기: 저장소를 받아(없으면) 고정한 커밋으로 맞추고, 영어·한국어 질문으로 잰 뒤
-// eval/bench/결과.md에 합계를 쓴다. 모델 호출 없음, 무료.
+// 세트 폴더의 결과.md에 합계를 쓴다. 모델 호출 없음, 무료.
 //
 // 사용: cargo build --release -p lantern-context
 //       node eval/bench/run.mjs --dir <저장소를 받을 폴더> [--budget 8000]
+//         [--set eval/bilingual] [--langs en,ko] [--lantern <엔진 실행 파일>]
+// 한국어 질문(q_ko)이 하나도 없는 세트는 한국어를 건너뛴다.
 
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -17,13 +19,17 @@ const opt = (name, fallback) => {
 };
 const DIR = path.resolve(opt("dir", path.join(HERE, "..", "results", "bench")));
 const BUDGET = opt("budget", "8000");
-const RESULTS = path.join(DIR, "results");
+const SET = path.resolve(opt("set", HERE));
+const LANGS = opt("langs", "en,ko").split(",");
+const LANTERN = opt("lantern", "");
+// 기본 세트(eval/bench)가 아니면 세트 이름의 하위 폴더에 (결과가 섞이지 않게)
+const RESULTS = SET === HERE ? path.join(DIR, "results") : path.join(DIR, "results", path.basename(SET));
 fs.mkdirSync(RESULTS, { recursive: true });
 
-const sets = fs.readdirSync(HERE).filter((f) => f.endsWith(".json")).sort();
+const sets = fs.readdirSync(SET).filter((f) => f.endsWith(".json")).sort();
 const table = [];
 for (const f of sets) {
-  const set = JSON.parse(fs.readFileSync(path.join(HERE, f), "utf8"));
+  const set = JSON.parse(fs.readFileSync(path.join(SET, f), "utf8"));
   const repo = path.join(DIR, set.project);
   if (!fs.existsSync(path.join(repo, ".git"))) {
     console.log(`${set.url} 받는 중…`);
@@ -31,11 +37,13 @@ for (const f of sets) {
     execFileSync("git", ["-C", repo, "config", "core.longpaths", "true"]);
   }
   execFileSync("git", ["-C", repo, "checkout", "-q", "-f", "--detach", set.ref], { stdio: "inherit" });
-  for (const lang of ["en", "ko"]) {
+  const field = { en: "q", ko: "q_ko", "ko-mt": "q_ko_mt" };
+  for (const lang of LANGS.filter((l) => set.questions.some((q) => q[field[l]]))) {
     console.log(`\n== ${set.project} (${lang})`);
-    execFileSync("node", [path.join(HERE, "..", "retrieval.mjs"), "--project", repo, "--golden", path.join(HERE, f), "--budget", BUDGET, "--out", RESULTS, "--lang", lang], { stdio: "inherit" });
+    const extra = LANTERN ? ["--lantern", LANTERN] : [];
+    execFileSync("node", [path.join(HERE, "..", "retrieval.mjs"), "--project", repo, "--golden", path.join(SET, f), "--budget", BUDGET, "--out", RESULTS, "--lang", lang, ...extra], { stdio: "inherit" });
     // retrieval-<프로젝트>[-ko]-<시각>.json (영어 쪽이 한국어 파일을 집지 않게 시각 앞까지 정확히 맞춘다)
-    const name = new RegExp(`^retrieval-${set.project.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}${lang === "ko" ? "-ko" : ""}-\\d{4}-.*\\.json$`);
+    const name = new RegExp(`^retrieval-${set.project.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}${lang === "en" ? "" : `-${lang}`}-\\d{4}-.*\\.json$`);
     const latest = fs.readdirSync(RESULTS).filter((x) => name.test(x)).sort().pop();
     const r = JSON.parse(fs.readFileSync(path.join(RESULTS, latest), "utf8"));
     table.push({ project: set.project, url: set.url, ref: set.ref, lang, n: r.rows.length, s: r.summary });
@@ -59,13 +67,12 @@ const md = [
   "",
   "| 저장소 (언어) | 질문 | 키워드 적중률 | 키워드(조각) 적중률 | Lantern 적중률 | 키워드 앞 3개 | 키워드(조각) 앞 3개 | Lantern 앞 3개 | 무작위 |",
   "|---|---|---|---|---|---|---|---|---|",
-  ...table.map((r) => line(`[${r.project}](${r.url}/tree/${r.ref.slice(0, 10)}) ${r.lang === "ko" ? "한국어" : "영어"}`, [r])),
-  line("**합계 (영어)**", table.filter((r) => r.lang === "en")),
-  line("**합계 (한국어)**", table.filter((r) => r.lang === "ko")),
+  ...table.map((r) => line(`[${r.project}](${r.url}/tree/${r.ref.slice(0, 10)}) ${{ en: "영어", ko: "한국어", "ko-mt": "한국어→번역" }[r.lang]}`, [r])),
+  ...[["en", "영어"], ["ko", "한국어"], ["ko-mt", "한국어→번역"]].filter(([l]) => table.some((r) => r.lang === l)).map(([l, label]) => line(`**합계 (${label})**`, table.filter((r) => r.lang === l))),
   "",
   "키워드: 질문의 단어로 grep → 많이 맞은 파일부터 통째로 읽기. 키워드(조각): 같은 grep에서 맞은 줄 앞뒤 12줄만 가져와 예산을 여러 파일에 나누기.",
   "",
 ].join("\n");
-fs.writeFileSync(path.join(HERE, "결과.md"), md);
-console.log(`\n${path.join(HERE, "결과.md")}`);
+fs.writeFileSync(path.join(SET, "결과.md"), md);
+console.log(`\n${path.join(SET, "결과.md")}`);
 console.log(md);
