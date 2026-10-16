@@ -1,0 +1,190 @@
+"""Lantern과 비교 대상의 결과를 같은 지표로 묶는다.
+
+    python eval/bilingual/report.py --dir <클론 폴더> [--set eval/bilingual] [--md <결과 파일>] [--subset all|test|dev|2026]
+
+읽는 것
+- <dir>/results/retrieval-<저장소>[-ko]-<시각>.json  (eval/retrieval.mjs: 키워드, 키워드 조각, Lantern) 가장 최근 것
+- <dir>/results/baselines/<저장소>-<언어>.json       (baselines.py)
+- <dir>/results/lantern-<이름>/retrieval-….json      (Lantern 변형, 예: 의미 검색 켬 → 방법 이름 lantern-<이름>)
+
+지표 (문항마다 계산해 평균)
+- Recall@B: 정답 파일 중 예산 안에 담긴 비율
+- Acc@k: 담긴 파일 중 앞 k개 안에 정답 파일이 하나라도 있는가
+- MRR: 처음 나온 정답 파일 순위의 역수 (예산 안에 없으면 0)
+세트 나누기: 커밋 해시 앞 8자리를 정수로 본 값의 10으로 나눈 나머지가 0~2면 dev(약 30%), 나머지는 test.
+신뢰구간: 문항 단위 paired bootstrap 10,000회 95%. 이진 지표(Acc@3) 차이는 McNemar 정확 검정.
+"""
+
+import argparse
+import glob
+import json
+import math
+import os
+import random
+import re
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+LABEL = {
+    "grep": "키워드 (파일)",
+    "snippets": "키워드 (조각)",
+    "bm25-file": "BM25 (파일)",
+    "bm25-chunk": "BM25 (조각)",
+    "dense": "임베딩 (조각)",
+    "hybrid": "BM25+임베딩 RRF",
+    "repomap": "Aider RepoMap",
+    "lantern": "**Lantern**",
+    "lantern-sem": "**Lantern + 임베딩 (e5-small)**",
+}
+LANGS = {"en": "영어", "ko": "한국어", "ko-mt": "한국어→기계 번역"}
+
+
+def split_of(commit):
+    return "dev" if int(commit[:8], 16) % 10 < 3 else "test"
+
+
+def score(files, golden):
+    hit = [g for g in golden if g in files]
+    first = next((i for i, p in enumerate(files) if p in golden), None)
+    return {
+        "recall": len(hit) / len(golden),
+        "acc1": first is not None and first < 1,
+        "acc3": first is not None and first < 3,
+        "acc5": first is not None and first < 5,
+        "mrr": 0.0 if first is None else 1 / (first + 1),
+        "files": len(files),
+    }
+
+
+def load(dir_, set_dir):
+    """{(lang, method): {commit: score}} 와 문항 정보"""
+    questions = {}
+    for f in sorted(glob.glob(os.path.join(set_dir, "*.json"))):
+        with open(f, encoding="utf-8") as fh:
+            s = json.load(fh)
+        for q in s["questions"]:
+            questions[q["commit"]] = {**q, "project": s["project"]}
+    res = {}
+    rdir = os.path.join(dir_, "results", os.path.basename(os.path.normpath(set_dir)))
+    variants = [(rdir, ("grep", "snippets", "lantern"), None)]
+    if os.path.isdir(rdir):
+        variants += [(os.path.join(rdir, d), ("lantern",), d) for d in sorted(os.listdir(rdir)) if d.startswith("lantern-")]
+    for proj in {q["project"] for q in questions.values()}:
+        for vdir, kinds, rename in variants:
+            for lang, suffix in (("en", ""), ("ko", "-ko"), ("ko-mt", "-ko-mt")):
+                pat = re.compile(rf"^retrieval-{re.escape(proj)}{suffix}-\d{{4}}-.*\.json$")
+                cands = sorted(x for x in os.listdir(vdir) if pat.match(x)) if os.path.isdir(vdir) else []
+                if not cands:
+                    continue
+                with open(os.path.join(vdir, cands[-1]), encoding="utf-8") as fh:
+                    r = json.load(fh)
+                for row in r["rows"]:
+                    if row["commit"] not in questions:
+                        continue
+                    for m in kinds:
+                        res.setdefault((lang, rename or m), {})[row["commit"]] = score(row[m]["files"], row["golden"])
+        for path in glob.glob(os.path.join(rdir, "baselines", f"{proj}-*.json")):
+            with open(path, encoding="utf-8") as fh:
+                b = json.load(fh)
+            for row in b["rows"]:
+                if row["commit"] not in questions:
+                    continue
+                for m, v in row["methods"].items():
+                    res.setdefault((b["lang"], m), {})[row["commit"]] = score(v["files"], row["golden"])
+    return questions, res
+
+
+def mean(xs):
+    return sum(xs) / len(xs) if xs else float("nan")
+
+
+def bootstrap_diff(a, b, n=10_000, seed=7):
+    """짝지은 두 값 목록의 평균 차이(a-b)와 95% 구간"""
+    rnd = random.Random(seed)
+    d = [x - y for x, y in zip(a, b)]
+    k = len(d)
+    stats = sorted(sum(d[rnd.randrange(k)] for _ in range(k)) / k for _ in range(n))
+    return mean(d), stats[int(0.025 * n)], stats[int(0.975 * n) - 1]
+
+
+def mcnemar(a, b):
+    """이진 결과 짝의 McNemar 정확 검정 p값 (양측)"""
+    b01 = sum(1 for x, y in zip(a, b) if x and not y)
+    b10 = sum(1 for x, y in zip(a, b) if y and not x)
+    n = b01 + b10
+    if n == 0:
+        return 1.0
+    k = min(b01, b10)
+    p = sum(math.comb(n, i) for i in range(k + 1)) / 2**n
+    return min(1.0, 2 * p)
+
+
+def pct(x):
+    return f"{x * 100:.1f}"
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dir", required=True)
+    ap.add_argument("--set", default=HERE)
+    ap.add_argument("--subset", default="all", choices=["all", "test", "dev", "2026"])
+    ap.add_argument("--md", default=None)
+    a = ap.parse_args()
+    questions, res = load(a.dir, a.set)
+
+    def keep(c):
+        q = questions[c]
+        if a.subset in ("test", "dev"):
+            return split_of(c) == a.subset
+        if a.subset == "2026":
+            return (q.get("date") or "").startswith("2026")
+        return True
+
+    out = [f"# 영·한 병렬 벤치마크 비교 ({a.subset})", ""]
+    order = [m for m in LABEL if any(k[1] == m for k in res)]
+    for lang in [l for l in LANGS if any(k[0] == l for k in res)]:
+        out += [f"## {LANGS[lang]}", "", "| 방법 | 문항 | Recall@8k | Acc@1 | Acc@3 | Acc@5 | MRR | 파일 수 |", "|---|---|---|---|---|---|---|---|"]
+        for m in order:
+            r = res.get((lang, m))
+            if not r:
+                continue
+            rows = [v for c, v in r.items() if keep(c)]
+            out.append(
+                f"| {LABEL[m]} | {len(rows)} | {pct(mean([x['recall'] for x in rows]))} | {pct(mean([x['acc1'] for x in rows]))} | "
+                f"{pct(mean([x['acc3'] for x in rows]))} | {pct(mean([x['acc5'] for x in rows]))} | {mean([x['mrr'] for x in rows]):.3f} | {mean([x['files'] for x in rows]):.1f} |"
+            )
+        # Lantern과 각 방법의 차이 (같은 문항끼리)
+        lan = res.get((lang, "lantern"), {})
+        if lan:
+            out += ["", "Lantern − 방법 (같은 문항, 95% 구간)", "", "| 방법 | Recall@8k 차이 | Acc@3 차이 | Acc@3 McNemar p |", "|---|---|---|---|"]
+            for m in order:
+                if m == "lantern" or (lang, m) not in res:
+                    continue
+                cs = [c for c in lan if c in res[(lang, m)] and keep(c)]
+                if not cs:
+                    continue
+                rd = bootstrap_diff([lan[c]["recall"] for c in cs], [res[(lang, m)][c]["recall"] for c in cs])
+                ad = bootstrap_diff([float(lan[c]["acc3"]) for c in cs], [float(res[(lang, m)][c]["acc3"]) for c in cs])
+                p = mcnemar([lan[c]["acc3"] for c in cs], [res[(lang, m)][c]["acc3"] for c in cs])
+                out.append(f"| {LABEL[m]} | {pct(rd[0])} ({pct(rd[1])}~{pct(rd[2])}) | {pct(ad[0])} ({pct(ad[1])}~{pct(ad[2])}) | {p:.3g} |")
+        out.append("")
+    # 영어 → 한국어 하락 (같은 문항)
+    if any(k[0] == "ko" for k in res):
+        out += ["## 영어 → 한국어 하락 (같은 문항, 95% 구간)", "", "| 방법 | 문항 | Recall@8k | Acc@3 |", "|---|---|---|---|"]
+        for m in order:
+            en, ko = res.get(("en", m), {}), res.get(("ko", m), {})
+            cs = [c for c in en if c in ko and keep(c)]
+            if not cs:
+                continue
+            rd = bootstrap_diff([ko[c]["recall"] for c in cs], [en[c]["recall"] for c in cs])
+            ad = bootstrap_diff([float(ko[c]["acc3"]) for c in cs], [float(en[c]["acc3"]) for c in cs])
+            out.append(f"| {LABEL[m]} | {len(cs)} | {pct(rd[0])} ({pct(rd[1])}~{pct(rd[2])}) | {pct(ad[0])} ({pct(ad[1])}~{pct(ad[2])}) |")
+        out.append("")
+    text = "\n".join(out)
+    print(text)
+    if a.md:
+        with open(a.md, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(text + "\n")
+
+
+if __name__ == "__main__":
+    main()
