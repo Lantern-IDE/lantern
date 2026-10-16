@@ -1,0 +1,332 @@
+{
+  "project": "commons-lang",
+  "url": "https://github.com/apache/commons-lang",
+  "ref": "29624cdb50ecd794207d561345b2fc9ca3a9d326",
+  "made_by": "eval/bench/make.mjs",
+  "questions": [
+    {
+      "q": "Fix mutable time zone keys in the FastDateFormat cache",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/time/AbstractFormatCache.java"
+      ],
+      "commit": "55dcbc4bb1449aa9f7c6ee422cc22b465a35fa2f",
+      "parent": "d86ec875bdc7676d76c162d393e81db7dee01f2d",
+      "date": "2026-09-19"
+    },
+    {
+      "q": "Reflection builders' cycle registry unregisters per-visit: cycle-SAFE but DAG-exponential, a 40-level reference diamond drives ~2^40 traversals and unbounded output (f032).",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/builder/ToStringStyle.java"
+      ],
+      "commit": "4303a36de3a8b29d19b88e7ca5901f78a536de72",
+      "parent": "11e2dad29e2ae58d3bd604233af55183ccee1d17",
+      "date": "2026-09-06"
+    },
+    {
+      "q": "StrBuilder.indexOf materializes the whole builder as a String per call; deleteAll/replaceAll multiply it into ~750 GB churn on a 1 MB builder (f026).",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/CharSequenceUtils.java"
+      ],
+      "commit": "4d053dc896df7c1165673637607fcc86a146eb10",
+      "parent": "2e16df6260fb207cf45ae456e25e391cb7ef9bf8",
+      "date": "2026-09-05"
+    },
+    {
+      "q": "Attacker-controlled exception message forges frames in getRootCauseStackTrace output AND suppresses all real frames, beyond cosmetic log spoofing (f025).",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/exception/ExceptionUtils.java"
+      ],
+      "commit": "2e16df6260fb207cf45ae456e25e391cb7ef9bf8",
+      "parent": "2dfaafa2576afc5534575fa27967b622e86580b9",
+      "date": "2026-09-05"
+    },
+    {
+      "q": "default caches the first failure forever, has no size bound or eviction, and runs the user computation inside the ConcurrentHashMap bin lock (blocking unrelated keys, deadlocking reentrant use) (f011).",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/concurrent/Memoizer.java"
+      ],
+      "commit": "1aef131265a6b2c8a5ded4301dd92468c7d826c5",
+      "parent": "fd6361792d1e021462215386d69dd3e0d1b59229",
+      "date": "2026-09-05"
+    },
+    {
+      "q": "keep stripStart and stripEnd off surrogate pair boundaries",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      ],
+      "commit": "c747711133c3e13d8d2bdab27a2eb7b11f1c6d7f",
+      "parent": "8bf8b78700c778b10049131f51b687195e039da9",
+      "date": "2026-08-14"
+    },
+    {
+      "q": "Keep chop from splitting a trailing surrogate pair",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/StringUtils.java"
+      ],
+      "commit": "62f6edfd96008fd10cd22bf854cf4e8d2c008ae2",
+      "parent": "9ed5d0ba95652ffcbb912894ce67d81a2fbd60df",
+      "date": "2026-08-12"
+    },
+    {
+      "q": "Handle ParsePosition index beyond source string length cleanly",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/time/FastDateParser.java"
+      ],
+      "commit": "e0dba35f9e41dfdbbbb646fcd377b8af8ef7344e",
+      "parent": "94ad3a756aad97add12e48ed8ff54d630a927d4b",
+      "date": "2026-07-27"
+    },
+    {
+      "q": "fix getMatchingMethod false ambiguity for boxed primitive args",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/reflect/MethodUtils.java"
+      ],
+      "commit": "aae7f0e61c51040dbdc7556f9eca5786eb9f63bd",
+      "parent": "dfaea97de4dd175781eeb552ff9eb29db767acc3",
+      "date": "2026-06-23"
+    },
+    {
+      "q": "fix unescapeCsv bounds error on a single quote field",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/StringEscapeUtils.java"
+      ],
+      "commit": "6dbbbb308bb77ba9c0ddab1ae400ee2ff76026b4",
+      "parent": "c4c294b0e04024d361d710985f8500f7d2412232",
+      "date": "2026-06-21"
+    },
+    {
+      "q": "keep initials from splitting a supplementary code point",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/text/WordUtils.java"
+      ],
+      "commit": "6bef246b2f10699a56a3010bbc6fa11d241430c6",
+      "parent": "226bf3975afd430b6b74c23a0c9cbae9f9b90de5",
+      "date": "2026-06-20"
+    },
+    {
+      "q": "strip L suffix for oversized hex literals in createNumber",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/math/NumberUtils.java"
+      ],
+      "commit": "18063c1f6d935d60d0e7341d68434ab4c88a34ee",
+      "parent": "e10003978ba6bacb7b32c27816b68b858404e967",
+      "date": "2026-06-17"
+    },
+    {
+      "q": "Add tests to ensure nulls compare correctly",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/compare/ObjectToStringComparator.java"
+      ],
+      "commit": "60d4c9843891f07596d2caf52fb8689d80179344",
+      "parent": "3e111f128a1f5a2f1e7df78c5cd6e8206eada959",
+      "date": "2026-06-14"
+    },
+    {
+      "q": "reject doubled leading sign in createBigInteger",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/math/NumberUtils.java"
+      ],
+      "commit": "060ab31e517d856292e97428345821b5b289249a",
+      "parent": "44298fe0c0df0688827bcbf07677c3706de00f88",
+      "date": "2026-06-13"
+    },
+    {
+      "q": "fix lookup translator code point count for supplementary keys",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/text/translate/LookupTranslator.java"
+      ],
+      "commit": "80bf07c61721520ef12679fc394ac5584c1e9536",
+      "parent": "1e071b3dd5a16cd74b3dd991b7d0b03e581c8d7a",
+      "date": "2026-06-07"
+    },
+    {
+      "q": "NaN bypass in primitive double range validators.",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/Validate.java"
+      ],
+      "commit": "864dd6ea887fd394f15e3b55203d6f52f717373b",
+      "parent": "4b09471db039085a3114f79ece97ca7fd9bd6f1e",
+      "date": "2026-05-07"
+    },
+    {
+      "q": "Annotation lookup matches unrelated overloads via assignable-parameter resolution",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/reflect/MethodUtils.java"
+      ],
+      "commit": "daa17b8629a7a9921ffe42e7c2c0f0051af42571",
+      "parent": "0c7942f416ec7dbf163e72ce0a62a138f11822ad",
+      "date": "2026-05-07"
+    },
+    {
+      "q": "No need to end exception messages with an exclamation!",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/concurrent/BackgroundInitializer.java",
+        "src/main/java/org/apache/commons/lang3/concurrent/MultiBackgroundInitializer.java",
+        "src/main/java/org/apache/commons/lang3/concurrent/TimedSemaphore.java"
+      ],
+      "commit": "23a730b8ed392ba424cc275df793dcae88f4cebe",
+      "parent": "7138b8c001b9c60176598a21c0d15db43f8d8a1f",
+      "date": "2026-04-15"
+    },
+    {
+      "q": "Make stopInstant be in sync with stopTimeNanos for split",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/time/StopWatch.java"
+      ],
+      "commit": "aa47951bd0223d674d2b85d06ccc6f7f1749a682",
+      "parent": "185edc4b8594e20d81baad65a199a211e2137616",
+      "date": "2026-03-04"
+    },
+    {
+      "q": "Use a single return in indexesOf() methods",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/ArrayUtils.java"
+      ],
+      "commit": "becbcffffe673ad062b2b389a2a31dce7565841e",
+      "parent": "a4cf528306f96784ed9c8e4cacb59e128fea92b3",
+      "date": "2026-01-22"
+    },
+    {
+      "q": "Fix ClassNotFoundException message variable",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/ClassUtils.java"
+      ],
+      "commit": "b6224451728562b0a4b33b63e8589753b1e2a57c",
+      "parent": "c4ea2b0113b28b9d861acefc296f277e2eddaf9f",
+      "date": "2026-01-22"
+    },
+    {
+      "q": "Inline single use local variable",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/time/FastDateParser.java"
+      ],
+      "commit": "1db59d54a7863943014c3d6ed12f17e88f5d05a3",
+      "parent": "efe894332c981836e8953b6f2ffc7e2891e8b155",
+      "date": "2026-01-18"
+    },
+    {
+      "q": "Sort the available TimeZone IDs once.",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/time/FastDateParser.java",
+        "src/main/java/org/apache/commons/lang3/time/TimeZones.java"
+      ],
+      "commit": "47aea5993d289b82c7febdbf9b05ffaad31b6ec9",
+      "parent": "865a0297c3d96a247b35a7fed7895e1bfe2025aa",
+      "date": "2026-01-18"
+    },
+    {
+      "q": "Deprecate SOFT_MAX_ARRAY_LENGTH in favor of MAX_ARRAY_LENGTH",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/ArrayUtils.java"
+      ],
+      "commit": "d9de2fd5b8c65506b1ab14df631cc26ffcd647dc",
+      "parent": "037880852770c3124f8d61c2dbf2b31f34a75508",
+      "date": "2026-01-10"
+    },
+    {
+      "q": "Use for each on array",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/reflect/TypeUtils.java"
+      ],
+      "commit": "74e7fd172624111016e30bfa0258c68960afb9a0",
+      "parent": "05b0e0625f8ce6bf6b9622a5e5de7394a26902e8",
+      "date": "2025-12-31"
+    },
+    {
+      "q": "Improve handling of parameterized types and variable unrolling",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/reflect/TypeUtils.java"
+      ],
+      "commit": "8f8cc04e65506fbe79bbc5efa6f7d44d65f0dbf1",
+      "parent": "71d4f3d17f029c16e0783f39d1fbf1ad88bedacf",
+      "date": "2025-12-31"
+    },
+    {
+      "q": "Use interface in private method signature",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/ClassUtils.java"
+      ],
+      "commit": "3efb7c31e119c858f481aee8c7fdfdc75e80fff0",
+      "parent": "137e34041626ea1f19ec1bfec379eb6ca4257f55",
+      "date": "2025-12-26"
+    },
+    {
+      "q": "Make test Java15BugFastDateParserTest more lenient on Java 26-ea",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/SystemUtils.java"
+      ],
+      "commit": "1c05980f3d73efa1829b00f54b87eae520e65097",
+      "parent": "fd154dec975049e4dd22126194518245f4935692",
+      "date": "2025-12-19"
+    },
+    {
+      "q": "Remove redundant extends in generics",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/ObjectUtils.java"
+      ],
+      "commit": "45852e15ab292ca9d661a4253e82d0f215a67485",
+      "parent": "724d22920314964324a5676aba4285edcf58fe93",
+      "date": "2025-11-15"
+    },
+    {
+      "q": "Migrate from deprecated method",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/time/FastDateFormat.java"
+      ],
+      "commit": "817d50f746adfb485355d8d3a3ae4b9833ed3f63",
+      "parent": "b5cb40c16ce29ae3bf22c0434f9ed520ce2495f0",
+      "date": "2025-10-25"
+    },
+    {
+      "q": "Fix internal inverted logic in private isEnum() method and correct its usage in getFirstEnum()",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/EnumUtils.java"
+      ],
+      "commit": "6513eb0bbb4b3e8d427cce632f786c115f2a3516",
+      "parent": "756436b7b18febab0c5035257b211b52c009819c",
+      "date": "2025-09-29"
+    },
+    {
+      "q": "Deprecate obsolete system property constants.",
+      "q_ko": null,
+      "golden": [
+        "src/main/java/org/apache/commons/lang3/SystemProperties.java",
+        "src/main/java/org/apache/commons/lang3/SystemUtils.java"
+      ],
+      "commit": "0c58cce21dfc606f220403a691e7f36feb47ed43",
+      "parent": "b8d96173a1dbb837362d61a3e2c94527f0b2abea",
+      "date": "2025-09-18"
+    }
+  ]
+}

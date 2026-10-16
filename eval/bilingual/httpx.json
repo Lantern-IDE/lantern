@@ -1,0 +1,341 @@
+{
+  "project": "httpx",
+  "url": "https://github.com/encode/httpx",
+  "ref": "b5addb64f0161ff6bfe94c124ef76f6a1fba5254",
+  "made_by": "eval/bench/make.mjs",
+  "questions": [
+    {
+      "q": "Expose `FunctionAuth` in `__all__`",
+      "q_ko": null,
+      "golden": [
+        "httpx/__init__.py",
+        "httpx/_auth.py"
+      ],
+      "commit": "ae1b9f66238f75ced3ced5e4485408435de10768",
+      "parent": "ca097c96f97d8d2a5da09b8ca736c7e78a2467f6",
+      "date": "2025-12-10"
+    },
+    {
+      "q": "Display proxy protocol scheme on error",
+      "q_ko": null,
+      "golden": [
+        "httpx/_transports/default.py"
+      ],
+      "commit": "336204f0121a9aefdebac5cacd81f912bafe8057",
+      "parent": "6c7af967734bafd011164f2a1653abc87905a62b",
+      "date": "2025-06-02"
+    },
+    {
+      "q": "Fix `verify=False`, `cert=...` case.",
+      "q_ko": null,
+      "golden": [
+        "httpx/_config.py"
+      ],
+      "commit": "89599a9541af14bcf906fc4ed58ccbdf403802ba",
+      "parent": "8ecb86f0d74ffc52d4663214fae9526bee89358d",
+      "date": "2024-12-04"
+    },
+    {
+      "q": "Fix `extensions` type annotation.",
+      "q_ko": null,
+      "golden": [
+        "httpx/_models.py",
+        "httpx/_types.py"
+      ],
+      "commit": "a33c87852b8a0dddc65e5f739af1e0a6fca4b91f",
+      "parent": "ce7e14da27abba6574be9b3ea7cd5990556a9343",
+      "date": "2024-11-28"
+    },
+    {
+      "q": "Error on verify as str.",
+      "q_ko": null,
+      "golden": [
+        "httpx/_config.py"
+      ],
+      "commit": "ce7e14da27abba6574be9b3ea7cd5990556a9343",
+      "parent": "47f4a96ffaaaa07dca1614409549b5d7a6e7af49",
+      "date": "2024-11-28"
+    },
+    {
+      "q": "Handle empty zstd responses",
+      "q_ko": null,
+      "golden": [
+        "httpx/__version__.py",
+        "httpx/_decoders.py"
+      ],
+      "commit": "47f4a96ffaaaa07dca1614409549b5d7a6e7af49",
+      "parent": "189fc4bcbe5f314128775dec66a616ac9a31ad48",
+      "date": "2024-11-22"
+    },
+    {
+      "q": "Cleanup `Request` method parameter.",
+      "q_ko": null,
+      "golden": [
+        "httpx/_models.py"
+      ],
+      "commit": "66225539796d819b5114ead2fd5e4d61865ab708",
+      "parent": "12be5c44caa7a34bfe19f82eace5150ddeba2612",
+      "date": "2024-10-29"
+    },
+    {
+      "q": "add socks5h proxy support",
+      "q_ko": null,
+      "golden": [
+        "httpx/_config.py",
+        "httpx/_transports/default.py"
+      ],
+      "commit": "12be5c44caa7a34bfe19f82eace5150ddeba2612",
+      "parent": "e9cabc8e1deb6548c5c5e2f453e343d39a2a5321",
+      "date": "2024-10-29"
+    },
+    {
+      "q": "Just use default `safe=...` characters for `urlescape`",
+      "q_ko": null,
+      "golden": [
+        "httpx/_urls.py"
+      ],
+      "commit": "5dda2aa30692e8529555f57efa7bcd203a7d5ac1",
+      "parent": "544038155382473ce87b17ef2238c96e48dee700",
+      "date": "2024-10-28"
+    },
+    {
+      "q": "Review urlescape percent-safe set, and use + behavior for form spaces.",
+      "q_ko": null,
+      "golden": [
+        "httpx/_urlparse.py",
+        "httpx/_urls.py"
+      ],
+      "commit": "ba2e51215e4e619540f2a24282b84ed8a738e6fd",
+      "parent": "d293374b6603816420a2bb8e7f4fe5a5f09cbfcc",
+      "date": "2024-10-28"
+    },
+    {
+      "q": "Review URL percent escaping sets, from whatwg.",
+      "q_ko": null,
+      "golden": [
+        "httpx/_urlparse.py"
+      ],
+      "commit": "d293374b6603816420a2bb8e7f4fe5a5f09cbfcc",
+      "parent": "489fef48ba8619c7604376165c7e8007398e1b5d",
+      "date": "2024-10-28"
+    },
+    {
+      "q": "Clarified error when header value is None",
+      "q_ko": null,
+      "golden": [
+        "httpx/_utils.py"
+      ],
+      "commit": "49d74a2e7f773f88a84dd4af900d7a8543636ae2",
+      "parent": "2e01aa0075327c5c30632207e8b7a1961dda5303",
+      "date": "2024-09-26"
+    },
+    {
+      "q": "Improve InvalidURL error message.",
+      "q_ko": null,
+      "golden": [
+        "httpx/_urlparse.py"
+      ],
+      "commit": "7c0cda153d301bde9a011e1dd7157d7e2b20889d",
+      "parent": "beb501fc28cb24ef7cd584159bc6ac55d2244dea",
+      "date": "2024-07-26"
+    },
+    {
+      "q": "Use proxy ssl context consistently",
+      "q_ko": null,
+      "golden": [
+        "httpx/_transports/default.py"
+      ],
+      "commit": "88a81c5d31a4a8b4bd0a860dedd3bb12dc09ff86",
+      "parent": "fa6dac8383541669f42086d4f07c71b0f8d6a279",
+      "date": "2024-05-10"
+    },
+    {
+      "q": "Keep clients in sync",
+      "q_ko": null,
+      "golden": [
+        "httpx/_client.py"
+      ],
+      "commit": "f3eb3c90fdd19d2e4c5239e19a3588d072ff53fb",
+      "parent": "7e10342c2ad44955582e4fef96470f3e653347d4",
+      "date": "2024-02-29"
+    },
+    {
+      "q": "Update /advanced/#<anchor> links -> /advanced/clients/#<anchor>",
+      "q_ko": null,
+      "golden": [
+        "httpx/_client.py"
+      ],
+      "commit": "6045186f7d3a665b965c13dec413e3a346b1a01d",
+      "parent": "6d852d319acd5d97caf14037dff15ede04b37542",
+      "date": "2024-02-28"
+    },
+    {
+      "q": "Fix RFC 2069 mode digest authentication",
+      "q_ko": null,
+      "golden": [
+        "httpx/_auth.py"
+      ],
+      "commit": "99cba6ac642b12f0331d069ae324402c54c4c600",
+      "parent": "ca51b4532a4495c38c8abf1a393dbd80099deae3",
+      "date": "2024-01-10"
+    },
+    {
+      "q": "Fixed `iter_text` adding an empty string",
+      "q_ko": null,
+      "golden": [
+        "httpx/_decoders.py",
+        "httpx/_models.py"
+      ],
+      "commit": "1e110964736a95d822144390b99d7ecf17fca527",
+      "parent": "90538a3b4610ba49ce16c997bcfdb9101f9503be",
+      "date": "2023-12-11"
+    },
+    {
+      "q": "Lazily import 'netrc' module",
+      "q_ko": null,
+      "golden": [
+        "httpx/_auth.py"
+      ],
+      "commit": "ad06741d1e0cfe4f5143c957c54f9a3fb8002e76",
+      "parent": "9751f76186c1c89d71baa571ebd4a5b6be76d117",
+      "date": "2023-10-30"
+    },
+    {
+      "q": "Drop unneccessary `binascii` import",
+      "q_ko": null,
+      "golden": [
+        "httpx/_multipart.py"
+      ],
+      "commit": "9751f76186c1c89d71baa571ebd4a5b6be76d117",
+      "parent": "31a7bb381ac9f5d99e3e2dc68ffaff4b5d23faca",
+      "date": "2023-10-30"
+    },
+    {
+      "q": "Add support for Python 3.12",
+      "q_ko": null,
+      "golden": [
+        "httpx/_compat.py",
+        "httpx/_config.py"
+      ],
+      "commit": "7c9db49f0c6c454fa6d0d7bdbd0d71c0a0cbacfd",
+      "parent": "59df8190a4c72c58238dda315ad446f1c132dcdc",
+      "date": "2023-09-21"
+    },
+    {
+      "q": "Raise ValueError on `Response.encoding` being set after `Response.text` has been accessed",
+      "q_ko": null,
+      "golden": [
+        "httpx/_models.py"
+      ],
+      "commit": "59df8190a4c72c58238dda315ad446f1c132dcdc",
+      "parent": "e4241c6155c8a85789566b8fe10fa2291eea20f4",
+      "date": "2023-09-19"
+    },
+    {
+      "q": "More robust check for upload files in binary mode",
+      "q_ko": null,
+      "golden": [
+        "httpx/_multipart.py"
+      ],
+      "commit": "472597fb6b63fc112f2e6ab52bab871a10b08929",
+      "parent": "26dc39213a2520f86b9b4e36bfa2eb2974116d5b",
+      "date": "2023-04-20"
+    },
+    {
+      "q": "NO_PROXY should support IPv4, IPv6 and localhost",
+      "q_ko": null,
+      "golden": [
+        "httpx/_utils.py"
+      ],
+      "commit": "15d09a3bbc20372cd87e48f17f7c9381c8220a0f",
+      "parent": "7d7c4f15b8784e4a550d974139acfa64193b32c2",
+      "date": "2023-04-19"
+    },
+    {
+      "q": "Change LineDecoder to match stdlib splitlines, resulting in significant speed up",
+      "q_ko": null,
+      "golden": [
+        "httpx/_decoders.py"
+      ],
+      "commit": "85c5898d8e48011ab7b660fe8aac58910e45c84b",
+      "parent": "e486fbceea7a933baa4b52852681f9c6ac80ac96",
+      "date": "2023-03-16"
+    },
+    {
+      "q": "Use '%20' for encoding spaces in query parameters.",
+      "q_ko": null,
+      "golden": [
+        "httpx/_urlparse.py",
+        "httpx/_urls.py"
+      ],
+      "commit": "a6af45edac51dce888e1e1f0ebf344f126a1c66c",
+      "parent": "57daabf673705954afa94686c0002801c93d31f3",
+      "date": "2023-01-10"
+    },
+    {
+      "q": "Raise TypeError if content is passed a 'dict' instance.",
+      "q_ko": null,
+      "golden": [
+        "httpx/_content.py"
+      ],
+      "commit": "a8dd079be7028b2bf4cdbbbc3a6793a5f78ecc85",
+      "parent": "563a1031f5bd37445d2fdbf622ba5cab926207c9",
+      "date": "2022-12-11"
+    },
+    {
+      "q": "Add back in URL.raw with NamedTuple",
+      "q_ko": null,
+      "golden": [
+        "httpx/_types.py",
+        "httpx/_urls.py"
+      ],
+      "commit": "40a0da093b423ca37feee2b85df7c3f0ce3cc96c",
+      "parent": "933551c51985375423ca60a880210aef34f1c620",
+      "date": "2022-12-02"
+    },
+    {
+      "q": "Remove typeshed iscoroutine workaround",
+      "q_ko": null,
+      "golden": [
+        "httpx/_compat.py",
+        "httpx/_transports/mock.py"
+      ],
+      "commit": "75a13a15aa8fea10367b791747a89463a978fa3e",
+      "parent": "1ba3e2ad4c08772d1a826a192410fa0f1e61f171",
+      "date": "2022-11-29"
+    },
+    {
+      "q": "Switch `extensions` from `Dict` to `Mapping`.",
+      "q_ko": null,
+      "golden": [
+        "httpx/_client.py",
+        "httpx/_types.py"
+      ],
+      "commit": "1ba3e2ad4c08772d1a826a192410fa0f1e61f171",
+      "parent": "8e5e3b871be2eb05f3c0775940fc32e266f3122d",
+      "date": "2022-11-28"
+    },
+    {
+      "q": "Drop .read/.aread from SyncByteStream/AsyncByteStream",
+      "q_ko": null,
+      "golden": [
+        "httpx/_content.py",
+        "httpx/_types.py"
+      ],
+      "commit": "8752e2672c451f66040c8ed533456872a94dcf0f",
+      "parent": "9f9deea944a96175bf50f1fa078849c61cbdb7da",
+      "date": "2022-11-07"
+    },
+    {
+      "q": "Allow str content for multipart upload files",
+      "q_ko": null,
+      "golden": [
+        "httpx/_multipart.py",
+        "httpx/_types.py"
+      ],
+      "commit": "0ebe9259aca97baf4cadf112b0aa47152bec426c",
+      "parent": "770d4f2254acd5f4c67eaf25634f70ec1640c443",
+      "date": "2022-10-06"
+    }
+  ]
+}
