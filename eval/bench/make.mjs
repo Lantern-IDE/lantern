@@ -2,8 +2,8 @@
 //   질문 = 커밋 메시지 제목, 정답 파일 = 그 커밋이 고친 코드 파일, 평가 시점 = 그 커밋의 부모.
 // 사람이 정답을 고르지 않으므로 엔진을 아는 사람의 편향이 들어가지 않고, 누구나 같은 커밋으로 재현할 수 있다.
 //
-// 사용: node eval/bench/make.mjs --repo <클론 폴더> --name flask --url https://github.com/pallets/flask [--count 20]
-// 결과: eval/bench/<name>.json (고정한 커밋과 질문 목록)
+// 사용: node eval/bench/make.mjs --repo <클론 폴더> --name flask --url https://github.com/pallets/flask [--count 20] [--ref <커밋>] [--out <폴더>]
+// 결과: <폴더, 기본 eval/bench>/<name>.json (고정한 커밋과 질문 목록)
 
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -21,6 +21,7 @@ const NAME = opt("name", path.basename(REPO));
 const URL = opt("url", "");
 const COUNT = Number(opt("count", "20"));
 const REF = opt("ref", "HEAD");
+const OUT = path.resolve(opt("out", HERE));
 if (!fs.existsSync(path.join(REPO, ".git"))) {
   console.error("--repo <git 클론 폴더>가 필요합니다");
   process.exit(2);
@@ -28,15 +29,27 @@ if (!fs.existsSync(path.join(REPO, ".git"))) {
 const git = (...a) => execFileSync("git", ["-C", REPO, ...a], { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
 
 // 맥락 엔진이 읽는 언어와 같은 기준
-const CODE = /\.(ts|tsx|js|jsx|mjs|cjs|py|rs|java|go|cs)$/;
+const CODE = /\.(ts|mts|cts|tsx|js|jsx|mjs|cjs|py|pyi|rs|java|go|cs|kt|kts|c|h|cpp|cc|cxx|hpp|hh|hxx|ipp)$/;
 const isTest = (p) => {
   const l = p.toLowerCase();
   const file = p.split("/").pop() ?? "";
   const stem = file.replace(/\.[^.]+$/, "");
-  return /(^|\/)(tests?|__tests__|spec)\//.test(l) || /\.(test|spec)\./.test(l) || /_test\./.test(l) || file.startsWith("test_") || /(Test|Tests|IT)$/.test(stem);
+  // Kotlin·Gradle의 테스트 소스 폴더(jvmTest/, commonTest/), 테스트 지원 모듈(okhttp-testing-support/, testFixtures/),
+  // 테스트 도우미(…Tester, …TestRule)도 테스트로 본다
+  return (
+    /(^|\/)(tests?|__tests__|spec)\//.test(l) ||
+    /(^|\/)[a-z]+Test\//.test(p) ||
+    /(^|\/)[\w-]*test(ing)?[-_]?(support|fixtures|utils?)\//.test(l) ||
+    /\.(test|spec)\./.test(l) ||
+    /_test\./.test(l) ||
+    file.startsWith("test_") ||
+    /(Test|Tests|IT|Tester|TestRule)$/.test(stem)
+  );
 };
 // 질문으로 쓰기 어려운 커밋 (버전·문서·빌드·되돌리기 등)
-const SKIP = /^(merge|bump|release|revert|chore|docs?|ci|build|style|test|tests|typo|format|lint|deps|update dependencies|prepare|version)\b/i;
+const SKIP = /^(merge|bump|release|revert|chore|docs?|ci|build|style|test|tests|typo|format|lint|deps|update dependencies|update (plugin|dependency|module)|prepare|version)\b/i;
+/** 빌드 스크립트·빌드 로직, 예제·문서·시험용 프로젝트(vite playground)는 코드 확장자여도 정답으로 쓰지 않는다 */
+const BUILD = /(\.gradle\.kts$|(^|\/)(buildSrc|build-logic|examples?|docs?|playground|scripts|benchmarks?)\/)/;
 // 도구·문서 손질 (코드 동작을 묻는 질문이 되지 않는다)
 const SKIP_ANY = /\b(ruff|noqa|lint|linter|eslint|prettier|mypy|pyright|flake8|checkstyle|spotbugs|pmd|javadoc|docs?|docstrings?|typos?|changelog|readme|copyright|license|whitespace|formatting|comments?|unused|ternary)\b/i;
 /** 같은 정답 파일 묶음은 이 수까지만 (한 파일에 몰린 이력이 결과를 좌우하지 않게) */
@@ -47,22 +60,22 @@ function clean(subject) {
   return subject
     .replace(/^\[[^\]]*\]\s*/, "")
     .replace(/^[a-z]+(\([^)]*\))?!?:\s*/i, "")
-    .replace(/\s*\(#\d+\)\s*$/, "")
+    .replace(/(\s*[([]#\d+[)\]])+\s*$/, "")
     .replace(/\s*#\d+\s*$/, "")
     .trim();
 }
 
 const head = git("rev-parse", REF).trim();
-const log = git("log", "--no-merges", "--format=@@%H %P%n%s", "--name-status", "-n", "4000", head);
+const log = git("log", "--no-merges", "--format=@@%H %cs %P%n%s", "--name-status", "-n", "4000", head);
 const questions = [];
 for (const block of log.split("@@").slice(1)) {
   if (questions.length >= COUNT) break;
   const [first, subject, ...rest] = block.split("\n");
-  const [sha, ...parents] = first.trim().split(" ");
+  const [sha, date, ...parents] = first.trim().split(" ");
   if (parents.length !== 1 || !subject || SKIP.test(subject.trim()) || SKIP_ANY.test(subject)) continue;
   const changes = rest.filter(Boolean).map((l) => l.split("\t"));
   if (changes.length > 6) continue; // 큰 리팩터링은 질문 하나로 가리키기 어렵다
-  const code = changes.filter(([, p]) => p && CODE.test(p) && !isTest(p));
+  const code = changes.filter(([, p]) => p && CODE.test(p) && !BUILD.test(p) && !isTest(p));
   // 새로 만든·지운·옮긴 파일은 부모 시점에 없거나 이름이 달라 찾을 수 없다
   if (!code.length || code.length > 3 || code.some(([s]) => s !== "M")) continue;
   const golden = code.map(([, p]) => p);
@@ -76,10 +89,11 @@ for (const block of log.split("@@").slice(1)) {
   if (leaks) continue;
   const key = [...golden].sort().join("|");
   if (questions.some((x) => x.q === q) || questions.filter((x) => [...x.golden].sort().join("|") === key).length >= MAX_SAME_GOLDEN) continue;
-  questions.push({ q, q_ko: null, golden, commit: sha, parent: parents[0] });
+  questions.push({ q, q_ko: null, golden, commit: sha, parent: parents[0], date });
 }
 
-const file = path.join(HERE, `${NAME}.json`);
+fs.mkdirSync(OUT, { recursive: true });
+const file = path.join(OUT, `${NAME}.json`);
 // 다시 만들어도 사람이 옮긴 한국어 질문은 같은 커밋이면 그대로 둔다
 if (fs.existsSync(file)) {
   const prev = new Map(JSON.parse(fs.readFileSync(file, "utf8")).questions.map((x) => [x.commit, x.q_ko]));
