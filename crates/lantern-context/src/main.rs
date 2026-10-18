@@ -27,6 +27,8 @@ enum Cmd {
     },
     /// 심볼 검색
     Search {
+        /// '-'로 시작해도 질문으로 받음 (예: "--seq 모드에서 …")
+        #[arg(allow_hyphen_values = true)]
         query: String,
         #[arg(long, default_value_t = 20)]
         limit: usize,
@@ -37,6 +39,8 @@ enum Cmd {
     Refs { name: String },
     /// 질문에 맞는 맥락 조립
     Context {
+        /// '-'로 시작해도 질문으로 받음 (예: "--seq 모드에서 …")
+        #[arg(allow_hyphen_values = true)]
         query: String,
         #[arg(long)]
         file: Option<String>,
