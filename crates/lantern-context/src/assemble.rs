@@ -159,6 +159,12 @@ pub fn normalize_path(root: &Path, path: &str) -> String {
     rel.to_string_lossy().replace('\\', "/").trim_start_matches("./").to_string()
 }
 
+/// 평가용: 맥락 조립 단계를 하나씩 끈다 (`LANTERN_ABLATE=dict,name,graph,cochange,copies`).
+/// 단계마다 결과에 얼마나 기여하는지 재려고 둔 것이라 앱은 이 값을 쓰지 않는다.
+fn ablated(step: &str) -> bool {
+    std::env::var("LANTERN_ABLATE").is_ok_and(|v| v.split(',').any(|s| s.trim() == step))
+}
+
 pub fn assemble(store: &Store, root: &Path, req: &ContextRequest) -> Result<ContextResult> {
     assemble_with(store, root, req, &[])
 }
@@ -171,7 +177,10 @@ pub fn assemble_with(store: &Store, root: &Path, req: &ContextRequest, semantic:
 
     // 1. 시드: 전문 검색. 질문의 단어와, 한국어 개발 용어에서 옮긴 영어 단어를 따로 찾고
     //    옮긴 단어 쪽은 약하게 친다 (validate, check 같은 흔한 단어가 질문의 핵심어를 누르지 않게).
-    let (asked, expanded): (Vec<_>, Vec<_>) = terms.iter().cloned().partition(|t| !t.expanded);
+    let (asked, mut expanded): (Vec<_>, Vec<_>) = terms.iter().cloned().partition(|t| !t.expanded);
+    if ablated("dict") {
+        expanded.clear();
+    }
     for (group, weight) in [(&asked, W_SEARCH), (&expanded, W_SEARCH_EXPANDED)] {
         if group.is_empty() {
             continue;
@@ -185,7 +194,7 @@ pub fn assemble_with(store: &Store, root: &Path, req: &ContextRequest, semantic:
     }
 
     // 1-2. 질문에 심볼 이름이 그대로 나오면 가산
-    for ident in tokenize::identifiers(&req.query).filter(|i| i.len() >= 3) {
+    for ident in tokenize::identifiers(&req.query).filter(|i| i.len() >= 3 && !ablated("name")) {
         let defs = store.symbols_by_name(ident, MAX_AMBIGUOUS_DEFS as usize)?;
         let n = defs.len().max(1) as f64;
         for d in defs {
@@ -218,7 +227,7 @@ pub fn assemble_with(store: &Store, root: &Path, req: &ContextRequest, semantic:
     // 2. 그래프 확장 (1홉)
     let seeds: Vec<(SymbolRow, f64)> =
         cands.ranked().into_iter().take(SEED_COUNT).map(|c| (c.sym.clone(), c.score)).collect();
-    for (seed, score) in &seeds {
+    for (seed, score) in seeds.iter().filter(|_| !ablated("graph")) {
         for name in store.callee_names(seed.id)?.into_iter().take(30) {
             if name == seed.name {
                 continue;
@@ -253,6 +262,9 @@ pub fn assemble_with(store: &Store, root: &Path, req: &ContextRequest, semantic:
     let mut partner: HashMap<String, (f64, String)> = HashMap::new();
     let mut seed_files: Vec<&str> = seeds.iter().map(|(s, _)| s.path.as_str()).collect();
     seed_files.dedup();
+    if ablated("cochange") {
+        seed_files.clear();
+    }
     for f in seed_files.into_iter().take(5) {
         let co = store.cochanged(f, 10)?;
         let max = co.first().map(|(_, n)| *n).unwrap_or(1).max(1) as f64;
@@ -287,7 +299,9 @@ pub fn assemble_with(store: &Store, root: &Path, req: &ContextRequest, semantic:
     }
 
     // 3-3. 보관용 사본: 같은 코드가 예산을 나눠 먹지 않게 오래 손대지 않은 쪽을 빼거나 낮춘다
-    demote_stale_copies(store, &mut cands)?;
+    if !ablated("copies") {
+        demote_stale_copies(store, &mut cands)?;
+    }
 
     // 4~5. 순위와 예산 내 압축
     let budget = req.budget_tokens.max(500);
