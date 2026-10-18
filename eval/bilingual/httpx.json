@@ -13,7 +13,8 @@
       ],
       "commit": "ae1b9f66238f75ced3ced5e4485408435de10768",
       "parent": "ca097c96f97d8d2a5da09b8ca736c7e78a2467f6",
-      "date": "2025-12-10"
+      "date": "2025-12-10",
+      "q_ko_draft": "`FunctionAuth`도 `__all__`에 노출해줘"
     },
     {
       "q": "Display proxy protocol scheme on error",
@@ -23,7 +24,8 @@
       ],
       "commit": "336204f0121a9aefdebac5cacd81f912bafe8057",
       "parent": "6c7af967734bafd011164f2a1653abc87905a62b",
-      "date": "2025-06-02"
+      "date": "2025-06-02",
+      "q_ko_draft": "에러 날 때 프록시 프로토콜 scheme 보여주려면 어디 고쳐야 해?"
     },
     {
       "q": "Fix `verify=False`, `cert=...` case.",
@@ -33,7 +35,8 @@
       ],
       "commit": "89599a9541af14bcf906fc4ed58ccbdf403802ba",
       "parent": "8ecb86f0d74ffc52d4663214fae9526bee89358d",
-      "date": "2024-12-04"
+      "date": "2024-12-04",
+      "q_ko_draft": "`verify=False`에 `cert=...`까지 준 경우 버그"
     },
     {
       "q": "Fix `extensions` type annotation.",
@@ -44,7 +47,8 @@
       ],
       "commit": "a33c87852b8a0dddc65e5f739af1e0a6fca4b91f",
       "parent": "ce7e14da27abba6574be9b3ea7cd5990556a9343",
-      "date": "2024-11-28"
+      "date": "2024-11-28",
+      "q_ko_draft": "`extensions` 타입 어노테이션 고쳐줘"
     },
     {
       "q": "Error on verify as str.",
@@ -54,7 +58,8 @@
       ],
       "commit": "ce7e14da27abba6574be9b3ea7cd5990556a9343",
       "parent": "47f4a96ffaaaa07dca1614409549b5d7a6e7af49",
-      "date": "2024-11-28"
+      "date": "2024-11-28",
+      "q_ko_draft": "verify에 str이 들어오면 에러 내는 건 어디서 해?"
     },
     {
       "q": "Handle empty zstd responses",
@@ -65,7 +70,8 @@
       ],
       "commit": "47f4a96ffaaaa07dca1614409549b5d7a6e7af49",
       "parent": "189fc4bcbe5f314128775dec66a616ac9a31ad48",
-      "date": "2024-11-22"
+      "date": "2024-11-22",
+      "q_ko_draft": "빈 zstd 응답은 어디서 처리해?"
     },
     {
       "q": "Cleanup `Request` method parameter.",
@@ -75,7 +81,8 @@
       ],
       "commit": "66225539796d819b5114ead2fd5e4d61865ab708",
       "parent": "12be5c44caa7a34bfe19f82eace5150ddeba2612",
-      "date": "2024-10-29"
+      "date": "2024-10-29",
+      "q_ko_draft": "`Request`의 method 파라미터 정리해줘"
     },
     {
       "q": "add socks5h proxy support",
@@ -86,7 +93,8 @@
       ],
       "commit": "12be5c44caa7a34bfe19f82eace5150ddeba2612",
       "parent": "e9cabc8e1deb6548c5c5e2f453e343d39a2a5321",
-      "date": "2024-10-29"
+      "date": "2024-10-29",
+      "q_ko_draft": "socks5h 프록시 지원 추가"
     },
     {
       "q": "Just use default `safe=...` characters for `urlescape`",
@@ -96,7 +104,8 @@
       ],
       "commit": "5dda2aa30692e8529555f57efa7bcd203a7d5ac1",
       "parent": "544038155382473ce87b17ef2238c96e48dee700",
-      "date": "2024-10-28"
+      "date": "2024-10-28",
+      "q_ko_draft": "`urlescape`는 그냥 기본 `safe=...` 문자 쓰게 해줘"
     },
     {
       "q": "Review urlescape percent-safe set, and use + behavior for form spaces.",
@@ -107,7 +116,8 @@
       ],
       "commit": "ba2e51215e4e619540f2a24282b84ed8a738e6fd",
       "parent": "d293374b6603816420a2bb8e7f4fe5a5f09cbfcc",
-      "date": "2024-10-28"
+      "date": "2024-10-28",
+      "q_ko_draft": "urlescape의 퍼센트 인코딩 안 하는 문자 집합 다시 보고, form 공백은 +로 처리하게 해줘"
     },
     {
       "q": "Review URL percent escaping sets, from whatwg.",
@@ -117,7 +127,8 @@
       ],
       "commit": "d293374b6603816420a2bb8e7f4fe5a5f09cbfcc",
       "parent": "489fef48ba8619c7604376165c7e8007398e1b5d",
-      "date": "2024-10-28"
+      "date": "2024-10-28",
+      "q_ko_draft": "whatwg 기준으로 URL 퍼센트 이스케이프 문자 집합 재검토"
     },
     {
       "q": "Clarified error when header value is None",
@@ -127,7 +138,8 @@
       ],
       "commit": "49d74a2e7f773f88a84dd4af900d7a8543636ae2",
       "parent": "2e01aa0075327c5c30632207e8b7a1961dda5303",
-      "date": "2024-09-26"
+      "date": "2024-09-26",
+      "q_ko_draft": "헤더 값이 None일 때 에러 메시지 더 명확하게"
     },
     {
       "q": "Improve InvalidURL error message.",
@@ -137,7 +149,8 @@
       ],
       "commit": "7c0cda153d301bde9a011e1dd7157d7e2b20889d",
       "parent": "beb501fc28cb24ef7cd584159bc6ac55d2244dea",
-      "date": "2024-07-26"
+      "date": "2024-07-26",
+      "q_ko_draft": "InvalidURL 에러 메시지 개선하려면 어디를 고쳐야 해?"
     },
     {
       "q": "Use proxy ssl context consistently",
@@ -147,7 +160,8 @@
       ],
       "commit": "88a81c5d31a4a8b4bd0a860dedd3bb12dc09ff86",
       "parent": "fa6dac8383541669f42086d4f07c71b0f8d6a279",
-      "date": "2024-05-10"
+      "date": "2024-05-10",
+      "q_ko_draft": "프록시 ssl context를 일관되게 안 쓰는 문제"
     },
     {
       "q": "Keep clients in sync",
@@ -157,7 +171,8 @@
       ],
       "commit": "f3eb3c90fdd19d2e4c5239e19a3588d072ff53fb",
       "parent": "7e10342c2ad44955582e4fef96470f3e653347d4",
-      "date": "2024-02-29"
+      "date": "2024-02-29",
+      "q_ko_draft": "클라이언트들끼리 어긋나지 않게 맞춰줘"
     },
     {
       "q": "Update /advanced/#<anchor> links -> /advanced/clients/#<anchor>",
@@ -167,7 +182,8 @@
       ],
       "commit": "6045186f7d3a665b965c13dec413e3a346b1a01d",
       "parent": "6d852d319acd5d97caf14037dff15ede04b37542",
-      "date": "2024-02-28"
+      "date": "2024-02-28",
+      "q_ko_draft": "/advanced/#<anchor> 링크를 /advanced/clients/#<anchor>로 바꿔줘"
     },
     {
       "q": "Fix RFC 2069 mode digest authentication",
@@ -177,7 +193,8 @@
       ],
       "commit": "99cba6ac642b12f0331d069ae324402c54c4c600",
       "parent": "ca51b4532a4495c38c8abf1a393dbd80099deae3",
-      "date": "2024-01-10"
+      "date": "2024-01-10",
+      "q_ko_draft": "RFC 2069 모드 digest 인증 버그 어디서 고쳐?"
     },
     {
       "q": "Fixed `iter_text` adding an empty string",
@@ -188,7 +205,8 @@
       ],
       "commit": "1e110964736a95d822144390b99d7ecf17fca527",
       "parent": "90538a3b4610ba49ce16c997bcfdb9101f9503be",
-      "date": "2023-12-11"
+      "date": "2023-12-11",
+      "q_ko_draft": "`iter_text`가 빈 문자열을 끼워 넣는 문제"
     },
     {
       "q": "Lazily import 'netrc' module",
@@ -198,7 +216,8 @@
       ],
       "commit": "ad06741d1e0cfe4f5143c957c54f9a3fb8002e76",
       "parent": "9751f76186c1c89d71baa571ebd4a5b6be76d117",
-      "date": "2023-10-30"
+      "date": "2023-10-30",
+      "q_ko_draft": "'netrc' 모듈은 필요할 때 import하게 해줘"
     },
     {
       "q": "Drop unneccessary `binascii` import",
@@ -208,7 +227,8 @@
       ],
       "commit": "9751f76186c1c89d71baa571ebd4a5b6be76d117",
       "parent": "31a7bb381ac9f5d99e3e2dc68ffaff4b5d23faca",
-      "date": "2023-10-30"
+      "date": "2023-10-30",
+      "q_ko_draft": "불필요한 `binascii` import 제거"
     },
     {
       "q": "Add support for Python 3.12",
@@ -219,7 +239,8 @@
       ],
       "commit": "7c9db49f0c6c454fa6d0d7bdbd0d71c0a0cbacfd",
       "parent": "59df8190a4c72c58238dda315ad446f1c132dcdc",
-      "date": "2023-09-21"
+      "date": "2023-09-21",
+      "q_ko_draft": "Python 3.12 지원 추가하려면 어디를 손봐야 해?"
     },
     {
       "q": "Raise ValueError on `Response.encoding` being set after `Response.text` has been accessed",
@@ -229,7 +250,8 @@
       ],
       "commit": "59df8190a4c72c58238dda315ad446f1c132dcdc",
       "parent": "e4241c6155c8a85789566b8fe10fa2291eea20f4",
-      "date": "2023-09-19"
+      "date": "2023-09-19",
+      "q_ko_draft": "`Response.text`에 접근한 뒤 `Response.encoding`을 설정하면 ValueError 내게 해줘"
     },
     {
       "q": "More robust check for upload files in binary mode",
@@ -239,7 +261,8 @@
       ],
       "commit": "472597fb6b63fc112f2e6ab52bab871a10b08929",
       "parent": "26dc39213a2520f86b9b4e36bfa2eb2974116d5b",
-      "date": "2023-04-20"
+      "date": "2023-04-20",
+      "q_ko_draft": "업로드 파일이 바이너리 모드인지 더 확실하게 체크"
     },
     {
       "q": "NO_PROXY should support IPv4, IPv6 and localhost",
@@ -249,7 +272,8 @@
       ],
       "commit": "15d09a3bbc20372cd87e48f17f7c9381c8220a0f",
       "parent": "7d7c4f15b8784e4a550d974139acfa64193b32c2",
-      "date": "2023-04-19"
+      "date": "2023-04-19",
+      "q_ko_draft": "NO_PROXY에서 IPv4, IPv6, localhost 지원하려면 어디를 봐야 해?"
     },
     {
       "q": "Change LineDecoder to match stdlib splitlines, resulting in significant speed up",
@@ -259,7 +283,8 @@
       ],
       "commit": "85c5898d8e48011ab7b660fe8aac58910e45c84b",
       "parent": "e486fbceea7a933baa4b52852681f9c6ac80ac96",
-      "date": "2023-03-16"
+      "date": "2023-03-16",
+      "q_ko_draft": "LineDecoder를 표준 라이브러리 splitlines에 맞게 바꿔서 속도 크게 올려줘"
     },
     {
       "q": "Use '%20' for encoding spaces in query parameters.",
@@ -270,7 +295,8 @@
       ],
       "commit": "a6af45edac51dce888e1e1f0ebf344f126a1c66c",
       "parent": "57daabf673705954afa94686c0002801c93d31f3",
-      "date": "2023-01-10"
+      "date": "2023-01-10",
+      "q_ko_draft": "쿼리 파라미터 공백은 '%20'으로 인코딩"
     },
     {
       "q": "Raise TypeError if content is passed a 'dict' instance.",
@@ -280,7 +306,8 @@
       ],
       "commit": "a8dd079be7028b2bf4cdbbbc3a6793a5f78ecc85",
       "parent": "563a1031f5bd37445d2fdbf622ba5cab926207c9",
-      "date": "2022-12-11"
+      "date": "2022-12-11",
+      "q_ko_draft": "content에 'dict' 인스턴스 넘기면 TypeError 내는 건 어디서 해?"
     },
     {
       "q": "Add back in URL.raw with NamedTuple",
@@ -291,7 +318,8 @@
       ],
       "commit": "40a0da093b423ca37feee2b85df7c3f0ce3cc96c",
       "parent": "933551c51985375423ca60a880210aef34f1c620",
-      "date": "2022-12-02"
+      "date": "2022-12-02",
+      "q_ko_draft": "URL.raw를 NamedTuple로 다시 넣어줘"
     },
     {
       "q": "Remove typeshed iscoroutine workaround",
@@ -302,7 +330,8 @@
       ],
       "commit": "75a13a15aa8fea10367b791747a89463a978fa3e",
       "parent": "1ba3e2ad4c08772d1a826a192410fa0f1e61f171",
-      "date": "2022-11-29"
+      "date": "2022-11-29",
+      "q_ko_draft": "typeshed iscoroutine 우회 코드 제거"
     },
     {
       "q": "Switch `extensions` from `Dict` to `Mapping`.",
@@ -313,7 +342,8 @@
       ],
       "commit": "1ba3e2ad4c08772d1a826a192410fa0f1e61f171",
       "parent": "8e5e3b871be2eb05f3c0775940fc32e266f3122d",
-      "date": "2022-11-28"
+      "date": "2022-11-28",
+      "q_ko_draft": "`extensions`를 `Dict`에서 `Mapping`으로 바꾸려면 어디 고쳐야 해?"
     },
     {
       "q": "Drop .read/.aread from SyncByteStream/AsyncByteStream",
@@ -324,7 +354,8 @@
       ],
       "commit": "8752e2672c451f66040c8ed533456872a94dcf0f",
       "parent": "9f9deea944a96175bf50f1fa078849c61cbdb7da",
-      "date": "2022-11-07"
+      "date": "2022-11-07",
+      "q_ko_draft": "SyncByteStream/AsyncByteStream에서 .read/.aread 제거"
     },
     {
       "q": "Allow str content for multipart upload files",
@@ -335,7 +366,8 @@
       ],
       "commit": "0ebe9259aca97baf4cadf112b0aa47152bec426c",
       "parent": "770d4f2254acd5f4c67eaf25634f70ec1640c443",
-      "date": "2022-10-06"
+      "date": "2022-10-06",
+      "q_ko_draft": "multipart 업로드 파일 content로 str도 받으려면 어디 봐야 해?"
     }
   ]
 }

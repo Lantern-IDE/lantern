@@ -12,7 +12,8 @@
       ],
       "commit": "8d415e6af9cd50a8ae27331a53b4aaf9f7e24612",
       "parent": "b16dd7787807f7f15e5fb1a3e39b7d190c312b2e",
-      "date": "2026-10-15"
+      "date": "2026-10-15",
+      "q_ko_draft": "matcher 콜백이 headers 인스턴스에 바인딩되게 해줘"
     },
     {
       "q": "remove progress event listeners on request completion",
@@ -22,7 +23,8 @@
       ],
       "commit": "b16dd7787807f7f15e5fb1a3e39b7d190c312b2e",
       "parent": "790b2ca8b6d8486dde3ce54cda20990ba91b0831",
-      "date": "2026-10-15"
+      "date": "2026-10-15",
+      "q_ko_draft": "요청 끝나면 progress 이벤트 리스너 제거하는 건 어디서 해?"
     },
     {
       "q": "stop reusing sessions after GOAWAY",
@@ -32,7 +34,8 @@
       ],
       "commit": "43968f294eaf79dabf0fcc2c05fd9add6a4faf12",
       "parent": "2a9489df3eb07e7d2cba2046efd30df8a6d0b954",
-      "date": "2026-10-13"
+      "date": "2026-10-13",
+      "q_ko_draft": "GOAWAY 이후에도 세션을 계속 재사용하는 문제"
     },
     {
       "q": "reduce request configuration merge overhead",
@@ -43,7 +46,8 @@
       ],
       "commit": "2a9489df3eb07e7d2cba2046efd30df8a6d0b954",
       "parent": "b0842e8d40362b1d31decb6c1728b15fff6d3a5f",
-      "date": "2026-10-13"
+      "date": "2026-10-13",
+      "q_ko_draft": "요청 설정 병합 오버헤드 줄이기"
     },
     {
       "q": "restore numeric-string interceptor IDs",
@@ -53,7 +57,8 @@
       ],
       "commit": "a07c81a53c18684f72c5a47a5fc970c11797314f",
       "parent": "1a94bdbdf0518f3adbeada510b747aff80847ed7",
-      "date": "2026-10-09"
+      "date": "2026-10-09",
+      "q_ko_draft": "인터셉터 ID를 예전처럼 숫자 문자열로 되돌려줘"
     },
     {
       "q": "decode percent-encoded Base64 data URLs",
@@ -64,7 +69,8 @@
       ],
       "commit": "2b169bbb0cf67e6539e4cec222ced5ac8a923e00",
       "parent": "28e9b84ac59c034260c1927f4a0b7c022b6b0071",
-      "date": "2026-10-06"
+      "date": "2026-10-06",
+      "q_ko_draft": "퍼센트 인코딩된 Base64 data URL은 어디서 디코딩해?"
     },
     {
       "q": "accept case-insensitive base64 tokens",
@@ -75,7 +81,8 @@
       ],
       "commit": "6576f5753e26444d8d04b0a7c0b4d9d0a83bdaa0",
       "parent": "057930bdb839201f2f99885c1626159f16890430",
-      "date": "2026-10-05"
+      "date": "2026-10-05",
+      "q_ko_draft": "base64 토큰 대소문자 구분 없이 받기"
     },
     {
       "q": "preserve short reconstructed request stacks",
@@ -85,7 +92,8 @@
       ],
       "commit": "c4303eeb601d3d5914a0f425cc7539616fdc7ea7",
       "parent": "aab2d17f6e0bcee0e44bef45e7c7c320114e6569",
-      "date": "2026-10-03"
+      "date": "2026-10-03",
+      "q_ko_draft": "재구성한 요청 스택이 짧아도 그대로 유지되게 해줘"
     },
     {
       "q": "apply the default cache mode only where the runtime accepts it",
@@ -95,7 +103,8 @@
       ],
       "commit": "f8df2e2429a2e6bf6e34161e57d04feb62ed1573",
       "parent": "18e7dfedf30c96e58652887f930642ae82e0130c",
-      "date": "2026-09-13"
+      "date": "2026-09-13",
+      "q_ko_draft": "런타임이 받아주는 경우에만 기본 cache 모드를 적용하려면 어디를 봐야 해?"
     },
     {
       "q": "tolerate nullish handlers in syncHandlerEntries",
@@ -105,7 +114,8 @@
       ],
       "commit": "2d2a21af8a433089474a2149781799c93acbcf3c",
       "parent": "d19040bda7a8be2f82c3c6e1a5bc03917daee39a",
-      "date": "2026-08-13"
+      "date": "2026-08-13",
+      "q_ko_draft": "syncHandlerEntries에 nullish 핸들러가 들어와도 문제없게 해줘"
     },
     {
       "q": "stop per-socket error listener from retaining the installing request's context (memory leak)",
@@ -115,7 +125,8 @@
       ],
       "commit": "e8147e6ae25a74793e48b4e00e2f98bc303f5b29",
       "parent": "39955a6ebed53217a524a3c8c7e5568fc0faa4bd",
-      "date": "2026-08-04"
+      "date": "2026-08-04",
+      "q_ko_draft": "소켓별 에러 리스너가 자기를 등록한 요청의 컨텍스트를 계속 잡고 있는 메모리 누수"
     },
     {
       "q": "tolerate non-string stack when decorating request errors",
@@ -125,7 +136,8 @@
       ],
       "commit": "a75bf44647e5132e39b778730394b0a2b983265c",
       "parent": "712e02373f1c5ac72fdf5da16f04838338ba817e",
-      "date": "2026-07-29"
+      "date": "2026-07-29",
+      "q_ko_draft": "요청 에러 가공할 때 stack이 문자열이 아니어도 안 깨지게 해줘"
     },
     {
       "q": "resolve TypeError on constant variable path assignment",
@@ -135,7 +147,8 @@
       ],
       "commit": "878bb29de570765b0d4c0970e30400d9ea9399f7",
       "parent": "a092bae50d1884782151b2fcea12974d6da6e376",
-      "date": "2026-07-19"
+      "date": "2026-07-19",
+      "q_ko_draft": "상수 변수 경로 할당에서 TypeError 나는 문제"
     },
     {
       "q": "correct data: URL base64 size estimate for maxContentLength guard",
@@ -146,7 +159,8 @@
       ],
       "commit": "05acca21c888e44e2125d4813be3311d32f72483",
       "parent": "1de8d518e62e068fffae9a9b54ccba779e2773e8",
-      "date": "2026-07-14"
+      "date": "2026-07-14",
+      "q_ko_draft": "maxContentLength 체크에 쓰는 data: URL base64 크기 추정 바로잡아줘"
     },
     {
       "q": "honor wildcard entries in NO_PROXY lists",
@@ -156,7 +170,8 @@
       ],
       "commit": "ff60b43277c32a5b2f7589c917db16d8e043c0d4",
       "parent": "3ebc76240c835a07fc6af23cb10d41579371a08f",
-      "date": "2026-07-13"
+      "date": "2026-07-13",
+      "q_ko_draft": "NO_PROXY 목록의 와일드카드 항목은 어디서 처리해?"
     },
     {
       "q": "serialize Set values in toJSONObject",
@@ -166,7 +181,8 @@
       ],
       "commit": "e435384f36bdd310ae784d652e97a0383d1c52a7",
       "parent": "a85da2918eb540928b54bb3d57692efc8f2f83f1",
-      "date": "2026-07-01"
+      "date": "2026-07-01",
+      "q_ko_draft": "toJSONObject에서 Set 값 직렬화"
     },
     {
       "q": "flush download progress before stream close",
@@ -177,7 +193,8 @@
       ],
       "commit": "97131238cab2e56f58f26b5bfd95e40bb5b9df14",
       "parent": "3d253b4f17a5107e6f274ee5b2e96e03508dceb2",
-      "date": "2026-07-01"
+      "date": "2026-07-01",
+      "q_ko_draft": "스트림 닫히기 전에 다운로드 진행률 flush하는 부분 어디 있어?"
     },
     {
       "q": "clamp negative progress values",
@@ -187,7 +204,8 @@
       ],
       "commit": "3d253b4f17a5107e6f274ee5b2e96e03508dceb2",
       "parent": "02c2c4f891d76b15712a9edd149a2d9f7978774f",
-      "date": "2026-07-01"
+      "date": "2026-07-01",
+      "q_ko_draft": "음수 진행률 값 clamp 처리"
     },
     {
       "q": "normalize repeated base URL slashes",
@@ -197,7 +215,8 @@
       ],
       "commit": "02c2c4f891d76b15712a9edd149a2d9f7978774f",
       "parent": "bdba132964d91d2e74341cf0af0a54e4d2346870",
-      "date": "2026-07-01"
+      "date": "2026-07-01",
+      "q_ko_draft": "base URL 슬래시가 중복될 때 정규화하려면 어디를 고쳐야 해?"
     },
     {
       "q": "return set-cookie values consistently",
@@ -207,7 +226,8 @@
       ],
       "commit": "e566ea39a22e55a05073b035c51852b4863de012",
       "parent": "78b5187ee7b6b97e416caf4e116fe7c8d3c2c2ca",
-      "date": "2026-06-29"
+      "date": "2026-06-29",
+      "q_ko_draft": "set-cookie 값을 일관되게 반환하려면 어디를 봐야 해?"
     },
     {
       "q": "preserve empty duplicate header values",
@@ -217,7 +237,8 @@
       ],
       "commit": "78b5187ee7b6b97e416caf4e116fe7c8d3c2c2ca",
       "parent": "4106dda9abe43bd3a1471b24dd5d0627470570fc",
-      "date": "2026-06-29"
+      "date": "2026-06-29",
+      "q_ko_draft": "비어 있는 중복 헤더 값도 남기려면 어디부터 보면 돼?"
     },
     {
       "q": "abort composed signals immediately",
@@ -227,7 +248,8 @@
       ],
       "commit": "4106dda9abe43bd3a1471b24dd5d0627470570fc",
       "parent": "9e5c894ef7a07666b38973cd3031bc51e9924c6a",
-      "date": "2026-06-29"
+      "date": "2026-06-29",
+      "q_ko_draft": "조합한 signal이 바로 abort되게 해줘"
     },
     {
       "q": "only split keys on bracket and dot notation",
@@ -237,7 +259,8 @@
       ],
       "commit": "44de1e484dcd65809d13c54d3220fe3de9113d4f",
       "parent": "debf320ec8387b23edf846de33192b5cc7a257ef",
-      "date": "2026-06-25"
+      "date": "2026-06-25",
+      "q_ko_draft": "키는 대괄호·점 표기일 때만 쪼개기"
     },
     {
       "q": "use arrow function so encoder.call(this) receives the instance",
@@ -247,7 +270,8 @@
       ],
       "commit": "a446b39b19c8b570214a4158520c5ddd5b020366",
       "parent": "cf1306a42d97960b635c894c83658f2692e53585",
-      "date": "2026-06-18"
+      "date": "2026-06-18",
+      "q_ko_draft": "encoder.call(this)에 인스턴스가 넘어가도록 화살표 함수로 바꿔줘"
     },
     {
       "q": "incorrect use of error",
@@ -257,7 +281,8 @@
       ],
       "commit": "b32880af48017457a1203ab2e63720902d3b71b3",
       "parent": "1792eda11aff8fe0f8c8a6e5ae6ff305740a6460",
-      "date": "2026-06-17"
+      "date": "2026-06-17",
+      "q_ko_draft": "error를 잘못 쓰고 있는 부분"
     },
     {
       "q": "support basic auth from URL",
@@ -268,7 +293,8 @@
       ],
       "commit": "38ba1b3d2b0aa5ada0463a37a548feb83a84dfa1",
       "parent": "32e2515f1e09b649723e4acd89d920df13eee77e",
-      "date": "2026-06-01"
+      "date": "2026-06-01",
+      "q_ko_draft": "URL에 들어 있는 basic auth를 지원하려면 어디 건드리면 돼?"
     },
     {
       "q": "correct isCancel type to narrow to CanceledError<T>",
@@ -278,7 +304,8 @@
       ],
       "commit": "a2390a5c059342bcac2a5297728181dd9939f562",
       "parent": "fa01b9255d71e72599826428bc6c60f34994c6ce",
-      "date": "2026-05-28"
+      "date": "2026-05-28",
+      "q_ko_draft": "isCancel 타입이 CanceledError<T>로 좁혀지게 고쳐줘"
     },
     {
       "q": "AxiosHeaders `toJSON()` return types",
@@ -289,7 +316,8 @@
       ],
       "commit": "2d2314a1ac29ce6723eb53e130b4a36617fd201c",
       "parent": "fcca2dd85503a236c4ce13749a9a81b6ffc1f2f6",
-      "date": "2026-05-28"
+      "date": "2026-05-28",
+      "q_ko_draft": "AxiosHeaders `toJSON()` 반환 타입"
     },
     {
       "q": "clear RN FormData content type",
@@ -299,7 +327,8 @@
       ],
       "commit": "7b3369a9c4b8666a9bb4e34c9c49712ce542ce01",
       "parent": "b0771a3c3e6f2bcefd4168f64cf24e454a7fb77a",
-      "date": "2026-05-24"
+      "date": "2026-05-24",
+      "q_ko_draft": "RN FormData의 content type 비워줘"
     },
     {
       "q": "preserve symbol keys in merged request data",
@@ -309,7 +338,8 @@
       ],
       "commit": "f70731bbdcc08672f4cd3f085198a930f4722c88",
       "parent": "315ec44489cafeec509409fb6b0c0a6a88d56dc8",
-      "date": "2026-05-22"
+      "date": "2026-05-22",
+      "q_ko_draft": "요청 데이터 병합할 때 symbol 키가 빠지는 문제"
     },
     {
       "q": "guard malformed XHR upload events",
@@ -319,7 +349,8 @@
       ],
       "commit": "40948863677bb793bfff0293cce7e7b4f8a1b212",
       "parent": "44f0c5bf73c45df6009365141faa394d73596bd7",
-      "date": "2026-05-09"
+      "date": "2026-05-09",
+      "q_ko_draft": "형식이 잘못된 XHR 업로드 이벤트는 어디서 막아?"
     },
     {
       "q": "make parseReviver context.source optional per ES2023 spec",
@@ -330,7 +361,8 @@
       ],
       "commit": "ac5c335b3b4bf00c024d8b6ede37fcbd7ebb7051",
       "parent": "23fd0a6a16a4879bc2601c867db0caa2ce178824",
-      "date": "2026-05-06"
+      "date": "2026-05-06",
+      "q_ko_draft": "ES2023 스펙대로 parseReviver의 context.source를 optional로 바꿔줘"
     }
   ]
 }

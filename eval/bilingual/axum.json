@@ -12,7 +12,8 @@
       ],
       "commit": "e57b547eb95de74b73b34719dd5926254a085634",
       "parent": "dcfd5e3442b2a8b021ccc954501157ebd602d2a2",
-      "date": "2026-10-11"
+      "date": "2026-10-11",
+      "q_ko_draft": "성공한 CONNECT 응답에서는 framing 헤더 빼줘"
     },
     {
       "q": "drop tower-log from the default features",
@@ -22,7 +23,8 @@
       ],
       "commit": "618496288c41da835683ec149432c4869722779f",
       "parent": "a000c300848c0be7ba0f63ebabd5dbe0f6643067",
-      "date": "2026-10-07"
+      "date": "2026-10-07",
+      "q_ko_draft": "기본 feature에서 tower-log 제외"
     },
     {
       "q": "axum-extra: reject trailing content in JsonDeserializer",
@@ -32,7 +34,8 @@
       ],
       "commit": "90f299cb721bf930ba26c0f373b8b3d2e8295ec7",
       "parent": "f660aa9050f48bdb805e0f902c50751dfdf637b2",
-      "date": "2026-10-04"
+      "date": "2026-10-04",
+      "q_ko_draft": "axum-extra: JsonDeserializer에서 뒤에 남는 내용이 있으면 거부하게 해줘"
     },
     {
       "q": "axum-macros: report invalid TypedPath capture names without panicking",
@@ -42,7 +45,8 @@
       ],
       "commit": "f660aa9050f48bdb805e0f902c50751dfdf637b2",
       "parent": "f8b02f22cf10bee707bda19b58265b9e33677535",
-      "date": "2026-10-04"
+      "date": "2026-10-04",
+      "q_ko_draft": "axum-macros: TypedPath 캡처 이름이 잘못돼도 패닉 말고 에러로 알려줘"
     },
     {
       "q": "Don't wrap merged service routes in another Route",
@@ -52,7 +56,8 @@
       ],
       "commit": "f8b02f22cf10bee707bda19b58265b9e33677535",
       "parent": "83366c2b275599366d0b914b27128141cf4ca936",
-      "date": "2026-09-30"
+      "date": "2026-09-30",
+      "q_ko_draft": "병합한 서비스 라우트를 Route로 한 번 더 감싸는 문제"
     },
     {
       "q": "axum-extra: Avoid duplicate typed header error output",
@@ -62,7 +67,8 @@
       ],
       "commit": "09e767e6667b21327f4c259568854a6b5c709bcf",
       "parent": "bc8d4912435204a4a073cea70355ae0328d263fe",
-      "date": "2026-09-28"
+      "date": "2026-09-28",
+      "q_ko_draft": "axum-extra: typed header 에러가 중복으로 출력되는 문제"
     },
     {
       "q": "remove v07 path checks",
@@ -74,7 +80,8 @@
       ],
       "commit": "7c3c67879dc5689a921620b1fce54c383d304d67",
       "parent": "c44f6650aa38d4c154e3cdb7347205e03813f4d5",
-      "date": "2026-09-23"
+      "date": "2026-09-23",
+      "q_ko_draft": "v07 경로 검사 코드 지워줘"
     },
     {
       "q": "add `ConnectionLimits` for bounding connection lifetime",
@@ -84,7 +91,8 @@
       ],
       "commit": "3ea7f31b8e43962053d5e45a8cea87097adb9ca0",
       "parent": "3f46d25e9274d485a99905d3734d37828112bc31",
-      "date": "2026-09-18"
+      "date": "2026-09-18",
+      "q_ko_draft": "연결 수명 제한용 `ConnectionLimits`는 어디에 추가하면 돼?"
     },
     {
       "q": "handle missing optional typed headers",
@@ -94,7 +102,8 @@
       ],
       "commit": "b14732f08cb54bde5b2ba3cfe324af3f6747b568",
       "parent": "8aae5935791472be6e8aada157d3e7a49a610c23",
-      "date": "2026-09-09"
+      "date": "2026-09-09",
+      "q_ko_draft": "optional typed header가 없을 땐 어디서 처리해?"
     },
     {
       "q": "add Event::raw for fully custom payloads",
@@ -104,7 +113,8 @@
       ],
       "commit": "9d1849626e8fe557b94c9f2e6732e441dd263825",
       "parent": "46d4f02ff39f16de4c505bca53e8a54fccb1f158",
-      "date": "2026-09-08"
+      "date": "2026-09-08",
+      "q_ko_draft": "페이로드를 완전히 직접 구성할 수 있게 Event::raw 추가해줘"
     },
     {
       "q": "axum-extra: avoid multipart boundary collisions",
@@ -114,7 +124,8 @@
       ],
       "commit": "8b30afbfeee457146d29c9c9db47f0ae621a22a8",
       "parent": "130b421f2695a003dcf55a18d68f112f2b442b20",
-      "date": "2026-09-04"
+      "date": "2026-09-04",
+      "q_ko_draft": "axum-extra: multipart boundary 충돌 문제"
     },
     {
       "q": "Avoid shared shutdown waiter contention",
@@ -124,7 +135,8 @@
       ],
       "commit": "3d78036dcac289d6c1d54934708acb6a5bd73686",
       "parent": "fe403025ae6443f54a7ae66c500b92af653376f9",
-      "date": "2026-08-20"
+      "date": "2026-08-20",
+      "q_ko_draft": "공유 shutdown waiter 경합을 피하려면 어디를 봐야 해?"
     },
     {
       "q": "axum-core: fix nested error downcast",
@@ -134,7 +146,8 @@
       ],
       "commit": "c9a911b7999de50e9e5023942ca072e9725ae943",
       "parent": "40ede29be6a4b5adbb76a1423463937fed6c695c",
-      "date": "2026-08-05"
+      "date": "2026-08-05",
+      "q_ko_draft": "axum-core 중첩 에러 downcast 안 되는 거 어디서 고쳐?"
     },
     {
       "q": "support `RawForm` extraction from `HEAD` query strings",
@@ -144,7 +157,8 @@
       ],
       "commit": "8ef714c12be4c502d2ea8ad047017644e23d9bab",
       "parent": "502aa875b78bccd7d743dbd783447050c3450139",
-      "date": "2026-07-23"
+      "date": "2026-07-23",
+      "q_ko_draft": "`HEAD` 쿼리 스트링에서도 `RawForm` 추출되게 해줘"
     },
     {
       "q": "skip non-data frames in BytesMut",
@@ -154,7 +168,8 @@
       ],
       "commit": "502aa875b78bccd7d743dbd783447050c3450139",
       "parent": "0704574455272caa79ff3ae8207adf8f620516c9",
-      "date": "2026-07-23"
+      "date": "2026-07-23",
+      "q_ko_draft": "BytesMut에서 data 아닌 프레임 건너뛰는 건 어디서 해?"
     },
     {
       "q": "deduplicate methods in the `Allow` header after merging `MethodRouter`s",
@@ -164,7 +179,8 @@
       ],
       "commit": "b7e37889932edcf521ca54e5ed30245f01180994",
       "parent": "98aea470f9190fad1915897166ac0f149522011a",
-      "date": "2026-07-16"
+      "date": "2026-07-16",
+      "q_ko_draft": "`MethodRouter` 병합 후 `Allow` 헤더에 메서드가 중복되는 문제"
     },
     {
       "q": "Support affixed typed path captures",
@@ -174,7 +190,8 @@
       ],
       "commit": "5b52bcdcfa7143d755c27d0df43e19754a3f3a0d",
       "parent": "42d6fdc80d8933ced5ff4ae858f43a3581106c75",
-      "date": "2026-06-10"
+      "date": "2026-06-10",
+      "q_ko_draft": "앞뒤로 문자가 붙은 typed path 캡처도 지원해줘"
     },
     {
       "q": "Exclude feature tokio/net for WASM builds",
@@ -184,7 +201,8 @@
       ],
       "commit": "42d6fdc80d8933ced5ff4ae858f43a3581106c75",
       "parent": "e1f5f5eaa7ed3aca1a9420cc4b2f759b5893a9fc",
-      "date": "2026-06-10"
+      "date": "2026-06-10",
+      "q_ko_draft": "WASM 빌드에서 tokio/net feature 빼려면 어디서 설정해?"
     },
     {
       "q": "document ws cancellation & delegation",
@@ -194,7 +212,8 @@
       ],
       "commit": "ffe32473ccd5e7dfa08aa5fde63d42c980377b53",
       "parent": "4a72e063b916f39e0698a345a99a755deb8f345b",
-      "date": "2026-06-05"
+      "date": "2026-06-05",
+      "q_ko_draft": "ws 취소랑 위임 관련 문서화"
     },
     {
       "q": "add `#[diagnostic::on_unimplemented]` to `IntoResponse` and `IntoResponseParts`",
@@ -205,7 +224,8 @@
       ],
       "commit": "309d1bd9530eec2217134cb262760af1df42ee3b",
       "parent": "7be02d77545cb918ad2f6b9b62c81fe769afaab6",
-      "date": "2026-04-15"
+      "date": "2026-04-15",
+      "q_ko_draft": "`IntoResponse`랑 `IntoResponseParts`에 `#[diagnostic::on_unimplemented]` 붙여줘"
     },
     {
       "q": "Improve typed path by disallowing deprecated variable definitions",
@@ -215,7 +235,8 @@
       ],
       "commit": "fc7e86c38d7b00c0e9488ca12b014f439ee6fdcf",
       "parent": "ec4f5bbf9ee70a8eac941da2e6c2ba87abad16f7",
-      "date": "2026-04-03"
+      "date": "2026-04-03",
+      "q_ko_draft": "typed path에서 deprecated된 변수 정의 방식 막기"
     },
     {
       "q": "Address tower-http deprecated warning",
@@ -226,7 +247,8 @@
       ],
       "commit": "0a24ff6b0a65a9c1a6c2af8ef4df75f638d4afc7",
       "parent": "4fa5d80ab7fc17d880d19293e8838bd7e4255877",
-      "date": "2026-04-03"
+      "date": "2026-04-03",
+      "q_ko_draft": "tower-http deprecated 경고 해결하려면 어디를 고쳐야 해?"
     },
     {
       "q": "Set connect endpoint on correct field in MethodRouter",
@@ -236,7 +258,8 @@
       ],
       "commit": "27f40159865f7fd485655a3e663d4bcb491df2d1",
       "parent": "6fd77f82ca5b0991f4190042d48b871d7d8025e7",
-      "date": "2026-04-03"
+      "date": "2026-04-03",
+      "q_ko_draft": "MethodRouter에서 connect 엔드포인트가 엉뚱한 필드에 설정되는 버그"
     },
     {
       "q": "Add customizable WebSocket subprotocol selection",
@@ -246,7 +269,8 @@
       ],
       "commit": "8019ae0786bb1297192acf7f83a383009234d78d",
       "parent": "2b0978690c9bf852c014128fdd2714f92e496e23",
-      "date": "2026-04-03"
+      "date": "2026-04-03",
+      "q_ko_draft": "WebSocket 서브프로토콜 선택을 커스터마이징할 수 있게 해줘"
     },
     {
       "q": "Avoid unwrap in fallback path",
@@ -256,7 +280,8 @@
       ],
       "commit": "776c4a438fd057a48387fcae39ee38c772cfab11",
       "parent": "8a9b03cb546bf3584324856bf5f9c6911ac33db5",
-      "date": "2026-02-14"
+      "date": "2026-02-14",
+      "q_ko_draft": "fallback 경로에서는 unwrap 안 쓰게 바꿔줘"
     },
     {
       "q": "Add method filtering to route_with_tsr",
@@ -268,7 +293,8 @@
       ],
       "commit": "183ace306ab126f034c55d9147ea3513c8a5a139",
       "parent": "051628c163b5d9f639dd88a8188f2df9b0552538",
-      "date": "2026-01-04"
+      "date": "2026-01-04",
+      "q_ko_draft": "route_with_tsr에 메서드 필터링 넣으려면 어디 봐야 해?"
     },
     {
       "q": "Use Result for validate_nest_path",
@@ -278,7 +304,8 @@
       ],
       "commit": "0101c2a2405b966c31218aa6bf4189ec982ed9c8",
       "parent": "f3a95d786a4242a4492beb329d96fd54e32e7e2b",
-      "date": "2025-12-28"
+      "date": "2025-12-28",
+      "q_ko_draft": "validate_nest_path가 Result 쓰게 바꿔줘"
     },
     {
       "q": "Respect default body limit",
@@ -288,7 +315,8 @@
       ],
       "commit": "6b0089190c832f5b8da3cbd3cb737b900bf3f36e",
       "parent": "4e2bc8c92a570ff98dd5b774a0449092e407a942",
-      "date": "2025-12-27"
+      "date": "2025-12-27",
+      "q_ko_draft": "기본 body 크기 제한이 지켜지게 하려면 어디를 봐야 해?"
     },
     {
       "q": "Correct a small inconsistency",
@@ -298,7 +326,8 @@
       ],
       "commit": "f5804aa6a13f8af1ae1a8998b872b300b0859d81",
       "parent": "f51f3ba4366e1060206efc41fde1227055164c45",
-      "date": "2025-12-20"
+      "date": "2025-12-20",
+      "q_ko_draft": "사소한 불일치 수정"
     },
     {
       "q": "axum-extra: Add trailing newline to pretty JSON response",
@@ -308,7 +337,8 @@
       ],
       "commit": "f51f3ba4366e1060206efc41fde1227055164c45",
       "parent": "816407a8166491217168890ee96856469c3b424c",
-      "date": "2025-12-20"
+      "date": "2025-12-20",
+      "q_ko_draft": "axum-extra pretty JSON 응답 끝에 줄바꿈 붙이는 건 어디서 해?"
     },
     {
       "q": "Fix integer underflow in `try_range_response` for empty files",
@@ -318,7 +348,8 @@
       ],
       "commit": "816407a8166491217168890ee96856469c3b424c",
       "parent": "78656ebb4a925329dc19c17a4dbef31d7551d4f5",
-      "date": "2025-12-20"
+      "date": "2025-12-20",
+      "q_ko_draft": "빈 파일일 때 `try_range_response`에서 정수 언더플로 나는 버그"
     },
     {
       "q": "move imports under the feature",
@@ -328,7 +359,8 @@
       ],
       "commit": "ca24460fac17536fc4a5ef1fbc4f43ee5f401421",
       "parent": "5c4c1658a7a5151986c3a22bb8fdf71d5e749679",
-      "date": "2025-12-04"
+      "date": "2025-12-04",
+      "q_ko_draft": "import를 feature 조건 아래로 옮겨줘"
     }
   ]
 }

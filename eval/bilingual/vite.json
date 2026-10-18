@@ -14,7 +14,8 @@
       ],
       "commit": "8d7623d9b5647714a5b20cbd787a5401ca846229",
       "parent": "5b73935881424ed5919571036dd89d3868590f92",
-      "date": "2026-10-15"
+      "date": "2026-10-15",
+      "q_ko_draft": "chunk import map이 없을 때는 어디서 처리해?"
     },
     {
       "q": "don't fail on a literal `%` in `url()`",
@@ -24,7 +25,8 @@
       ],
       "commit": "50b382d31835b8b4bc8b6964738ac03146e44261",
       "parent": "d112dad9392efdb38eafc2c36fd27b54e614efca",
-      "date": "2026-10-15"
+      "date": "2026-10-15",
+      "q_ko_draft": "`url()` 안에 `%`가 그대로 있으면 실패하는 문제"
     },
     {
       "q": "skip patches dir hash for nub lockfile",
@@ -34,7 +36,8 @@
       ],
       "commit": "a7d56967ef0050a09c0507e63a18164bc7a0d486",
       "parent": "b65a4b55a8d3fc4674ebda272f6612c29b01de84",
-      "date": "2026-10-15"
+      "date": "2026-10-15",
+      "q_ko_draft": "nub lockfile이면 patches 디렉터리 해시는 건너뛰게 해줘"
     },
     {
       "q": "map forwarded error stacks through the bundle source maps",
@@ -44,7 +47,8 @@
       ],
       "commit": "11fe1e46ff0c136cb90fbe263ba03993bc94df18",
       "parent": "c2c9ef4dcd05b3e4d88844ea3a13dc23819ca2a5",
-      "date": "2026-10-15"
+      "date": "2026-10-15",
+      "q_ko_draft": "전달받은 에러 스택을 번들 소스맵으로 매핑해줘"
     },
     {
       "q": "handle socket errors on upgrade requests not taken by the HMR server",
@@ -54,7 +58,8 @@
       ],
       "commit": "c2c9ef4dcd05b3e4d88844ea3a13dc23819ca2a5",
       "parent": "4ea708a3ae9a324c6aabca59fade4082bf72f3e5",
-      "date": "2026-10-14"
+      "date": "2026-10-14",
+      "q_ko_draft": "HMR 서버가 안 가져간 upgrade 요청의 소켓 에러는 어디서 처리해?"
     },
     {
       "q": "fall back to yarn.lock for lockfile hash",
@@ -64,7 +69,8 @@
       ],
       "commit": "f20609630faa93026924275115d1426fdc08629e",
       "parent": "a4bfdb11766696af26186207f686fe8be2e1472d",
-      "date": "2026-10-09"
+      "date": "2026-10-09",
+      "q_ko_draft": "lockfile 해시에서 yarn.lock으로 fallback하려면 어디를 고쳐야 해?"
     },
     {
       "q": "normalize served output files",
@@ -74,7 +80,8 @@
       ],
       "commit": "df4e02cc8317a62f21edefc79a9690571ffed1f3",
       "parent": "52ba877693c8633458d163117504a8259beb3cf5",
-      "date": "2026-10-09"
+      "date": "2026-10-09",
+      "q_ko_draft": "서빙하는 output 파일 정규화"
     },
     {
       "q": "correct preloads when chunkImportMap is enabled with non-root base",
@@ -84,7 +91,8 @@
       ],
       "commit": "2a8c0f05c76e35c43ab3560984a5103c8db8dbcd",
       "parent": "18f9e07e85c172252c3ec27da1b33a4d728b4e16",
-      "date": "2026-10-08"
+      "date": "2026-10-08",
+      "q_ko_draft": "base가 루트가 아닐 때 chunkImportMap 켜면 preload가 틀어지는 문제"
     },
     {
       "q": "avoid adding filesystem root to watcher",
@@ -94,7 +102,8 @@
       ],
       "commit": "3a7f2aea757d59bae66ad6edf6b321d26a7e6778",
       "parent": "facc2fb1fffce03d9e2dd7011d0bd0eeddc7d0f6",
-      "date": "2026-10-08"
+      "date": "2026-10-08",
+      "q_ko_draft": "watcher에 파일시스템 루트는 추가 안 되게 해줘"
     },
     {
       "q": "remove input option unescaping for now",
@@ -104,7 +113,8 @@
       ],
       "commit": "facc2fb1fffce03d9e2dd7011d0bd0eeddc7d0f6",
       "parent": "70d56ea1848909edab416934f3f68ce14343eb73",
-      "date": "2026-10-08"
+      "date": "2026-10-08",
+      "q_ko_draft": "input 옵션 unescape 처리는 일단 빼줘"
     },
     {
       "q": "a restart requested during a restart used to be dropped (fix #23392)",
@@ -114,7 +124,8 @@
       ],
       "commit": "70d56ea1848909edab416934f3f68ce14343eb73",
       "parent": "cf52011c46409a4a45f3d74bba631b8f005c4bc9",
-      "date": "2026-10-08"
+      "date": "2026-10-08",
+      "q_ko_draft": "재시작 도중에 요청된 재시작이 버려지던 문제 (#23392)"
     },
     {
       "q": "don't treat modules ending with js-like query as js",
@@ -124,7 +135,8 @@
       ],
       "commit": "fcb6f1252a95857823d935f98554b938888d41a0",
       "parent": "8579189bae8626b6ddab55a09325e209d62e027e",
-      "date": "2026-10-08"
+      "date": "2026-10-08",
+      "q_ko_draft": "js 같은 쿼리로 끝나는 모듈을 js로 판단하는 곳 어디야?"
     },
     {
       "q": "wait for in-flight stylesheets in preload helper (fix #23652)",
@@ -134,7 +146,8 @@
       ],
       "commit": "036b74599b2fe1d8c61475371b856ceb88d26963",
       "parent": "574d5e351905fe99891364d03c2440531378f7fd",
-      "date": "2026-10-08"
+      "date": "2026-10-08",
+      "q_ko_draft": "preload helper에서 로딩 중인 스타일시트 기다리게 해줘 (#23652)"
     },
     {
       "q": "avoid mutating hmr defaults (fix #23575)",
@@ -144,7 +157,8 @@
       ],
       "commit": "574d5e351905fe99891364d03c2440531378f7fd",
       "parent": "15d82f7dc679ab9c18d5ce2c3711157c2365ddd1",
-      "date": "2026-10-08"
+      "date": "2026-10-08",
+      "q_ko_draft": "hmr 기본값을 직접 수정해버리는 문제 (#23575)"
     },
     {
       "q": "skip caching CSS of chunks in a cycle (fix #23628)",
@@ -154,7 +168,8 @@
       ],
       "commit": "15d82f7dc679ab9c18d5ce2c3711157c2365ddd1",
       "parent": "3d674869a50a0bca84a8cc8dc55bd35d57100e37",
-      "date": "2026-10-08"
+      "date": "2026-10-08",
+      "q_ko_draft": "순환에 걸린 chunk의 CSS는 캐시 안 하려면 어디 봐야 해? (#23628)"
     },
     {
       "q": "skip cloning call sites that have no source map",
@@ -164,7 +179,8 @@
       ],
       "commit": "3d674869a50a0bca84a8cc8dc55bd35d57100e37",
       "parent": "8a4c19cfc035f2dd203f2fa6d00ab9256a5e77c9",
-      "date": "2026-10-08"
+      "date": "2026-10-08",
+      "q_ko_draft": "소스맵 없는 call site는 복제하지 말고 건너뛰어줘"
     },
     {
       "q": "normalize file before root check in `ensureWatchedFile`",
@@ -174,7 +190,8 @@
       ],
       "commit": "12bb28c22379c8d2fe90088fa0eefbfa2ab3fb80",
       "parent": "fea5b21dd9524ed7308632407b996f1fe5942c9c",
-      "date": "2026-10-07"
+      "date": "2026-10-07",
+      "q_ko_draft": "`ensureWatchedFile`에서 root 체크 전에 file부터 정규화해줘"
     },
     {
       "q": "check `fs.serve` for `?vite-wasm-instance`",
@@ -184,7 +201,8 @@
       ],
       "commit": "ba8b7ab43b4afa5d0292ab4b6e3a7b5033cc9c73",
       "parent": "22fd1d5238cce2ee9db0eb4122f9e8feb6b06097",
-      "date": "2026-10-06"
+      "date": "2026-10-06",
+      "q_ko_draft": "`?vite-wasm-instance`에도 `fs.serve` 검사하려면 어디를 고쳐야 해?"
     },
     {
       "q": "avoid encoding intermediate source maps",
@@ -195,7 +213,8 @@
       ],
       "commit": "89574f6d940a7273a53c5122a4477285801a696a",
       "parent": "5a3a010eea4c9ebbdcc080819f93068d4e035bd4",
-      "date": "2026-10-01"
+      "date": "2026-10-01",
+      "q_ko_draft": "중간 소스맵 인코딩 안 하기"
     },
     {
       "q": "release previous environments after initialization",
@@ -205,7 +224,8 @@
       ],
       "commit": "5a3a010eea4c9ebbdcc080819f93068d4e035bd4",
       "parent": "1929b4cc5f38ad53781e3b07b8bdaa32cf18da07",
-      "date": "2026-10-01"
+      "date": "2026-10-01",
+      "q_ko_draft": "초기화 끝나면 이전 environment 해제하는 건 어디서 해?"
     },
     {
       "q": "avoid quadratic link scan in the preload helper",
@@ -215,7 +235,8 @@
       ],
       "commit": "cf5c0288d526824aead1b24e977400f13c527927",
       "parent": "bba3bb8beedd185948956e02667d450672632d79",
-      "date": "2026-09-30"
+      "date": "2026-09-30",
+      "q_ko_draft": "preload helper의 link 탐색이 제곱 시간 걸리는 문제"
     },
     {
       "q": "pass queries to `renderBuiltUrl`",
@@ -227,7 +248,8 @@
       ],
       "commit": "744269e5b2a155074910ddd275aecf2b83938496",
       "parent": "a2bd6fa897c35c8a691671a7d70061c1cdd5c688",
-      "date": "2026-09-29"
+      "date": "2026-09-29",
+      "q_ko_draft": "`renderBuiltUrl`에 쿼리도 넘겨줘"
     },
     {
       "q": "serve lazy chunk sourcemaps",
@@ -237,7 +259,8 @@
       ],
       "commit": "eb7aa9a8816a1e926d5d9b4cbe7e796b61314ce2",
       "parent": "24339f4339d64fd8b5bc37654ac14ccff5aee584",
-      "date": "2026-09-29"
+      "date": "2026-09-29",
+      "q_ko_draft": "lazy chunk 소스맵은 어디서 서빙해?"
     },
     {
       "q": "use `tinyexec` instead of `cross-spawn`",
@@ -247,7 +270,8 @@
       ],
       "commit": "db915e5c0edbe1359dcf0cea340c9571dc7f4ad9",
       "parent": "bbc88129c967a8b8eedebd93acc82bee63b86b2a",
-      "date": "2026-09-25"
+      "date": "2026-09-25",
+      "q_ko_draft": "`cross-spawn` 대신 `tinyexec` 쓰게 바꿔줘"
     },
     {
       "q": "skip URL source roots when injecting sources content",
@@ -257,7 +281,8 @@
       ],
       "commit": "04fc30a4b91870e65a436b3420620a2e02a94a41",
       "parent": "5f894339d27882fedc86bf6b1076fa6d92e404f3",
-      "date": "2026-09-24"
+      "date": "2026-09-24",
+      "q_ko_draft": "sources content 넣을 때 URL source root는 어디서 걸러?"
     },
     {
       "q": "resolve pending discovered dep processing on close before init",
@@ -267,7 +292,8 @@
       ],
       "commit": "5f894339d27882fedc86bf6b1076fa6d92e404f3",
       "parent": "6e09961181a1047ef78d37b1a23fb0e7488c8980",
-      "date": "2026-09-24"
+      "date": "2026-09-24",
+      "q_ko_draft": "init 전에 close되면 대기 중인 discovered dep 처리를 resolve해줘"
     },
     {
       "q": "add router only options for tanstack router/start",
@@ -277,7 +303,8 @@
       ],
       "commit": "f155b62ceabbaaf71abbf59933968787e3961c56",
       "parent": "af7cdf6964f124f58d66037e808fe687654948e2",
-      "date": "2026-09-23"
+      "date": "2026-09-23",
+      "q_ko_draft": "tanstack router/start용 router 전용 옵션 추가"
     },
     {
       "q": "replace `find` with `some`",
@@ -287,7 +314,8 @@
       ],
       "commit": "af7cdf6964f124f58d66037e808fe687654948e2",
       "parent": "1544bb1b7ac92f775e9d0dea97954c99cc6cbd43",
-      "date": "2026-09-23"
+      "date": "2026-09-23",
+      "q_ko_draft": "`find` 대신 `some` 쓰기"
     },
     {
       "q": "don't skip imports whose binding starts with type",
@@ -297,7 +325,8 @@
       ],
       "commit": "39330f489a0ae08923557f0ce10a307d6662a3f5",
       "parent": "bd97903e326c4caf022405f7c1d5f3eb624a931f",
-      "date": "2026-09-22"
+      "date": "2026-09-22",
+      "q_ko_draft": "binding이 type으로 시작하는 import를 건너뛰는 버그"
     },
     {
       "q": "assets regexp use non-capture",
@@ -307,7 +336,8 @@
       ],
       "commit": "f4b4431a2f9097fd9bbb7aaebbf1b63c4b54dea1",
       "parent": "6a84c72100da4e4be4badb2d9a0026279b4df136",
-      "date": "2026-09-18"
+      "date": "2026-09-18",
+      "q_ko_draft": "assets 정규식에 비캡처 그룹 쓰기"
     },
     {
       "q": "pre-compile context matchers at server creation",
@@ -317,7 +347,8 @@
       ],
       "commit": "8abf700eeb2411d8402d08f8e2696effafdbe774",
       "parent": "ef0dc17ada53d1169ae5a89cb8f6482831466755",
-      "date": "2026-09-10"
+      "date": "2026-09-10",
+      "q_ko_draft": "서버 만들 때 context matcher 미리 컴파일해둬"
     },
     {
       "q": "add nub package manager support",
@@ -327,7 +358,8 @@
       ],
       "commit": "c31c499ca04c7557d9093291b08b6e3087df0542",
       "parent": "76e8082c56a2872dc8017c5672bc36cba8dcf75d",
-      "date": "2026-08-24"
+      "date": "2026-08-24",
+      "q_ko_draft": "nub 패키지 매니저 지원 추가하려면 어디를 봐야 해?"
     }
   ]
 }

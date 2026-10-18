@@ -12,7 +12,8 @@
       ],
       "commit": "55dcbc4bb1449aa9f7c6ee422cc22b465a35fa2f",
       "parent": "d86ec875bdc7676d76c162d393e81db7dee01f2d",
-      "date": "2026-09-19"
+      "date": "2026-09-19",
+      "q_ko_draft": "FastDateFormat 캐시의 타임존 키가 mutable한 문제 고쳐줘"
     },
     {
       "q": "Reflection builders' cycle registry unregisters per-visit: cycle-SAFE but DAG-exponential, a 40-level reference diamond drives ~2^40 traversals and unbounded output (f032).",
@@ -22,7 +23,8 @@
       ],
       "commit": "4303a36de3a8b29d19b88e7ca5901f78a536de72",
       "parent": "11e2dad29e2ae58d3bd604233af55183ccee1d17",
-      "date": "2026-09-06"
+      "date": "2026-09-06",
+      "q_ko_draft": "리플렉션 빌더의 순환 레지스트리가 방문마다 등록을 해제함. 순환엔 안전하지만 DAG에선 지수적이라 40단계 다이아몬드 참조면 순회가 ~2^40번 돌고 출력도 끝없이 커짐 (f032)"
     },
     {
       "q": "StrBuilder.indexOf materializes the whole builder as a String per call; deleteAll/replaceAll multiply it into ~750 GB churn on a 1 MB builder (f026).",
@@ -32,7 +34,8 @@
       ],
       "commit": "4d053dc896df7c1165673637607fcc86a146eb10",
       "parent": "2e16df6260fb207cf45ae456e25e391cb7ef9bf8",
-      "date": "2026-09-05"
+      "date": "2026-09-05",
+      "q_ko_draft": "StrBuilder.indexOf가 호출할 때마다 빌더 전체를 String으로 만듦. deleteAll/replaceAll에선 이게 곱해져서 1 MB 빌더에 ~750 GB를 할당했다 버리는 문제 (f026)"
     },
     {
       "q": "Attacker-controlled exception message forges frames in getRootCauseStackTrace output AND suppresses all real frames, beyond cosmetic log spoofing (f025).",
@@ -42,7 +45,8 @@
       ],
       "commit": "2e16df6260fb207cf45ae456e25e391cb7ef9bf8",
       "parent": "2dfaafa2576afc5534575fa27967b622e86580b9",
-      "date": "2026-09-05"
+      "date": "2026-09-05",
+      "q_ko_draft": "공격자가 조작한 예외 메시지로 getRootCauseStackTrace 출력에 가짜 프레임을 끼워 넣고 진짜 프레임은 전부 숨길 수 있음. 단순 로그 위조 수준이 아님 (f025)"
     },
     {
       "q": "default caches the first failure forever, has no size bound or eviction, and runs the user computation inside the ConcurrentHashMap bin lock (blocking unrelated keys, deadlocking reentrant use) (f011).",
@@ -52,7 +56,8 @@
       ],
       "commit": "1aef131265a6b2c8a5ded4301dd92468c7d826c5",
       "parent": "fd6361792d1e021462215386d69dd3e0d1b59229",
-      "date": "2026-09-05"
+      "date": "2026-09-05",
+      "q_ko_draft": "default가 첫 실패를 영원히 캐시하고, 크기 제한도 eviction도 없고, 사용자 계산을 ConcurrentHashMap bin 락 안에서 돌림 (관련 없는 키까지 막히고 재진입하면 데드락) (f011)"
     },
     {
       "q": "keep stripStart and stripEnd off surrogate pair boundaries",
@@ -62,7 +67,8 @@
       ],
       "commit": "c747711133c3e13d8d2bdab27a2eb7b11f1c6d7f",
       "parent": "8bf8b78700c778b10049131f51b687195e039da9",
-      "date": "2026-08-14"
+      "date": "2026-08-14",
+      "q_ko_draft": "stripStart, stripEnd가 서로게이트 쌍 중간에서 자르지 않게 해줘"
     },
     {
       "q": "Keep chop from splitting a trailing surrogate pair",
@@ -72,7 +78,8 @@
       ],
       "commit": "62f6edfd96008fd10cd22bf854cf4e8d2c008ae2",
       "parent": "9ed5d0ba95652ffcbb912894ce67d81a2fbd60df",
-      "date": "2026-08-12"
+      "date": "2026-08-12",
+      "q_ko_draft": "chop이 끝에 있는 서로게이트 쌍을 쪼개는 문제"
     },
     {
       "q": "Handle ParsePosition index beyond source string length cleanly",
@@ -82,7 +89,8 @@
       ],
       "commit": "e0dba35f9e41dfdbbbb646fcd377b8af8ef7344e",
       "parent": "94ad3a756aad97add12e48ed8ff54d630a927d4b",
-      "date": "2026-07-27"
+      "date": "2026-07-27",
+      "q_ko_draft": "ParsePosition 인덱스가 원본 문자열 길이를 넘을 때 깔끔하게 처리하려면 어디를 봐야 해?"
     },
     {
       "q": "fix getMatchingMethod false ambiguity for boxed primitive args",
@@ -92,7 +100,8 @@
       ],
       "commit": "aae7f0e61c51040dbdc7556f9eca5786eb9f63bd",
       "parent": "dfaea97de4dd175781eeb552ff9eb29db767acc3",
-      "date": "2026-06-23"
+      "date": "2026-06-23",
+      "q_ko_draft": "박싱된 primitive 인자에서 getMatchingMethod가 모호하다고 잘못 판단하는 버그"
     },
     {
       "q": "fix unescapeCsv bounds error on a single quote field",
@@ -102,7 +111,8 @@
       ],
       "commit": "6dbbbb308bb77ba9c0ddab1ae400ee2ff76026b4",
       "parent": "c4c294b0e04024d361d710985f8500f7d2412232",
-      "date": "2026-06-21"
+      "date": "2026-06-21",
+      "q_ko_draft": "따옴표 하나짜리 필드에서 unescapeCsv 범위 에러 나는 거 고쳐줘"
     },
     {
       "q": "keep initials from splitting a supplementary code point",
@@ -112,7 +122,8 @@
       ],
       "commit": "6bef246b2f10699a56a3010bbc6fa11d241430c6",
       "parent": "226bf3975afd430b6b74c23a0c9cbae9f9b90de5",
-      "date": "2026-06-20"
+      "date": "2026-06-20",
+      "q_ko_draft": "initials가 supplementary 코드 포인트를 쪼개지 않게 하려면 어디 고쳐야 해?"
     },
     {
       "q": "strip L suffix for oversized hex literals in createNumber",
@@ -122,7 +133,8 @@
       ],
       "commit": "18063c1f6d935d60d0e7341d68434ab4c88a34ee",
       "parent": "e10003978ba6bacb7b32c27816b68b858404e967",
-      "date": "2026-06-17"
+      "date": "2026-06-17",
+      "q_ko_draft": "createNumber에서 범위 넘는 16진수 리터럴의 L 접미사는 어디서 떼?"
     },
     {
       "q": "Add tests to ensure nulls compare correctly",
@@ -132,7 +144,8 @@
       ],
       "commit": "60d4c9843891f07596d2caf52fb8689d80179344",
       "parent": "3e111f128a1f5a2f1e7df78c5cd6e8206eada959",
-      "date": "2026-06-14"
+      "date": "2026-06-14",
+      "q_ko_draft": "null 비교가 제대로 되는지 확인하는 테스트 추가해줘"
     },
     {
       "q": "reject doubled leading sign in createBigInteger",
@@ -142,7 +155,8 @@
       ],
       "commit": "060ab31e517d856292e97428345821b5b289249a",
       "parent": "44298fe0c0df0688827bcbf07677c3706de00f88",
-      "date": "2026-06-13"
+      "date": "2026-06-13",
+      "q_ko_draft": "createBigInteger에서 앞에 부호가 두 번 붙은 입력은 어디서 걸러?"
     },
     {
       "q": "fix lookup translator code point count for supplementary keys",
@@ -152,7 +166,8 @@
       ],
       "commit": "80bf07c61721520ef12679fc394ac5584c1e9536",
       "parent": "1e071b3dd5a16cd74b3dd991b7d0b03e581c8d7a",
-      "date": "2026-06-07"
+      "date": "2026-06-07",
+      "q_ko_draft": "lookup translator가 supplementary 키의 코드 포인트 수를 잘못 세는 버그"
     },
     {
       "q": "NaN bypass in primitive double range validators.",
@@ -162,7 +177,8 @@
       ],
       "commit": "864dd6ea887fd394f15e3b55203d6f52f717373b",
       "parent": "4b09471db039085a3114f79ece97ca7fd9bd6f1e",
-      "date": "2026-05-07"
+      "date": "2026-05-07",
+      "q_ko_draft": "primitive double 범위 검증에서 NaN이 그냥 통과되는 곳 어디야?"
     },
     {
       "q": "Annotation lookup matches unrelated overloads via assignable-parameter resolution",
@@ -172,7 +188,8 @@
       ],
       "commit": "daa17b8629a7a9921ffe42e7c2c0f0051af42571",
       "parent": "0c7942f416ec7dbf163e72ce0a62a138f11822ad",
-      "date": "2026-05-07"
+      "date": "2026-05-07",
+      "q_ko_draft": "애노테이션 조회가 할당 가능한 파라미터로 판정하다 상관없는 오버로드까지 매칭하는 문제"
     },
     {
       "q": "No need to end exception messages with an exclamation!",
@@ -184,7 +201,8 @@
       ],
       "commit": "23a730b8ed392ba424cc275df793dcae88f4cebe",
       "parent": "7138b8c001b9c60176598a21c0d15db43f8d8a1f",
-      "date": "2026-04-15"
+      "date": "2026-04-15",
+      "q_ko_draft": "예외 메시지 끝에 느낌표 붙일 필요 없으니 빼줘"
     },
     {
       "q": "Make stopInstant be in sync with stopTimeNanos for split",
@@ -194,7 +212,8 @@
       ],
       "commit": "aa47951bd0223d674d2b85d06ccc6f7f1749a682",
       "parent": "185edc4b8594e20d81baad65a199a211e2137616",
-      "date": "2026-03-04"
+      "date": "2026-03-04",
+      "q_ko_draft": "split할 때 stopInstant를 stopTimeNanos랑 맞추려면 어디를 고쳐야 해?"
     },
     {
       "q": "Use a single return in indexesOf() methods",
@@ -204,7 +223,8 @@
       ],
       "commit": "becbcffffe673ad062b2b389a2a31dce7565841e",
       "parent": "a4cf528306f96784ed9c8e4cacb59e128fea92b3",
-      "date": "2026-01-22"
+      "date": "2026-01-22",
+      "q_ko_draft": "indexesOf() 메서드들 return 하나로 정리해줘"
     },
     {
       "q": "Fix ClassNotFoundException message variable",
@@ -214,7 +234,8 @@
       ],
       "commit": "b6224451728562b0a4b33b63e8589753b1e2a57c",
       "parent": "c4ea2b0113b28b9d861acefc296f277e2eddaf9f",
-      "date": "2026-01-22"
+      "date": "2026-01-22",
+      "q_ko_draft": "ClassNotFoundException 메시지 변수 잘못 들어간 곳 어디야?"
     },
     {
       "q": "Inline single use local variable",
@@ -224,7 +245,8 @@
       ],
       "commit": "1db59d54a7863943014c3d6ed12f17e88f5d05a3",
       "parent": "efe894332c981836e8953b6f2ffc7e2891e8b155",
-      "date": "2026-01-18"
+      "date": "2026-01-18",
+      "q_ko_draft": "한 번만 쓰는 지역 변수 인라인해줘"
     },
     {
       "q": "Sort the available TimeZone IDs once.",
@@ -235,7 +257,8 @@
       ],
       "commit": "47aea5993d289b82c7febdbf9b05ffaad31b6ec9",
       "parent": "865a0297c3d96a247b35a7fed7895e1bfe2025aa",
-      "date": "2026-01-18"
+      "date": "2026-01-18",
+      "q_ko_draft": "사용 가능한 TimeZone ID를 한 번만 정렬하게 하려면 어디 봐야 해?"
     },
     {
       "q": "Deprecate SOFT_MAX_ARRAY_LENGTH in favor of MAX_ARRAY_LENGTH",
@@ -245,7 +268,8 @@
       ],
       "commit": "d9de2fd5b8c65506b1ab14df631cc26ffcd647dc",
       "parent": "037880852770c3124f8d61c2dbf2b31f34a75508",
-      "date": "2026-01-10"
+      "date": "2026-01-10",
+      "q_ko_draft": "SOFT_MAX_ARRAY_LENGTH는 deprecated 처리하고 MAX_ARRAY_LENGTH 쓰게 해줘"
     },
     {
       "q": "Use for each on array",
@@ -255,7 +279,8 @@
       ],
       "commit": "74e7fd172624111016e30bfa0258c68960afb9a0",
       "parent": "05b0e0625f8ce6bf6b9622a5e5de7394a26902e8",
-      "date": "2025-12-31"
+      "date": "2025-12-31",
+      "q_ko_draft": "배열 순회에 for-each 쓰기"
     },
     {
       "q": "Improve handling of parameterized types and variable unrolling",
@@ -265,7 +290,8 @@
       ],
       "commit": "8f8cc04e65506fbe79bbc5efa6f7d44d65f0dbf1",
       "parent": "71d4f3d17f029c16e0783f39d1fbf1ad88bedacf",
-      "date": "2025-12-31"
+      "date": "2025-12-31",
+      "q_ko_draft": "파라미터화 타입이랑 변수 unrolling 처리 개선"
     },
     {
       "q": "Use interface in private method signature",
@@ -275,7 +301,8 @@
       ],
       "commit": "3efb7c31e119c858f481aee8c7fdfdc75e80fff0",
       "parent": "137e34041626ea1f19ec1bfec379eb6ca4257f55",
-      "date": "2025-12-26"
+      "date": "2025-12-26",
+      "q_ko_draft": "private 메서드 시그니처에 인터페이스 타입 쓰게 바꿔줘"
     },
     {
       "q": "Make test Java15BugFastDateParserTest more lenient on Java 26-ea",
@@ -285,7 +312,8 @@
       ],
       "commit": "1c05980f3d73efa1829b00f54b87eae520e65097",
       "parent": "fd154dec975049e4dd22126194518245f4935692",
-      "date": "2025-12-19"
+      "date": "2025-12-19",
+      "q_ko_draft": "Java 26-ea에서 Java15BugFastDateParserTest를 좀 더 느슨하게 하려면 어디부터 보면 돼?"
     },
     {
       "q": "Remove redundant extends in generics",
@@ -295,7 +323,8 @@
       ],
       "commit": "45852e15ab292ca9d661a4253e82d0f215a67485",
       "parent": "724d22920314964324a5676aba4285edcf58fe93",
-      "date": "2025-11-15"
+      "date": "2025-11-15",
+      "q_ko_draft": "제네릭에 불필요한 extends 붙은 곳 어디야?"
     },
     {
       "q": "Migrate from deprecated method",
@@ -305,7 +334,8 @@
       ],
       "commit": "817d50f746adfb485355d8d3a3ae4b9833ed3f63",
       "parent": "b5cb40c16ce29ae3bf22c0434f9ed520ce2495f0",
-      "date": "2025-10-25"
+      "date": "2025-10-25",
+      "q_ko_draft": "deprecated 메서드 쓰는 부분 갈아타줘"
     },
     {
       "q": "Fix internal inverted logic in private isEnum() method and correct its usage in getFirstEnum()",
@@ -315,7 +345,8 @@
       ],
       "commit": "6513eb0bbb4b3e8d427cce632f786c115f2a3516",
       "parent": "756436b7b18febab0c5035257b211b52c009819c",
-      "date": "2025-09-29"
+      "date": "2025-09-29",
+      "q_ko_draft": "private isEnum() 로직이 반대로 돼 있는 거 고치고 getFirstEnum()에서 쓰는 부분도 바로잡아줘"
     },
     {
       "q": "Deprecate obsolete system property constants.",
@@ -326,7 +357,8 @@
       ],
       "commit": "0c58cce21dfc606f220403a691e7f36feb47ed43",
       "parent": "b8d96173a1dbb837362d61a3e2c94527f0b2abea",
-      "date": "2025-09-18"
+      "date": "2025-09-18",
+      "q_ko_draft": "더 이상 안 쓰는 시스템 프로퍼티 상수 deprecated 처리"
     }
   ]
 }
