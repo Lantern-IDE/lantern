@@ -1,6 +1,7 @@
 """Lantern과 비교 대상의 결과를 같은 지표로 묶는다.
 
     python eval/bilingual/report.py --dir <클론 폴더> [--set eval/bilingual] [--md <결과 파일>] [--subset all|test|dev|2026]
+        [--tex <논문용 LaTeX 표 파일>]
 
 읽는 것
 - <dir>/results/retrieval-<저장소>[-ko]-<시각>.json  (eval/retrieval.mjs: 키워드, 키워드 조각, Lantern) 가장 최근 것
@@ -11,6 +12,7 @@
 - Recall@B: 정답 파일 중 예산 안에 담긴 비율
 - Acc@k: 담긴 파일 중 앞 k개 안에 정답 파일이 하나라도 있는가
 - MRR: 처음 나온 정답 파일 순위의 역수 (예산 안에 없으면 0)
+- R@10f: 앞 10개 파일 안에 든 정답 파일 비율 (파일을 많이 담을수록 유리한 효과를 뺀 적중률)
 세트 나누기: 커밋 해시 앞 8자리를 정수로 본 값의 10으로 나눈 나머지가 0~2면 dev(약 30%), 나머지는 test.
 신뢰구간: 문항 단위 paired bootstrap 10,000회 95%. 이진 지표(Acc@3) 차이는 McNemar 정확 검정.
 """
@@ -36,6 +38,60 @@ LABEL = {
     "lantern-sem": "**Lantern + 임베딩 (e5-small)**",
 }
 LANGS = {"en": "영어", "ko": "한국어", "ko-mt": "한국어→기계 번역"}
+# 논문 표에 쓰는 영어 이름
+TEX_LABEL = {
+    "grep": "Keyword (file)",
+    "snippets": "Keyword (snippet)",
+    "bm25-file": "BM25 (file)",
+    "bm25-chunk": "BM25 (chunk)",
+    "dense": "Dense (mE5-small)",
+    "hybrid": "BM25 + Dense (RRF)",
+    "repomap": "Aider RepoMap",
+    "lantern": "\\textbf{Lantern}",
+    "lantern-sem": "\\textbf{Lantern + Dense}",
+}
+TEX_LANG = {"en": "English", "ko": "Korean", "ko-mt": "Korean$\\to$MT"}
+
+
+def tex_table(res, keep, order, subset):
+    """언어마다 Recall@8k·Acc@3·MRR 세 칸. 각 열의 가장 큰 값은 굵게"""
+    langs = [l for l in TEX_LANG if any(k[0] == l for k in res)]
+    vals = {}
+    for lang in langs:
+        for m in order:
+            rows = [v for c, v in res.get((lang, m), {}).items() if keep(c)]
+            if rows:
+                vals[(lang, m)] = (mean([x["recall"] for x in rows]) * 100, mean([x["acc3"] for x in rows]) * 100, mean([x["mrr"] for x in rows]))
+    best = {(l, i): max(v[i] for (l2, _), v in vals.items() if l2 == l) for l in langs for i in range(3)}
+    n = max(len([c for c in res.get(("en", "lantern"), {}) if keep(c)]), 1)
+    env = "table*" if len(langs) > 1 else "table"  # 언어가 여럿이면 두 단에 걸침
+    lines = [
+        f"% report.py --subset {subset} 로 만든 표. 손으로 고치지 말고 다시 만든다",
+        f"\\begin{{{env}}}[t]",
+        "\\centering",
+        f"\\caption{{File-level context retrieval within an 8k-token budget ({subset} set, $n={n}$).}}",
+        "\\label{tab:results}",
+        "\\setlength{\\tabcolsep}{3pt}",
+        "\\begin{tabular}{l" + "rrr" * len(langs) + "}",
+        "\\toprule",
+        " & " + " & ".join(f"\\multicolumn{{3}}{{c}}{{{TEX_LANG[l]}}}" for l in langs) + " \\\\",
+        " ".join(f"\\cmidrule(lr){{{2 + 3 * i}-{4 + 3 * i}}}" for i in range(len(langs))),
+        "Method & " + " & ".join("R@8k & A@3 & MRR" for _ in langs) + " \\\\",
+        "\\midrule",
+    ]
+    for m in order:
+        cells = []
+        for l in langs:
+            v = vals.get((l, m))
+            if not v:
+                cells += ["--"] * 3
+                continue
+            for i, x in enumerate(v):
+                t = f"{x:.1f}" if i < 2 else f".{round(x * 1000):03d}"
+                cells.append(f"\\textbf{{{t}}}" if abs(x - best[(l, i)]) < 1e-9 else t)
+        lines.append(f"{TEX_LABEL[m]} & " + " & ".join(cells) + " \\\\")
+    lines += ["\\bottomrule", "\\end{tabular}", f"\\end{{{env}}}", ""]
+    return "\n".join(lines)
 
 
 def split_of(commit):
@@ -47,6 +103,7 @@ def score(files, golden):
     first = next((i for i, p in enumerate(files) if p in golden), None)
     return {
         "recall": len(hit) / len(golden),
+        "r10": sum(1 for g in golden if g in files[:10]) / len(golden),
         "acc1": first is not None and first < 1,
         "acc3": first is not None and first < 3,
         "acc5": first is not None and first < 5,
@@ -128,6 +185,7 @@ def main():
     ap.add_argument("--set", default=HERE)
     ap.add_argument("--subset", default="all", choices=["all", "test", "dev", "2026"])
     ap.add_argument("--md", default=None)
+    ap.add_argument("--tex", default=None)
     a = ap.parse_args()
     questions, res = load(a.dir, a.set)
 
@@ -142,14 +200,14 @@ def main():
     out = [f"# 영·한 병렬 벤치마크 비교 ({a.subset})", ""]
     order = [m for m in LABEL if any(k[1] == m for k in res)]
     for lang in [l for l in LANGS if any(k[0] == l for k in res)]:
-        out += [f"## {LANGS[lang]}", "", "| 방법 | 문항 | Recall@8k | Acc@1 | Acc@3 | Acc@5 | MRR | 파일 수 |", "|---|---|---|---|---|---|---|---|"]
+        out += [f"## {LANGS[lang]}", "", "| 방법 | 문항 | Recall@8k | R@10f | Acc@1 | Acc@3 | Acc@5 | MRR | 파일 수 |", "|---|---|---|---|---|---|---|---|---|"]
         for m in order:
             r = res.get((lang, m))
             if not r:
                 continue
             rows = [v for c, v in r.items() if keep(c)]
             out.append(
-                f"| {LABEL[m]} | {len(rows)} | {pct(mean([x['recall'] for x in rows]))} | {pct(mean([x['acc1'] for x in rows]))} | "
+                f"| {LABEL[m]} | {len(rows)} | {pct(mean([x['recall'] for x in rows]))} | {pct(mean([x['r10'] for x in rows]))} | {pct(mean([x['acc1'] for x in rows]))} | "
                 f"{pct(mean([x['acc3'] for x in rows]))} | {pct(mean([x['acc5'] for x in rows]))} | {mean([x['mrr'] for x in rows]):.3f} | {mean([x['files'] for x in rows]):.1f} |"
             )
         # Lantern과 각 방법의 차이 (같은 문항끼리)
@@ -181,6 +239,10 @@ def main():
         out.append("")
     text = "\n".join(out)
     print(text)
+    if a.tex:
+        os.makedirs(os.path.dirname(os.path.abspath(a.tex)), exist_ok=True)
+        with open(a.tex, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(tex_table(res, keep, order, a.subset))
     if a.md:
         with open(a.md, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(text + "\n")
