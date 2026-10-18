@@ -153,7 +153,7 @@ function chanceAny(n, total, g) {
 // ── B: Lantern ─────────────────────────────────────────────
 function lanternRetrieve(q) {
   const env = { ...process.env, LANTERN_INDEX_DIR: process.env.LANTERN_INDEX_DIR || path.join(OUT, `index-${path.basename(PROJECT)}`) };
-  const out = execFileSync(LANTERN_BIN, ["-C", PROJECT, "context", q, "--budget", String(BUDGET), "--json"], { encoding: "utf8", env, maxBuffer: 64 * 1024 * 1024 });
+  const out = execFileSync(LANTERN_BIN, ["-C", PROJECT, "context", "--budget", String(BUDGET), "--json", "--", q], { encoding: "utf8", env, maxBuffer: 64 * 1024 * 1024 });
   const r = JSON.parse(out);
   const picked = [];
   for (const it of r.items) if (!picked.includes(it.path)) picked.push(it.path);
