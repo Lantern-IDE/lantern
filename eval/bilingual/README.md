@@ -55,10 +55,22 @@ python eval/bilingual/ko_sheet.py import 검토표.xlsx   # 검토표 → 각 JS
 
 ```bash
 cargo build --release -p lantern-context
-node eval/bench/run.mjs --dir <저장소를 받을 폴더> --set eval/bilingual
+bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [aider가 깔린 파이썬]
 ```
 
-결과는 [결과.md](결과.md)에 씁니다.
+한국어 질문 번역(NLLB) → Lantern → BM25·임베딩·RRF → Aider RepoMap → Lantern+임베딩 → 규모 순으로 재고, [결과-비교.md](결과-비교.md)(전체)와 `결과-비교-test.md`(평가용 세트)를 씁니다. 모델 호출이 없어 무료지만, CPU에서 처음 임베딩을 만드느라 몇 시간 걸립니다 (벡터는 캐시해서 다음부터 빠름).
+
+| 스크립트 | 하는 일 |
+|---|---|
+| [../bench/run.mjs](../bench/run.mjs) `--set eval/bilingual` | 키워드 검색 2가지와 Lantern |
+| [baselines.py](baselines.py) | BM25(파일·40줄 조각), 다국어 임베딩(multilingual-e5-small), BM25+임베딩 RRF |
+| [repomap_baseline.py](repomap_baseline.py) | Aider RepoMap (aider-chat 0.86.2, 질문 낱말을 언급된 식별자로) |
+| [embed_server.py](embed_server.py) | Lantern 의미 검색을 같은 임베딩 모델로 재는 로컬 `/embeddings` 서버 |
+| [translate.py](translate.py) | 한국어 질문 → 영어 기계 번역 (번역한 뒤 검색 비교) |
+| [scale.py](scale.py) | 인덱싱 시간·메모리·인덱스 크기·질문당 조립 시간 |
+| [report.py](report.py) | Recall@8k, R@10f, Acc@1/3/5, MRR, 부트스트랩 95% 구간, McNemar, 논문용 LaTeX 표(`--tex`) |
+
+평가용·개발용 세트: 커밋 해시 앞 8자리 정수를 10으로 나눈 나머지가 0~2면 개발용(약 30%), 나머지는 평가용입니다. 엔진의 사전·가중치는 개발용으로만 맞추고, 보고는 평가용으로 합니다.
 
 ## 한계
 
