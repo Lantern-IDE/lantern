@@ -92,7 +92,7 @@ def main():
             "% scale.py로 만든 표. 손으로 고치지 말고 다시 만든다",
             "\\begin{table}[t]",
             "\\centering",
-            "\\caption{Indexing cost and per-question context assembly time (median) on a laptop CPU, no model calls.}",
+            "\\caption{Indexing cost and per-question context assembly time (median) on a desktop CPU (Intel Core i5-11400, 6 cores, 32 GB RAM), no model calls.}",
             "\\label{tab:scale}",
             "\\setlength{\\tabcolsep}{3pt}",
             "\\begin{tabular}{lrrrrr}",
