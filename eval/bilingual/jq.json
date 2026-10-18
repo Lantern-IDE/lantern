@@ -12,7 +12,8 @@
       ],
       "commit": "6b53f8031161db96387b64b5f412845cd23491f6",
       "parent": "80fc7a169d3a3942a07f587abc4346d119fc525d",
-      "date": "2026-10-13"
+      "date": "2026-10-13",
+      "q_ko_draft": "strftime/1, strflocaltime/1이 빈 결과를 허용 안 하는 문제"
     },
     {
       "q": "Skip to the next RS after a parse error in --seq mode",
@@ -22,7 +23,8 @@
       ],
       "commit": "80fc7a169d3a3942a07f587abc4346d119fc525d",
       "parent": "611c575a97f0fbaaea9c334b2c70ffe3fa733f41",
-      "date": "2026-10-12"
+      "date": "2026-10-12",
+      "q_ko_draft": "--seq 모드에서 파싱 에러 나면 다음 RS까지 건너뛰게 해줘"
     },
     {
       "q": "Improve performance of string output",
@@ -32,7 +34,8 @@
       ],
       "commit": "b904884b94ca48e025a12697ab172711e6c134d8",
       "parent": "a5323a369c904b34d7e5c2c81d2066b81bcf6a6f",
-      "date": "2026-10-10"
+      "date": "2026-10-10",
+      "q_ko_draft": "문자열 출력 성능 올리려면 어디를 봐야 해?"
     },
     {
       "q": "Fix assertion failure on too many parameters in a nested function",
@@ -42,7 +45,8 @@
       ],
       "commit": "a5323a369c904b34d7e5c2c81d2066b81bcf6a6f",
       "parent": "04042494cfd9d3bb1f4aa6895177dadd6f5abc67",
-      "date": "2026-10-10"
+      "date": "2026-10-10",
+      "q_ko_draft": "중첩 함수에 파라미터가 너무 많으면 assertion 실패하는 버그"
     },
     {
       "q": "Exit with the given status for negative `halt_error` codes",
@@ -52,7 +56,8 @@
       ],
       "commit": "04042494cfd9d3bb1f4aa6895177dadd6f5abc67",
       "parent": "a8e6d5f8714ad470ae1dbbf6198dec03092d954c",
-      "date": "2026-10-10"
+      "date": "2026-10-10",
+      "q_ko_draft": "`halt_error`에 음수 코드를 주면 그 값 그대로 종료 상태로 나가게 하려면 어디 고쳐야 해?"
     },
     {
       "q": "Fix undefined behavior on out-of-range array index in has() and del()",
@@ -62,7 +67,8 @@
       ],
       "commit": "a8e6d5f8714ad470ae1dbbf6198dec03092d954c",
       "parent": "dbbae0dee3e18e8cc1b545cda108b9a04110b561",
-      "date": "2026-10-09"
+      "date": "2026-10-09",
+      "q_ko_draft": "has()랑 del()에서 범위 밖 배열 인덱스로 생기는 undefined behavior 고쳐줘"
     },
     {
       "q": "Strip UTF-8 BOM at the start of each input file",
@@ -74,7 +80,8 @@
       ],
       "commit": "e001deb4cfb735a6b14a802398a41bfa03df5a2a",
       "parent": "17b87d25c77c4c07f8b7f8a26ea5b72b05ae46a4",
-      "date": "2026-10-08"
+      "date": "2026-10-08",
+      "q_ko_draft": "입력 파일마다 맨 앞의 UTF-8 BOM 떼는 건 어디서 해?"
     },
     {
       "q": "Prefer getentropy() over arc4random() to seed the string hash",
@@ -84,7 +91,8 @@
       ],
       "commit": "32580f5d83f4321588a1ebf8e3893f7fbecefe4e",
       "parent": "df24981307658868759faaea76b817cc62dd6be0",
-      "date": "2026-09-25"
+      "date": "2026-09-25",
+      "q_ko_draft": "문자열 해시 시드에 arc4random()보다 getentropy()를 우선 쓰게 해줘"
     },
     {
       "q": "Fix reduce to preserve its input across init backtracking",
@@ -96,7 +104,8 @@
       ],
       "commit": "df24981307658868759faaea76b817cc62dd6be0",
       "parent": "4beed4e01ad0d390f279a63bb20d61a262b9567f",
-      "date": "2026-09-19"
+      "date": "2026-09-19",
+      "q_ko_draft": "init 백트래킹할 때 reduce 입력이 유지 안 되는 버그"
     },
     {
       "q": "Implement `range/3` in C for consistent error handling",
@@ -107,7 +116,8 @@
       ],
       "commit": "e371bfaa923f7f4286810984cd75135efd7d9f87",
       "parent": "dd409de28d5868691992027bffa464d4c4575898",
-      "date": "2026-09-18"
+      "date": "2026-09-18",
+      "q_ko_draft": "에러 처리 일관되게 `range/3`를 C로 구현"
     },
     {
       "q": "Use WriteConsoleW() in priv_fwrite() too",
@@ -118,7 +128,8 @@
       ],
       "commit": "dd409de28d5868691992027bffa464d4c4575898",
       "parent": "7422e8c914d9b834698d5b0a6de1a2539d175b87",
-      "date": "2026-09-18"
+      "date": "2026-09-18",
+      "q_ko_draft": "priv_fwrite()에서도 WriteConsoleW() 쓰게 해줘"
     },
     {
       "q": "Fix gmtime and localtime on negative timestamps with fractional seconds",
@@ -128,7 +139,8 @@
       ],
       "commit": "6aeafff056a988c20672ac1359b2beea13fb9315",
       "parent": "57f5976edf6ca0132bf2fc4ef19732ddbd2a862b",
-      "date": "2026-09-18"
+      "date": "2026-09-18",
+      "q_ko_draft": "소수점 초가 있는 음수 타임스탬프를 gmtime, localtime이 제대로 처리하게 하려면 어디 봐야 해?"
     },
     {
       "q": "Reject raw NUL bytes in the parser instead of silently truncating tokens",
@@ -138,7 +150,8 @@
       ],
       "commit": "fbee8f48bac154aeb6edfbd79792181ac19914a3",
       "parent": "8cf81cb80c05cf9c480470f477af7f700f6a3c27",
-      "date": "2026-08-24"
+      "date": "2026-08-24",
+      "q_ko_draft": "파서에서 raw NUL 바이트 나오면 토큰 몰래 자르지 말고 거부해줘"
     },
     {
       "q": "Cast char to unsigned char before passing to isspace",
@@ -148,7 +161,8 @@
       ],
       "commit": "579e6f76cffd7643ba4002a2c3618a5ea710589a",
       "parent": "42d4035d4fe8028008c95d4efb0ac4f2a36a5932",
-      "date": "2026-07-02"
+      "date": "2026-07-02",
+      "q_ko_draft": "isspace에 넘기기 전에 char를 unsigned char로 캐스팅"
     },
     {
       "q": "Tighten string length bounds and propagate invalid jv in implode",
@@ -159,7 +173,8 @@
       ],
       "commit": "46d1da30944ce93dd671ac72b6513fc0eb747837",
       "parent": "e987df0d463d85fd70825e042a082427e8275b86",
-      "date": "2026-06-16"
+      "date": "2026-06-16",
+      "q_ko_draft": "implode에서 문자열 길이 범위 더 엄격하게 보고 invalid jv는 전파하게 해줘"
     },
     {
       "q": "Fix heap-buffer-overflow in raw file loading",
@@ -169,7 +184,8 @@
       ],
       "commit": "e987df0d463d85fd70825e042a082427e8275b86",
       "parent": "985abe534fdd48186015e169da7786c05fd7f868",
-      "date": "2026-06-08"
+      "date": "2026-06-08",
+      "q_ko_draft": "raw 파일 로딩 중 heap-buffer-overflow 나는 버그"
     },
     {
       "q": "Fix undefined pointer arithmetic in UTF-8 helpers",
@@ -179,7 +195,8 @@
       ],
       "commit": "df924eae91af10cc236a907cdadd97813827aa1f",
       "parent": "a829f678f340da83a75fb35457d918c98524fdc7",
-      "date": "2026-05-23"
+      "date": "2026-05-23",
+      "q_ko_draft": "UTF-8 헬퍼에서 정의되지 않은 포인터 연산은 어디서 고쳐야 해?"
     },
     {
       "q": "Guard deep structural equality and comparison recursion",
@@ -191,7 +208,8 @@
       ],
       "commit": "7122866869960b55cea3646bc91334ef55787831",
       "parent": "f58787c41835d9b17795730cb04925fdba25c71c",
-      "date": "2026-05-22"
+      "date": "2026-05-22",
+      "q_ko_draft": "깊은 구조의 동등성·비교 재귀 방어"
     },
     {
       "q": "Detect circular module imports to prevent stack overflow",
@@ -201,7 +219,8 @@
       ],
       "commit": "f58787c41835d9b17795730cb04925fdba25c71c",
       "parent": "9d223f153c3632a207fa071caaa6292da33ae361",
-      "date": "2026-05-11"
+      "date": "2026-05-11",
+      "q_ko_draft": "모듈 순환 import 감지해서 스택 오버플로 막아줘"
     },
     {
       "q": "Reject numeric literals longer than DEC_MAX_DIGITS (999999999)",
@@ -212,7 +231,8 @@
       ],
       "commit": "9761ceb7d6cc48c16b25f0ab1baaef0e701927e4",
       "parent": "532ccea6080ed6758f39fe9f6208a44b665023d2",
-      "date": "2026-05-06"
+      "date": "2026-05-06",
+      "q_ko_draft": "DEC_MAX_DIGITS(999999999)보다 긴 숫자 리터럴은 거부하게 해줘"
     },
     {
       "q": "Limit recursive object merge depth to prevent stack overflow",
@@ -222,7 +242,8 @@
       ],
       "commit": "532ccea6080ed6758f39fe9f6208a44b665023d2",
       "parent": "33d7bce3218ec718139342e5b48b475c4dea715f",
-      "date": "2026-05-05"
+      "date": "2026-05-05",
+      "q_ko_draft": "재귀 객체 병합 깊이 제한해서 스택 오버플로 막으려면 어디 봐야 해?"
     },
     {
       "q": "Fix signed-int overflow in `stack_reallocate`",
@@ -232,7 +253,8 @@
       ],
       "commit": "01b3cded76daacbfddb7f8763700b0803bcb5c6f",
       "parent": "d1a12569d91641135976a8536776a4a329c02cc2",
-      "date": "2026-04-24"
+      "date": "2026-04-24",
+      "q_ko_draft": "`stack_reallocate`의 signed int 오버플로"
     },
     {
       "q": "Limit the containment check depth",
@@ -243,7 +265,8 @@
       ],
       "commit": "d1a12569d91641135976a8536776a4a329c02cc2",
       "parent": "870207323d178f5aaf926995b72fe50dc2043447",
-      "date": "2026-04-24"
+      "date": "2026-04-24",
+      "q_ko_draft": "포함 관계 검사 깊이 제한은 어디서 걸어?"
     },
     {
       "q": "Limit path depth to prevent stack overflow",
@@ -253,7 +276,8 @@
       ],
       "commit": "fb59f1491058d58bdc3e8dd28f1773d1ac690a1f",
       "parent": "2f09060afab23fe9390cce7cb860b10416e1bf5f",
-      "date": "2026-04-13"
+      "date": "2026-04-13",
+      "q_ko_draft": "스택 오버플로 안 나게 path 깊이 제한해줘"
     },
     {
       "q": "Fix NUL truncation in the JSON parser",
@@ -263,7 +287,8 @@
       ],
       "commit": "6374ae0bcdfe33a18eb0ae6db28493b1f34a0a5b",
       "parent": "fdf8ef0f0810e3d365cdd5160de43db46f57ed03",
-      "date": "2026-04-13"
+      "date": "2026-04-13",
+      "q_ko_draft": "JSON 파서에서 NUL 때문에 잘리는 거 어디서 고쳐?"
     },
     {
       "q": "Fix use-after-free in args2obj() array argument path",
@@ -273,7 +298,8 @@
       ],
       "commit": "3985b80ce50bd75c6eb5a97cb3348c3f835ca8e0",
       "parent": "3cd7e0da00f2a65e544d8f8bb8a42edf822bb5a2",
-      "date": "2026-03-09"
+      "date": "2026-03-09",
+      "q_ko_draft": "args2obj() 배열 인자 경로의 use-after-free"
     },
     {
       "q": "Fix crash when importing a module with errors twice",
@@ -283,7 +309,8 @@
       ],
       "commit": "3cd7e0da00f2a65e544d8f8bb8a42edf822bb5a2",
       "parent": "ed3c7f214b192024ade9b5c501f32800a87984b5",
-      "date": "2026-03-06"
+      "date": "2026-03-06",
+      "q_ko_draft": "에러 있는 모듈을 두 번 import할 때 크래시 나는 곳 어디야?"
     },
     {
       "q": "Limit number of function parameters and definitions to prevent SEGV",
@@ -293,7 +320,8 @@
       ],
       "commit": "a2741ee0a8022fd3e47ddc6b8b87db359673cea8",
       "parent": "b33a7634ba34ffa7ce7368cc0ebf5ca40b54c7e6",
-      "date": "2026-02-25"
+      "date": "2026-02-25",
+      "q_ko_draft": "SEGV 안 나게 함수 파라미터 수랑 정의 수 제한해줘"
     },
     {
       "q": "Fix slurping raw input not to corrupt multi-byte characters (fix #3389)",
@@ -304,7 +332,8 @@
       ],
       "commit": "55297882922c3def24cbddc3ea24d4c304cf3a42",
       "parent": "8d9a3c3ab3e6e964fd5c013e209dece0cda07650",
-      "date": "2025-10-31"
+      "date": "2025-10-31",
+      "q_ko_draft": "raw 입력 slurp할 때 멀티바이트 문자 깨지는 문제 (#3389)"
     },
     {
       "q": "Increase the maximum printing depth from 256 to 10000 (fixes #3413)",
@@ -314,7 +343,8 @@
       ],
       "commit": "b29504b4e191a4b1028bd1c252aaab0c62fbdbfa",
       "parent": "589a6947fa5e6f6f1d3f340053a8c92fa8b9f445",
-      "date": "2025-10-14"
+      "date": "2025-10-14",
+      "q_ko_draft": "최대 출력 깊이 256에서 10000으로 늘려줘 (#3413)"
     },
     {
       "q": "Use jv_mem_alloc to allocate dtoa_context in tsd_dtoa_context_get",
@@ -324,7 +354,8 @@
       ],
       "commit": "2e6987967e9cbea933619c4a5f78b226acb49c13",
       "parent": "0b1ef469734f0621283a056aa1e8f2080110b493",
-      "date": "2025-06-30"
+      "date": "2025-06-30",
+      "q_ko_draft": "tsd_dtoa_context_get에서 dtoa_context 할당을 jv_mem_alloc으로 하려면 어디 봐야 해?"
     },
     {
       "q": "Fix syntax error assertion failure (fix #3348)",
@@ -334,7 +365,8 @@
       ],
       "commit": "a587ddc5a390563b837b0c53610cae6a4a5363d8",
       "parent": "78045d8aa9d155ec0f82ab102aa752300c2349f1",
-      "date": "2025-06-17"
+      "date": "2025-06-17",
+      "q_ko_draft": "문법 에러에서 assertion 실패하는 버그 (#3348)"
     }
   ]
 }

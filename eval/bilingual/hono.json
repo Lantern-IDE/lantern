@@ -12,7 +12,8 @@
       ],
       "commit": "90d02fb1645c12a65d27f39594d2129db2065ba7",
       "parent": "5f31392d724cf98c9e48a3de119a55284583ad5f",
-      "date": "2026-09-25"
+      "date": "2026-09-25",
+      "q_ko_draft": "응답 body로 Blob도 반환할 수 있게 해줘"
     },
     {
       "q": "fail with a descriptive error on a malformed event",
@@ -22,7 +23,8 @@
       ],
       "commit": "6cadf7537385c6e3df9cbd6d05c9b84c82ae0361",
       "parent": "de310ac063febf3e7b73f6206142d0e88800661f",
-      "date": "2026-09-22"
+      "date": "2026-09-22",
+      "q_ko_draft": "이벤트 형식이 잘못됐을 때 알아보기 쉬운 에러로 실패하게 하려면 어디를 봐야 해?"
     },
     {
       "q": "sync content type detection with aws-lambda",
@@ -32,7 +34,8 @@
       ],
       "commit": "de310ac063febf3e7b73f6206142d0e88800661f",
       "parent": "28e8572cd265b4da1160ce6cd51919bb70516e2c",
-      "date": "2026-09-22"
+      "date": "2026-09-22",
+      "q_ko_draft": "content type 판별을 aws-lambda 쪽이랑 맞추려면 어디 고쳐야 해?"
     },
     {
       "q": "preserve empty query parameters",
@@ -42,7 +45,8 @@
       ],
       "commit": "28e8572cd265b4da1160ce6cd51919bb70516e2c",
       "parent": "0d86899d28e146da0c8760201b2d08ddae732eaa",
-      "date": "2026-09-21"
+      "date": "2026-09-21",
+      "q_ko_draft": "빈 쿼리 파라미터가 안 사라지게 하려면 어디를 고쳐야 해?"
     },
     {
       "q": "treat binary +xml archive media types as binary",
@@ -52,7 +56,8 @@
       ],
       "commit": "0d86899d28e146da0c8760201b2d08ddae732eaa",
       "parent": "52febbcc30bc509d5e4987577e63906fe08fc471",
-      "date": "2026-09-21"
+      "date": "2026-09-21",
+      "q_ko_draft": "+xml 붙은 바이너리 아카이브 미디어 타입은 바이너리로 취급해줘"
     },
     {
       "q": "don't break responses with unparseable JSON bodies",
@@ -62,7 +67,8 @@
       ],
       "commit": "f950277cd3d9264622785e82785f21c648da699a",
       "parent": "00ee875728e2369b98a9ab7dda0690b77afedcff",
-      "date": "2026-09-20"
+      "date": "2026-09-20",
+      "q_ko_draft": "JSON 바디를 파싱 못 하면 응답이 깨지는 문제"
     },
     {
       "q": "don't match an empty path segment as a param",
@@ -72,7 +78,8 @@
       ],
       "commit": "00ee875728e2369b98a9ab7dda0690b77afedcff",
       "parent": "f5a53463ad2ff791fc02418b645750ce75a260ad",
-      "date": "2026-09-20"
+      "date": "2026-09-20",
+      "q_ko_draft": "빈 경로 세그먼트가 파라미터로 매칭되는 버그"
     },
     {
       "q": "match media types and language tags case-insensitively",
@@ -82,7 +89,8 @@
       ],
       "commit": "f5a53463ad2ff791fc02418b645750ce75a260ad",
       "parent": "cb5bea3614e6591e8ab933ef9a38ce7addf1d09a",
-      "date": "2026-09-20"
+      "date": "2026-09-20",
+      "q_ko_draft": "미디어 타입이랑 언어 태그는 대소문자 구분 없이 매칭하게 해줘"
     },
     {
       "q": "replace Suspense and ErrorBoundary content across newlines",
@@ -93,7 +101,8 @@
       ],
       "commit": "cb5bea3614e6591e8ab933ef9a38ce7addf1d09a",
       "parent": "098e11912ab244c5c33931de007f04dc8e3c2929",
-      "date": "2026-09-20"
+      "date": "2026-09-20",
+      "q_ko_draft": "여러 줄에 걸친 Suspense, ErrorBoundary 내용 치환은 어디서 해?"
     },
     {
       "q": "optimize matching-head child lookup during reconciliation",
@@ -103,7 +112,8 @@
       ],
       "commit": "e8c8c21244f87da80aaa5ac5ab9c92f3faca2489",
       "parent": "8755b17fbcfdee76511eeb460e18e94e6c9a8d30",
-      "date": "2026-09-14"
+      "date": "2026-09-14",
+      "q_ko_draft": "reconciliation 중 head가 일치하는 자식 찾기 최적화"
     },
     {
       "q": "clamp a negative q to 0, not 1",
@@ -113,7 +123,8 @@
       ],
       "commit": "9b4e9c2864c30ea9275cf426e2d2716bd9f05195",
       "parent": "65cff90e152dbbbcdde2808af15b48344676edfe",
-      "date": "2026-09-12"
+      "date": "2026-09-12",
+      "q_ko_draft": "음수 q는 1이 아니라 0으로 clamp해줘"
     },
     {
       "q": "treat the q parameter name as case-insensitive",
@@ -123,7 +134,8 @@
       ],
       "commit": "65cff90e152dbbbcdde2808af15b48344676edfe",
       "parent": "f147de5ea1eeadd4b4851ab075999673e140a303",
-      "date": "2026-09-12"
+      "date": "2026-09-12",
+      "q_ko_draft": "q 파라미터 이름을 대소문자 구분 없이 보려면 어디를 봐야 해?"
     },
     {
       "q": "skip accept entries with quality 0 when matching",
@@ -134,7 +146,8 @@
       ],
       "commit": "f147de5ea1eeadd4b4851ab075999673e140a303",
       "parent": "90e1b948467961718afd3ae34af9dee582b42248",
-      "date": "2026-09-12"
+      "date": "2026-09-12",
+      "q_ko_draft": "매칭할 때 quality가 0인 accept 항목은 어디서 걸러?"
     },
     {
       "q": "reduce lookup work for large keyed updates",
@@ -144,7 +157,8 @@
       ],
       "commit": "7792f5dc14acaa92056c1bf402241567ff9c7396",
       "parent": "e7b38ee42bfa41f20194ad20fb949b625346be62",
-      "date": "2026-09-10"
+      "date": "2026-09-10",
+      "q_ko_draft": "key 있는 대량 업데이트에서 조회 작업 좀 줄여줘"
     },
     {
       "q": "use forEach for consistent handler iteration",
@@ -154,7 +168,8 @@
       ],
       "commit": "dac5d5794c6134711e469c5e69d09cd6274e1fc1",
       "parent": "ec648d683768ec5093315e5dc694c05594fec185",
-      "date": "2026-09-04"
+      "date": "2026-09-04",
+      "q_ko_draft": "핸들러 순회는 forEach로 통일"
     },
     {
       "q": "normalize root WebSocket URLs",
@@ -164,7 +179,8 @@
       ],
       "commit": "499c35ebda35777fd35a7dd1906dd4f2687da61e",
       "parent": "50b8788cf54cb60112b7cd93642bc5094901475c",
-      "date": "2026-08-27"
+      "date": "2026-08-27",
+      "q_ko_draft": "루트 WebSocket URL 정규화는 어디서 해?"
     },
     {
       "q": "keep a param value of \"index\" in $url() and $path()",
@@ -174,7 +190,8 @@
       ],
       "commit": "50b8788cf54cb60112b7cd93642bc5094901475c",
       "parent": "06880c4a2b04de9dd74217f26dd831209b9c01f1",
-      "date": "2026-08-27"
+      "date": "2026-08-27",
+      "q_ko_draft": "$url()이랑 $path()에서 param 값이 \"index\"면 사라지는 문제"
     },
     {
       "q": "do not let abort listeners crash abort()",
@@ -184,7 +201,8 @@
       ],
       "commit": "5e5b83d6ed963a2bc7d8384002e1c953648253b1",
       "parent": "241ae4c72b7ab732e425f40ea28cd3af2e78d8a2",
-      "date": "2026-08-23"
+      "date": "2026-08-23",
+      "q_ko_draft": "abort 리스너 때문에 abort()가 죽지 않게 해줘"
     },
     {
       "q": "drop stale content length for cloned FormData",
@@ -194,7 +212,8 @@
       ],
       "commit": "612b59c0227b421090d46721cd5a98243ad8c6ec",
       "parent": "73794bdabeadca93676cdbd54aa82d018feb69b8",
-      "date": "2026-08-23"
+      "date": "2026-08-23",
+      "q_ko_draft": "복제한 FormData에 남은 예전 content length는 어디서 지워?"
     },
     {
       "q": "support wildcard media types and specificity ordering in defaultMatch",
@@ -204,7 +223,8 @@
       ],
       "commit": "28a9c128912de19f3fb28b00ae289c9b93f6f392",
       "parent": "1096d66e03a3fd16a5cc5f912c2d5e8fd6d990b0",
-      "date": "2026-08-22"
+      "date": "2026-08-22",
+      "q_ko_draft": "defaultMatch에서 와일드카드 미디어 타입이랑 구체성 순 정렬 지원해줘"
     },
     {
       "q": "skip an undefined entry inside a query array",
@@ -214,7 +234,8 @@
       ],
       "commit": "2059584f84187a688354956e0647269834ccf3a6",
       "parent": "d6c0b0de163a3b709e4dc57de0e0e8581aa08b7b",
-      "date": "2026-08-22"
+      "date": "2026-08-22",
+      "q_ko_draft": "쿼리 배열 안에 undefined 항목은 건너뛰게 해줘"
     },
     {
       "q": "associate wildcard middleware with matching routes",
@@ -225,7 +246,8 @@
       ],
       "commit": "a10592f3e1864cbe277619633db953450a6b1e4b",
       "parent": "48e360fcaa107c7706fcf8adccb93505876791dc",
-      "date": "2026-08-19"
+      "date": "2026-08-19",
+      "q_ko_draft": "와일드카드 미들웨어를 매칭되는 라우트랑 연결하는 건 어디서 해?"
     },
     {
       "q": "support structured JSON content-types (+json)",
@@ -235,7 +257,8 @@
       ],
       "commit": "5ad469a888f3944ae3e5d993621612d799f1e96c",
       "parent": "c91ec9b60df18c76a3feb47533ce097d02f7fe6c",
-      "date": "2026-08-18"
+      "date": "2026-08-18",
+      "q_ko_draft": "+json 같은 구조화된 JSON content-type 지원"
     },
     {
       "q": "avoid truncation on embedded IPv4 addresses in expandIPv6",
@@ -245,7 +268,8 @@
       ],
       "commit": "c91ec9b60df18c76a3feb47533ce097d02f7fe6c",
       "parent": "eea9735fe308e6549509c312d80e13cd9e18898b",
-      "date": "2026-08-18"
+      "date": "2026-08-18",
+      "q_ko_draft": "expandIPv6에서 IPv4가 들어간 주소가 잘리는 문제"
     },
     {
       "q": "exempt OPTIONS request from CSRF validation",
@@ -255,7 +279,8 @@
       ],
       "commit": "eea9735fe308e6549509c312d80e13cd9e18898b",
       "parent": "a19462879716e7b600daed8eb3a1b2af4bd68feb",
-      "date": "2026-08-17"
+      "date": "2026-08-17",
+      "q_ko_draft": "OPTIONS 요청은 CSRF 검증에서 빼줘"
     },
     {
       "q": "prevent prefix overmatch on wildcard routes",
@@ -266,7 +291,8 @@
       ],
       "commit": "a19462879716e7b600daed8eb3a1b2af4bd68feb",
       "parent": "63bbcf508c74d9fe7a3e20f4dfe7ffacc566dcce",
-      "date": "2026-08-17"
+      "date": "2026-08-17",
+      "q_ko_draft": "와일드카드 라우트에서 prefix가 너무 넓게 매칭되는 문제"
     },
     {
       "q": "match suffix wildcard routes",
@@ -277,7 +303,8 @@
       ],
       "commit": "63bbcf508c74d9fe7a3e20f4dfe7ffacc566dcce",
       "parent": "ef0739d5f6e83242ba2b64c1365c9f96738933a1",
-      "date": "2026-08-17"
+      "date": "2026-08-17",
+      "q_ko_draft": "suffix 와일드카드 라우트가 매칭되게 하려면 어디 건드리면 돼?"
     },
     {
       "q": "append Origin to Vary header on OPTIONS preflight",
@@ -287,7 +314,8 @@
       ],
       "commit": "8bf03c377a39226b3dbcbcadf3b342532e1dd0a8",
       "parent": "546eca0c402a031aaeb4a3b422c5d9cb87fe1576",
-      "date": "2026-08-16"
+      "date": "2026-08-16",
+      "q_ko_draft": "OPTIONS preflight에서 Vary 헤더에 Origin 추가해줘"
     },
     {
       "q": "avoid skipping headers when filtering 304 response headers",
@@ -297,7 +325,8 @@
       ],
       "commit": "546eca0c402a031aaeb4a3b422c5d9cb87fe1576",
       "parent": "7195c2486037a2caa51355a33f2ff31f6d1279c9",
-      "date": "2026-08-16"
+      "date": "2026-08-16",
+      "q_ko_draft": "304 응답 헤더 거를 때 일부 헤더가 건너뛰어지는 문제"
     },
     {
       "q": "copy pending stream bytes",
@@ -307,7 +336,8 @@
       ],
       "commit": "7195c2486037a2caa51355a33f2ff31f6d1279c9",
       "parent": "4eb022de6869b8d5a7ce4edb1489e384cd76b9fe",
-      "date": "2026-08-16"
+      "date": "2026-08-16",
+      "q_ko_draft": "pending 상태인 스트림 바이트 복사해줘"
     },
     {
       "q": "prevent URL corruption when replaceUrlParam contains $ replacement tokens",
@@ -317,7 +347,8 @@
       ],
       "commit": "4eb022de6869b8d5a7ce4edb1489e384cd76b9fe",
       "parent": "41bdc4288ed7023c24d35f32bd065bd963435e3e",
-      "date": "2026-08-16"
+      "date": "2026-08-16",
+      "q_ko_draft": "replaceUrlParam에 $ 치환 토큰이 있으면 URL이 깨지는 문제"
     },
     {
       "q": "pre-join static array header options during initialization",
@@ -327,7 +358,8 @@
       ],
       "commit": "a1e4ac7d46a3e627c143c4dd6dcf7bc59031bb9a",
       "parent": "d982f637ebab758715f7e68ff35a7c4844450023",
-      "date": "2026-08-13"
+      "date": "2026-08-13",
+      "q_ko_draft": "정적 배열 헤더 옵션은 초기화할 때 미리 join해둬"
     }
   ]
 }

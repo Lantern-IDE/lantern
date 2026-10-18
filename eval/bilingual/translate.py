@@ -1,9 +1,10 @@
 """한국어 질문(q_ko)을 영어로 기계 번역해 q_ko_mt에 넣는다 ("번역한 뒤 검색" 비교용).
 
-    python eval/bilingual/translate.py [--set eval/bilingual] [--model Helsinki-NLP/opus-mt-ko-en]
+    python eval/bilingual/translate.py [--set eval/bilingual] [--model facebook/nllb-200-distilled-600M]
 
 로컬 CPU에서 도는 공개 번역 모델을 써서 비용 없이 누구나 같은 결과를 낸다. 쓴 모델 이름은 각 JSON의 mt_model에 남긴다.
-이미 번역한 문항은 한국어 질문이 바뀌지 않았으면 그대로 둔다 (q_ko_mt_src로 확인).
+기본은 NLLB-200 600M(CC-BY-NC 4.0, 연구용). Helsinki-NLP/opus-mt-ko-en도 쓸 수 있지만 품질이 낮아 비교 상대로 약하다.
+이미 번역한 문항은 한국어 질문과 모델이 같으면 그대로 둔다 (q_ko_mt_src로 확인).
 transformers, sentencepiece가 필요하다.
 """
 
@@ -18,12 +19,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--set", default=HERE)
-    ap.add_argument("--model", default="Helsinki-NLP/opus-mt-ko-en")
+    ap.add_argument("--model", default="facebook/nllb-200-distilled-600M")
     a = ap.parse_args()
-    from transformers import MarianMTModel, MarianTokenizer
+    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-    tok = MarianTokenizer.from_pretrained(a.model)
-    model = MarianMTModel.from_pretrained(a.model)
+    nllb = "nllb" in a.model.lower()
+    tok = AutoTokenizer.from_pretrained(a.model, **({"src_lang": "kor_Hang"} if nllb else {}))
+    model = AutoModelForSeq2SeqLM.from_pretrained(a.model)
+    extra = {"forced_bos_token_id": tok.convert_tokens_to_ids("eng_Latn")} if nllb else {}
     total = 0
     for f in sorted(glob.glob(os.path.join(a.set, "*.json"))):
         with open(f, encoding="utf-8") as fh:
@@ -32,7 +35,7 @@ def main():
         for i in range(0, len(todo), 16):
             batch = todo[i : i + 16]
             enc = tok([q["q_ko"] for q in batch], return_tensors="pt", padding=True, truncation=True)
-            out = model.generate(**enc, num_beams=4, max_new_tokens=128)
+            out = model.generate(**enc, **extra, num_beams=4, max_new_tokens=128)
             for q, text in zip(batch, tok.batch_decode(out, skip_special_tokens=True)):
                 q["q_ko_mt"] = text.strip()
                 q["q_ko_mt_src"] = q["q_ko"]
