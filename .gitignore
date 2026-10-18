@@ -20,3 +20,6 @@ eval/results/
 
 # 디자인 도구의 로컬 작업 파일
 .impeccable/
+
+# 파이썬 캐시 (eval 스크립트)
+__pycache__/
