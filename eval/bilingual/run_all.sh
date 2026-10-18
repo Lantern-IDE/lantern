@@ -6,7 +6,7 @@
 # 미리: cargo build --release -p lantern-context
 #       pip install sentence-transformers transformers sentencepiece psutil openpyxl
 #       python -m venv .venv-aider && .venv-aider/Scripts/pip install aider-chat==0.86.2   (RepoMap, 선택)
-# 순서: 한국어 질문 번역(NLLB) → Lantern → BM25·임베딩·RRF → RepoMap → Lantern+임베딩 → 규모 → 보고서
+# 순서: 한국어 질문 번역(NLLB) → Lantern → 구성 요소별 기여 → BM25·임베딩·RRF → RepoMap → Lantern+임베딩 → 규모 → 보고서
 # 결과: <클론 폴더>/results/bilingual/, 보고서는 eval/bilingual/결과-비교.md
 set -euo pipefail
 DIR=${1:?클론 폴더}
@@ -26,6 +26,15 @@ python eval/bilingual/translate.py
 log "Lantern (en, ko, ko-mt)"
 node eval/bench/run.mjs --dir "$DIR" --set eval/bilingual --langs en,ko,ko-mt --lantern "$LANTERN"
 cp eval/bilingual/결과.md "$RES/결과-lantern.md"
+
+log "Lantern 구성 요소별 기여 (단계를 하나씩 끔)"
+for step in dict name graph cochange; do
+  MARK=$(mktemp)
+  LANTERN_ABLATE=$step node eval/bench/run.mjs --dir "$DIR" --set eval/bilingual --langs en,ko --lantern "$LANTERN" > /dev/null
+  mkdir -p "$RES/lantern-no-$step"
+  find "$RES" -maxdepth 1 -name 'retrieval-*' -newer "$MARK" -exec mv {} "$RES/lantern-no-$step/" \;
+done
+cp "$RES/결과-lantern.md" eval/bilingual/결과.md
 
 log "BM25·임베딩·RRF"
 for lang in en ko ko-mt; do

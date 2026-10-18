@@ -36,6 +36,10 @@ LABEL = {
     "repomap": "Aider RepoMap",
     "lantern": "**Lantern**",
     "lantern-sem": "**Lantern + 임베딩 (e5-small)**",
+    "lantern-no-dict": "Lantern − 한국어 용어 확장",
+    "lantern-no-name": "Lantern − 식별자 가산",
+    "lantern-no-graph": "Lantern − 호출 그래프",
+    "lantern-no-cochange": "Lantern − 함께 바뀐 파일",
 }
 LANGS = {"en": "영어", "ko": "한국어", "ko-mt": "한국어→기계 번역"}
 # 논문 표에 쓰는 영어 이름
@@ -49,6 +53,10 @@ TEX_LABEL = {
     "repomap": "Aider RepoMap",
     "lantern": "\\textbf{Lantern}",
     "lantern-sem": "\\textbf{Lantern + Dense}",
+    "lantern-no-dict": "\\quad $-$ Korean term expansion",
+    "lantern-no-name": "\\quad $-$ identifier match",
+    "lantern-no-graph": "\\quad $-$ call graph",
+    "lantern-no-cochange": "\\quad $-$ co-change",
 }
 TEX_LANG = {"en": "English", "ko": "Korean", "ko-mt": "Korean$\\to$MT"}
 
