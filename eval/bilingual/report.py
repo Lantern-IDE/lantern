@@ -35,11 +35,11 @@ LABEL = {
     "hybrid": "BM25+임베딩 RRF",
     "repomap": "Aider RepoMap",
     "lantern": "**Lantern**",
-    "lantern-sem": "**Lantern + 임베딩 (e5-small)**",
     "lantern-no-dict": "Lantern − 한국어 용어 확장",
     "lantern-no-name": "Lantern − 식별자 가산",
     "lantern-no-graph": "Lantern − 호출 그래프",
     "lantern-no-cochange": "Lantern − 함께 바뀐 파일",
+    "lantern-sem": "**Lantern + 임베딩 (e5-small)**",
 }
 LANGS = {"en": "영어", "ko": "한국어", "ko-mt": "한국어→기계 번역"}
 # 논문 표에 쓰는 영어 이름
@@ -52,12 +52,13 @@ TEX_LABEL = {
     "hybrid": "BM25 + Dense (RRF)",
     "repomap": "Aider RepoMap",
     "lantern": "\\textbf{Lantern}",
-    "lantern-sem": "\\textbf{Lantern + Dense}",
     "lantern-no-dict": "\\quad $-$ Korean term expansion",
     "lantern-no-name": "\\quad $-$ identifier match",
     "lantern-no-graph": "\\quad $-$ call graph",
     "lantern-no-cochange": "\\quad $-$ co-change",
+    "lantern-sem": "\\textbf{Lantern + Dense}",
 }
+SUBSET_TEX = {"all": "all questions", "test": "test split", "dev": "dev split", "2026": "2026 commits"}
 TEX_LANG = {"en": "English", "ko": "Korean", "ko-mt": "Korean$\\to$MT"}
 
 
@@ -77,7 +78,7 @@ def tex_table(res, keep, order, subset):
         f"% report.py --subset {subset} 로 만든 표. 손으로 고치지 말고 다시 만든다",
         f"\\begin{{{env}}}[t]",
         "\\centering",
-        f"\\caption{{File-level context retrieval within an 8k-token budget ({subset} set, $n={n}$).}}",
+        f"\\caption{{File-level context retrieval within an 8k-token budget ({SUBSET_TEX[subset]}, $n={n}$). Indented rows remove one component from Lantern.}}",
         "\\label{tab:results}",
         "\\setlength{\\tabcolsep}{3pt}",
         "\\begin{tabular}{l" + "rrr" * len(langs) + "}",
