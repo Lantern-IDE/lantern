@@ -6,51 +6,63 @@
   "questions": [
     {
       "q": "Throw UnknownHostException on DnsOverHttps HTTP errors",
-      "q_ko": null,
+      "q_ko": "DnsOverHttps에서 HTTP 에러 나면 UnknownHostException 던지게 해줘",
       "golden": [
         "okhttp-dnsoverhttps/src/main/kotlin/okhttp3/dnsoverhttps/internal/-DnsOverHttpsQuery.kt"
       ],
       "commit": "75d8f91cfe2495b79d07b1dabe05789caa429ac2",
       "parent": "9afa908c7db269eec87b4fc91a8923c43d32b844",
       "date": "2026-10-02",
-      "q_ko_draft": "DnsOverHttps에서 HTTP 에러 나면 UnknownHostException 던지게 해줘"
+      "q_ko_draft": "DnsOverHttps에서 HTTP 에러 나면 UnknownHostException 던지게 해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "If there's an HTTP error on DnsOverHttps, throw the UnknownHostException.",
+      "q_ko_mt_src": "DnsOverHttps에서 HTTP 에러 나면 UnknownHostException 던지게 해줘"
     },
     {
       "q": "Use a fixed size for DoH request body",
-      "q_ko": null,
+      "q_ko": "DoH 요청 body 크기를 고정하려면 어디를 봐야 해?",
       "golden": [
         "okhttp-dnsoverhttps/src/main/kotlin/okhttp3/dnsoverhttps/internal/-DnsOverHttpsQuery.kt"
       ],
       "commit": "ecc3b05adfe6b2607b8ec251562c2cccf7c1923a",
       "parent": "9926082660dfa6f1cc848c6f465cf5ccb998e415",
       "date": "2026-08-16",
-      "q_ko_draft": "DoH 요청 body 크기를 고정하려면 어디를 봐야 해?"
+      "q_ko_draft": "DoH 요청 body 크기를 고정하려면 어디를 봐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you need to look to determine the size of the DoH request body?",
+      "q_ko_mt_src": "DoH 요청 body 크기를 고정하려면 어디를 봐야 해?"
     },
     {
       "q": "Order ServiceMetadata records per the spec",
-      "q_ko": null,
+      "q_ko": "ServiceMetadata 레코드를 스펙대로 정렬",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/dns/-StateMachineDnsCall.kt"
       ],
       "commit": "15764539c69842dad607462f102a2507223dbfe7",
       "parent": "fb582e976a9a82d691342a4d57b3c72208ce416c",
       "date": "2026-08-15",
-      "q_ko_draft": "ServiceMetadata 레코드를 스펙대로 정렬"
+      "q_ko_draft": "ServiceMetadata 레코드를 스펙대로 정렬",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Service Metadata records are sorted by spectrum.",
+      "q_ko_mt_src": "ServiceMetadata 레코드를 스펙대로 정렬"
     },
     {
       "q": "retryOnConnectionFailure doesn't impact ECH retries",
-      "q_ko": null,
+      "q_ko": "retryOnConnectionFailure가 ECH 재시도에는 영향 안 주게 해줘",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/connection/ConnectPlan.kt"
       ],
       "commit": "4e884abb1a207c321acffb070c476acb4b89fa3f",
       "parent": "0433cee8131b63fa2c0634fa2f9b3a01f9a8b1f3",
       "date": "2026-08-15",
-      "q_ko_draft": "retryOnConnectionFailure가 ECH 재시도에는 영향 안 주게 해줘"
+      "q_ko_draft": "retryOnConnectionFailure가 ECH 재시도에는 영향 안 주게 해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Let the retryOnConnectionFailure not affect the ECH response.",
+      "q_ko_mt_src": "retryOnConnectionFailure가 ECH 재시도에는 영향 안 주게 해줘"
     },
     {
       "q": "Don't close the multipart sink when a part closes its stream",
-      "q_ko": null,
+      "q_ko": "파트가 자기 스트림 닫으면 multipart sink까지 닫히는 문제",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/MultipartBody.kt",
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/RequestBody.kt"
@@ -58,33 +70,42 @@
       "commit": "a372199f4f32aaa8e5083b65abc3bef29e49800a",
       "parent": "e0c3dd776c5097f1513233f454021e6907131344",
       "date": "2026-08-14",
-      "q_ko_draft": "파트가 자기 스트림 닫으면 multipart sink까지 닫히는 문제"
+      "q_ko_draft": "파트가 자기 스트림 닫으면 multipart sink까지 닫히는 문제",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "The problem is that when the part closes its own stream, it closes down to the multipart sink.",
+      "q_ko_mt_src": "파트가 자기 스트림 닫으면 multipart sink까지 닫히는 문제"
     },
     {
       "q": "Handle unsupported AliasMode records",
-      "q_ko": null,
+      "q_ko": "지원 안 하는 AliasMode 레코드는 어디서 처리해?",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/dns/-StateMachineDnsCall.kt"
       ],
       "commit": "97fc958b7064c8fab3424628085a66711879ceca",
       "parent": "a4a1c5d631cb9315c149bbc8550018e1bb384528",
       "date": "2026-08-12",
-      "q_ko_draft": "지원 안 하는 AliasMode 레코드는 어디서 처리해?"
+      "q_ko_draft": "지원 안 하는 AliasMode 레코드는 어디서 처리해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you handle unsupported AliasMode records?",
+      "q_ko_mt_src": "지원 안 하는 AliasMode 레코드는 어디서 처리해?"
     },
     {
       "q": "Flush HTTP/1 request bodies before detachTimeout",
-      "q_ko": null,
+      "q_ko": "detachTimeout 전에 HTTP/1 요청 body flush해줘",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/http1/Http1ExchangeCodec.kt"
       ],
       "commit": "f028b5a69b5371c3674fa10492d6d42bc73b0b7f",
       "parent": "e5393f0d2069502efac817b3ab797f6d2c133ac2",
       "date": "2026-08-11",
-      "q_ko_draft": "detachTimeout 전에 HTTP/1 요청 body flush해줘"
+      "q_ko_draft": "detachTimeout 전에 HTTP/1 요청 body flush해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Please flush the HTTP/1 request before detachtimeout.",
+      "q_ko_mt_src": "detachTimeout 전에 HTTP/1 요청 body flush해줘"
     },
     {
       "q": "Change DnsOverHttps to query the correct port per Attrleaf",
-      "q_ko": null,
+      "q_ko": "DnsOverHttps가 Attrleaf에 맞는 포트로 조회하게 바꿔줘",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/connection/RouteSelector.kt",
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/dns/-StateMachineDnsCall.kt"
@@ -92,88 +113,112 @@
       "commit": "e5393f0d2069502efac817b3ab797f6d2c133ac2",
       "parent": "91a8b34c6f44bd28c421364f8edadc9f324dddd9",
       "date": "2026-08-11",
-      "q_ko_draft": "DnsOverHttps가 Attrleaf에 맞는 포트로 조회하게 바꿔줘"
+      "q_ko_draft": "DnsOverHttps가 Attrleaf에 맞는 포트로 조회하게 바꿔줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Change the DnsOverHttps to a port that matches the Attrleaf.",
+      "q_ko_mt_src": "DnsOverHttps가 Attrleaf에 맞는 포트로 조회하게 바꿔줘"
     },
     {
       "q": "Start @StartStop fields for @Nested JUnit 5 tests",
-      "q_ko": null,
+      "q_ko": "@Nested JUnit 5 테스트에서 @StartStop 필드가 시작 안 되는 문제",
       "golden": [
         "mockwebserver-junit5/src/main/kotlin/mockwebserver3/junit5/internal/StartStopExtension.kt"
       ],
       "commit": "fc9a83dd580f06c52beea5207ffca1a7d99df24e",
       "parent": "d1e57f352020e5b80710fffb416faf8a65a62f0d",
       "date": "2026-08-08",
-      "q_ko_draft": "@Nested JUnit 5 테스트에서 @StartStop 필드가 시작 안 되는 문제"
+      "q_ko_draft": "@Nested JUnit 5 테스트에서 @StartStop 필드가 시작 안 되는 문제",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "The @Nested JUnit 5 test doesn't start the @StartStop field.",
+      "q_ko_mt_src": "@Nested JUnit 5 테스트에서 @StartStop 필드가 시작 안 되는 문제"
     },
     {
       "q": "reject hosts that fail IP canonicalization in verifyIpAddress",
-      "q_ko": null,
+      "q_ko": "verifyIpAddress에서 IP 정규화 실패하는 호스트는 거부해줘",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/tls/OkHostnameVerifier.kt"
       ],
       "commit": "f258f7a14b3a56106ed051a841ce71fa8a978b97",
       "parent": "8ef0994e8a58ae8bb92df41c47bb2d49fec0e779",
       "date": "2026-07-30",
-      "q_ko_draft": "verifyIpAddress에서 IP 정규화 실패하는 호스트는 거부해줘"
+      "q_ko_draft": "verifyIpAddress에서 IP 정규화 실패하는 호스트는 거부해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Reject the host that fails to fix the IP on verifyIpAddress.",
+      "q_ko_mt_src": "verifyIpAddress에서 IP 정규화 실패하는 호스트는 거부해줘"
     },
     {
       "q": "read DNS RDLENGTH as an unsigned 16-bit value",
-      "q_ko": null,
+      "q_ko": "DNS RDLENGTH를 부호 없는 16비트로 읽기",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/dns/-DnsMessageReader.kt"
       ],
       "commit": "44c6993788c4236b3ad0669fcad4481b802d1874",
       "parent": "b8fabcaac6127daf8c0e0fdf9dd9dd09953af4c0",
       "date": "2026-07-28",
-      "q_ko_draft": "DNS RDLENGTH를 부호 없는 16비트로 읽기"
+      "q_ko_draft": "DNS RDLENGTH를 부호 없는 16비트로 읽기",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Read the DNS RDLENGTH in unencrypted 16 bits",
+      "q_ko_mt_src": "DNS RDLENGTH를 부호 없는 16비트로 읽기"
     },
     {
       "q": "Cache empty results on the failure schedule.",
-      "q_ko": null,
+      "q_ko": "빈 결과도 실패 스케줄대로 캐시해줘",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/dns/RealDnsCache.kt"
       ],
       "commit": "116395312625f4c929da5e060746f8b0e3682198",
       "parent": "23f38965d38bc4db49fd9f53f43772d8d1848ccb",
       "date": "2026-07-25",
-      "q_ko_draft": "빈 결과도 실패 스케줄대로 캐시해줘"
+      "q_ko_draft": "빈 결과도 실패 스케줄대로 캐시해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Keep the empty results on the failure schedule.",
+      "q_ko_mt_src": "빈 결과도 실패 스케줄대로 캐시해줘"
     },
     {
       "q": "read HTTPS mandatory SvcParamKeys as 16-bit values",
-      "q_ko": null,
+      "q_ko": "HTTPS mandatory SvcParamKeys를 16비트 값으로 읽는 건 어디서 해?",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/dns/-DnsMessageReader.kt"
       ],
       "commit": "0a5f8780076c05f78b9be4bc2226a45f9eb66645",
       "parent": "551ef83b265f88b176fe72c45fc3d9a1a8da967e",
       "date": "2026-07-24",
-      "q_ko_draft": "HTTPS mandatory SvcParamKeys를 16비트 값으로 읽는 건 어디서 해?"
+      "q_ko_draft": "HTTPS mandatory SvcParamKeys를 16비트 값으로 읽는 건 어디서 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you read the HTTPS mandatory SvcParamKeys at 16 bits?",
+      "q_ko_mt_src": "HTTPS mandatory SvcParamKeys를 16비트 값으로 읽는 건 어디서 해?"
     },
     {
       "q": "Rename includeHttps to includeServiceMetadata",
-      "q_ko": null,
+      "q_ko": "includeHttps를 includeServiceMetadata로 이름 변경",
       "golden": [
         "okhttp-dnsoverhttps/src/main/kotlin/okhttp3/dnsoverhttps/DnsOverHttps.kt"
       ],
       "commit": "6846f1f6795c393c278aa2c04ed8d4928d7c6520",
       "parent": "25724c1827252e907c69babb603687d93075178c",
       "date": "2026-07-19",
-      "q_ko_draft": "includeHttps를 includeServiceMetadata로 이름 변경"
+      "q_ko_draft": "includeHttps를 includeServiceMetadata로 이름 변경",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "includeHttps to includeServiceMetadata",
+      "q_ko_mt_src": "includeHttps를 includeServiceMetadata로 이름 변경"
     },
     {
       "q": "Reject malformed messages that have infinite loops",
-      "q_ko": null,
+      "q_ko": "무한 루프가 생기는 잘못된 메시지는 거부해줘",
       "golden": [
         "okhttp-dnsoverhttps/src/main/kotlin/okhttp3/dnsoverhttps/internal/-DnsMessageReader.kt"
       ],
       "commit": "25724c1827252e907c69babb603687d93075178c",
       "parent": "7da9284510cd55c0afb8d501f903af3d96bbcba7",
       "date": "2026-07-19",
-      "q_ko_draft": "무한 루프가 생기는 잘못된 메시지는 거부해줘"
+      "q_ko_draft": "무한 루프가 생기는 잘못된 메시지는 거부해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Reject the wrong message from the infinite loop.",
+      "q_ko_mt_src": "무한 루프가 생기는 잘못된 메시지는 거부해줘"
     },
     {
       "q": "Add RFC 1008 (QUERY Method) support",
-      "q_ko": null,
+      "q_ko": "RFC 1008 (QUERY 메서드) 지원 추가",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/http/HttpMethod.kt",
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/http/RetryAndFollowUpInterceptor.kt"
@@ -181,55 +226,70 @@
       "commit": "2babee3b0a1b0b724c52883e40b538acaf3b85c3",
       "parent": "20fcded4b5a00e45836e932913e498b230d68f90",
       "date": "2026-07-18",
-      "q_ko_draft": "RFC 1008 (QUERY 메서드) 지원 추가"
+      "q_ko_draft": "RFC 1008 (QUERY 메서드) 지원 추가",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "RFC 1008 (QUERY method) support added",
+      "q_ko_mt_src": "RFC 1008 (QUERY 메서드) 지원 추가"
     },
     {
       "q": "Don't crash route selection when the system proxy selector throws",
-      "q_ko": null,
+      "q_ko": "시스템 프록시 셀렉터가 예외 던질 때 라우트 선택이 안 죽게 하려면 어디를 고쳐야 해?",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/connection/RouteSelector.kt"
       ],
       "commit": "668794b665a62045605930e03dd7ae0336ce5934",
       "parent": "728e4d575d8e9a09bbab04ef09bb24ff6b1fa0ab",
       "date": "2026-06-08",
-      "q_ko_draft": "시스템 프록시 셀렉터가 예외 던질 때 라우트 선택이 안 죽게 하려면 어디를 고쳐야 해?"
+      "q_ko_draft": "시스템 프록시 셀렉터가 예외 던질 때 라우트 선택이 안 죽게 하려면 어디를 고쳐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "When the system proxy selector throws an exception, where do you need to fix it to keep the routing options from dying?",
+      "q_ko_mt_src": "시스템 프록시 셀렉터가 예외 던질 때 라우트 선택이 안 죽게 하려면 어디를 고쳐야 해?"
     },
     {
       "q": "guard null fields in Entry.writeTo() to fix NPE",
-      "q_ko": null,
+      "q_ko": "Entry.writeTo()에서 null 필드 때문에 NPE 나는 버그",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/Cache.kt"
       ],
       "commit": "21ad1aa6aa4d5de7f5f52956f0841a5c304ab849",
       "parent": "bbe4f22deca382a4842caf3a7949f9449d35e410",
       "date": "2026-03-20",
-      "q_ko_draft": "Entry.writeTo()에서 null 필드 때문에 NPE 나는 버그"
+      "q_ko_draft": "Entry.writeTo()에서 null 필드 때문에 NPE 나는 버그",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Because of the null field in Entry.writeTo ((() NPE I bug",
+      "q_ko_mt_src": "Entry.writeTo()에서 null 필드 때문에 NPE 나는 버그"
     },
     {
       "q": "Fix some failing tests that CI hasn't been running",
-      "q_ko": null,
+      "q_ko": "CI가 안 돌리고 있던 실패 테스트 몇 개 고쳐줘",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/ws/WebSocketReader.kt"
       ],
       "commit": "e4721510ae15fd60188ab8e49b362996d43b3081",
       "parent": "55bf06e98f6599f0394c10eec19bd0af772874c4",
       "date": "2025-11-04",
-      "q_ko_draft": "CI가 안 돌리고 있던 실패 테스트 몇 개 고쳐줘"
+      "q_ko_draft": "CI가 안 돌리고 있던 실패 테스트 몇 개 고쳐줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Fix a couple of failed tests that CI wasn't working on.",
+      "q_ko_mt_src": "CI가 안 돌리고 있던 실패 테스트 몇 개 고쳐줘"
     },
     {
       "q": "Fix SSL Handshake issue affecting MockWebserver on Android 24",
-      "q_ko": null,
+      "q_ko": "Android 24에서 MockWebserver SSL 핸드셰이크 문제",
       "golden": [
         "okhttp/src/androidMain/kotlin/okhttp3/internal/platform/AndroidPlatform.kt"
       ],
       "commit": "d5b3f2c7621a89a4491cd4854f773bab5c91cbd1",
       "parent": "29bd9cda98417e9054b3d9ebd8c01fb14d132ef1",
       "date": "2025-10-10",
-      "q_ko_draft": "Android 24에서 MockWebserver SSL 핸드셰이크 문제"
+      "q_ko_draft": "Android 24에서 MockWebserver SSL 핸드셰이크 문제",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "MockWebserver SSL handshake issue on Android 24",
+      "q_ko_mt_src": "Android 24에서 MockWebserver SSL 핸드셰이크 문제"
     },
     {
       "q": "Fix RequestBody events on upgraded connections",
-      "q_ko": null,
+      "q_ko": "업그레이드된 연결에서 RequestBody 이벤트 잘못 나오는 거 어디서 고쳐?",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/connection/Exchange.kt",
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/http/CallServerInterceptor.kt"
@@ -237,33 +297,42 @@
       "commit": "d4a5be134ef9083a88a80a2e135ec6a730b49673",
       "parent": "112a19d5e4eab3fd376db1473220887285e39126",
       "date": "2025-10-07",
-      "q_ko_draft": "업그레이드된 연결에서 RequestBody 이벤트 잘못 나오는 거 어디서 고쳐?"
+      "q_ko_draft": "업그레이드된 연결에서 RequestBody 이벤트 잘못 나오는 거 어디서 고쳐?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you fix the wrong RequestBody event in an upgraded connection?",
+      "q_ko_mt_src": "업그레이드된 연결에서 RequestBody 이벤트 잘못 나오는 거 어디서 고쳐?"
     },
     {
       "q": "Fix merge issue with modules and logging",
-      "q_ko": null,
+      "q_ko": "모듈이랑 logging 쪽 머지 문제 고쳐줘",
       "golden": [
         "okhttp/src/jvmMain/java9/module-info.java"
       ],
       "commit": "bc4fffe1f31fed1a797c97a06d947c988f9c3cf2",
       "parent": "195c54d7bf8f69b1b93c316c2ac16295fd0e2975",
       "date": "2025-09-21",
-      "q_ko_draft": "모듈이랑 logging 쪽 머지 문제 고쳐줘"
+      "q_ko_draft": "모듈이랑 logging 쪽 머지 문제 고쳐줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Fix the problem with the module and logging.",
+      "q_ko_mt_src": "모듈이랑 logging 쪽 머지 문제 고쳐줘"
     },
     {
       "q": "Discard trailing data after a deflated message",
-      "q_ko": null,
+      "q_ko": "deflate된 메시지 뒤에 남은 데이터는 어디서 버려?",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/ws/MessageInflater.kt"
       ],
       "commit": "8f88fdbf1d46860c5555a6fe533d7a8eb0c468b0",
       "parent": "c998c2c57ba82a02035c60173e084033a44aa0a8",
       "date": "2025-09-21",
-      "q_ko_draft": "deflate된 메시지 뒤에 남은 데이터는 어디서 버려?"
+      "q_ko_draft": "deflate된 메시지 뒤에 남은 데이터는 어디서 버려?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you leave the data behind the deflated message?",
+      "q_ko_mt_src": "deflate된 메시지 뒤에 남은 데이터는 어디서 버려?"
     },
     {
       "q": "Handle interrupts with shutdownNow() gracefully",
-      "q_ko": null,
+      "q_ko": "shutdownNow()로 인터럽트 걸렸을 때 깔끔하게 처리하려면 어디 봐야 해?",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/concurrent/TaskRunner.kt",
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/connection/RealCall.kt"
@@ -271,11 +340,14 @@
       "commit": "46d21172089f9aeef948442e54ceedb74b36260c",
       "parent": "e63f4baeb6065974cffb3c60ec4f992696e4ce10",
       "date": "2025-08-30",
-      "q_ko_draft": "shutdownNow()로 인터럽트 걸렸을 때 깔끔하게 처리하려면 어디 봐야 해?"
+      "q_ko_draft": "shutdownNow()로 인터럽트 걸렸을 때 깔끔하게 처리하려면 어디 봐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "When you get interrupted by shutdownNow, where do you need to look to clean it up?",
+      "q_ko_mt_src": "shutdownNow()로 인터럽트 걸렸을 때 깔끔하게 처리하려면 어디 봐야 해?"
     },
     {
       "q": "Add QUERY method support",
-      "q_ko": null,
+      "q_ko": "QUERY 메서드 지원 추가",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/Cache.kt",
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/Request.kt"
@@ -283,33 +355,42 @@
       "commit": "35ac3f5a722b24f5a8bd92a93c6185c2cfc18026",
       "parent": "02df6d46880ae3ee1591609134ade3560ac59655",
       "date": "2025-08-16",
-      "q_ko_draft": "QUERY 메서드 지원 추가"
+      "q_ko_draft": "QUERY 메서드 지원 추가",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "QUERY Method Support Added",
+      "q_ko_mt_src": "QUERY 메서드 지원 추가"
     },
     {
       "q": "Update com.squareup.okio to v3.16.0",
-      "q_ko": null,
+      "q_ko": "com.squareup.okio를 v3.16.0으로 올려줘",
       "golden": [
         "mockwebserver/src/main/kotlin/mockwebserver3/MockWebServer.kt"
       ],
       "commit": "cf4b91189cc01743ef019ab6309c05632b8cb3db",
       "parent": "67c1b8e419828caac30b4129f8a0d7c1c5eb4c84",
       "date": "2025-08-02",
-      "q_ko_draft": "com.squareup.okio를 v3.16.0으로 올려줘"
+      "q_ko_draft": "com.squareup.okio를 v3.16.0으로 올려줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Upload the com.squareup.okio to v3.16.0.",
+      "q_ko_mt_src": "com.squareup.okio를 v3.16.0으로 올려줘"
     },
     {
       "q": "Add test demonstrating topPrivateDomain on Robolectric",
-      "q_ko": null,
+      "q_ko": "Robolectric에서 topPrivateDomain 동작 보여주는 테스트 추가",
       "golden": [
         "okhttp/src/androidMain/kotlin/okhttp3/internal/platform/android/AndroidLog.kt"
       ],
       "commit": "50f1be974d877d5270305af644fc6a81975f078e",
       "parent": "5f474fd5a7f32d5f7710e77de12ed6b6cee500e4",
       "date": "2025-07-22",
-      "q_ko_draft": "Robolectric에서 topPrivateDomain 동작 보여주는 테스트 추가"
+      "q_ko_draft": "Robolectric에서 topPrivateDomain 동작 보여주는 테스트 추가",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Add a test showing topPrivateDomain action from Robolectric",
+      "q_ko_mt_src": "Robolectric에서 topPrivateDomain 동작 보여주는 테스트 추가"
     },
     {
       "q": "Avoid a ClassCastException in ResponseBodySource.close",
-      "q_ko": null,
+      "q_ko": "ResponseBodySource.close에서 ClassCastException 안 나게 하려면 어디 봐야 해?",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/connection/Exchange.kt",
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/connection/RealCall.kt",
@@ -318,33 +399,42 @@
       "commit": "cc12051513dc907ce6dc945479adb80bce5dcae8",
       "parent": "be3eb1429807abec61c2f97aa885b0f8aaa9b946",
       "date": "2025-07-21",
-      "q_ko_draft": "ResponseBodySource.close에서 ClassCastException 안 나게 하려면 어디 봐야 해?"
+      "q_ko_draft": "ResponseBodySource.close에서 ClassCastException 안 나게 하려면 어디 봐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do I look to prevent ClassCastException from coming out of ResponseBodySource.close?",
+      "q_ko_mt_src": "ResponseBodySource.close에서 ClassCastException 안 나게 하려면 어디 봐야 해?"
     },
     {
       "q": "Fix breaking change from alpha.17 release",
-      "q_ko": null,
+      "q_ko": "alpha.17 릴리스에서 생긴 breaking change는 어디서 고쳐야 해?",
       "golden": [
         "mockwebserver-deprecated/src/main/kotlin/okhttp3/mockwebserver/DeprecationBridge.kt"
       ],
       "commit": "dcb640c3dada70207fe0f7e303ee7a9287c3d0db",
       "parent": "75661d41cd2b4b014fc71320391c13a3a56d7946",
       "date": "2025-07-03",
-      "q_ko_draft": "alpha.17 릴리스에서 생긴 breaking change는 어디서 고쳐야 해?"
+      "q_ko_draft": "alpha.17 릴리스에서 생긴 breaking change는 어디서 고쳐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do I fix the breaking change in the alpha.17 release?",
+      "q_ko_mt_src": "alpha.17 릴리스에서 생긴 breaking change는 어디서 고쳐야 해?"
     },
     {
       "q": "Update rfc document link",
-      "q_ko": null,
+      "q_ko": "rfc 문서 링크 업데이트",
       "golden": [
         "okhttp/src/commonJvmAndroid/kotlin/okhttp3/Protocol.kt"
       ],
       "commit": "2f78681a1f5ef5d9cc4f7bce48b9975f79c06978",
       "parent": "9dda461c233557be153d135c49db035c8211ad2d",
       "date": "2025-06-23",
-      "q_ko_draft": "rfc 문서 링크 업데이트"
+      "q_ko_draft": "rfc 문서 링크 업데이트",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Update the link to the rfc document",
+      "q_ko_mt_src": "rfc 문서 링크 업데이트"
     },
     {
       "q": "Use HTTP/2 in RecordedRequest",
-      "q_ko": null,
+      "q_ko": "RecordedRequest에서 HTTP/2 쓰려면 어디 건드리면 돼?",
       "golden": [
         "mockwebserver/src/main/kotlin/mockwebserver3/MockWebServer.kt",
         "mockwebserver/src/main/kotlin/mockwebserver3/internal/RecordedRequestFactory.kt"
@@ -352,18 +442,25 @@
       "commit": "0a902f3d28e718dfe0843c9deb6294dae9ecfc4d",
       "parent": "36ed3452fe64c4ad2649f9c117acd11137dbb8cc",
       "date": "2025-06-19",
-      "q_ko_draft": "RecordedRequest에서 HTTP/2 쓰려면 어디 건드리면 돼?"
+      "q_ko_draft": "RecordedRequest에서 HTTP/2 쓰려면 어디 건드리면 돼?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where can I tap to use HTTP/2 on RecordedRequest?",
+      "q_ko_mt_src": "RecordedRequest에서 HTTP/2 쓰려면 어디 건드리면 돼?"
     },
     {
       "q": "Stop using experimental coroutines APIs",
-      "q_ko": null,
+      "q_ko": "실험적 코루틴 API 그만 쓰게 바꿔줘",
       "golden": [
         "okhttp-coroutines/src/main/kotlin/okhttp3/coroutines/ExecuteAsync.kt"
       ],
       "commit": "570277976dc1e85dffbf0cf7a69f7da319ee0732",
       "parent": "dd70d9e57937f322bba9781c584ae6d1f4e4eca2",
       "date": "2025-06-19",
-      "q_ko_draft": "실험적 코루틴 API 그만 쓰게 바꿔줘"
+      "q_ko_draft": "실험적 코루틴 API 그만 쓰게 바꿔줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "I need you to stop using the experimental corotene API.",
+      "q_ko_mt_src": "실험적 코루틴 API 그만 쓰게 바꿔줘"
     }
-  ]
+  ],
+  "mt_model": "facebook/nllb-200-distilled-600M"
 }

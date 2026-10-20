@@ -6,62 +6,77 @@
   "questions": [
     {
       "q": "grow skippedNodes when pooled capacity is stale",
-      "q_ko": null,
+      "q_ko": "풀에서 가져온 capacity가 stale하면 skippedNodes 늘려줘",
       "golden": [
         "tree.go"
       ],
       "commit": "ea9fab99e01d55a5e4f8daacc0d11ccffaee0a15",
       "parent": "e8f24969d59611428b03d02424b8f4bb55a1ef91",
       "date": "2026-10-10",
-      "q_ko_draft": "풀에서 가져온 capacity가 stale하면 skippedNodes 늘려줘"
+      "q_ko_draft": "풀에서 가져온 capacity가 stale하면 skippedNodes 늘려줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "If the capacity from the pool stale, increase the skippedNodes.",
+      "q_ko_mt_src": "풀에서 가져온 capacity가 stale하면 skippedNodes 늘려줘"
     },
     {
       "q": "include HTTP QUERY method in Any",
-      "q_ko": null,
+      "q_ko": "Any에 HTTP QUERY 메서드가 빠져 있는 문제",
       "golden": [
         "routergroup.go"
       ],
       "commit": "e8f24969d59611428b03d02424b8f4bb55a1ef91",
       "parent": "43fe48e8a0f44af783116cdb010725e6bb50255f",
       "date": "2026-10-10",
-      "q_ko_draft": "Any에 HTTP QUERY 메서드가 빠져 있는 문제"
+      "q_ko_draft": "Any에 HTTP QUERY 메서드가 빠져 있는 문제",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Any problem with the HTTP QUERY method.",
+      "q_ko_mt_src": "Any에 HTTP QUERY 메서드가 빠져 있는 문제"
     },
     {
       "q": "load Keys under the mutex in Copy",
-      "q_ko": null,
+      "q_ko": "Copy에서 Keys는 뮤텍스 잡고 읽게 해줘",
       "golden": [
         "context.go"
       ],
       "commit": "1bd0ecf2d3e08da37efa270bb7be20c1eddb0d68",
       "parent": "3b08cd7235bd5ad2f055aa9e38135f111f6c5926",
       "date": "2026-09-25",
-      "q_ko_draft": "Copy에서 Keys는 뮤텍스 잡고 읽게 해줘"
+      "q_ko_draft": "Copy에서 Keys는 뮤텍스 잡고 읽게 해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Copy the keys, grab the mutex and let me read it.",
+      "q_ko_mt_src": "Copy에서 Keys는 뮤텍스 잡고 읽게 해줘"
     },
     {
       "q": "reset skipped-nodes stack on getValue entry to prevent slice overflow panic",
-      "q_ko": null,
+      "q_ko": "getValue 들어갈 때 skipped-nodes 스택 리셋해서 슬라이스 오버플로 패닉 막아줘",
       "golden": [
         "tree.go"
       ],
       "commit": "3b08cd7235bd5ad2f055aa9e38135f111f6c5926",
       "parent": "d8f2d588d7573b3438cfc95b7a47f9ec8966273c",
       "date": "2026-09-19",
-      "q_ko_draft": "getValue 들어갈 때 skipped-nodes 스택 리셋해서 슬라이스 오버플로 패닉 막아줘"
+      "q_ko_draft": "getValue 들어갈 때 skipped-nodes 스택 리셋해서 슬라이스 오버플로 패닉 막아줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "When you enter getValue, reset the skip-nodes stack and stop the panic from slicing over.",
+      "q_ko_mt_src": "getValue 들어갈 때 skipped-nodes 스택 리셋해서 슬라이스 오버플로 패닉 막아줘"
     },
     {
       "q": "add default ReadHeaderTimeout to http.Server in Run methods",
-      "q_ko": null,
+      "q_ko": "Run 메서드들에서 http.Server에 기본 ReadHeaderTimeout 넣으려면 어디를 봐야 해?",
       "golden": [
         "gin.go"
       ],
       "commit": "d8f2d588d7573b3438cfc95b7a47f9ec8966273c",
       "parent": "8ad9f9cbeab45887327608f393bb614187e06099",
       "date": "2026-09-19",
-      "q_ko_draft": "Run 메서드들에서 http.Server에 기본 ReadHeaderTimeout 넣으려면 어디를 봐야 해?"
+      "q_ko_draft": "Run 메서드들에서 http.Server에 기본 ReadHeaderTimeout 넣으려면 어디를 봐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do I look to put the default ReadHeaderTimeout on the http.Server in Run Methods?",
+      "q_ko_mt_src": "Run 메서드들에서 http.Server에 기본 ReadHeaderTimeout 넣으려면 어디를 봐야 해?"
     },
     {
       "q": "add support for the HTTP QUERY method (RFC 10008)",
-      "q_ko": null,
+      "q_ko": "HTTP QUERY 메서드(RFC 10008) 지원 추가",
       "golden": [
         "ginS/gins.go",
         "routergroup.go"
@@ -69,99 +84,126 @@
       "commit": "b1f77cf536154f67e3332fc5d0965b891be86606",
       "parent": "05b14df992a31fe8ff567338bb6c934f1aa3872f",
       "date": "2026-09-19",
-      "q_ko_draft": "HTTP QUERY 메서드(RFC 10008) 지원 추가"
+      "q_ko_draft": "HTTP QUERY 메서드(RFC 10008) 지원 추가",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "HTTP QUERY method (RFC 10008) Added support",
+      "q_ko_mt_src": "HTTP QUERY 메서드(RFC 10008) 지원 추가"
     },
     {
       "q": "add QUERY method shortcut for RFC 10008",
-      "q_ko": null,
+      "q_ko": "RFC 10008 QUERY 메서드 단축 함수는 어디에 추가하면 돼?",
       "golden": [
         "routergroup.go"
       ],
       "commit": "2a1a14ff37a26ca6a76763ecc33727c23d9284e9",
       "parent": "dcaa4296d111981ffb31ac3eba90bb63e1eb5ab9",
       "date": "2026-09-16",
-      "q_ko_draft": "RFC 10008 QUERY 메서드 단축 함수는 어디에 추가하면 돼?"
+      "q_ko_draft": "RFC 10008 QUERY 메서드 단축 함수는 어디에 추가하면 돼?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where can I add the RFC 10008 QUERY method shortcut function?",
+      "q_ko_mt_src": "RFC 10008 QUERY 메서드 단축 함수는 어디에 추가하면 돼?"
     },
     {
       "q": "skip chmod on pre-existing dirs in SaveUploadedFile",
-      "q_ko": null,
+      "q_ko": "SaveUploadedFile에서 이미 있던 디렉터리에도 chmod 하는 문제",
       "golden": [
         "context.go"
       ],
       "commit": "d9307dbcbbe796a64d9e0ef23452da888dd7f904",
       "parent": "da1e108614ecbbadfa5736b1b297b16121d23b9b",
       "date": "2026-06-22",
-      "q_ko_draft": "SaveUploadedFile에서 이미 있던 디렉터리에도 chmod 하는 문제"
+      "q_ko_draft": "SaveUploadedFile에서 이미 있던 디렉터리에도 chmod 하는 문제",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "There's also a chmod issue in the directory that's already in SaveUploadedFile.",
+      "q_ko_mt_src": "SaveUploadedFile에서 이미 있던 디렉터리에도 chmod 하는 문제"
     },
     {
       "q": "record recovered panics in c.Errors",
-      "q_ko": null,
+      "q_ko": "recover한 패닉을 c.Errors에 남기려면 어디 고쳐야 해?",
       "golden": [
         "recovery.go"
       ],
       "commit": "4a3eb31fb15b2a2d78b4bdbe0c31a2c564b1977a",
       "parent": "293ad7edebb3ae30369288bd6416ca0d78474727",
       "date": "2026-06-22",
-      "q_ko_draft": "recover한 패닉을 c.Errors에 남기려면 어디 고쳐야 해?"
+      "q_ko_draft": "recover한 패닉을 c.Errors에 남기려면 어디 고쳐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you fix a recovered panic to stay in c.Errors?",
+      "q_ko_mt_src": "recover한 패닉을 c.Errors에 남기려면 어디 고쳐야 해?"
     },
     {
       "q": "panic on Hijack/CloseNotify when wrapper unsupported",
-      "q_ko": null,
+      "q_ko": "래퍼가 지원 안 할 때 Hijack/CloseNotify에서 패닉 내는 부분 어디야?",
       "golden": [
         "response_writer.go"
       ],
       "commit": "d75fcd4c9ab260e5225de590f1f0f8c0e0e12d11",
       "parent": "8d0468f72897652485933b845253386f9147a8bf",
       "date": "2026-06-02",
-      "q_ko_draft": "래퍼가 지원 안 할 때 Hijack/CloseNotify에서 패닉 내는 부분 어디야?"
+      "q_ko_draft": "래퍼가 지원 안 할 때 Hijack/CloseNotify에서 패닉 내는 부분 어디야?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where's the part where the rapper panics on Hijack/CloseNotify when he doesn't support it?",
+      "q_ko_mt_src": "래퍼가 지원 안 할 때 Hijack/CloseNotify에서 패닉 내는 부분 어디야?"
     },
     {
       "q": "add support for encoding.UnmarshalText in uri/query binding",
-      "q_ko": null,
+      "q_ko": "uri/query 바인딩에서 encoding.UnmarshalText 지원 추가해줘",
       "golden": [
         "binding/form_mapping.go"
       ],
       "commit": "192ac89eefc1c30f7c97ae48a9ffb1c6f1c8c8bc",
       "parent": "b2b489dbf4826c2c630717a77fd5e42774625410",
       "date": "2026-01-24",
-      "q_ko_draft": "uri/query 바인딩에서 encoding.UnmarshalText 지원 추가해줘"
+      "q_ko_draft": "uri/query 바인딩에서 encoding.UnmarshalText 지원 추가해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Add support for encoding.UnmarshalText from the uri/query binding.",
+      "q_ko_mt_src": "uri/query 바인딩에서 encoding.UnmarshalText 지원 추가해줘"
     },
     {
       "q": "replace hardcoded localhost IPs with constants",
-      "q_ko": null,
+      "q_ko": "하드코딩된 localhost IP를 상수로 바꿔줘",
       "golden": [
         "utils.go"
       ],
       "commit": "915e4c90d28ec4cffc6eb146e208ab5a65eac772",
       "parent": "26c3a628655cad2388380cb8102d6ce7d4875f3b",
       "date": "2025-12-27",
-      "q_ko_draft": "하드코딩된 localhost IP를 상수로 바꿔줘"
+      "q_ko_draft": "하드코딩된 localhost IP를 상수로 바꿔줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Change the hard-coded localhost IP to a variable.",
+      "q_ko_mt_src": "하드코딩된 localhost IP를 상수로 바꿔줘"
     },
     {
       "q": "optimize line reading in stack function",
-      "q_ko": null,
+      "q_ko": "stack 함수 줄 읽기 최적화",
       "golden": [
         "recovery.go"
       ],
       "commit": "64a6ed9a41ab72076506bd590dc4b916ca4b66a5",
       "parent": "19b877fa50cbbb9282763099fb177a1e5cc5c850",
       "date": "2025-12-12",
-      "q_ko_draft": "stack 함수 줄 읽기 최적화"
+      "q_ko_draft": "stack 함수 줄 읽기 최적화",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Optimize the stack function to read the string",
+      "q_ko_mt_src": "stack 함수 줄 읽기 최적화"
     },
     {
       "q": "add option to use escaped path",
-      "q_ko": null,
+      "q_ko": "이스케이프된 경로 쓰는 옵션 추가해줘",
       "golden": [
         "gin.go"
       ],
       "commit": "771dcc6476d7bc6abb9ec0235ecefa4d38fe6fb0",
       "parent": "52ecf029bd2e9b4d2652f96dd2b753f8bc6b6e95",
       "date": "2025-11-27",
-      "q_ko_draft": "이스케이프된 경로 쓰는 옵션 추가해줘"
+      "q_ko_draft": "이스케이프된 경로 쓰는 옵션 추가해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Add an option to use an escaped route.",
+      "q_ko_mt_src": "이스케이프된 경로 쓰는 옵션 추가해줘"
     },
     {
       "q": "replace regex with custom functions in redirectTrailingSlash",
-      "q_ko": null,
+      "q_ko": "redirectTrailingSlash에서 정규식 대신 직접 짠 함수 쓰려면 어디를 봐야 해?",
       "golden": [
         "gin.go",
         "path.go"
@@ -169,55 +211,70 @@
       "commit": "440eb14ab8ed503d4a31dfecc9946a90cd73b955",
       "parent": "ecb3f7b5e2f3915bf1db240ed5eee572f8dbea36",
       "date": "2025-11-26",
-      "q_ko_draft": "redirectTrailingSlash에서 정규식 대신 직접 짠 함수 쓰려면 어디를 봐야 해?"
+      "q_ko_draft": "redirectTrailingSlash에서 정규식 대신 직접 짠 함수 쓰려면 어디를 봐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "So where do I look to use the direct trailing function instead of the regular one in redirectTrailingSlash?",
+      "q_ko_mt_src": "redirectTrailingSlash에서 정규식 대신 직접 짠 함수 쓰려면 어디를 봐야 해?"
     },
     {
       "q": "improve empty slice/array handling in form binding",
-      "q_ko": null,
+      "q_ko": "form 바인딩의 빈 slice/array 처리 개선",
       "golden": [
         "binding/form_mapping.go"
       ],
       "commit": "c3d1092b3b48addf6f9cd00fe274ec3bd14650eb",
       "parent": "9968c4bf9d5a99edc3eee2c068a4c9160ece8915",
       "date": "2025-10-11",
-      "q_ko_draft": "form 바인딩의 빈 slice/array 처리 개선"
+      "q_ko_draft": "form 바인딩의 빈 slice/array 처리 개선",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Improve the blank slice/array processing of form binding",
+      "q_ko_mt_src": "form 바인딩의 빈 slice/array 처리 개선"
     },
     {
       "q": "refine hijack behavior for response lifecycle",
-      "q_ko": null,
+      "q_ko": "응답 라이프사이클에 맞게 hijack 동작 다듬어줘",
       "golden": [
         "response_writer.go"
       ],
       "commit": "234a6d4c00cb77af9852aca0b8289745d5529b4b",
       "parent": "df2753778e7bc5c2dd559361cf0c97b2b313e9bb",
       "date": "2025-09-26",
-      "q_ko_draft": "응답 라이프사이클에 맞게 hijack 동작 다듬어줘"
+      "q_ko_draft": "응답 라이프사이클에 맞게 hijack 동작 다듬어줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "I need you to adjust the hijack to the response lifecycle.",
+      "q_ko_mt_src": "응답 라이프사이클에 맞게 hijack 동작 다듬어줘"
     },
     {
       "q": "use sync.OnceValue to simplify engine function",
-      "q_ko": null,
+      "q_ko": "engine 함수를 sync.OnceValue로 단순화하려면 어디부터 보면 돼?",
       "golden": [
         "ginS/gins.go"
       ],
       "commit": "59e9d4a794f12c4f9a6c7bed441b9644e5f6d99b",
       "parent": "6a1d1218c3dbfc11427abc1ba39b86e81dff1e54",
       "date": "2025-09-21",
-      "q_ko_draft": "engine 함수를 sync.OnceValue로 단순화하려면 어디부터 보면 돼?"
+      "q_ko_draft": "engine 함수를 sync.OnceValue로 단순화하려면 어디부터 보면 돼?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do we look to simplify the engine function to sync.OnceValue?",
+      "q_ko_mt_src": "engine 함수를 sync.OnceValue로 단순화하려면 어디부터 보면 돼?"
     },
     {
       "q": "remove headers parameter from writeHeader",
-      "q_ko": null,
+      "q_ko": "writeHeader의 headers 파라미터 제거",
       "golden": [
         "render/reader.go"
       ],
       "commit": "e198f6e859220afd35bc2fb2fd5d404d7c0882ca",
       "parent": "cca98d2d266d3797a8bf70f5903c2fbe32e8bf86",
       "date": "2025-09-19",
-      "q_ko_draft": "writeHeader의 headers 파라미터 제거"
+      "q_ko_draft": "writeHeader의 headers 파라미터 제거",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Remove the headers parameter of the writeHeader",
+      "q_ko_mt_src": "writeHeader의 headers 파라미터 제거"
     },
     {
       "q": "refactor `Keys` type to `map[any]any`",
-      "q_ko": null,
+      "q_ko": "`Keys` 타입을 `map[any]any`로 리팩터링",
       "golden": [
         "context.go",
         "logger.go"
@@ -225,11 +282,14 @@
       "commit": "41d8591eb16bf23732de9ae2b699d6cae54c2ae8",
       "parent": "848e1cdd0d1525ce0a99b7e6a2a1cf0d84d76156",
       "date": "2025-05-26",
-      "q_ko_draft": "`Keys` 타입을 `map[any]any`로 리팩터링"
+      "q_ko_draft": "`Keys` 타입을 `map[any]any`로 리팩터링",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "`Keys` type refactoring to `map[any]any`",
+      "q_ko_mt_src": "`Keys` 타입을 `map[any]any`로 리팩터링"
     },
     {
       "q": "replace interface{} with any in type declarations",
-      "q_ko": null,
+      "q_ko": "타입 선언에 있는 interface{}를 any로 바꿔줘",
       "golden": [
         "binding/plain.go",
         "debug.go"
@@ -237,11 +297,14 @@
       "commit": "848e1cdd0d1525ce0a99b7e6a2a1cf0d84d76156",
       "parent": "c8af82af15dd00d684113334d12e05f589f33ff3",
       "date": "2025-05-26",
-      "q_ko_draft": "타입 선언에 있는 interface{}를 any로 바꿔줘"
+      "q_ko_draft": "타입 선언에 있는 interface{}를 any로 바꿔줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Change the interface in the type declaration to any.",
+      "q_ko_mt_src": "타입 선언에 있는 interface{}를 any로 바꿔줘"
     },
     {
       "q": "use strings.Cut to replace strings.SplitN",
-      "q_ko": null,
+      "q_ko": "strings.SplitN 대신 strings.Cut 쓰기",
       "golden": [
         "recovery.go",
         "tree.go"
@@ -249,22 +312,28 @@
       "commit": "3d8e288c64aa3d3064df6264ab1b5445a28b709d",
       "parent": "2e2bd1f408fdaa5e522bc56972e3f109fd7502fd",
       "date": "2025-05-20",
-      "q_ko_draft": "strings.SplitN 대신 strings.Cut 쓰기"
+      "q_ko_draft": "strings.SplitN 대신 strings.Cut 쓰기",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Instead of writing strings.SplitN, write strings.Cut.",
+      "q_ko_mt_src": "strings.SplitN 대신 strings.Cut 쓰기"
     },
     {
       "q": "change Unwrap method receiver to value type",
-      "q_ko": null,
+      "q_ko": "Unwrap 메서드 리시버를 값 타입으로 바꿔줘",
       "golden": [
         "errors.go"
       ],
       "commit": "b38c59de7fef67400a1c98efeae700a689c45783",
       "parent": "cf32d2dcf8c7534f59727c5e213e45f2412c593a",
       "date": "2025-05-11",
-      "q_ko_draft": "Unwrap 메서드 리시버를 값 타입으로 바꿔줘"
+      "q_ko_draft": "Unwrap 메서드 리시버를 값 타입으로 바꿔줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Change the Unwrap Method receiver to the value type.",
+      "q_ko_mt_src": "Unwrap 메서드 리시버를 값 타입으로 바꿔줘"
     },
     {
       "q": "add literal colon support",
-      "q_ko": null,
+      "q_ko": "리터럴 콜론 지원은 어디서 처리해?",
       "golden": [
         "gin.go",
         "tree.go"
@@ -272,22 +341,28 @@
       "commit": "4621b7ac982335d9a74432e182dd2bfc6d841431",
       "parent": "334160bab772f6f93767b870f9d07c176cd4aa2b",
       "date": "2024-06-01",
-      "q_ko_draft": "리터럴 콜론 지원은 어디서 처리해?"
+      "q_ko_draft": "리터럴 콜론 지원은 어디서 처리해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you get the rectal column support?",
+      "q_ko_mt_src": "리터럴 콜론 지원은 어디서 처리해?"
     },
     {
       "q": "simplify SliceValidationError Error method",
-      "q_ko": null,
+      "q_ko": "SliceValidationError의 Error 메서드 단순화",
       "golden": [
         "binding/default_validator.go"
       ],
       "commit": "3f5b0afa2ac85ea79638ca08f4140ce64b8246e5",
       "parent": "a569ed8f26a13b10c02920de103eba79c7102cd7",
       "date": "2024-05-13",
-      "q_ko_draft": "SliceValidationError의 Error 메서드 단순화"
+      "q_ko_draft": "SliceValidationError의 Error 메서드 단순화",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "SliceValidationError error method simplified",
+      "q_ko_mt_src": "SliceValidationError의 Error 메서드 단순화"
     },
     {
       "q": "Export, test and document OnlyFilesFS",
-      "q_ko": null,
+      "q_ko": "OnlyFilesFS export하고 테스트랑 문서도 붙여줘",
       "golden": [
         "fs.go",
         "routergroup.go"
@@ -295,73 +370,95 @@
       "commit": "8791c96960e719ff2f41e24163c5898656cee474",
       "parent": "b1c1e7b572f76071fb0e0e7884a0697e0458aa7c",
       "date": "2024-05-08",
-      "q_ko_draft": "OnlyFilesFS export하고 테스트랑 문서도 붙여줘"
+      "q_ko_draft": "OnlyFilesFS export하고 테스트랑 문서도 붙여줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Export OnlyFilesFS and get me some tests and documents.",
+      "q_ko_mt_src": "OnlyFilesFS export하고 테스트랑 문서도 붙여줘"
     },
     {
       "q": "dereference pointer to struct",
-      "q_ko": null,
+      "q_ko": "구조체 포인터 역참조",
       "golden": [
         "binding/default_validator.go"
       ],
       "commit": "82bcd6d39bfe9c22032764ff3b0b6f8ef1673e49",
       "parent": "86ff4a64c7efe1a1c875529835eeef9e15de1e86",
       "date": "2024-02-07",
-      "q_ko_draft": "구조체 포인터 역참조"
+      "q_ko_draft": "구조체 포인터 역참조",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Structural pointers reverse.",
+      "q_ko_mt_src": "구조체 포인터 역참조"
     },
     {
       "q": "ability to skip logs based on user-defined logic",
-      "q_ko": null,
+      "q_ko": "사용자가 정한 로직으로 로그를 건너뛸 수 있게 하려면 어디를 봐야 해?",
       "golden": [
         "logger.go"
       ],
       "commit": "c6ae2e69666a2b36203b29650ee75d172c725c66",
       "parent": "a64286a7760be2031209686ce4d36e99d42dd419",
       "date": "2024-02-02",
-      "q_ko_draft": "사용자가 정한 로직으로 로그를 건너뛸 수 있게 하려면 어디를 봐야 해?"
+      "q_ko_draft": "사용자가 정한 로직으로 로그를 건너뛸 수 있게 하려면 어디를 봐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you need to look if you want to allow the user to skip logs to a specific log?",
+      "q_ko_mt_src": "사용자가 정한 로직으로 로그를 건너뛸 수 있게 하려면 어디를 봐야 해?"
     },
     {
       "q": "Ready release gin 1.9.1 (by: thinkerou)",
-      "q_ko": null,
+      "q_ko": "gin 1.9.1 릴리스 준비 (by: thinkerou)",
       "golden": [
         "version.go"
       ],
       "commit": "4ea0e648e38a63d6caff14100f5eab5c50912bcd",
       "parent": "bb1fc2e0fe97c63dab1527baab88d01183853b8f",
       "date": "2023-06-01",
-      "q_ko_draft": "gin 1.9.1 릴리스 준비 (by: thinkerou)"
+      "q_ko_draft": "gin 1.9.1 릴리스 준비 (by: thinkerou)",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Gin 1.9.1 release ready (by: thinkerou)",
+      "q_ko_mt_src": "gin 1.9.1 릴리스 준비 (by: thinkerou)"
     },
     {
       "q": "Adjust the position of some functions",
-      "q_ko": null,
+      "q_ko": "일부 함수 위치 조정",
       "golden": [
         "binding/toml.go"
       ],
       "commit": "1660995a04f579b4e0d5683ff45e1af4c2a50346",
       "parent": "97082f8accd197ec1240b31df3a20993c3747e6d",
       "date": "2023-01-17",
-      "q_ko_draft": "일부 함수 위치 조정"
+      "q_ko_draft": "일부 함수 위치 조정",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Adjusting the position of some functions",
+      "q_ko_mt_src": "일부 함수 위치 조정"
     },
     {
       "q": "Fix the value of ginSupportMinGoVer constant by semantic",
-      "q_ko": null,
+      "q_ko": "ginSupportMinGoVer 상수 값을 의미에 맞게 고쳐줘",
       "golden": [
         "debug.go"
       ],
       "commit": "088cdd74d42df20d4e58aa17d3f4403a22e8a545",
       "parent": "92dd245c9bef184fcfb5289f31f4247f9fced87b",
       "date": "2022-07-01",
-      "q_ko_draft": "ginSupportMinGoVer 상수 값을 의미에 맞게 고쳐줘"
+      "q_ko_draft": "ginSupportMinGoVer 상수 값을 의미에 맞게 고쳐줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "GinSupportMinGoVer, correct the constant value to the meaning.",
+      "q_ko_mt_src": "ginSupportMinGoVer 상수 값을 의미에 맞게 고쳐줘"
     },
     {
       "q": "switch min version of go to 1.15",
-      "q_ko": null,
+      "q_ko": "Go 최소 버전을 1.15로 바꾸려면 어디를 고쳐야 해?",
       "golden": [
         "debug.go"
       ],
       "commit": "6de2245e6265a077326d13cb249378b2d27ad781",
       "parent": "12b55b4fe9f8e06da3b8f0c4314b3d68a7051e9f",
       "date": "2022-06-27",
-      "q_ko_draft": "Go 최소 버전을 1.15로 바꾸려면 어디를 고쳐야 해?"
+      "q_ko_draft": "Go 최소 버전을 1.15로 바꾸려면 어디를 고쳐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "What do you need to fix if you want to change the Go minimum to 1.15?",
+      "q_ko_mt_src": "Go 최소 버전을 1.15로 바꾸려면 어디를 고쳐야 해?"
     }
-  ]
+  ],
+  "mt_model": "facebook/nllb-200-distilled-600M"
 }

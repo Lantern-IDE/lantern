@@ -8,7 +8,7 @@ Each question is paired in English and Korean with the same gold files, so the e
 |---|---|
 | Repositories | 10, in 8 programming languages (table below) |
 | Questions | 320 (the 32 most recent eligible commits per repository); 212 are from 2026 |
-| Questions text | English: the commit message subject. Korean: an LLM draft, reviewed and edited by the author (a native Korean developer) |
+| Questions text | English: the commit message subject. Korean: an LLM draft, checked by a second, independent LLM pass (4 of 320 edited) |
 | Gold files | Code files changed by that commit (tests, build scripts, examples and docs excluded). 1 file: 250 questions, 2 files: 60, 3 files: 10 |
 | Snapshot | The parent of that commit (retrieval runs on the code before the fix) |
 
@@ -33,7 +33,7 @@ One JSON file per repository: `project`, `url`, `ref` (snapshot), and `questions
 |---|---|
 | `q` | English question (commit subject, conventional-commit prefixes and PR numbers removed) |
 | `q_ko_draft` | Korean draft written by an LLM agent that did not know this engine |
-| `q_ko` | Korean question after the author's review (`null` until reviewed) |
+| `q_ko` | Korean question after review (`null` until reviewed); `q_ko_reviewed` says who reviewed (`"llm"`, or `true` for a person via the review sheet) |
 | `q_ko_mt` | `q_ko` machine-translated back to English (NLLB-200 600M), for the translate-then-retrieve baseline |
 | `golden` | Gold files, repository-relative |
 | `commit`, `parent`, `date` | The commit, its parent (where retrieval runs), and the commit date |
@@ -53,7 +53,7 @@ Commits are skipped if they are merges; version, docs, build, lint or dependency
 Two steps:
 
 1. **Draft** (`q_ko_draft`): an LLM agent that knew nothing about this engine or its Korean dictionary received only the English question and the writing guidelines. It did not see the repository, the commit or any code. A writer who knows the engine might lean toward the words its dictionary covers.
-2. **Review** (`q_ko`): the author read every draft and fixed unnatural or wrong ones. Only questions marked as reviewed get a `q_ko`; Korean results use reviewed questions only.
+2. **Review** (`q_ko`): a second LLM agent, also unaware of the engine, checked every draft against the same guidelines (meaning, negations and conditions, no added information, natural phrasing) and edited 4 of 320. No person has reviewed them yet. The review sheet below lets a person review them; only questions marked as reviewed get a `q_ko`, and Korean results use reviewed questions only.
 
 ```bash
 python eval/bilingual/ko_sheet.py export review.xlsx   # questions and drafts → review sheet
@@ -89,7 +89,7 @@ All methods get the same 8,000-token budget and the same file filter; tokens are
 
 - Commit messages are written after the fact and contain more identifiers than real user questions (only commits that mention a gold file name are skipped).
 - Gold files are the files that were changed; files one had to read but did not change are not gold.
-- Korean questions are translations, not questions originally written in Korean, and some LLM phrasing may remain. One person reviewed them.
+- Korean questions are LLM translations checked by an LLM, not questions written by Korean developers, and some LLM phrasing may remain.
 - Because the drafts came from English, translating them back can land close to the original wording, which may favor translate-then-retrieve (hence the translation model differs from the drafting LLM).
 - These are popular repositories, so older commits may be in model training data. Commit dates are kept so 2026-only results can be reported.
 
