@@ -26,17 +26,19 @@ The core is a local context engine (`crates/lantern-context`, Rust + tree-sitter
 
 Languages the engine understands (symbols, calls, map, impact radius): Rust, Python, TypeScript/JavaScript, Java, Kotlin, Go, C#, C/C++. Other files still open with syntax colors, but have no symbols.
 
-**Public benchmark.** 60 real commits from [Flask](https://github.com/pallets/flask) (Python), [Hono](https://github.com/honojs/hono) (TypeScript), and [Apache Commons Lang](https://github.com/apache/commons-lang) (Java). The question is the commit message, the answer files are the code files that commit changed, and each question is measured at the commit's parent. Nobody hand-picks the answers. Same 8,000-token budget, no model calls:
+**Public benchmark.** 320 real commits from 10 repositories in 8 languages (flask, httpx, hono, vite, commons-lang, gin, axum, okhttp, axios, jq), each asked in English and in Korean. The question is the commit subject, the answer files are the code files that commit changed, and each question is measured at the commit's parent; nobody hand-picks the answers. Same files and 8,000-token budget for every method, no model calls for retrieval:
 
-| | Keyword search (grep, read whole files) | Keyword search (grep, snippets around matches) | Lantern |
-|---|---|---|---|
-| Answer files retrieved (mean recall) | 13% | 41% | **88%** |
-| An answer file among the first 3 files | 15% | 30% | **65%** |
-| Same questions in Korean: recall / first 3 | 13% / 13% | 38% / 27% | **76% / 43%** |
+| | English: first 3 / MRR | Korean: first 3 / MRR |
+|---|---|---|
+| BM25 (40-line chunks) | 57.8% / .490 | 49.4% / .402 |
+| BM25 + embeddings (RRF) | 64.7% / .541 | 53.8% / .446 |
+| Aider RepoMap | 10.3% / .099 | 8.8% / .092 |
+| **Lantern** (no model) | 61.3% / .506 | **55.0% / .491** |
+| **Lantern + embeddings** | **67.5% / .574** | **60.3% / .506** |
 
-Picking as many files at random as Lantern returns would hit an answer file 10% of the time. Korean questions are human translations of the same commit messages. Reproduce with `node eval/bench/run.mjs` ([results](eval/bench/결과.md), [method](eval/README.md)). Bring your own project and questions with `eval/retrieval.mjs`.
+"First 3" means an answer file is among the first three files. Without any model, Lantern ties the BM25 + embeddings hybrid in English and loses much less when the question is in Korean (MRR .506 → .491, against .541 → .446), thanks to its Korean developer-term dictionary. With the same small multilingual model (`multilingual-e5-small`) it matches machine-translating the Korean question first (NLLB-200) and then running the hybrid, without a translation step that takes 3 s and 3 GB per question on a CPU. The Korean questions are LLM-drafted and LLM-checked. Ablations, statistics and caveats: [eval/bilingual](eval/bilingual) ([results](eval/bilingual/결과-비교.md)); reproduce everything with `bash eval/bilingual/run_all.sh`. The earlier 60-question set is in [eval/bench](eval/bench) ([method](eval/README.md)); bring your own project and questions with `eval/retrieval.mjs`.
 
-**Semantic search (optional).** With an embedding server configured, the engine also finds code whose meaning is close to the question even when no keyword matches, and merges that ranking with its own. Measured on the same benchmark with a small local model (`embeddinggemma-300m`): recall 88% → **93%**, first 3 65% → **73%**; in Korean 76% → **86%**, 43% → **52%**, with about 5 more files per question ([results](eval/bench/결과-의미검색.md)). It is off by default. Turn it on in `config.toml` with any OpenAI-compatible `/embeddings` endpoint (OpenAI, Ollama, LM Studio…); code chunks, with secrets masked, are sent to that server. The first run embeds the whole project in the background, which can take hours for a large project with a CPU-only local model.
+**Semantic search (optional).** With an embedding server configured, the engine also finds code whose meaning is close to the question even when no keyword matches, and merges that ranking with its own (the "Lantern + embeddings" row above, with about 5 more files per question). It is off by default. Turn it on in `config.toml` with any OpenAI-compatible `/embeddings` endpoint (OpenAI, Ollama, LM Studio…); code chunks, with secrets masked, are sent to that server. The first run embeds the whole project in the background, which can take hours for a large project with a CPU-only local model.
 
 ```toml
 [embeddings]
