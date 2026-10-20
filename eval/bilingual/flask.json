@@ -6,73 +6,91 @@
   "questions": [
     {
       "q": "support query in methodview",
-      "q_ko": null,
+      "q_ko": "MethodView에서 query 지원되게 해줘",
       "golden": [
         "src/flask/views.py"
       ],
       "commit": "2a8a38b051fc248865730bf3511bf2e2ea325e81",
       "parent": "d8eaaba824655046958d1a97f11780de460c3271",
       "date": "2026-08-11",
-      "q_ko_draft": "MethodView에서 query 지원되게 해줘"
+      "q_ko_draft": "MethodView에서 query 지원되게 해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Make the query supported in MethodView.",
+      "q_ko_mt_src": "MethodView에서 query 지원되게 해줘"
     },
     {
       "q": "add app.query route decorator",
-      "q_ko": null,
+      "q_ko": "app.query 라우트 데코레이터 추가",
       "golden": [
         "src/flask/sansio/scaffold.py"
       ],
       "commit": "89992954ec71b594b1b911f98977cdc8ad46a057",
       "parent": "3596b1ab61cea85edb8970e83ff61daa073facf8",
       "date": "2026-08-11",
-      "q_ko_draft": "app.query 라우트 데코레이터 추가"
+      "q_ko_draft": "app.query 라우트 데코레이터 추가",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "App.query route decorator added",
+      "q_ko_mt_src": "app.query 라우트 데코레이터 추가"
     },
     {
       "q": "Fix IPv6 server name parsing",
-      "q_ko": null,
+      "q_ko": "IPv6 서버 이름 파싱 잘못되는 거 어디서 고쳐?",
       "golden": [
         "src/flask/app.py"
       ],
       "commit": "7203feabf723edae0286ae5dc64fec8ac4c91735",
       "parent": "de8429ffda8cfb54db175529e2bae72a24e1fa7e",
       "date": "2026-08-11",
-      "q_ko_draft": "IPv6 서버 이름 파싱 잘못되는 거 어디서 고쳐?"
+      "q_ko_draft": "IPv6 서버 이름 파싱 잘못되는 거 어디서 고쳐?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you fix the IPv6 server name pacing that's wrong?",
+      "q_ko_mt_src": "IPv6 서버 이름 파싱 잘못되는 거 어디서 고쳐?"
     },
     {
       "q": "Fix IPv6 session transactions",
-      "q_ko": null,
+      "q_ko": "IPv6에서 세션 트랜잭션 깨지는 거 고쳐줘",
       "golden": [
         "src/flask/testing.py"
       ],
       "commit": "de8429ffda8cfb54db175529e2bae72a24e1fa7e",
       "parent": "514fc6b3e8402e4c646d5284e97a4f0ab50a7c4b",
       "date": "2026-08-11",
-      "q_ko_draft": "IPv6에서 세션 트랜잭션 깨지는 거 고쳐줘"
+      "q_ko_draft": "IPv6에서 세션 트랜잭션 깨지는 거 고쳐줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "I need you to fix a session transaction breach on IPv6.",
+      "q_ko_mt_src": "IPv6에서 세션 트랜잭션 깨지는 거 고쳐줘"
     },
     {
       "q": "Any for  CertParamType type",
-      "q_ko": null,
+      "q_ko": "CertParamType 타입에 Any 쓰기",
       "golden": [
         "src/flask/cli.py"
       ],
       "commit": "36e4a824f340fdee7ed50937ba8e7f6bc7d17f81",
       "parent": "954f5684e4841aad84a8eec7ace7b81a0d3f6831",
       "date": "2026-05-31",
-      "q_ko_draft": "CertParamType 타입에 Any 쓰기"
+      "q_ko_draft": "CertParamType 타입에 Any 쓰기",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Write Any to the CertParamType type.",
+      "q_ko_mt_src": "CertParamType 타입에 Any 쓰기"
     },
     {
       "q": "separate copy per call",
-      "q_ko": null,
+      "q_ko": "호출마다 별도 복사본 만들기",
       "golden": [
         "src/flask/ctx.py"
       ],
       "commit": "06ea505ce2b2042af26e96d35ebf159af7c0869d",
       "parent": "2ac89889f4cc330eabd50f295dcef02828522c69",
       "date": "2026-05-01",
-      "q_ko_draft": "호출마다 별도 복사본 만들기"
+      "q_ko_draft": "호출마다 별도 복사본 만들기",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Make a copy of each call.",
+      "q_ko_mt_src": "호출마다 별도 복사본 만들기"
     },
     {
       "q": "document that headers must be set before streaming",
-      "q_ko": null,
+      "q_ko": "스트리밍 전에 헤더를 설정해야 한다고 문서에 적어줘",
       "golden": [
         "src/flask/ctx.py",
         "src/flask/helpers.py"
@@ -80,22 +98,28 @@
       "commit": "a29f88ce6f2f9843bd6fcbbfce1390a2071965d6",
       "parent": "f00ad424ee3b050d382cc5b4aabb18afbb5e4ae7",
       "date": "2026-03-04",
-      "q_ko_draft": "스트리밍 전에 헤더를 설정해야 한다고 문서에 적어줘"
+      "q_ko_draft": "스트리밍 전에 헤더를 설정해야 한다고 문서에 적어줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "I need you to write in the document that you need to set the header before you can stream it.",
+      "q_ko_mt_src": "스트리밍 전에 헤더를 설정해야 한다고 문서에 적어줘"
     },
     {
       "q": "add back opening session on context push",
-      "q_ko": null,
+      "q_ko": "컨텍스트 push할 때 세션 여는 거 다시 넣어줘",
       "golden": [
         "src/flask/ctx.py"
       ],
       "commit": "a411a2434b09d9cbaa4074232b2c247d591bb655",
       "parent": "daca74d93a0edc458e618136de7d14803f06bc28",
       "date": "2026-02-19",
-      "q_ko_draft": "컨텍스트 push할 때 세션 여는 거 다시 넣어줘"
+      "q_ko_draft": "컨텍스트 push할 때 세션 여는 거 다시 넣어줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Put the session back when you push the context.",
+      "q_ko_mt_src": "컨텍스트 push할 때 세션 여는 거 다시 넣어줘"
     },
     {
       "q": "redirect defaults to 303",
-      "q_ko": null,
+      "q_ko": "redirect 기본 상태 코드를 303으로 바꾸려면 어디 봐야 해?",
       "golden": [
         "src/flask/helpers.py",
         "src/flask/sansio/app.py"
@@ -103,11 +127,14 @@
       "commit": "eca5fd1dfdc614c2df876cc32018a7d71f84ea82",
       "parent": "eb58d862cc4a8f31a369b6e9ad1724e9e642f13f",
       "date": "2026-01-24",
-      "q_ko_draft": "redirect 기본 상태 코드를 303으로 바꾸려면 어디 봐야 해?"
+      "q_ko_draft": "redirect 기본 상태 코드를 303으로 바꾸려면 어디 봐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do I look if I want to change the default state code to 303?",
+      "q_ko_mt_src": "redirect 기본 상태 코드를 303으로 바꾸려면 어디 봐야 해?"
     },
     {
       "q": "pass context through dispatch methods",
-      "q_ko": null,
+      "q_ko": "dispatch 메서드들로 컨텍스트 넘겨주려면 어디를 고쳐야 해?",
       "golden": [
         "src/flask/app.py",
         "src/flask/ctx.py",
@@ -116,11 +143,14 @@
       "commit": "6a64969009bf1898bd302e6a9633f71942523f7f",
       "parent": "adf363679da2d9a5ddc564bb2da563c7ca083916",
       "date": "2025-09-19",
-      "q_ko_draft": "dispatch 메서드들로 컨텍스트 넘겨주려면 어디를 고쳐야 해?"
+      "q_ko_draft": "dispatch 메서드들로 컨텍스트 넘겨주려면 어디를 고쳐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "What do you need to fix if you want to get the context through the dispatch methods?",
+      "q_ko_mt_src": "dispatch 메서드들로 컨텍스트 넘겨주려면 어디를 고쳐야 해?"
     },
     {
       "q": "use template_filter without parens",
-      "q_ko": null,
+      "q_ko": "template_filter를 괄호 없이 쓸 수 있게 하려면 어디 건드리면 돼?",
       "golden": [
         "src/flask/sansio/app.py",
         "src/flask/sansio/blueprints.py"
@@ -128,121 +158,154 @@
       "commit": "daf1510a4bda652ac2cfca03ec5567b03ddf8bf1",
       "parent": "85c5d93cbd049c4bd0679c36fd1ddcae8c37b642",
       "date": "2025-08-19",
-      "q_ko_draft": "template_filter를 괄호 없이 쓸 수 있게 하려면 어디 건드리면 돼?"
+      "q_ko_draft": "template_filter를 괄호 없이 쓸 수 있게 하려면 어디 건드리면 돼?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "So where do I tap to make it easy to use the template_filter without brackets?",
+      "q_ko_mt_src": "template_filter를 괄호 없이 쓸 수 있게 하려면 어디 건드리면 돼?"
     },
     {
       "q": "refactor stream_with_context for async views",
-      "q_ko": null,
+      "q_ko": "async 뷰에 맞게 stream_with_context 리팩터링",
       "golden": [
         "src/flask/helpers.py"
       ],
       "commit": "9822a0351574790cb66c652fcc396ad7aa2b09d8",
       "parent": "49b7e7bc8fb69d605719991d1c0a99fcee689053",
       "date": "2025-08-19",
-      "q_ko_draft": "async 뷰에 맞게 stream_with_context 리팩터링"
+      "q_ko_draft": "async 뷰에 맞게 stream_with_context 리팩터링",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Refactoring stream_with_context to the async view",
+      "q_ko_mt_src": "async 뷰에 맞게 stream_with_context 리팩터링"
     },
     {
       "q": "relax type hint for bytes io",
-      "q_ko": null,
+      "q_ko": "bytes IO 타입 힌트 좀 느슨하게 풀어줘",
       "golden": [
         "src/flask/helpers.py"
       ],
       "commit": "d44f1c65239c3e33509224aa1931631243dbfa7f",
       "parent": "c56c5ec7c41e6ffd02516bf7cb80dd2ba9ba7aa3",
       "date": "2025-08-18",
-      "q_ko_draft": "bytes IO 타입 힌트 좀 느슨하게 풀어줘"
+      "q_ko_draft": "bytes IO 타입 힌트 좀 느슨하게 풀어줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Bytes IO type, let's move the tip loosely.",
+      "q_ko_mt_src": "bytes IO 타입 힌트 좀 느슨하게 풀어줘"
     },
     {
       "q": "push preserved contexts in correct order",
-      "q_ko": null,
+      "q_ko": "보존된 컨텍스트 push 순서가 잘못된 문제",
       "golden": [
         "src/flask/testing.py"
       ],
       "commit": "53b8f08218796d95764c5252bccd8a50a173a6fb",
       "parent": "5addaf833b2e8c7a616f89dd8ad5a44b07d7c000",
       "date": "2025-08-18",
-      "q_ko_draft": "보존된 컨텍스트 push 순서가 잘못된 문제"
+      "q_ko_draft": "보존된 컨텍스트 push 순서가 잘못된 문제",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Preserved context push sequence is wrong",
+      "q_ko_mt_src": "보존된 컨텍스트 push 순서가 잘못된 문제"
     },
     {
       "q": "secret key rotation: fix key list ordering",
-      "q_ko": null,
+      "q_ko": "시크릿 키 로테이션에서 키 목록 순서 고쳐줘",
       "golden": [
         "src/flask/sessions.py"
       ],
       "commit": "fb54159861708558b5f5658ebdc14709d984361c",
       "parent": "941efd4a36ed0f27e13758874f95e3aa1d3ee163",
       "date": "2025-05-12",
-      "q_ko_draft": "시크릿 키 로테이션에서 키 목록 순서 고쳐줘"
+      "q_ko_draft": "시크릿 키 로테이션에서 키 목록 순서 고쳐줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Fix the key list order in the secret key rotation.",
+      "q_ko_mt_src": "시크릿 키 로테이션에서 키 목록 순서 고쳐줘"
     },
     {
       "q": "Accept `AsyncIterable` for responses",
-      "q_ko": null,
+      "q_ko": "응답으로 `AsyncIterable`도 받으려면 어디서 처리해야 해?",
       "golden": [
         "src/flask/typing.py"
       ],
       "commit": "410e5ab7ed0ef326fa8b5164a633863f137ffff5",
       "parent": "bfffe87d4c2ea255b9a51432bebb3d28741245c4",
       "date": "2025-03-30",
-      "q_ko_draft": "응답으로 `AsyncIterable`도 받으려면 어디서 처리해야 해?"
+      "q_ko_draft": "응답으로 `AsyncIterable`도 받으려면 어디서 처리해야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you have to handle it if you want to get `AsyncIterable` as a response?",
+      "q_ko_mt_src": "응답으로 `AsyncIterable`도 받으려면 어디서 처리해야 해?"
     },
     {
       "q": "better type checking during deprecation",
-      "q_ko": null,
+      "q_ko": "deprecation 중 타입 체크 개선",
       "golden": [
         "src/flask/__init__.py"
       ],
       "commit": "7d5d1874581209f66ad7bcdfb7f85b2b9a7ca471",
       "parent": "c7c8dc38ea2890d62b7aaff7e4c016e4b98101b0",
       "date": "2025-03-29",
-      "q_ko_draft": "deprecation 중 타입 체크 개선"
+      "q_ko_draft": "deprecation 중 타입 체크 개선",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Improvement of type check during deprecation",
+      "q_ko_mt_src": "deprecation 중 타입 체크 개선"
     },
     {
       "q": "Handle help arg by itself the same as no args",
-      "q_ko": null,
+      "q_ko": "help 인자만 단독으로 오면 인자 없을 때랑 똑같이 처리하려면 어디를 봐야 해?",
       "golden": [
         "src/flask/cli.py"
       ],
       "commit": "da600394865c06a4772c433c1a560453dcf4f868",
       "parent": "08c480b3b31e896698bb773069026a61eb53d158",
       "date": "2025-03-29",
-      "q_ko_draft": "help 인자만 단독으로 오면 인자 없을 때랑 똑같이 처리하려면 어디를 봐야 해?"
+      "q_ko_draft": "help 인자만 단독으로 오면 인자 없을 때랑 똑같이 처리하려면 어디를 봐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you look for help when you're alone, to treat you the same way when you're not?",
+      "q_ko_mt_src": "help 인자만 단독으로 오면 인자 없을 때랑 똑같이 처리하려면 어디를 봐야 해?"
     },
     {
       "q": "remove previously deprecated code",
-      "q_ko": null,
+      "q_ko": "예전에 deprecated 처리했던 코드 지워줘",
       "golden": [
         "src/flask/__init__.py"
       ],
       "commit": "d22bfcd4cfe3b93daddfce8521f77447ca8d6b84",
       "parent": "4fec712f329ceecd38729af6404a2c32aed83648",
       "date": "2024-11-23",
-      "q_ko_draft": "예전에 deprecated 처리했던 코드 지워줘"
+      "q_ko_draft": "예전에 deprecated 처리했던 코드 지워줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Delete the code that was previously deprecated.",
+      "q_ko_mt_src": "예전에 deprecated 처리했던 코드 지워줘"
     },
     {
       "q": "use generic bases for session",
-      "q_ko": null,
+      "q_ko": "세션에 제네릭 베이스 클래스 쓰기",
       "golden": [
         "src/flask/sessions.py"
       ],
       "commit": "f49dbfd3e451006a485e81ebce030495131c4454",
       "parent": "7b21d43d4c763b874bc86d4c2d69a48ee492dc22",
       "date": "2024-11-13",
-      "q_ko_draft": "세션에 제네릭 베이스 클래스 쓰기"
+      "q_ko_draft": "세션에 제네릭 베이스 클래스 쓰기",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Writing a generic base class in a session.",
+      "q_ko_mt_src": "세션에 제네릭 베이스 클래스 쓰기"
     },
     {
       "q": "configure and check trusted_hosts",
-      "q_ko": null,
+      "q_ko": "trusted_hosts 설정하고 검사하는 건 어디서 해?",
       "golden": [
         "src/flask/app.py"
       ],
       "commit": "4f7156f2c3271613b34d04040b502b9d7ae35eb9",
       "parent": "10bdf61a0f751f3cb000f8f8ac5ac5b4bb535677",
       "date": "2024-11-12",
-      "q_ko_draft": "trusted_hosts 설정하고 검사하는 건 어디서 해?"
+      "q_ko_draft": "trusted_hosts 설정하고 검사하는 건 어디서 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Where do you set up and check trusted_hosts?",
+      "q_ko_mt_src": "trusted_hosts 설정하고 검사하는 건 어디서 해?"
     },
     {
       "q": "add encoding parameter to open_resource",
-      "q_ko": null,
+      "q_ko": "open_resource에 encoding 파라미터 추가해줘",
       "golden": [
         "src/flask/app.py",
         "src/flask/blueprints.py"
@@ -250,11 +313,14 @@
       "commit": "28d5a4d71824ff5823ae310e3fd014b48b33d583",
       "parent": "66af0e55ef6631d05c691707da19d0f1c46921ea",
       "date": "2024-07-10",
-      "q_ko_draft": "open_resource에 encoding 파라미터 추가해줘"
+      "q_ko_draft": "open_resource에 encoding 파라미터 추가해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Add the encoding parameter to open_resource.",
+      "q_ko_mt_src": "open_resource에 encoding 파라미터 추가해줘"
     },
     {
       "q": "Provide a configuration option to control automatic option responses",
-      "q_ko": null,
+      "q_ko": "자동 OPTIONS 응답을 설정 옵션으로 제어할 수 있게 해줘",
       "golden": [
         "src/flask/app.py",
         "src/flask/sansio/app.py"
@@ -262,22 +328,28 @@
       "commit": "d718ecf6d3dfc4656d262154c59672437c1ea075",
       "parent": "0ce27278d234c13ce00019540ff8e9891542d1f2",
       "date": "2024-06-07",
-      "q_ko_draft": "자동 OPTIONS 응답을 설정 옵션으로 제어할 수 있게 해줘"
+      "q_ko_draft": "자동 OPTIONS 응답을 설정 옵션으로 제어할 수 있게 해줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Allow me to control the automatic OPTIONS response as setup option.",
+      "q_ko_mt_src": "자동 OPTIONS 응답을 설정 옵션으로 제어할 수 있게 해줘"
     },
     {
       "q": "Added python type annotation and return type.",
-      "q_ko": null,
+      "q_ko": "파이썬 타입 어노테이션이랑 반환 타입 추가",
       "golden": [
         "src/flask/sansio/app.py"
       ],
       "commit": "c7da8c2aa3a923fc620ad480a8831a8a0f21ab37",
       "parent": "bb16048ad74dfd07364226d02ab656f5a5cf6730",
       "date": "2024-05-25",
-      "q_ko_draft": "파이썬 타입 어노테이션이랑 반환 타입 추가"
+      "q_ko_draft": "파이썬 타입 어노테이션이랑 반환 타입 추가",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Python type annotation and return type addition",
+      "q_ko_mt_src": "파이썬 타입 어노테이션이랑 반환 타입 추가"
     },
     {
       "q": "Support async template context processors",
-      "q_ko": null,
+      "q_ko": "템플릿 context processor를 async로도 쓰려면 어디를 고쳐야 해?",
       "golden": [
         "src/flask/app.py",
         "src/flask/typing.py"
@@ -285,22 +357,28 @@
       "commit": "3f6b243cec6859185ea4064e84b33c07cc7febf6",
       "parent": "72c85e80c8ef9e6d5b5644f7bb23cdc175ca3873",
       "date": "2023-08-19",
-      "q_ko_draft": "템플릿 context processor를 async로도 쓰려면 어디를 고쳐야 해?"
+      "q_ko_draft": "템플릿 context processor를 async로도 쓰려면 어디를 고쳐야 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "If you want to use a template context processor asynchronous, where do you need to fix it?",
+      "q_ko_mt_src": "템플릿 context processor를 async로도 쓰려면 어디를 고쳐야 해?"
     },
     {
       "q": "Provide an extendable merge blueprint funcs method",
-      "q_ko": null,
+      "q_ko": "블루프린트 함수 병합하는 메서드를 확장 가능하게 만들어줘",
       "golden": [
         "src/flask/sansio/blueprints.py"
       ],
       "commit": "72c85e80c8ef9e6d5b5644f7bb23cdc175ca3873",
       "parent": "0ec7f713d679ceed2c605e62ac5d38d579f29fa0",
       "date": "2023-08-19",
-      "q_ko_draft": "블루프린트 함수 병합하는 메서드를 확장 가능하게 만들어줘"
+      "q_ko_draft": "블루프린트 함수 병합하는 메서드를 확장 가능하게 만들어줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Make it possible to extend the method of combining the blueprint function.",
+      "q_ko_mt_src": "블루프린트 함수 병합하는 메서드를 확장 가능하게 만들어줘"
     },
     {
       "q": "fix use of importlib.util.find_spec",
-      "q_ko": null,
+      "q_ko": "importlib.util.find_spec 잘못 쓰는 문제",
       "golden": [
         "src/flask/helpers.py",
         "src/flask/scaffold.py"
@@ -308,11 +386,14 @@
       "commit": "bda295d37fa3809c95a93d01dd605d0222109889",
       "parent": "c8cf4694c60f0d81809468a1b45ec730496cc546",
       "date": "2023-06-09",
-      "q_ko_draft": "importlib.util.find_spec 잘못 쓰는 문제"
+      "q_ko_draft": "importlib.util.find_spec 잘못 쓰는 문제",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Importlib.util.find_spec is wrong.",
+      "q_ko_mt_src": "importlib.util.find_spec 잘못 쓰는 문제"
     },
     {
       "q": "use importlib instead of pkgutil",
-      "q_ko": null,
+      "q_ko": "pkgutil 대신 importlib 쓰게 바꿔줘",
       "golden": [
         "src/flask/helpers.py",
         "src/flask/scaffold.py"
@@ -320,22 +401,28 @@
       "commit": "84e11a1e827c0f55f9b9ee15952eddcf8a6492e0",
       "parent": "367e1df785a71e9004d9a87a221652bfc5a964ac",
       "date": "2023-06-07",
-      "q_ko_draft": "pkgutil 대신 importlib 쓰게 바꿔줘"
+      "q_ko_draft": "pkgutil 대신 importlib 쓰게 바꿔줘",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Why don't you switch to importlib instead of pkgutil?",
+      "q_ko_mt_src": "pkgutil 대신 importlib 쓰게 바꿔줘"
     },
     {
       "q": "Allow Response subclasses to set default_mimetype as None",
-      "q_ko": null,
+      "q_ko": "Response 하위 클래스에서 default_mimetype을 None으로 못 두는 문제",
       "golden": [
         "src/flask/wrappers.py"
       ],
       "commit": "b626a9387900a9f717eb42765275adc0bf0875e3",
       "parent": "c9a5660cfd0be150b598325697f6f19019af0ef8",
       "date": "2023-04-12",
-      "q_ko_draft": "Response 하위 클래스에서 default_mimetype을 None으로 못 두는 문제"
+      "q_ko_draft": "Response 하위 클래스에서 default_mimetype을 None으로 못 두는 문제",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Problem with default_mimetype being set to None in the Response subclass",
+      "q_ko_mt_src": "Response 하위 클래스에서 default_mimetype을 None으로 못 두는 문제"
     },
     {
       "q": "no cookie domain by default",
-      "q_ko": null,
+      "q_ko": "기본으로는 쿠키 domain 설정 안 하기",
       "golden": [
         "src/flask/helpers.py",
         "src/flask/sessions.py"
@@ -343,11 +430,14 @@
       "commit": "c24f8c8199f8ceda7a7cfb5e91773eba595f5b67",
       "parent": "fa0ceb62f26579c3c7d9e18926af3e6f3e6e425c",
       "date": "2023-04-12",
-      "q_ko_draft": "기본으로는 쿠키 domain 설정 안 하기"
+      "q_ko_draft": "기본으로는 쿠키 domain 설정 안 하기",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "By default, you won't be able to set a cookie domain.",
+      "q_ko_mt_src": "기본으로는 쿠키 domain 설정 안 하기"
     },
     {
       "q": "replace werkzeug.urls with urllib.parse",
-      "q_ko": null,
+      "q_ko": "werkzeug.urls를 urllib.parse로 교체",
       "golden": [
         "src/flask/app.py",
         "src/flask/testing.py"
@@ -355,18 +445,25 @@
       "commit": "c4b39ba2f3fede0555f18fc03b0f2499bb0d424b",
       "parent": "e7f8ae016696a6224d1db5c121bcf0282d528da8",
       "date": "2023-03-11",
-      "q_ko_draft": "werkzeug.urls를 urllib.parse로 교체"
+      "q_ko_draft": "werkzeug.urls를 urllib.parse로 교체",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "Workzeug.urls is replaced with urllib.parse",
+      "q_ko_mt_src": "werkzeug.urls를 urllib.parse로 교체"
     },
     {
       "q": "setup method on registered blueprint is error",
-      "q_ko": null,
+      "q_ko": "이미 등록된 블루프린트에서 setup 메서드 쓰면 에러 내는 건 어디서 해?",
       "golden": [
         "src/flask/blueprints.py"
       ],
       "commit": "fc03d0dfab64945169e1114cdc1fb39519a1e0c1",
       "parent": "2a33c1785412075c09f9f55b3e25f2bc995ca461",
       "date": "2023-02-23",
-      "q_ko_draft": "이미 등록된 블루프린트에서 setup 메서드 쓰면 에러 내는 건 어디서 해?"
+      "q_ko_draft": "이미 등록된 블루프린트에서 setup 메서드 쓰면 에러 내는 건 어디서 해?",
+      "q_ko_reviewed": "llm",
+      "q_ko_mt": "If you're using a setup method on a blueprint that's already registered, where do you get the error?",
+      "q_ko_mt_src": "이미 등록된 블루프린트에서 setup 메서드 쓰면 에러 내는 건 어디서 해?"
     }
-  ]
+  ],
+  "mt_model": "facebook/nllb-200-distilled-600M"
 }
