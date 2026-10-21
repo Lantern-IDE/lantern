@@ -21,17 +21,20 @@ def main():
     ap.add_argument("--set", default=HERE)
     ap.add_argument("--model", default="facebook/nllb-200-distilled-600M")
     a = ap.parse_args()
-    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-
     nllb = "nllb" in a.model.lower()
-    tok = AutoTokenizer.from_pretrained(a.model, **({"src_lang": "kor_Hang"} if nllb else {}))
-    model = AutoModelForSeq2SeqLM.from_pretrained(a.model)
-    extra = {"forced_bos_token_id": tok.convert_tokens_to_ids("eng_Latn")} if nllb else {}
+    tok = model = extra = None
     total = 0
     for f in sorted(glob.glob(os.path.join(a.set, "*.json"))):
         with open(f, encoding="utf-8") as fh:
             s = json.load(fh)
         todo = [q for q in s["questions"] if q.get("q_ko") and (q.get("q_ko_mt_src") != q["q_ko"] or s.get("mt_model") != a.model)]
+        if todo and model is None:
+            # 번역할 문항이 있을 때만 모델을 받는다 (저장된 번역으로 재현할 때는 3GB 모델이 필요 없음)
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
+            tok = AutoTokenizer.from_pretrained(a.model, **({"src_lang": "kor_Hang"} if nllb else {}))
+            model = AutoModelForSeq2SeqLM.from_pretrained(a.model)
+            extra = {"forced_bos_token_id": tok.convert_tokens_to_ids("eng_Latn")} if nllb else {}
         for i in range(0, len(todo), 16):
             batch = todo[i : i + 16]
             enc = tok([q["q_ko"] for q in batch], return_tensors="pt", padding=True, truncation=True)
