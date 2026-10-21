@@ -43,7 +43,8 @@ done
 cp "$RES/결과-lantern.md" eval/bilingual/결과.md
 
 log "BM25·임베딩·RRF (multilingual-e5-small)"
-for lang in en ${KO//,/ }; do
+# ko-dictw: 사전이 넓힌 낱말을 Lantern처럼 따로, 절반 가중치로 BM25에 결합
+for lang in en ${KO//,/ } ko-dictw; do
   python eval/bilingual/baselines.py --dir "$DIR" --lang $lang --methods bm25-file,bm25-chunk,dense,hybrid
 done
 # 더 큰 임베딩 모델은 따로 (예: --embed-model BAAI/bge-m3 --tag bgem3). CPU에서 조각 약 5만 8천 개를 새로 만들어야 해서
