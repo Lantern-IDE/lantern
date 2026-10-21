@@ -103,6 +103,7 @@ It translates and dictionary-expands the Korean questions, then runs Lantern, BM
 | [../bench/run.mjs](../bench/run.mjs) `--set eval/bilingual` | Keyword search (two variants) and Lantern |
 | [baselines.py](baselines.py) | BM25 (file, 40-line chunk), dense retrieval (multilingual-e5-small; another model with e.g. `--embed-model BAAI/bge-m3 --tag bgem3`, not part of `run_all.sh` because it takes about 19 hours on 4 CPU cores), BM25 + dense with RRF. Tokens: identifiers whole and split into words, as in Lantern; Hangul runs are kept as whole tokens (they match only Korean comments or strings) |
 | [expand.py](expand.py) | Korean question + the English words Lantern's dictionary adds (`q_ko_dict`) and the dictionary hit rate |
+| [ko_rating.py](ko_rating.py) | Sheet for the author to rate (not edit) 30 random LLM-written Korean questions for naturalness and meaning; criteria fixed in advance in [ko-rating-plan.md](ko-rating-plan.md) |
 | [native_sheet.py](native_sheet.py) | Sheet for Korean questions written from scratch by a person (`q_ko_native`) |
 | [leak.py](leak.py) | Leak check of the LLM rewrites (new identifiers, gold file names, overlap with the English original, verbatim rate before/after the model's training-data cutoff) |
 | [hybrid_cost.py](hybrid_cost.py) | Cost of the BM25 + dense hybrid on the same CPU: embedding every chunk from scratch, and time per question |
@@ -119,7 +120,7 @@ All methods get the same 8,000-token budget and the same file filter; tokens are
 
 ## Repositories never used during development
 
-The 59 development questions come from flask, hono and commons-lang. On the other seven repositories (224 questions, `report.py --subset fresh-repos`, [results-fresh-repos.md](results-fresh-repos.md)) the conclusions are the same: Lantern trails the hybrid in English (A@3 −8.9), ties it in Korean (+1.3), its smaller drop from English is significant even by repository (+10.3, [1.8, 19.2]), removing the dictionary costs 4.9, and chunk-level BM25 with the dictionary at half weight matches it.
+The 59 development questions come from flask, hono and commons-lang. On the other seven repositories (224 questions, `report.py --subset fresh-repos`, [results-fresh-repos.md](results-fresh-repos.md)) the conclusions are the same: Lantern trails the hybrid in English (A@3 −8.9), ties it in Korean (+1.3), its smaller drop from English is significant even by repository (+10.3, [1.8, 19.2]), removing the dictionary costs 4.9, and chunk-level BM25 with the dictionary at half weight matches it. With only 7–10 repositories, repository-level intervals are approximate. On the 37 unseen questions of the three development repositories (`--subset dev-repos`, [results-dev-repos.md](results-dev-repos.md)) Lantern does not fare better: English +2.7 against the hybrid, Korean −8.1, and its Korean drop is 4 questions larger than the hybrid's — the opposite of what overfitting to those repositories would produce.
 
 ## Notes on Lantern's cost measurements
 

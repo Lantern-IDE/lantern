@@ -90,4 +90,5 @@ python eval/bilingual/report.py --dir "$DIR" --md eval/bilingual/results-all.md 
 python eval/bilingual/report.py --dir "$DIR" --subset test --md eval/bilingual/results-test.md > /dev/null
 python eval/bilingual/report.py --dir "$DIR" --subset unseen --md eval/bilingual/results-unseen.md > /dev/null   # 논문 주 결과 (개발 중에 보지 않은 문항)
 python eval/bilingual/report.py --dir "$DIR" --subset fresh-repos --md eval/bilingual/results-fresh-repos.md > /dev/null   # 개발 중에 한 번도 보지 않은 7개 저장소
-log "끝: eval/bilingual/results-all.md, results-test.md, results-unseen.md, results-fresh-repos.md"
+python eval/bilingual/report.py --dir "$DIR" --subset dev-repos --md eval/bilingual/results-dev-repos.md > /dev/null   # 개발에 쓴 3개 저장소의 보지 않은 문항 (과적합 점검)
+log "끝: eval/bilingual/results-all.md, results-test.md, results-unseen.md, results-fresh-repos.md, results-dev-repos.md"

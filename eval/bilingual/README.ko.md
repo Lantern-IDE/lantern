@@ -102,6 +102,7 @@ bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [aider가 깔린 파
 | [../bench/run.mjs](../bench/run.mjs) `--set eval/bilingual` | 키워드 검색 2가지와 Lantern |
 | [baselines.py](baselines.py) | BM25(파일·40줄 조각), 다국어 임베딩(multilingual-e5-small. 다른 모델은 `--embed-model BAAI/bge-m3 --tag bgem3`처럼 따로, 4코어로 19시간쯤 걸려 `run_all.sh`에서는 뺌), BM25+임베딩 RRF. 낱말: 식별자는 Lantern처럼 통째로 + 낱말로 쪼갬, 한글은 붙어 있는 덩어리 그대로 (한국어 주석·문자열에만 맞음) |
 | [expand.py](expand.py) | 한국어 질문 + Lantern 사전이 넓힌 영어 낱말(`q_ko_dict`), 사전 적중률 |
+| [ko_rating.py](ko_rating.py) | 저자가 LLM 한국어 질문 30개(무작위)를 고치지 않고 자연스러움·뜻만 평가하는 표. 기준은 [ko-rating-plan.md](ko-rating-plan.md)에 미리 정함 |
 | [native_sheet.py](native_sheet.py) | 사람이 처음부터 쓰는 한국어 질문 표 (`q_ko_native`) |
 | [leak.py](leak.py) | LLM 재작성 누출 점검 (새 식별자, 정답 파일 이름, 영어 원문과의 겹침, 모델 학습 시점 전후의 원문 복원 비율) |
 | [hybrid_cost.py](hybrid_cost.py) | 같은 CPU에서 BM25+임베딩 혼합의 비용: 모든 조각을 처음부터 임베딩하는 시간, 질문당 시간 |
@@ -118,7 +119,7 @@ bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [aider가 깔린 파
 
 ## 개발 중에 한 번도 보지 않은 저장소
 
-개발 때 쓴 59문항은 flask, hono, commons-lang에서만 나왔습니다. 나머지 7개 저장소(224문항, `report.py --subset fresh-repos`, [results-fresh-repos.md](results-fresh-repos.md))에서도 결론이 같습니다: 영어에서 Lantern이 혼합보다 낮고(처음 3개 −8.9), 한국어에서 비기고(+1.3), 영어보다 덜 떨어지는 차이는 저장소 단위로도 유의하며(+10.3, [1.8, 19.2]), 사전을 빼면 4.9 깎이고, 사전을 절반 가중으로 준 BM25(조각)는 Lantern과 같습니다.
+개발 때 쓴 59문항은 flask, hono, commons-lang에서만 나왔습니다. 나머지 7개 저장소(224문항, `report.py --subset fresh-repos`, [results-fresh-repos.md](results-fresh-repos.md))에서도 결론이 같습니다: 영어에서 Lantern이 혼합보다 낮고(처음 3개 −8.9), 한국어에서 비기고(+1.3), 영어보다 덜 떨어지는 차이는 저장소 단위로도 유의하며(+10.3, [1.8, 19.2]), 사전을 빼면 4.9 깎이고, 사전을 절반 가중으로 준 BM25(조각)는 Lantern과 같습니다. 저장소가 7~10개뿐이라 저장소 단위 구간은 근사입니다. 개발에 쓴 3개 저장소의 보지 않은 37문항(`--subset dev-repos`, [results-dev-repos.md](results-dev-repos.md))에서는 Lantern이 오히려 유리하지 않습니다: 혼합 대비 영어 +2.7, 한국어 −8.1, 한국어 하락이 혼합보다 4문항 큼. 그 저장소들에 과적합됐다면 반대여야 합니다.
 
 ## Lantern 비용 측정에 대해
 
