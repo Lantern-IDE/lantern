@@ -66,7 +66,7 @@ TEX_LABEL = {
     "lantern-no-cochange": "\\quad $-$ co-change",
     "lantern-sem": "\\textbf{Lantern + Dense}",
 }
-SUBSET_TEX = {"all": "all questions", "unseen": "questions not used during development", "fresh-repos": "repositories not used during development", "test": "test split", "dev": "dev split", "2026": "2026 commits"}
+SUBSET_TEX = {"all": "all questions", "unseen": "questions not used during development", "fresh-repos": "repositories not used during development", "dev-repos": "unseen questions from the development repositories", "test": "test split", "dev": "dev split", "2026": "2026 commits"}
 # 논문 표의 사전 열은 Lantern과 같은 결합(절반 가중, ko-dictw). 그냥 덧붙인 ko-dict는 보고서(md)에만
 TEX_LANG = {"en": "EN", "ko": "KO", "ko-dictw": "KO+dict", "ko-mt": "KO$\\to$MT", "ko-llm": "KO$\\to$LLM"}
 
@@ -439,7 +439,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--set", default=HERE)
-    ap.add_argument("--subset", default="all", choices=["all", "unseen", "fresh-repos", "test", "dev", "2026"])
+    ap.add_argument("--subset", default="all", choices=["all", "unseen", "fresh-repos", "dev-repos", "test", "dev", "2026"])
     ap.add_argument("--md", default=None)
     ap.add_argument("--tex", default=None)
     a = ap.parse_args()
@@ -459,6 +459,9 @@ def main():
         if a.subset == "fresh-repos":
             # 개발 중에 한 번도 보지 않은 저장소의 문항만 (저장소 수준의 누출까지 뺀 결과)
             return q["project"] not in dev_repos
+        if a.subset == "dev-repos":
+            # 개발 중 확인에 쓴 세 저장소에서, 그때 쓰지 않은 문항 (과적합이 있었다면 여기서 Lantern이 더 유리해야 함)
+            return q["project"] in dev_repos and c not in seen
         if a.subset in ("test", "dev"):
             return split_of(c) == a.subset
         if a.subset == "2026":
