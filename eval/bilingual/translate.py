@@ -13,6 +13,8 @@ import glob
 import json
 import os
 
+from baselines import REVISION
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -32,8 +34,8 @@ def main():
             # 번역할 문항이 있을 때만 모델을 받는다 (저장된 번역으로 재현할 때는 3GB 모델이 필요 없음)
             from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-            tok = AutoTokenizer.from_pretrained(a.model, **({"src_lang": "kor_Hang"} if nllb else {}))
-            model = AutoModelForSeq2SeqLM.from_pretrained(a.model)
+            tok = AutoTokenizer.from_pretrained(a.model, revision=REVISION.get(a.model), **({"src_lang": "kor_Hang"} if nllb else {}))
+            model = AutoModelForSeq2SeqLM.from_pretrained(a.model, revision=REVISION.get(a.model))
             extra = {"forced_bos_token_id": tok.convert_tokens_to_ids("eng_Latn")} if nllb else {}
         for i in range(0, len(todo), 16):
             batch = todo[i : i + 16]
