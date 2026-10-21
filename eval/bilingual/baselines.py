@@ -1,13 +1,16 @@
 """비교 대상(기준선) 검색. Lantern과 같은 문항·같은 토큰 예산으로 파일 순서를 만들어 저장한다.
 
-    python eval/bilingual/baselines.py --dir <클론 폴더> [--set eval/bilingual] [--lang en|ko|ko-mt]
+    python eval/bilingual/baselines.py --dir <클론 폴더> [--set eval/bilingual] [--lang en|ko|ko-dict|ko-mt|ko-llm]
         [--methods bm25-file,bm25-chunk,dense,hybrid] [--budget 8000] [--out <폴더>] [--only gin,jq]
+        [--embed-model BAAI/bge-m3 --tag bgem3]   (다른 임베딩 모델: 방법 이름·결과 파일에 이름표가 붙음)
 
 - bm25-file: 파일 단위 BM25, 순위대로 파일을 통째로 예산까지 담음
 - bm25-chunk: 40줄 조각 단위 BM25, 순위대로 조각을 예산까지 담음
 - dense: 같은 조각을 다국어 임베딩(multilingual-e5-small)으로 찾음 (sentence-transformers 필요)
 - hybrid: bm25-chunk와 dense의 순위를 RRF(k=60)로 섞음
-- 질문: en = 영어(q), ko = 한국어(q_ko), ko-mt = 한국어를 기계 번역한 영어(q_ko_mt)
+- 질문: en = 영어(q), ko = 한국어(q_ko), ko-dict = 한국어 + Lantern 사전이 넓힌 영어 낱말(q_ko_dict, expand.py),
+  ko-mt = 한국어를 기계 번역한 영어(q_ko_mt), ko-llm = 한국어를 LLM이 영어 검색어로 다시 쓴 것(q_ko_llm)
+- 임베딩 입력은 512토큰에서 자른다 (모델마다 같은 조건). e5 계열은 query:/passage: 접두어를 붙인다
 
 파일을 고르는 기준(코드 확장자, 무시 폴더, 400KB 미만, 압축 파일 제외)과 토큰 추정(글자 4개 ≈ 1토큰)은
 eval/retrieval.mjs와 같다. 지표는 report.py가 Lantern 결과와 함께 계산한다.
@@ -147,10 +150,13 @@ def ranked(scores):
 
 
 class Embedder:
-    def __init__(self, cache_path):
+    def __init__(self, cache_path, model=EMBED_MODEL):
         from sentence_transformers import SentenceTransformer  # 무거워서 쓸 때만
 
-        self.model = SentenceTransformer(EMBED_MODEL, device="cpu")
+        self.model = SentenceTransformer(model, device="cpu")
+        self.model.max_seq_length = 512
+        e5 = "e5" in model.lower()
+        self.qp, self.dp = ("query: ", "passage: ") if e5 else ("", "")
         self.cache_path = cache_path
         self.cache = {}
         if os.path.exists(cache_path):
@@ -164,14 +170,14 @@ class Embedder:
         keys = [hashlib.sha1(t.encode("utf-8", "replace")).hexdigest() for t in texts]
         missing = [i for i, k in enumerate(keys) if k not in self.cache]
         if missing:
-            vecs = self.model.encode(["passage: " + texts[i] for i in missing], batch_size=64, normalize_embeddings=True, show_progress_bar=len(missing) > 2000)
+            vecs = self.model.encode([self.dp + texts[i] for i in missing], batch_size=32, normalize_embeddings=True, show_progress_bar=len(missing) > 2000)
             for i, v in zip(missing, vecs):
                 self.cache[keys[i]] = v.astype("float32")
             self.dirty = True
         return np.stack([self.cache[k] for k in keys])
 
     def query(self, q):
-        return self.model.encode(["query: " + q], normalize_embeddings=True)[0]
+        return self.model.encode([self.qp + q], normalize_embeddings=True)[0]
 
     def save(self):
         if self.dirty:
@@ -184,16 +190,19 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--set", default=HERE)
-    ap.add_argument("--lang", default="en", choices=["en", "ko", "ko-mt"])
+    ap.add_argument("--lang", default="en", choices=["en", "ko", "ko-dict", "ko-mt", "ko-llm", "ko-native"])
     ap.add_argument("--methods", default="bm25-file,bm25-chunk")
     ap.add_argument("--budget", type=int, default=8000)
     ap.add_argument("--out", default=None)
     ap.add_argument("--only", default="")
+    ap.add_argument("--embed-model", default=EMBED_MODEL)
+    ap.add_argument("--tag", default="", help="다른 임베딩 모델일 때 방법 이름·결과 파일에 붙일 이름 (예: bgem3)")
     a = ap.parse_args()
     methods = a.methods.split(",")
+    suffix = f"-{a.tag}" if a.tag else ""
     out_dir = a.out or os.path.join(a.dir, "results", os.path.basename(os.path.normpath(a.set)), "baselines")
     os.makedirs(out_dir, exist_ok=True)
-    field = {"en": "q", "ko": "q_ko", "ko-mt": "q_ko_mt"}[a.lang]
+    field = {"en": "q", "ko": "q_ko", "ko-dict": "q_ko_dict", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-native": "q_ko_native"}[a.lang]
     need_dense = any(m in ("dense", "hybrid") for m in methods)
 
     for f in sorted(glob.glob(os.path.join(a.set, "*.json"))):
@@ -210,7 +219,7 @@ def main():
         if git(repo, "status", "--porcelain", "--untracked-files=no").strip():
             sys.exit(f"{repo}에 커밋하지 않은 변경이 있습니다")
         original = git(repo, "rev-parse", "HEAD").strip()
-        emb = Embedder(os.path.join(out_dir, f"emb-{name}.pkl")) if need_dense else None
+        emb = Embedder(os.path.join(out_dir, f"emb-{name}{suffix}.pkl"), a.embed_model) if need_dense else None
         rows = []
         started = time.time()
         for q in qs:
@@ -239,7 +248,7 @@ def main():
                 dense = [int(i) for i in np.argsort(-sims, kind="stable")]
                 if "dense" in methods:
                     picked, used = pack_chunks(dense, chunks, a.budget)
-                    row["methods"]["dense"] = {"files": picked, "used": used}
+                    row["methods"]["dense" + suffix] = {"files": picked, "used": used}
                 if "hybrid" in methods:
                     fused = defaultdict(float)
                     for r, i in enumerate(lex):
@@ -248,15 +257,15 @@ def main():
                         fused[i] += 1 / (RRF_K + r + 1)
                     order = sorted(fused, key=lambda i: (-fused[i], i))
                     picked, used = pack_chunks(order, chunks, a.budget)
-                    row["methods"]["hybrid"] = {"files": picked, "used": used}
+                    row["methods"]["hybrid" + suffix] = {"files": picked, "used": used}
                 emb.save()
             rows.append(row)
             hit = {m: any(g in v["files"][:3] for g in q["golden"]) for m, v in row["methods"].items()}
             print(f"  {name} {len(rows):2}/{len(qs)} " + " ".join(f"{m}:{'O' if h else '.'}" for m, h in hit.items()), flush=True)
         git(repo, "checkout", "-q", "--detach", original)
-        path = os.path.join(out_dir, f"{name}-{a.lang}.json")
+        path = os.path.join(out_dir, f"{name}-{a.lang}{suffix}.json")
         with open(path, "w", encoding="utf-8") as fh:
-            json.dump({"project": name, "lang": a.lang, "budget": a.budget, "methods": methods, "rows": rows}, fh, ensure_ascii=False, indent=1)
+            json.dump({"project": name, "lang": a.lang, "budget": a.budget, "embed_model": a.embed_model if need_dense else None, "methods": [m + (suffix if m in ("dense", "hybrid") else "") for m in methods], "rows": rows}, fh, ensure_ascii=False, indent=1)
         print(f"{name} ({a.lang}): {len(rows)}문항 {time.time() - started:.0f}초 → {path}")
 
 

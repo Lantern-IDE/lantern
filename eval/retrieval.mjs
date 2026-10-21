@@ -9,7 +9,8 @@
 //
 // 질문에 `parent`(커밋)가 있으면 질문마다 프로젝트를 그 커밋으로 꺼내서 잰다 (eval/bench의 공개 벤치마크).
 // 이때 프로젝트는 변경 없는 git 클론이어야 하고, 끝나면 원래 커밋으로 돌려 놓는다.
-// --lang ko: 질문의 한국어판(`q_ko`)으로 잰다. --lang ko-mt: 한국어판을 기계 번역한 영어(`q_ko_mt`). 정답 파일은 같다.
+// --lang ko: 질문의 한국어판(`q_ko`)으로 잰다. --lang ko-mt: 한국어판을 기계 번역한 영어(`q_ko_mt`).
+// --lang ko-llm: 한국어판을 LLM이 영어 검색어로 다시 쓴 것(`q_ko_llm`). --lang ko-dict: 한국어판 + 사전이 넓힌 영어 낱말(`q_ko_dict`). 정답 파일은 같다.
 
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -34,8 +35,13 @@ if (!fs.existsSync(PROJECT) || !GOLDEN) {
 }
 const LANG = opt("lang", "en");
 const golden = JSON.parse(fs.readFileSync(path.resolve(GOLDEN), "utf8"));
+const FIELD = { en: "q", ko: "q_ko", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-dict": "q_ko_dict", "ko-native": "q_ko_native" }[LANG];
+if (!FIELD) {
+  console.error(`--lang은 en, ko, ko-mt, ko-llm, ko-dict, ko-native 중 하나: ${LANG}`);
+  process.exit(2);
+}
 const questions = golden.questions
-  .map((q) => (LANG === "ko" ? { ...q, q: q.q_ko } : LANG === "ko-mt" ? { ...q, q: q.q_ko_mt } : q))
+  .map((q) => ({ ...q, q: q[FIELD] }))
   .filter((q) => q.q);
 
 // ── 커밋별 평가: 질문마다 부모 커밋으로 꺼낸다 ─────────────────
@@ -211,7 +217,7 @@ fs.writeFileSync(path.join(OUT, `retrieval-${stamp}.json`), JSON.stringify({ pro
 const md = [
   `# 맥락 적중률 (${stamp})`,
   "",
-  `프로젝트 \`${path.basename(PROJECT)}\` · 코드 파일 ${files.length}개 · 질문 ${rows.length}개${LANG === "ko" ? " (한국어)" : LANG === "ko-mt" ? " (한국어 → 기계 번역)" : ""} · 예산 ${BUDGET} 토큰 · 모델 호출 없음`,
+  `프로젝트 \`${path.basename(PROJECT)}\` · 코드 파일 ${files.length}개 · 질문 ${rows.length}개${{ en: "", ko: " (한국어)", "ko-mt": " (한국어 → 기계 번역)", "ko-llm": " (한국어 → LLM 재작성)", "ko-dict": " (한국어 + 사전)", "ko-native": " (사람이 쓴 한국어)" }[LANG]} · 예산 ${BUDGET} 토큰 · 모델 호출 없음`,
   "",
   "정답 파일: 질문에 답하려면 꼭 봐야 하는 파일. 같은 예산에서 각 방식이 정답 파일을 몇 개 가져오는지 잰다.",
   "- 키워드 검색: 질문의 단어로 grep → 많이 맞은 파일부터 통째로 읽기",
