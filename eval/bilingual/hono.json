@@ -3,6 +3,12 @@
   "url": "https://github.com/honojs/hono",
   "ref": "ee0622e14487444211942eec2f6ab7ccede4c6af",
   "made_by": "eval/bench/make.mjs",
+  "ko_drafts": "Claude Opus 5.5 (claude-opus-5-5, Claude Code subagents): q_ko_draft from q only (prompt 1), reviewed into q_ko by a second agent (prompt 2, q_ko_reviewed = \"llm\"); prompts in eval/bilingual/prompts.md",
+  "mt_model": "facebook/nllb-200-distilled-600M",
+  "llm_model": "claude-opus-5-5",
+  "llm_rewrite": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite.json",
+  "para_rewrite": "Claude Opus 5.5 (claude-opus-5-5, Claude Code subagent, one pass over all questions): q reworded in English with the same guidelines as the Korean drafts (control for rewording); prompt 4 in eval/bilingual/prompts.md",
+  "loan_rewrite": "Claude Opus 5.5 (claude-opus-5-5, Claude Code subagent, one pass over all questions): q_ko rewritten with Hangul loanwords, a stress test, not native questions; prompt 5 in eval/bilingual/prompts.md",
   "questions": [
     {
       "q": "allow returning a Blob as a response body",
@@ -22,9 +28,11 @@
         "return"
       ],
       "q_ko_dict": "응답 body로 Blob도 반환할 수 있게 해줘 response return",
-      "q_ko_llm": "allow returning Blob as response body",
+      "q_ko_llm": "support Blob as response body in Context body/newResponse (Data type)",
       "q_ko_loan": "리스폰스 바디로 Blob도 리턴할 수 있게 해줘",
-      "q_para": "can I return a Blob as the response body?"
+      "q_para": "can I return a Blob as the response body?",
+      "q_ko_llm_src": "응답 body로 Blob도 반환할 수 있게 해줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "fail with a descriptive error on a malformed event",
@@ -46,9 +54,14 @@
         "failure"
       ],
       "q_ko_dict": "이벤트 형식이 잘못됐을 때 알아보기 쉬운 에러로 실패하게 하려면 어디를 봐야 해? event error fail failure",
-      "q_ko_llm": "fail with clear error on malformed event",
+      "q_ko_llm": "throw clear error when event has invalid format",
       "q_ko_loan": "이벤트 포맷이 잘못됐을 때 알아보기 쉬운 에러로 페일하게 하려면 어디를 봐야 해?",
-      "q_para": "error out with a clear message when an event is malformed"
+      "q_para": "error out with a clear message when an event is malformed",
+      "q_ko_llm_src": "이벤트 형식이 잘못됐을 때 알아보기 쉬운 에러로 실패하게 하려면 어디를 봐야 해?",
+      "q_ko_loan_dict_terms": [
+        "event",
+        "error"
+      ]
     },
     {
       "q": "sync content type detection with aws-lambda",
@@ -67,9 +80,14 @@
         "fix"
       ],
       "q_ko_dict": "content type 판별을 aws-lambda 쪽이랑 맞추려면 어디 고쳐야 해? fix",
-      "q_ko_llm": "align content type detection with aws-lambda",
+      "q_ko_llm": "align content type detection with aws-lambda adapter content-type check logic",
       "q_ko_loan": "컨텐트 타입 디텍션을 aws-lambda 쪽이랑 맞추려면 어디 고쳐야 해?",
-      "q_para": "how do I keep content type detection in sync with aws-lambda?"
+      "q_para": "how do I keep content type detection in sync with aws-lambda?",
+      "q_ko_llm_src": "content type 판별을 aws-lambda 쪽이랑 맞추려면 어디 고쳐야 해?",
+      "q_ko_loan_dict_terms": [
+        "type",
+        "fix"
+      ]
     },
     {
       "q": "preserve empty query parameters",
@@ -88,9 +106,13 @@
         "fix"
       ],
       "q_ko_dict": "빈 쿼리 파라미터가 안 사라지게 하려면 어디를 고쳐야 해? fix",
-      "q_ko_llm": "keep empty query parameters from being dropped",
+      "q_ko_llm": "preserve empty query parameters instead of dropping them when parsing the query string",
       "q_ko_loan": "빈 쿼리 파라미터가 안 사라지게 하려면 어디를 고쳐야 해?",
-      "q_para": "empty query parameters get dropped"
+      "q_para": "empty query parameters get dropped",
+      "q_ko_llm_src": "빈 쿼리 파라미터가 안 사라지게 하려면 어디를 고쳐야 해?",
+      "q_ko_loan_dict_terms": [
+        "fix"
+      ]
     },
     {
       "q": "treat binary +xml archive media types as binary",
@@ -109,9 +131,13 @@
         "type"
       ],
       "q_ko_dict": "+xml 붙은 바이너리 아카이브 미디어 타입은 바이너리로 취급해줘 type",
-      "q_ko_llm": "treat binary archive media types with +xml suffix as binary",
+      "q_ko_llm": "treat binary archive media types with +xml suffix as binary content type",
       "q_ko_loan": "+xml 붙은 바이너리 아카이브 미디어 타입은 바이너리로 취급해줘",
-      "q_para": "binary +xml archive media types aren't treated as binary"
+      "q_para": "binary +xml archive media types aren't treated as binary",
+      "q_ko_llm_src": "+xml 붙은 바이너리 아카이브 미디어 타입은 바이너리로 취급해줘",
+      "q_ko_loan_dict_terms": [
+        "type"
+      ]
     },
     {
       "q": "don't break responses with unparseable JSON bodies",
@@ -135,9 +161,17 @@
         "render"
       ],
       "q_ko_dict": "JSON 바디를 파싱 못 하면 응답이 깨지는 문제 parse parser response broken encoding render",
-      "q_ko_llm": "response breaks when JSON body fails to parse",
+      "q_ko_llm": "Response breaks when JSON request body fails to parse; handle JSON body parse error",
       "q_ko_loan": "JSON 바디를 파싱 못 하면 리스폰스가 깨지는 이슈",
-      "q_para": "how do I stop responses with unparseable JSON bodies from breaking?"
+      "q_para": "how do I stop responses with unparseable JSON bodies from breaking?",
+      "q_ko_llm_src": "JSON 바디를 파싱 못 하면 응답이 깨지는 문제",
+      "q_ko_loan_dict_terms": [
+        "parse",
+        "parser",
+        "broken",
+        "encoding",
+        "render"
+      ]
     },
     {
       "q": "don't match an empty path segment as a param",
@@ -157,9 +191,11 @@
         "path"
       ],
       "q_ko_dict": "빈 경로 세그먼트가 파라미터로 매칭되는 버그 route path",
-      "q_ko_llm": "empty path segment matched as parameter",
+      "q_ko_llm": "router matches empty path segment as route parameter bug",
       "q_ko_loan": "빈 패스 세그먼트가 파라미터로 매칭되는 버그",
-      "q_para": "an empty path segment gets matched as a param"
+      "q_para": "an empty path segment gets matched as a param",
+      "q_ko_llm_src": "빈 경로 세그먼트가 파라미터로 매칭되는 버그",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "match media types and language tags case-insensitively",
@@ -181,9 +217,13 @@
         "locale"
       ],
       "q_ko_dict": "미디어 타입이랑 언어 태그는 대소문자 구분 없이 매칭하게 해줘 type lang language locale",
-      "q_ko_llm": "case-insensitive matching for media types and language tags",
+      "q_ko_llm": "Make media type and language tag matching case-insensitive in content negotiation (Accept, Accept-Language)",
       "q_ko_loan": "미디어 타입이랑 랭귀지 태그는 케이스 인센서티브하게 매칭하게 해줘",
-      "q_para": "how can media types and language tags be matched without regard to case?"
+      "q_para": "how can media types and language tags be matched without regard to case?",
+      "q_ko_llm_src": "미디어 타입이랑 언어 태그는 대소문자 구분 없이 매칭하게 해줘",
+      "q_ko_loan_dict_terms": [
+        "type"
+      ]
     },
     {
       "q": "replace Suspense and ErrorBoundary content across newlines",
@@ -203,9 +243,11 @@
         "line"
       ],
       "q_ko_dict": "여러 줄에 걸친 Suspense, ErrorBoundary 내용 치환은 어디서 해? line",
-      "q_ko_llm": "replace multi-line Suspense and ErrorBoundary content",
+      "q_ko_llm": "Multiline content replacement for Suspense and ErrorBoundary streaming in JSX rendering",
       "q_ko_loan": "멀티라인 Suspense, ErrorBoundary 콘텐츠 리플레이스는 어디서 해?",
-      "q_para": "Suspense and ErrorBoundary content isn't replaced across newlines"
+      "q_para": "Suspense and ErrorBoundary content isn't replaced across newlines",
+      "q_ko_llm_src": "여러 줄에 걸친 Suspense, ErrorBoundary 내용 치환은 어디서 해?",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "optimize matching-head child lookup during reconciliation",
@@ -228,7 +270,13 @@
       "q_ko_dict": "reconciliation 중 head가 일치하는 자식 찾기 최적화 find search lookup",
       "q_ko_llm": "optimize finding child with matching head during reconciliation",
       "q_ko_loan": "리컨실리에이션 중 head가 매칭되는 차일드 찾기 옵티마이즈",
-      "q_para": "speed up the matching-head child lookup during reconciliation"
+      "q_para": "speed up the matching-head child lookup during reconciliation",
+      "q_ko_llm_src": "reconciliation 중 head가 일치하는 자식 찾기 최적화",
+      "q_ko_loan_dict_terms": [
+        "find",
+        "search",
+        "lookup"
+      ]
     },
     {
       "q": "clamp a negative q to 0, not 1",
@@ -245,9 +293,11 @@
       "q_ko_mt_src": "음수 q는 1이 아니라 0으로 clamp해줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "음수 q는 1이 아니라 0으로 clamp해줘",
-      "q_ko_llm": "clamp negative q to 0 instead of 1",
+      "q_ko_llm": "clamp negative q value to 0 instead of 1 when parsing Accept header quality",
       "q_ko_loan": "음수 q는 1이 아니라 0으로 클램프해줘",
-      "q_para": "how do I clamp a negative q to 0 instead of 1?"
+      "q_para": "how do I clamp a negative q to 0 instead of 1?",
+      "q_ko_llm_src": "음수 q는 1이 아니라 0으로 clamp해줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "treat the q parameter name as case-insensitive",
@@ -266,9 +316,11 @@
         "name"
       ],
       "q_ko_dict": "q 파라미터 이름을 대소문자 구분 없이 보려면 어디를 봐야 해? name",
-      "q_ko_llm": "case-insensitive q parameter name",
+      "q_ko_llm": "case-insensitive query parameter name lookup for `q` in request query parsing",
       "q_ko_loan": "q 파라미터 네임을 케이스 인센서티브하게 보려면 어디를 봐야 해?",
-      "q_para": "q parameter name isn't treated case-insensitively"
+      "q_para": "q parameter name isn't treated case-insensitively",
+      "q_ko_llm_src": "q 파라미터 이름을 대소문자 구분 없이 보려면 어디를 봐야 해?",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "skip accept entries with quality 0 when matching",
@@ -286,9 +338,13 @@
       "q_ko_mt_src": "매칭할 때 quality가 0인 accept 항목은 어디서 걸러?",
       "q_ko_dict_terms": [],
       "q_ko_dict": "매칭할 때 quality가 0인 accept 항목은 어디서 걸러?",
-      "q_ko_llm": "filter out accept entries with quality 0 when matching",
+      "q_ko_llm": "filter out Accept header entries with quality q=0 during content negotiation matching",
       "q_ko_loan": "매칭할 때 퀄리티가 0인 accept 엔트리는 어디서 필터링해?",
-      "q_para": "when matching, ignore accept entries that have quality 0"
+      "q_para": "when matching, ignore accept entries that have quality 0",
+      "q_ko_llm_src": "매칭할 때 quality가 0인 accept 항목은 어디서 걸러?",
+      "q_ko_loan_dict_terms": [
+        "filter"
+      ]
     },
     {
       "q": "reduce lookup work for large keyed updates",
@@ -314,9 +370,16 @@
         "shrink"
       ],
       "q_ko_dict": "key 있는 대량 업데이트에서 조회 작업 좀 줄여줘 find get query fetch job task reduce shrink",
-      "q_ko_llm": "reduce lookups in keyed bulk updates",
+      "q_ko_llm": "Reduce lookups during keyed bulk updates",
       "q_ko_loan": "key 있는 벌크 업데이트에서 룩업 작업 좀 줄여줘",
-      "q_para": "how can we cut the lookup work for large keyed updates?"
+      "q_para": "how can we cut the lookup work for large keyed updates?",
+      "q_ko_llm_src": "key 있는 대량 업데이트에서 조회 작업 좀 줄여줘",
+      "q_ko_loan_dict_terms": [
+        "job",
+        "task",
+        "reduce",
+        "shrink"
+      ]
     },
     {
       "q": "use forEach for consistent handler iteration",
@@ -333,9 +396,11 @@
       "q_ko_mt_src": "핸들러 순회는 forEach로 통일",
       "q_ko_dict_terms": [],
       "q_ko_dict": "핸들러 순회는 forEach로 통일",
-      "q_ko_llm": "use forEach for handler iteration consistently",
+      "q_ko_llm": "refactor handler iteration loops to use forEach consistently",
       "q_ko_loan": "핸들러 이터레이션은 forEach로 통일",
-      "q_para": "iterate handlers with forEach so it's consistent"
+      "q_para": "iterate handlers with forEach so it's consistent",
+      "q_ko_llm_src": "핸들러 순회는 forEach로 통일",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "normalize root WebSocket URLs",
@@ -352,9 +417,11 @@
       "q_ko_mt_src": "루트 WebSocket URL 정규화는 어디서 해?",
       "q_ko_dict_terms": [],
       "q_ko_dict": "루트 WebSocket URL 정규화는 어디서 해?",
-      "q_ko_llm": "normalize root WebSocket URL",
+      "q_ko_llm": "WebSocket URL normalization for root path in client (ws/wss URL conversion)",
       "q_ko_loan": "루트 WebSocket URL 노멀라이즈는 어디서 해?",
-      "q_para": "where should root WebSocket URLs be normalized?"
+      "q_para": "where should root WebSocket URLs be normalized?",
+      "q_ko_llm_src": "루트 WebSocket URL 정규화는 어디서 해?",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "keep a param value of \"index\" in $url() and $path()",
@@ -373,9 +440,11 @@
         "value"
       ],
       "q_ko_dict": "$url()이랑 $path()에서 param 값이 \"index\"면 사라지는 문제 value",
-      "q_ko_llm": "$url() and $path() drop param value \"index\"",
+      "q_ko_llm": "Fix $url() and $path() dropping path param whose value is \"index\"",
       "q_ko_loan": "$url()이랑 $path()에서 param 밸류가 \"index\"면 사라지는 이슈",
-      "q_para": "$url() and $path() drop a param whose value is \"index\""
+      "q_para": "$url() and $path() drop a param whose value is \"index\"",
+      "q_ko_llm_src": "$url()이랑 $path()에서 param 값이 \"index\"면 사라지는 문제",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "do not let abort listeners crash abort()",
@@ -392,9 +461,11 @@
       "q_ko_mt_src": "abort 리스너 때문에 abort()가 죽지 않게 해줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "abort 리스너 때문에 abort()가 죽지 않게 해줘",
-      "q_ko_llm": "prevent abort listener from crashing abort()",
+      "q_ko_llm": "prevent abort() from throwing when an abort event listener throws an error",
       "q_ko_loan": "abort 리스너 때문에 abort()가 죽지 않게 해줘",
-      "q_para": "abort listeners can crash abort()"
+      "q_para": "abort listeners can crash abort()",
+      "q_ko_llm_src": "abort 리스너 때문에 abort()가 죽지 않게 해줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "drop stale content length for cloned FormData",
@@ -415,9 +486,15 @@
         "clear"
       ],
       "q_ko_dict": "복제한 FormData에 남은 예전 content length는 어디서 지워? delete remove clear",
-      "q_ko_llm": "remove stale content length from cloned FormData",
+      "q_ko_llm": "Where is the stale content-length header removed when cloning a request with a FormData body",
       "q_ko_loan": "클론한 FormData에 남은 예전 컨텐트 렝스는 어디서 지워?",
-      "q_para": "drop the stale content length when FormData is cloned"
+      "q_para": "drop the stale content length when FormData is cloned",
+      "q_ko_llm_src": "복제한 FormData에 남은 예전 content length는 어디서 지워?",
+      "q_ko_loan_dict_terms": [
+        "delete",
+        "remove",
+        "clear"
+      ]
     },
     {
       "q": "support wildcard media types and specificity ordering in defaultMatch",
@@ -438,9 +515,13 @@
         "order"
       ],
       "q_ko_dict": "defaultMatch에서 와일드카드 미디어 타입이랑 구체성 순 정렬 지원해줘 type sort order",
-      "q_ko_llm": "support wildcard media types and specificity ordering in defaultMatch",
+      "q_ko_llm": "Add wildcard media type matching and specificity-based sorting to defaultMatch",
       "q_ko_loan": "defaultMatch에서 와일드카드 미디어 타입이랑 스페시피시티 순 소팅 서포트해줘",
-      "q_para": "can defaultMatch support wildcard media types and order by specificity?"
+      "q_para": "can defaultMatch support wildcard media types and order by specificity?",
+      "q_ko_llm_src": "defaultMatch에서 와일드카드 미디어 타입이랑 구체성 순 정렬 지원해줘",
+      "q_ko_loan_dict_terms": [
+        "type"
+      ]
     },
     {
       "q": "skip an undefined entry inside a query array",
@@ -461,9 +542,11 @@
         "list"
       ],
       "q_ko_dict": "쿼리 배열 안에 undefined 항목은 건너뛰게 해줘 array vec list",
-      "q_ko_llm": "skip undefined entries in query arrays",
+      "q_ko_llm": "skip undefined values in query parameter arrays when building the query string",
       "q_ko_loan": "쿼리 어레이 안에 undefined 아이템은 스킵하게 해줘",
-      "q_para": "skip undefined entries inside a query array"
+      "q_para": "skip undefined entries inside a query array",
+      "q_ko_llm_src": "쿼리 배열 안에 undefined 항목은 건너뛰게 해줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "associate wildcard middleware with matching routes",
@@ -486,9 +569,16 @@
         "edge"
       ],
       "q_ko_dict": "와일드카드 미들웨어를 매칭되는 라우트랑 연결하는 건 어디서 해? middleware connect link edge",
-      "q_ko_llm": "associate wildcard middleware with matching routes",
+      "q_ko_llm": "where wildcard middleware is attached to matching routes in the router",
       "q_ko_loan": "와일드카드 미들웨어를 매칭되는 라우트랑 연결하는 건 어디서 해?",
-      "q_para": "how do I get wildcard middleware associated with the routes it matches?"
+      "q_para": "how do I get wildcard middleware associated with the routes it matches?",
+      "q_ko_llm_src": "와일드카드 미들웨어를 매칭되는 라우트랑 연결하는 건 어디서 해?",
+      "q_ko_loan_dict_terms": [
+        "middleware",
+        "connect",
+        "link",
+        "edge"
+      ]
     },
     {
       "q": "support structured JSON content-types (+json)",
@@ -505,9 +595,11 @@
       "q_ko_mt_src": "+json 같은 구조화된 JSON content-type 지원",
       "q_ko_dict_terms": [],
       "q_ko_dict": "+json 같은 구조화된 JSON content-type 지원",
-      "q_ko_llm": "support structured JSON content-type like +json",
+      "q_ko_llm": "Support structured JSON content types with `+json` suffix (e.g. `application/vnd.api+json`) in JSON content-type detection",
       "q_ko_loan": "+json 같은 스트럭처드 JSON content-type 서포트",
-      "q_para": "how do I support structured JSON content-types (+json)?"
+      "q_para": "how do I support structured JSON content-types (+json)?",
+      "q_ko_llm_src": "+json 같은 구조화된 JSON content-type 지원",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "avoid truncation on embedded IPv4 addresses in expandIPv6",
@@ -527,9 +619,11 @@
         "url"
       ],
       "q_ko_dict": "expandIPv6에서 IPv4가 들어간 주소가 잘리는 문제 address url",
-      "q_ko_llm": "expandIPv6 truncates IPv4-embedded addresses",
+      "q_ko_llm": "expandIPv6 truncates IPv6 addresses containing an embedded IPv4 part",
       "q_ko_loan": "expandIPv6에서 IPv4가 들어간 어드레스가 잘리는 이슈",
-      "q_para": "expandIPv6 truncates embedded IPv4 addresses"
+      "q_para": "expandIPv6 truncates embedded IPv4 addresses",
+      "q_ko_llm_src": "expandIPv6에서 IPv4가 들어간 주소가 잘리는 문제",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "exempt OPTIONS request from CSRF validation",
@@ -553,9 +647,14 @@
         "exclude"
       ],
       "q_ko_dict": "OPTIONS 요청은 CSRF 검증에서 빼줘 request validate verify validation remove exclude",
-      "q_ko_llm": "exclude OPTIONS requests from CSRF validation",
+      "q_ko_llm": "Skip CSRF protection check for OPTIONS requests in csrf middleware",
       "q_ko_loan": "OPTIONS 리퀘스트는 CSRF 밸리데이션에서 빼줘",
-      "q_para": "let OPTIONS requests skip CSRF validation"
+      "q_para": "let OPTIONS requests skip CSRF validation",
+      "q_ko_llm_src": "OPTIONS 요청은 CSRF 검증에서 빼줘",
+      "q_ko_loan_dict_terms": [
+        "remove",
+        "exclude"
+      ]
     },
     {
       "q": "prevent prefix overmatch on wildcard routes",
@@ -573,9 +672,11 @@
       "q_ko_mt_src": "와일드카드 라우트에서 prefix가 너무 넓게 매칭되는 문제",
       "q_ko_dict_terms": [],
       "q_ko_dict": "와일드카드 라우트에서 prefix가 너무 넓게 매칭되는 문제",
-      "q_ko_llm": "wildcard route prefix matches too broadly",
+      "q_ko_llm": "wildcard route prefix matching too broadly in router",
       "q_ko_loan": "와일드카드 라우트에서 프리픽스가 너무 넓게 매칭되는 이슈",
-      "q_para": "wildcard routes over-match on prefixes"
+      "q_para": "wildcard routes over-match on prefixes",
+      "q_ko_llm_src": "와일드카드 라우트에서 prefix가 너무 넓게 매칭되는 문제",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "match suffix wildcard routes",
@@ -593,9 +694,11 @@
       "q_ko_mt_src": "suffix 와일드카드 라우트가 매칭되게 하려면 어디 건드리면 돼?",
       "q_ko_dict_terms": [],
       "q_ko_dict": "suffix 와일드카드 라우트가 매칭되게 하려면 어디 건드리면 돼?",
-      "q_ko_llm": "match suffix wildcard routes",
+      "q_ko_llm": "router match suffix wildcard route pattern (e.g. `*.png`)",
       "q_ko_loan": "서픽스 와일드카드 라우트가 매칭되게 하려면 어디 건드리면 돼?",
-      "q_para": "why don't suffix wildcard routes match?"
+      "q_para": "why don't suffix wildcard routes match?",
+      "q_ko_llm_src": "suffix 와일드카드 라우트가 매칭되게 하려면 어디 건드리면 돼?",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "append Origin to Vary header on OPTIONS preflight",
@@ -615,9 +718,14 @@
         "create"
       ],
       "q_ko_dict": "OPTIONS preflight에서 Vary 헤더에 Origin 추가해줘 add create",
-      "q_ko_llm": "add Origin to Vary header on OPTIONS preflight",
+      "q_ko_llm": "CORS middleware: add Origin to Vary header in OPTIONS preflight response",
       "q_ko_loan": "OPTIONS 프리플라이트에서 Vary 헤더에 Origin 추가해줘",
-      "q_para": "add Origin to the Vary header on OPTIONS preflight"
+      "q_para": "add Origin to the Vary header on OPTIONS preflight",
+      "q_ko_llm_src": "OPTIONS preflight에서 Vary 헤더에 Origin 추가해줘",
+      "q_ko_loan_dict_terms": [
+        "add",
+        "create"
+      ]
     },
     {
       "q": "avoid skipping headers when filtering 304 response headers",
@@ -637,9 +745,13 @@
         "response"
       ],
       "q_ko_dict": "304 응답 헤더 거를 때 일부 헤더를 건너뛰는 문제 response",
-      "q_ko_llm": "some headers skipped when filtering 304 response headers",
+      "q_ko_llm": "fix filtering of 304 Not Modified response headers skipping some headers",
       "q_ko_loan": "304 리스폰스 헤더 필터링할 때 일부 헤더를 스킵하는 이슈",
-      "q_para": "some headers get skipped when filtering 304 response headers"
+      "q_para": "some headers get skipped when filtering 304 response headers",
+      "q_ko_llm_src": "304 응답 헤더 거를 때 일부 헤더를 건너뛰는 문제",
+      "q_ko_loan_dict_terms": [
+        "filter"
+      ]
     },
     {
       "q": "copy pending stream bytes",
@@ -661,9 +773,14 @@
         "clone"
       ],
       "q_ko_dict": "pending 상태인 스트림 바이트 복사해줘 state status copy clone",
-      "q_ko_llm": "copy pending stream bytes",
+      "q_ko_llm": "copy pending stream bytes while stream is in pending state",
       "q_ko_loan": "펜딩 상태인 스트림 바이트 카피해줘",
-      "q_para": "what do I change so pending stream bytes get copied?"
+      "q_para": "what do I change so pending stream bytes get copied?",
+      "q_ko_llm_src": "pending 상태인 스트림 바이트 복사해줘",
+      "q_ko_loan_dict_terms": [
+        "state",
+        "status"
+      ]
     },
     {
       "q": "prevent URL corruption when replaceUrlParam contains $ replacement tokens",
@@ -685,9 +802,16 @@
         "render"
       ],
       "q_ko_dict": "replaceUrlParam에 $ 치환 토큰이 있으면 URL이 깨지는 문제 token broken encoding render",
-      "q_ko_llm": "replaceUrlParam breaks URL when value contains $ replacement tokens",
+      "q_ko_llm": "replaceUrlParam breaks URL when param value contains $ replacement tokens in String.replace",
       "q_ko_loan": "replaceUrlParam에 $ 리플레이스먼트 토큰이 있으면 URL이 깨지는 이슈",
-      "q_para": "URL gets corrupted if replaceUrlParam contains $ replacement tokens"
+      "q_para": "URL gets corrupted if replaceUrlParam contains $ replacement tokens",
+      "q_ko_llm_src": "replaceUrlParam에 $ 치환 토큰이 있으면 URL이 깨지는 문제",
+      "q_ko_loan_dict_terms": [
+        "token",
+        "broken",
+        "encoding",
+        "render"
+      ]
     },
     {
       "q": "pre-join static array header options during initialization",
@@ -711,13 +835,11 @@
         "reset"
       ],
       "q_ko_dict": "정적 배열 헤더 옵션은 초기화할 때 미리 join해둬 array vec list init initialize reset",
-      "q_ko_llm": "pre-join static array header options at initialization",
+      "q_ko_llm": "Precompute join of static array header options at middleware initialization instead of per request",
       "q_ko_loan": "스태틱 어레이 헤더 옵션은 이니셜라이즈할 때 미리 join해둬",
-      "q_para": "join static array header options ahead of time at init"
+      "q_para": "join static array header options ahead of time at init",
+      "q_ko_llm_src": "정적 배열 헤더 옵션은 초기화할 때 미리 join해둬",
+      "q_ko_loan_dict_terms": []
     }
-  ],
-  "mt_model": "facebook/nllb-200-distilled-600M",
-  "llm_rewrite": "Claude (Claude Code subagent), Korean question only, prompt in eval/bilingual/README.md",
-  "loan_rewrite": "Claude Opus 5.5 (Claude Code subagent): q_ko rewritten with Hangul loanwords, a stress test, not native questions; prompt in eval/bilingual/README.md",
-  "para_rewrite": "Claude Opus 5.5 (Claude Code subagent): q reworded in English with the same guidelines as the Korean drafts (control for rewording); prompt in eval/bilingual/README.md"
+  ]
 }

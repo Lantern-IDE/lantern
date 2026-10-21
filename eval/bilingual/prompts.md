@@ -1,8 +1,6 @@
 # Prompts used to build the benchmark's question forms
 
-Every LLM step was run once with Claude Opus 5.5 (`claude-opus-5-5`) as a Claude Code subagent, on 2026-10-18 to 2026-10-21. The texts below are verbatim, except that local file paths are replaced by `<input file>` and `<output file>`. The agents had no access to the repositories, the gold files, Lantern or its dictionary unless stated.
-
-The one-call-per-question timing of the rewrite (`rewrite_latency.py`) uses a single-question version of prompt 3, kept in that script.
+Every LLM step was run once with Claude Opus 5.5 (`claude-opus-5-5`), on 2026-10-18 to 2026-10-21. Steps 1, 2, 4 and 5 ran as Claude Code subagents, each over all questions in one pass. Step 3, the rewrite that the KO→LLM baseline evaluates, is one separate call per question ([rewrite.py](rewrite.py)), so each rewrite sees only its own question. The texts below are verbatim, except that local file paths are replaced by `<input file>` and `<output file>`. The agents had no access to the repositories, the gold files, Lantern or its dictionary unless stated.
 
 ## 1. Korean drafts (`q_ko_draft`)
 
@@ -50,6 +48,20 @@ When finished, reply with only: total items, number changed, and up to 8 example
 ```
 
 ## 3. Rewrite into an English search query (`q_ko_llm`, KO→LLM)
+
+One call per question through Claude Code's headless mode (`claude -p --model claude-opus-5-5 --tools "" --setting-sources ""`, run in an empty folder, so the model has no tools, settings or project files). The system prompt is the text below; the user message is `Repository: <name>` and `Question: <Korean question>` on two lines. Each call's output, API time, tokens and list price are in [measurements/rewrite.json](measurements/rewrite.json) (320 calls on 2026-10-21, $3.72 in total).
+
+```text
+You are the query-rewriting step of a coding agent. A developer asked a question in Korean about an open-source repository; before searching the code, you rewrite it as an English code-search query.
+
+Rules:
+1. Write a short English query (one line) that a coding agent would use to search this repository for the code to read or change: say what the code does or what should change, in the words developers use in English code and commit messages.
+2. Keep every code identifier, option, flag, header, function and type name from the Korean exactly as written.
+3. Do not add information that is not in the Korean question (no guessed file names, function names or causes). Work only from the Korean text and the repository name.
+4. Reply with the query only; no explanations.
+```
+
+Up to tag `icpc2027-eval-v4`, `q_ko_llm` came from a single Claude Code subagent that rewrote all 320 questions in one pass with the batched version below. Those rewrites were terser and closer to the commit subjects (18% reproduced the subject verbatim, against 3% for the per-question calls), and they no longer match how the paper describes and times the baseline, so v5 replaced them. They remain in the git history.
 
 ```text
 You are the query-rewriting step of a coding agent. A developer asked a question in Korean about an open-source repository; before searching the code, you rewrite it as an English code-search query.

@@ -3,6 +3,12 @@
   "url": "https://github.com/axios/axios",
   "ref": "326843a3902d73c9f6af9bad7b55e2412566a251",
   "made_by": "eval/bench/make.mjs",
+  "ko_drafts": "Claude Opus 5.5 (claude-opus-5-5, Claude Code subagents): q_ko_draft from q only (prompt 1), reviewed into q_ko by a second agent (prompt 2, q_ko_reviewed = \"llm\"); prompts in eval/bilingual/prompts.md",
+  "mt_model": "facebook/nllb-200-distilled-600M",
+  "llm_model": "claude-opus-5-5",
+  "llm_rewrite": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite.json",
+  "para_rewrite": "Claude Opus 5.5 (claude-opus-5-5, Claude Code subagent, one pass over all questions): q reworded in English with the same guidelines as the Korean drafts (control for rewording); prompt 4 in eval/bilingual/prompts.md",
+  "loan_rewrite": "Claude Opus 5.5 (claude-opus-5-5, Claude Code subagent, one pass over all questions): q_ko rewritten with Hangul loanwords, a stress test, not native questions; prompt 5 in eval/bilingual/prompts.md",
   "questions": [
     {
       "q": "bind matcher callbacks to the headers instance",
@@ -19,9 +25,11 @@
       "q_ko_mt_src": "matcher 콜백이 headers 인스턴스에 바인딩되게 해줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "matcher 콜백이 headers 인스턴스에 바인딩되게 해줘",
-      "q_ko_llm": "bind matcher callback to the headers instance",
+      "q_ko_llm": "Bind matcher callback to AxiosHeaders instance (call matcher with headers as `this`)",
       "q_ko_loan": "matcher 콜백이 headers 인스턴스에 바인딩되게 해줘",
-      "q_para": "make the matcher callbacks get bound to the headers instance"
+      "q_para": "make the matcher callbacks get bound to the headers instance",
+      "q_ko_llm_src": "matcher 콜백이 headers 인스턴스에 바인딩되게 해줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "remove progress event listeners on request completion",
@@ -41,9 +49,13 @@
         "event"
       ],
       "q_ko_dict": "요청 끝나면 progress 이벤트 리스너 제거하는 건 어디서 해? request event",
-      "q_ko_llm": "remove progress event listeners when request finishes",
+      "q_ko_llm": "remove progress event listeners (onDownloadProgress / onUploadProgress) when request completes cleanup",
       "q_ko_loan": "리퀘스트 끝나면 프로그레스 이벤트 리스너 제거하는 건 어디서 해?",
-      "q_para": "progress event listeners aren't removed after the request finishes"
+      "q_para": "progress event listeners aren't removed after the request finishes",
+      "q_ko_llm_src": "요청 끝나면 progress 이벤트 리스너 제거하는 건 어디서 해?",
+      "q_ko_loan_dict_terms": [
+        "event"
+      ]
     },
     {
       "q": "stop reusing sessions after GOAWAY",
@@ -62,9 +74,13 @@
         "session"
       ],
       "q_ko_dict": "GOAWAY 이후에도 세션을 계속 재사용하는 문제 session",
-      "q_ko_llm": "session keeps being reused after GOAWAY",
+      "q_ko_llm": "HTTP/2 session keeps being reused after receiving GOAWAY frame instead of being closed and recreated",
       "q_ko_loan": "GOAWAY 이후에도 세션을 계속 재사용하는 이슈",
-      "q_para": "how do I keep sessions from being reused once a GOAWAY comes in?"
+      "q_para": "how do I keep sessions from being reused once a GOAWAY comes in?",
+      "q_ko_llm_src": "GOAWAY 이후에도 세션을 계속 재사용하는 문제",
+      "q_ko_loan_dict_terms": [
+        "session"
+      ]
     },
     {
       "q": "reduce request configuration merge overhead",
@@ -88,9 +104,14 @@
         "shrink"
       ],
       "q_ko_dict": "요청 설정 병합 오버헤드 줄이기 request config setting reduce shrink",
-      "q_ko_llm": "reduce request config merge overhead",
+      "q_ko_llm": "reduce overhead of merging request config (mergeConfig performance)",
       "q_ko_loan": "리퀘스트 컨피그 머지 오버헤드 줄이기",
-      "q_para": "please cut down the overhead of merging request configs"
+      "q_para": "please cut down the overhead of merging request configs",
+      "q_ko_llm_src": "요청 설정 병합 오버헤드 줄이기",
+      "q_ko_loan_dict_terms": [
+        "reduce",
+        "shrink"
+      ]
     },
     {
       "q": "restore numeric-string interceptor IDs",
@@ -111,9 +132,13 @@
         "str"
       ],
       "q_ko_dict": "인터셉터 ID를 예전처럼 숫자 문자열로 되돌려줘 interceptor string str",
-      "q_ko_llm": "revert interceptor IDs to numeric strings as before",
+      "q_ko_llm": "revert interceptor ID returned by use() back to numeric string as before",
       "q_ko_loan": "인터셉터 ID를 예전처럼 숫자 스트링으로 되돌려줘",
-      "q_para": "interceptor IDs are no longer numeric strings"
+      "q_para": "interceptor IDs are no longer numeric strings",
+      "q_ko_llm_src": "인터셉터 ID를 예전처럼 숫자 문자열로 되돌려줘",
+      "q_ko_loan_dict_terms": [
+        "interceptor"
+      ]
     },
     {
       "q": "decode percent-encoded Base64 data URLs",
@@ -133,9 +158,13 @@
         "encoding"
       ],
       "q_ko_dict": "퍼센트 인코딩된 Base64 data URL은 어디서 디코딩해? encoding",
-      "q_ko_llm": "decode percent-encoded Base64 data URL",
+      "q_ko_llm": "decode percent-encoded base64 data URL",
       "q_ko_loan": "퍼센트 인코딩된 Base64 데이터 URL은 어디서 디코딩해?",
-      "q_para": "what do I change so percent-encoded Base64 data URLs get decoded?"
+      "q_para": "what do I change so percent-encoded Base64 data URLs get decoded?",
+      "q_ko_llm_src": "퍼센트 인코딩된 Base64 data URL은 어디서 디코딩해?",
+      "q_ko_loan_dict_terms": [
+        "encoding"
+      ]
     },
     {
       "q": "accept case-insensitive base64 tokens",
@@ -155,9 +184,13 @@
         "token"
       ],
       "q_ko_dict": "base64 토큰 대소문자 구분 없이 받기 token",
-      "q_ko_llm": "accept base64 token case-insensitively",
+      "q_ko_llm": "Accept base64 token case-insensitively (case-insensitive base64 token parsing)",
       "q_ko_loan": "base64 토큰 케이스 인센서티브하게 받기",
-      "q_para": "let base64 tokens match regardless of case"
+      "q_para": "let base64 tokens match regardless of case",
+      "q_ko_llm_src": "base64 토큰 대소문자 구분 없이 받기",
+      "q_ko_loan_dict_terms": [
+        "token"
+      ]
     },
     {
       "q": "preserve short reconstructed request stacks",
@@ -176,9 +209,11 @@
         "request"
       ],
       "q_ko_dict": "재구성한 요청 스택이 짧아도 그대로 유지되게 해줘 request",
-      "q_ko_llm": "preserve reconstructed request stack even when it is short",
+      "q_ko_llm": "Preserve reconstructed request stack trace even when it is short instead of dropping it",
       "q_ko_loan": "재구성한 리퀘스트 스택이 짧아도 그대로 유지되게 해줘",
-      "q_para": "short reconstructed request stacks get lost"
+      "q_para": "short reconstructed request stacks get lost",
+      "q_ko_llm_src": "재구성한 요청 스택이 짧아도 그대로 유지되게 해줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "apply the default cache mode only where the runtime accepts it",
@@ -198,9 +233,14 @@
         "fetch"
       ],
       "q_ko_dict": "런타임이 받아주는 경우에만 기본 cache 모드를 적용하려면 어디를 봐야 해? receive fetch",
-      "q_ko_llm": "apply default cache mode only when the runtime supports it",
+      "q_ko_llm": "apply default fetch cache mode only when runtime supports the cache option (feature detection)",
       "q_ko_loan": "런타임이 받아주는 경우에만 디폴트 cache 모드를 적용하려면 어디를 봐야 해?",
-      "q_para": "only set the default cache mode in runtimes that accept it"
+      "q_para": "only set the default cache mode in runtimes that accept it",
+      "q_ko_llm_src": "런타임이 받아주는 경우에만 기본 cache 모드를 적용하려면 어디를 봐야 해?",
+      "q_ko_loan_dict_terms": [
+        "receive",
+        "fetch"
+      ]
     },
     {
       "q": "tolerate nullish handlers in syncHandlerEntries",
@@ -217,9 +257,11 @@
       "q_ko_mt_src": "syncHandlerEntries에 nullish 핸들러가 들어와도 문제없게 해줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "syncHandlerEntries에 nullish 핸들러가 들어와도 문제없게 해줘",
-      "q_ko_llm": "handle nullish handlers in syncHandlerEntries",
+      "q_ko_llm": "Handle nullish handlers in syncHandlerEntries without throwing errors",
       "q_ko_loan": "syncHandlerEntries에 nullish 핸들러가 들어와도 이슈 없게 해줘",
-      "q_para": "syncHandlerEntries breaks on null or undefined handlers"
+      "q_para": "syncHandlerEntries breaks on null or undefined handlers",
+      "q_ko_llm_src": "syncHandlerEntries에 nullish 핸들러가 들어와도 문제없게 해줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "stop per-socket error listener from retaining the installing request's context (memory leak)",
@@ -244,7 +286,14 @@
       "q_ko_dict": "소켓별 에러 리스너가 자기를 등록한 요청의 컨텍스트를 계속 잡고 있는 메모리 누수 socket error request memory alloc",
       "q_ko_llm": "memory leak: per-socket error listener retains context of the request that registered it",
       "q_ko_loan": "소켓별 에러 리스너가 자기를 등록한 리퀘스트의 컨텍스트를 계속 잡고 있는 메모리 릭",
-      "q_para": "memory leak: the per-socket error listener holds on to the context of the request that installed it"
+      "q_para": "memory leak: the per-socket error listener holds on to the context of the request that installed it",
+      "q_ko_llm_src": "소켓별 에러 리스너가 자기를 등록한 요청의 컨텍스트를 계속 잡고 있는 메모리 누수",
+      "q_ko_loan_dict_terms": [
+        "socket",
+        "error",
+        "memory",
+        "alloc"
+      ]
     },
     {
       "q": "tolerate non-string stack when decorating request errors",
@@ -269,9 +318,16 @@
         "render"
       ],
       "q_ko_dict": "요청 에러 가공할 때 stack이 문자열이 아니어도 안 깨지게 해줘 request error string str broken encoding render",
-      "q_ko_llm": "don't break when stack is not a string while enhancing request error",
+      "q_ko_llm": "handle non-string error stack when transforming request errors without crashing",
       "q_ko_loan": "리퀘스트 에러 가공할 때 stack이 스트링이 아니어도 안 깨지게 해줘",
-      "q_para": "how do I keep request error decoration from failing when the stack isn't a string?"
+      "q_para": "how do I keep request error decoration from failing when the stack isn't a string?",
+      "q_ko_llm_src": "요청 에러 가공할 때 stack이 문자열이 아니어도 안 깨지게 해줘",
+      "q_ko_loan_dict_terms": [
+        "error",
+        "broken",
+        "encoding",
+        "render"
+      ]
     },
     {
       "q": "resolve TypeError on constant variable path assignment",
@@ -296,9 +352,17 @@
         "capacity"
       ],
       "q_ko_dict": "상수 변수 경로 할당에서 TypeError 나는 문제 variable var route path alloc allocate capacity",
-      "q_ko_llm": "TypeError on constant variable path assignment",
+      "q_ko_llm": "Fix TypeError \"Assignment to constant variable\" when reassigning the path",
       "q_ko_loan": "상수 변수 패스 할당에서 TypeError 나는 이슈",
-      "q_para": "please fix the TypeError from the path assignment to a constant variable"
+      "q_para": "please fix the TypeError from the path assignment to a constant variable",
+      "q_ko_llm_src": "상수 변수 경로 할당에서 TypeError 나는 문제",
+      "q_ko_loan_dict_terms": [
+        "variable",
+        "var",
+        "alloc",
+        "allocate",
+        "capacity"
+      ]
     },
     {
       "q": "correct data: URL base64 size estimate for maxContentLength guard",
@@ -319,9 +383,11 @@
         "len"
       ],
       "q_ko_dict": "maxContentLength 체크에 쓰는 data: URL base64 크기 추정 바로잡아줘 size len",
-      "q_ko_llm": "fix data: URL base64 size estimation used for maxContentLength check",
+      "q_ko_llm": "fix base64 size estimation of data: URL used for maxContentLength check",
       "q_ko_loan": "maxContentLength 체크에 쓰는 data: URL base64 사이즈 추정 픽스해줘",
-      "q_para": "data: URL base64 size estimate is off for the maxContentLength check"
+      "q_para": "data: URL base64 size estimate is off for the maxContentLength check",
+      "q_ko_llm_src": "maxContentLength 체크에 쓰는 data: URL base64 크기 추정 바로잡아줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "honor wildcard entries in NO_PROXY lists",
@@ -342,9 +408,11 @@
         "process"
       ],
       "q_ko_dict": "NO_PROXY 목록의 와일드카드 항목은 어디서 처리해? list handle process",
-      "q_ko_llm": "handle wildcard entries in NO_PROXY list",
+      "q_ko_llm": "Where are wildcard entries in the NO_PROXY list handled (proxy bypass hostname matching)",
       "q_ko_loan": "NO_PROXY 리스트의 와일드카드 엔트리는 어디서 핸들링해?",
-      "q_para": "wildcard entries in NO_PROXY lists are ignored"
+      "q_para": "wildcard entries in NO_PROXY lists are ignored",
+      "q_ko_llm_src": "NO_PROXY 목록의 와일드카드 항목은 어디서 처리해?",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "serialize Set values in toJSONObject",
@@ -363,9 +431,13 @@
         "value"
       ],
       "q_ko_dict": "toJSONObject에서 Set 값 직렬화 value",
-      "q_ko_llm": "serialize Set values in toJSONObject",
+      "q_ko_llm": "toJSONObject serialize Set values",
       "q_ko_loan": "toJSONObject에서 Set 값 시리얼라이즈",
-      "q_para": "how can I get toJSONObject to serialize Set values?"
+      "q_para": "how can I get toJSONObject to serialize Set values?",
+      "q_ko_llm_src": "toJSONObject에서 Set 값 직렬화",
+      "q_ko_loan_dict_terms": [
+        "value"
+      ]
     },
     {
       "q": "flush download progress before stream close",
@@ -385,9 +457,13 @@
         "download"
       ],
       "q_ko_dict": "스트림 닫히기 전에 다운로드 진행률 flush하는 부분 어디 있어? download",
-      "q_ko_llm": "flush download progress before stream closes",
+      "q_ko_llm": "flush download progress before stream closes (onDownloadProgress final event on stream end)",
       "q_ko_loan": "스트림 클로즈되기 전에 다운로드 프로그레스 플러시하는 부분 어디 있어?",
-      "q_para": "flush the download progress before the stream closes"
+      "q_para": "flush the download progress before the stream closes",
+      "q_ko_llm_src": "스트림 닫히기 전에 다운로드 진행률 flush하는 부분 어디 있어?",
+      "q_ko_loan_dict_terms": [
+        "download"
+      ]
     },
     {
       "q": "clamp negative progress values",
@@ -408,9 +484,15 @@
         "process"
       ],
       "q_ko_dict": "음수 진행률 값 clamp 처리 value handle process",
-      "q_ko_llm": "clamp negative progress values",
+      "q_ko_llm": "clamp negative progress values in upload/download progress event handling",
       "q_ko_loan": "음수 프로그레스 값 클램프 처리",
-      "q_para": "where should negative progress values get clamped?"
+      "q_para": "where should negative progress values get clamped?",
+      "q_ko_llm_src": "음수 진행률 값 clamp 처리",
+      "q_ko_loan_dict_terms": [
+        "value",
+        "handle",
+        "process"
+      ]
     },
     {
       "q": "normalize repeated base URL slashes",
@@ -431,9 +513,15 @@
         "fix"
       ],
       "q_ko_dict": "base URL 슬래시가 중복될 때 정규화하려면 어디를 고쳐야 해? duplicate dedupe fix",
-      "q_ko_llm": "normalize duplicate slashes in base URL",
+      "q_ko_llm": "normalize duplicate slashes when combining baseURL with request URL",
       "q_ko_loan": "베이스 URL 슬래시가 중복될 때 노멀라이즈하려면 어디를 고쳐야 해?",
-      "q_para": "collapse repeated slashes in the base URL"
+      "q_para": "collapse repeated slashes in the base URL",
+      "q_ko_llm_src": "base URL 슬래시가 중복될 때 정규화하려면 어디를 고쳐야 해?",
+      "q_ko_loan_dict_terms": [
+        "duplicate",
+        "dedupe",
+        "fix"
+      ]
     },
     {
       "q": "return set-cookie values consistently",
@@ -453,9 +541,13 @@
         "return"
       ],
       "q_ko_dict": "set-cookie 값을 일관되게 반환하려면 어디를 봐야 해? value return",
-      "q_ko_llm": "return set-cookie values consistently",
+      "q_ko_llm": "return set-cookie header values consistently (always as array) in response headers parsing",
       "q_ko_loan": "set-cookie 값을 일관되게 리턴하려면 어디를 봐야 해?",
-      "q_para": "set-cookie values aren't returned consistently"
+      "q_para": "set-cookie values aren't returned consistently",
+      "q_ko_llm_src": "set-cookie 값을 일관되게 반환하려면 어디를 봐야 해?",
+      "q_ko_loan_dict_terms": [
+        "value"
+      ]
     },
     {
       "q": "preserve empty duplicate header values",
@@ -476,9 +568,14 @@
         "value"
       ],
       "q_ko_dict": "비어 있는 중복 헤더 값도 남기려면 어디부터 보면 돼? duplicate dedupe value",
-      "q_ko_llm": "preserve empty duplicate header values",
+      "q_ko_llm": "preserve empty duplicate header values when parsing or merging headers instead of dropping them",
       "q_ko_loan": "비어 있는 중복 헤더 밸류도 남기려면 어디부터 보면 돼?",
-      "q_para": "keep empty values when a header appears more than once"
+      "q_para": "keep empty values when a header appears more than once",
+      "q_ko_llm_src": "비어 있는 중복 헤더 값도 남기려면 어디부터 보면 돼?",
+      "q_ko_loan_dict_terms": [
+        "duplicate",
+        "dedupe"
+      ]
     },
     {
       "q": "abort composed signals immediately",
@@ -495,9 +592,11 @@
       "q_ko_mt_src": "조합한 signal이 바로 abort되게 해줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "조합한 signal이 바로 abort되게 해줘",
-      "q_ko_llm": "make combined signal abort immediately",
+      "q_ko_llm": "Make the composed signal (from combining multiple signals) abort immediately",
       "q_ko_loan": "컴바인한 signal이 바로 abort되게 해줘",
-      "q_para": "composed signals don't abort right away"
+      "q_para": "composed signals don't abort right away",
+      "q_ko_llm_src": "조합한 signal이 바로 abort되게 해줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "only split keys on bracket and dot notation",
@@ -516,9 +615,13 @@
         "key"
       ],
       "q_ko_dict": "키는 대괄호·점 표기일 때만 쪼개기 key",
-      "q_ko_llm": "split keys only on bracket and dot notation",
+      "q_ko_llm": "only split keys on bracket or dot notation when parsing nested form data / object keys into path segments",
       "q_ko_loan": "키는 브래킷·닷 노테이션일 때만 스플릿하기",
-      "q_para": "keys should be split only on bracket and dot notation, nothing else"
+      "q_para": "keys should be split only on bracket and dot notation, nothing else",
+      "q_ko_llm_src": "키는 대괄호·점 표기일 때만 쪼개기",
+      "q_ko_loan_dict_terms": [
+        "key"
+      ]
     },
     {
       "q": "use arrow function so encoder.call(this) receives the instance",
@@ -539,9 +642,15 @@
         "replace"
       ],
       "q_ko_dict": "encoder.call(this)에 인스턴스가 넘어가도록 화살표 함수로 바꿔줘 change update replace",
-      "q_ko_llm": "use arrow function so encoder.call(this) receives the instance",
+      "q_ko_llm": "change encoder wrapper to arrow function so encoder.call(this) receives the instance as this",
       "q_ko_loan": "encoder.call(this)에 인스턴스가 넘어가도록 애로우 펑션으로 바꿔줘",
-      "q_para": "switch to an arrow function so that encoder.call(this) gets the instance"
+      "q_para": "switch to an arrow function so that encoder.call(this) gets the instance",
+      "q_ko_llm_src": "encoder.call(this)에 인스턴스가 넘어가도록 화살표 함수로 바꿔줘",
+      "q_ko_loan_dict_terms": [
+        "change",
+        "update",
+        "replace"
+      ]
     },
     {
       "q": "incorrect use of error",
@@ -558,9 +667,11 @@
       "q_ko_mt_src": "error를 잘못 쓰고 있는 부분",
       "q_ko_dict_terms": [],
       "q_ko_dict": "error를 잘못 쓰고 있는 부분",
-      "q_ko_llm": "fix incorrect usage of error",
+      "q_ko_llm": "incorrect error usage or misuse of error handling",
       "q_ko_loan": "error를 잘못 쓰고 있는 부분",
-      "q_para": "error is used the wrong way"
+      "q_para": "error is used the wrong way",
+      "q_ko_llm_src": "error를 잘못 쓰고 있는 부분",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "support basic auth from URL",
@@ -578,9 +689,11 @@
       "q_ko_mt_src": "URL에 들어 있는 basic auth를 지원하려면 어디 건드리면 돼?",
       "q_ko_dict_terms": [],
       "q_ko_dict": "URL에 들어 있는 basic auth를 지원하려면 어디 건드리면 돼?",
-      "q_ko_llm": "support basic auth credentials embedded in URL",
+      "q_ko_llm": "support basic auth credentials embedded in request URL (username:password@host) and set Authorization header",
       "q_ko_loan": "URL에 들어 있는 베이직 어스를 서포트하려면 어디 건드리면 돼?",
-      "q_para": "how do I get basic auth taken from the URL to work?"
+      "q_para": "how do I get basic auth taken from the URL to work?",
+      "q_ko_llm_src": "URL에 들어 있는 basic auth를 지원하려면 어디 건드리면 돼?",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "correct isCancel type to narrow to CanceledError<T>",
@@ -600,9 +713,13 @@
         "fix"
       ],
       "q_ko_dict": "isCancel 타입이 CanceledError<T>로 좁혀지게 고쳐줘 type fix",
-      "q_ko_llm": "narrow isCancel type to CanceledError<T>",
+      "q_ko_llm": "isCancel type guard narrow to CanceledError<T> in TypeScript type definitions",
       "q_ko_loan": "isCancel 타입이 CanceledError<T>로 내로잉되게 픽스해줘",
-      "q_para": "isCancel type doesn't narrow to CanceledError<T>"
+      "q_para": "isCancel type doesn't narrow to CanceledError<T>",
+      "q_ko_llm_src": "isCancel 타입이 CanceledError<T>로 좁혀지게 고쳐줘",
+      "q_ko_loan_dict_terms": [
+        "type"
+      ]
     },
     {
       "q": "AxiosHeaders `toJSON()` return types",
@@ -623,9 +740,13 @@
         "type"
       ],
       "q_ko_dict": "AxiosHeaders `toJSON()` 반환 타입 return type",
-      "q_ko_llm": "AxiosHeaders toJSON() return type",
+      "q_ko_llm": "AxiosHeaders `toJSON()` return type definition",
       "q_ko_loan": "AxiosHeaders `toJSON()` 리턴 타입",
-      "q_para": "what should the AxiosHeaders `toJSON()` return types be?"
+      "q_para": "what should the AxiosHeaders `toJSON()` return types be?",
+      "q_ko_llm_src": "AxiosHeaders `toJSON()` 반환 타입",
+      "q_ko_loan_dict_terms": [
+        "type"
+      ]
     },
     {
       "q": "clear RN FormData content type",
@@ -642,9 +763,13 @@
       "q_ko_mt_src": "RN FormData의 content type 비워줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "RN FormData의 content type 비워줘",
-      "q_ko_llm": "clear content type for RN FormData",
+      "q_ko_llm": "clear Content-Type header for React Native FormData requests",
       "q_ko_loan": "RN FormData의 컨텐트 타입 비워줘",
-      "q_para": "unset the content type for RN FormData"
+      "q_para": "unset the content type for RN FormData",
+      "q_ko_llm_src": "RN FormData의 content type 비워줘",
+      "q_ko_loan_dict_terms": [
+        "type"
+      ]
     },
     {
       "q": "preserve symbol keys in merged request data",
@@ -666,7 +791,11 @@
       "q_ko_dict": "요청 데이터 병합할 때 symbol 키가 빠지는 문제 request key",
       "q_ko_llm": "symbol keys dropped when merging request data",
       "q_ko_loan": "리퀘스트 데이터 머지할 때 심볼 키가 빠지는 이슈",
-      "q_para": "symbol keys are lost when request data gets merged"
+      "q_para": "symbol keys are lost when request data gets merged",
+      "q_ko_llm_src": "요청 데이터 병합할 때 symbol 키가 빠지는 문제",
+      "q_ko_loan_dict_terms": [
+        "key"
+      ]
     },
     {
       "q": "guard malformed XHR upload events",
@@ -689,9 +818,17 @@
         "guard"
       ],
       "q_ko_dict": "형식이 잘못된 XHR 업로드 이벤트는 어디서 막아? upload event block prevent guard",
-      "q_ko_llm": "guard against malformed XHR upload events",
+      "q_ko_llm": "Where axios XHR adapter validates or ignores malformed upload progress events (onUploadProgress)",
       "q_ko_loan": "포맷이 잘못된 XHR 업로드 이벤트는 어디서 막아?",
-      "q_para": "how can I guard against malformed XHR upload events?"
+      "q_para": "how can I guard against malformed XHR upload events?",
+      "q_ko_llm_src": "형식이 잘못된 XHR 업로드 이벤트는 어디서 막아?",
+      "q_ko_loan_dict_terms": [
+        "upload",
+        "event",
+        "block",
+        "prevent",
+        "guard"
+      ]
     },
     {
       "q": "make parseReviver context.source optional per ES2023 spec",
@@ -715,11 +852,13 @@
       "q_ko_dict": "ES2023 스펙대로 parseReviver의 context.source를 optional로 바꿔줘 change update replace",
       "q_ko_llm": "make parseReviver context.source optional per ES2023 spec",
       "q_ko_loan": "ES2023 스펙대로 parseReviver의 context.source를 옵셔널로 바꿔줘",
-      "q_para": "per the ES2023 spec, make context.source in parseReviver optional"
+      "q_para": "per the ES2023 spec, make context.source in parseReviver optional",
+      "q_ko_llm_src": "ES2023 스펙대로 parseReviver의 context.source를 optional로 바꿔줘",
+      "q_ko_loan_dict_terms": [
+        "change",
+        "update",
+        "replace"
+      ]
     }
-  ],
-  "mt_model": "facebook/nllb-200-distilled-600M",
-  "llm_rewrite": "Claude (Claude Code subagent), Korean question only, prompt in eval/bilingual/README.md",
-  "loan_rewrite": "Claude Opus 5.5 (Claude Code subagent): q_ko rewritten with Hangul loanwords, a stress test, not native questions; prompt in eval/bilingual/README.md",
-  "para_rewrite": "Claude Opus 5.5 (Claude Code subagent): q reworded in English with the same guidelines as the Korean drafts (control for rewording); prompt in eval/bilingual/README.md"
+  ]
 }
