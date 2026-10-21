@@ -110,12 +110,12 @@ class BM25:
 DICT_WEIGHT = 0.5  # Lantern이 사전으로 넓힌 낱말에 주는 가중치와 같게
 
 
-def lex_scores(bm, qt, extra):
-    """질문 낱말 점수 + 사전이 넓힌 낱말 점수 × 0.5 (extra가 없으면 BM25 그대로)"""
+def lex_scores(bm, qt, extra, weight=DICT_WEIGHT):
+    """질문 낱말 점수 + 사전이 넓힌 낱말 점수 × weight (extra가 없으면 BM25 그대로)"""
     base = bm.scores(qt)
     if not extra:
         return base
-    return [x + DICT_WEIGHT * y for x, y in zip(base, bm.scores(extra))]
+    return [x + weight * y for x, y in zip(base, bm.scores(extra))]
 
 
 def chunks_of(files):
@@ -201,19 +201,21 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--set", default=HERE)
-    ap.add_argument("--lang", default="en", choices=["en", "ko", "ko-dict", "ko-dictw", "ko-mt", "ko-llm", "ko-native"])
+    ap.add_argument("--lang", default="en", choices=["en", "en-para", "ko", "ko-dict", "ko-dictw", "ko-mt", "ko-llm", "ko-loan", "ko-native"])
     ap.add_argument("--methods", default="bm25-file,bm25-chunk")
     ap.add_argument("--budget", type=int, default=8000)
     ap.add_argument("--out", default=None)
     ap.add_argument("--only", default="")
     ap.add_argument("--embed-model", default=EMBED_MODEL)
     ap.add_argument("--tag", default="", help="다른 임베딩 모델일 때 방법 이름·결과 파일에 붙일 이름 (예: bgem3)")
+    ap.add_argument("--dict-weight", type=float, default=DICT_WEIGHT, help="ko-dictw에서 사전 낱말 가중치 (민감도 분석: 0.5가 아니면 언어 이름이 ko-dictw25처럼 바뀜)")
     a = ap.parse_args()
+    lang = a.lang if a.lang != "ko-dictw" or a.dict_weight == DICT_WEIGHT else f"ko-dictw{round(a.dict_weight * 100)}"
     methods = a.methods.split(",")
     suffix = f"-{a.tag}" if a.tag else ""
     out_dir = a.out or os.path.join(a.dir, "results", os.path.basename(os.path.normpath(a.set)), "baselines")
     os.makedirs(out_dir, exist_ok=True)
-    field = {"en": "q", "ko": "q_ko", "ko-dict": "q_ko_dict", "ko-dictw": "q_ko_dict", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-native": "q_ko_native"}[a.lang]
+    field = {"en": "q", "en-para": "q_para", "ko": "q_ko", "ko-dict": "q_ko_dict", "ko-dictw": "q_ko_dict", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native"}[a.lang]
     need_dense = any(m in ("dense", "hybrid") for m in methods)
 
     for f in sorted(glob.glob(os.path.join(a.set, "*.json"))):
@@ -246,13 +248,13 @@ def main():
                 extra = [t for t in terms(" ".join(q.get("q_ko_dict_terms") or [])) if t not in qt]
             row = {"commit": q["commit"], "q": query, "golden": q["golden"], "methods": {}}
             if "bm25-file" in methods:
-                order = ranked(lex_scores(BM25([terms(p + " " + t) for p, t in files]), qt, extra))
+                order = ranked(lex_scores(BM25([terms(p + " " + t) for p, t in files]), qt, extra, a.dict_weight))
                 picked, used = pack_files([files[i][0] for i in order], by_path, a.budget)
                 row["methods"]["bm25-file"] = {"files": picked, "used": used}
             chunks = chunks_of(files) if any(m != "bm25-file" for m in methods) else []
             lex = None
             if any(m in ("bm25-chunk", "hybrid") for m in methods):
-                lex = ranked(lex_scores(BM25([terms(p + " " + b) for p, _, b in chunks]), qt, extra))
+                lex = ranked(lex_scores(BM25([terms(p + " " + b) for p, _, b in chunks]), qt, extra, a.dict_weight))
                 if "bm25-chunk" in methods:
                     picked, used = pack_chunks(lex, chunks, a.budget)
                     row["methods"]["bm25-chunk"] = {"files": picked, "used": used}
@@ -279,10 +281,10 @@ def main():
             hit = {m: any(g in v["files"][:3] for g in q["golden"]) for m, v in row["methods"].items()}
             print(f"  {name} {len(rows):2}/{len(qs)} " + " ".join(f"{m}:{'O' if h else '.'}" for m, h in hit.items()), flush=True)
         git(repo, "checkout", "-q", "--detach", original)
-        path = os.path.join(out_dir, f"{name}-{a.lang}{suffix}.json")
+        path = os.path.join(out_dir, f"{name}-{lang}{suffix}.json")
         with open(path, "w", encoding="utf-8") as fh:
-            json.dump({"project": name, "lang": a.lang, "budget": a.budget, "embed_model": a.embed_model if need_dense else None, "methods": [m + (suffix if m in ("dense", "hybrid") else "") for m in methods], "rows": rows}, fh, ensure_ascii=False, indent=1)
-        print(f"{name} ({a.lang}): {len(rows)}문항 {time.time() - started:.0f}초 → {path}")
+            json.dump({"project": name, "lang": lang, "budget": a.budget, "embed_model": a.embed_model if need_dense else None, "methods": [m + (suffix if m in ("dense", "hybrid") else "") for m in methods], "rows": rows}, fh, ensure_ascii=False, indent=1)
+        print(f"{name} ({lang}): {len(rows)}문항 {time.time() - started:.0f}초 → {path}")
 
 
 if __name__ == "__main__":
