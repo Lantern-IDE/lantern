@@ -54,6 +54,7 @@ def main():
     ap.add_argument("--tex", default=None)
     ap.add_argument("--extra", action="append", default=[], help="벤치마크 밖의 큰 저장소 이름=경로 (예: vscode=C:/clones/vscode). 지금 커밋 그대로 잰다")
     ap.add_argument("--extra-questions", default=os.path.join(HERE, "scale_questions.txt"), help="큰 저장소의 조립 시간을 잴 질문 (한 줄에 하나)")
+    ap.add_argument("--repeat", type=int, default=3, help="처음 인덱싱을 몇 번 재서 중앙값을 쓸지")
     a = ap.parse_args()
     results_dir = os.path.join(a.dir, "results", os.path.basename(os.path.normpath(a.set)))
     rows = []
@@ -68,7 +69,15 @@ def main():
             subprocess.run(["git", "-C", repo, "-c", "core.longpaths=true", "checkout", "-q", "--detach", ref], check=True)
         idx = tempfile.mkdtemp(prefix=f"lantern-scale-{name}-")
         env = {**os.environ, "LANTERN_INDEX_DIR": idx}
-        full_s, full_mb = run_measured([a.lantern, "-C", repo, "index", "--full"], env)
+        # 처음 인덱싱은 파일 캐시 상태에 따라 크게 달라서(막 받은 vscode 92초 → 다시 48초) 빈 인덱스에서 여러 번 재고 중앙값을 쓴다
+        runs = []
+        for k in range(a.repeat):
+            if k:
+                shutil.rmtree(idx, ignore_errors=True)
+                os.makedirs(idx, exist_ok=True)
+            runs.append(run_measured([a.lantern, "-C", repo, "index", "--full"], env))
+        full_s = statistics.median(s for s, _ in runs)
+        full_mb = max(mb for _, mb in runs)
         again_s, _ = run_measured([a.lantern, "-C", repo, "index"], env)
         out = subprocess.run([a.lantern, "-C", repo, "stats"], env=env, capture_output=True, text=True, encoding="utf-8").stdout
         nums = [int(x.replace(",", "")) for x in re.findall(r"[\d,]+", out.splitlines()[0])] if out else []
@@ -99,6 +108,8 @@ def main():
             "size_mb": size,
             "assemble_ms": statistics.median(ms) if ms else None,
             "extra": ref is None,
+            # 벤치마크 밖 저장소는 잰 커밋을 남긴다 (다시 잴 때 같은 커밋으로)
+            "commit": subprocess.run(["git", "-C", repo, "rev-parse", "--short=7", "HEAD"], capture_output=True, text=True).stdout.strip() if ref is None else ref[:7],
         }
         rows.append(row)
         print(f"{name:13} 파일 {row['files']:>5} 심볼 {row['symbols']:>6} | 인덱싱 {full_s:5.1f}초 최대 {full_mb:4.0f}MB | 다시 {again_s:4.2f}초 | 인덱스 {size:5.1f}MB | 조립 중앙값 {row['assemble_ms'] or 0:5.1f}ms", flush=True)
@@ -108,8 +119,10 @@ def main():
             "\\begin{table}[t]",
             "\\centering",
             "\\caption{Lantern's cost on a desktop CPU (Intel Core i5-11400, 6 cores, 32 GB RAM), no model calls. Files: code files indexed; "
-            "Index: first full indexing; Peak: peak memory while indexing; Size: index on disk; Query: median context assembly time per question"
-            + (f" (benchmark questions; for {', '.join(r['project'] for r in rows if r.get('extra'))}, the questions in \\texttt{{eval/bilingual/scale\\_questions.txt}})" if any(r.get("extra") for r in rows) else "")
+            f"Index: full indexing from an empty index (median of {a.repeat} runs, warm file cache, up to 8 parsing threads); Peak: peak memory while indexing; "
+            "Size: index on disk, which grows with symbols and references rather than files; "
+            "Query: median context assembly time per question"
+            + (f" (benchmark questions; for {', '.join(r['project'] + ' at commit ' + r['commit'] for r in rows if r.get('extra'))}, the questions in \\texttt{{eval/bilingual/scale\\_questions.txt}})" if any(r.get("extra") for r in rows) else "")
             + ".}",
             "\\label{tab:scale}",
             "\\setlength{\\tabcolsep}{3pt}",
