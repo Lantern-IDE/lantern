@@ -23,7 +23,9 @@ def main():
     a = ap.parse_args()
     from sentence_transformers import SentenceTransformer
 
-    model = SentenceTransformer(a.model, device="cpu")
+    from baselines import REVISION
+
+    model = SentenceTransformer(a.model, device="cpu", revision=REVISION.get(a.model))
 
     class Handler(BaseHTTPRequestHandler):
         def do_POST(self):

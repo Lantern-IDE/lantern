@@ -15,7 +15,7 @@ import statistics
 import time
 from collections import defaultdict
 
-from baselines import BM25, EMBED_MODEL, HERE, RRF_K, chunks_of, git, pack_chunks, ranked, read_files, terms
+from baselines import BM25, EMBED_MODEL, HERE, REVISION, RRF_K, chunks_of, git, pack_chunks, ranked, read_files, terms
 
 
 def main():
@@ -33,7 +33,7 @@ def main():
     from sentence_transformers import SentenceTransformer
 
     torch.set_num_threads(a.threads)
-    model = SentenceTransformer(EMBED_MODEL, device="cpu")
+    model = SentenceTransformer(EMBED_MODEL, device="cpu", revision=REVISION.get(EMBED_MODEL))
     model.max_seq_length = 512
     proc = psutil.Process()
     rows = []
