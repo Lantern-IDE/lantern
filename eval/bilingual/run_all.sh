@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# 영·한 병렬 벤치마크를 모든 방법·모든 질문 언어로 잰다 (모델 호출 없음, 무료. CPU에서 처음에는 몇 시간).
+# 영·한 병렬 벤치마크를 모든 방법·모든 질문 형태로 잰다 (모델 API 호출 없음, 무료. CPU에서 처음에는 몇 시간).
 #
 #   bash eval/bilingual/run_all.sh <클론 폴더> [aider가 깔린 파이썬]
+#   VSCODE=<vscode 클론> bash eval/bilingual/run_all.sh ...   (규모 표의 vscode 행. 클론을 커밋 76e9dff로 꺼내 둘 것)
 #
-# 미리: cargo build --release -p lantern-context
-#       pip install sentence-transformers transformers sentencepiece psutil openpyxl
-#       python -m venv .venv-aider && .venv-aider/Scripts/pip install aider-chat==0.86.2   (RepoMap, 선택)
-# 순서: 한국어 질문 번역(NLLB)·사전 확장 → Lantern → 구성 요소별 기여 → BM25·임베딩·RRF → RepoMap → Lantern+임베딩 → 규모 → 보고서
-# 결과: <클론 폴더>/results/bilingual/, 보고서는 eval/bilingual/results-all.md
+# 미리: README의 'Reproducing' (Rust·Node·Python 버전, pip install -r eval/bilingual/requirements.txt, aider 가상환경)
+# 순서: 파일 규칙 점검 → 사전 확장 (번역·LLM이 만든 형태는 저장된 것) → Lantern → 구성 요소별 기여 → BM25·임베딩·RRF
+#       → RepoMap → Lantern+임베딩 → 규모·혼합 검색 비용·번역 비용 → 보고서·논문 표·누출 점검·오류 후보
+# 결과: <클론 폴더>/results/bilingual/ (논문 표는 그 밑 tables/), 보고서는 eval/bilingual/results-*.md,
+#       시간 측정 원자료는 eval/bilingual/measurements/
 set -euo pipefail
 DIR=${1:?클론 폴더}
 AIDER_PY=${2:-}
@@ -20,19 +21,25 @@ export PYTHONIOENCODING=utf-8
 cd "$ROOT"
 log() { echo "[$(date +%H:%M:%S)] $*"; }
 
-log "한국어 질문 번역 (NLLB-200), 사전으로 넓힌 한국어 질문"
+log "한국어 질문 번역 (저장된 NLLB 번역을 씀. q_ko_mt_src를 지우면 다시 옮김), 사전으로 넓힌 한국어 질문"
 python eval/bilingual/translate.py
 python eval/bilingual/expand.py --lantern "$LANTERN"
-# q_ko_llm(LLM이 영어 검색어로 다시 쓴 것)은 한 번 만들어 JSON에 두었다 (README의 '질문 언어'). 다시 만들지 않는다.
+# LLM이 만든 형태(q_ko_draft·q_ko, q_ko_llm, q_para, q_ko_loan)는 JSON에 저장된 것을 쓴다 (지시문은 prompts.md).
+# q_ko_llm을 다시 만들려면 rewrite.py (질문마다 모델을 한 번씩 부르므로 계정 사용량을 씀)
 # 사람이 직접 쓴 한국어 질문(q_ko_native, native_sheet.py)이 있으면 그것도 잰다
-# q_ko_loan(외래어를 많이 쓰게 LLM이 바꾼 한국어, 스트레스 테스트), q_para(영어를 영어로 바꿔 말한 통제)도 저장해 둔 것을 씀
 KO=ko,ko-dict,ko-mt,ko-llm,ko-loan
 NATIVE=$(python -c "import glob,json;print(any(q.get('q_ko_native') for f in glob.glob('eval/bilingual/*.json') for q in json.load(open(f,encoding='utf-8'))['questions']))")
 [ "$NATIVE" = True ] && KO=$KO,ko-native
 NATIVE_B=$(python -c "import glob,json;print(any(q.get('q_ko_native_b') for f in glob.glob('eval/bilingual/*.json') for q in json.load(open(f,encoding='utf-8'))['questions']))")
 [ "$NATIVE_B" = True ] && KO=$KO,ko-native-b
 
+log "파일 규칙 점검: 엔진·비교 대상·키워드 검색이 같은 파일을 보는지 (저장소마다 커밋 4곳)"
+python eval/bilingual/check_files.py --dir "$DIR" --lantern "$LANTERN"
+
 log "Lantern (en, en-para, $KO)"
+# Lantern은 점수가 같으면 심볼 id로 순서를 정하고, id는 색인해 온 순서에 따라 달라진다(#139).
+# 지난 측정이 남긴 인덱스에서 시작하면 결과가 조금 달라지므로 늘 빈 인덱스에서 시작한다
+rm -rf "$RES"/index-*
 node eval/bench/run.mjs --dir "$DIR" --set eval/bilingual --langs en,en-para,$KO --lantern "$LANTERN"
 cp eval/bilingual/결과.md "$RES/결과-lantern.md"
 
@@ -81,14 +88,18 @@ kill $SERVER 2>/dev/null || true
 cp eval/bilingual/결과.md "$RES/결과-lantern-sem.md"
 cp "$RES/결과-lantern.md" eval/bilingual/결과.md
 
-log "규모 (VSCODE=<vscode 클론>을 주면 큰 저장소도), 혼합 검색 비용"
-python eval/bilingual/scale.py --dir "$DIR" --lantern "$LANTERN" ${VSCODE:+--extra vscode=$VSCODE}   # 논문의 vscode는 커밋 76e9dff
-python eval/bilingual/hybrid_cost.py --dir "$DIR" --threads 4 --out "$RES/../hybrid_cost.json"
+log "규모 (VSCODE=<vscode 클론>을 주면 큰 저장소도), 혼합 검색 비용, 번역 비용 (시간 측정이라 다른 작업 없이)"
+mkdir -p "$RES/tables"
+python eval/bilingual/scale.py --dir "$DIR" --lantern "$LANTERN" ${VSCODE:+--extra vscode=$VSCODE} --json eval/bilingual/measurements/scale.json --tex "$RES/tables/scale.tex"
+python eval/bilingual/hybrid_cost.py --dir "$DIR" --threads 4 --out eval/bilingual/measurements/hybrid_cost.json
+python eval/bilingual/nllb_cost.py --threads 4
 
-log "보고서"
+log "보고서, 논문 표 (results.tex, scale.tex), 누출 점검, 오류 후보"
 python eval/bilingual/report.py --dir "$DIR" --md eval/bilingual/results-all.md > /dev/null
 python eval/bilingual/report.py --dir "$DIR" --subset test --md eval/bilingual/results-test.md > /dev/null
-python eval/bilingual/report.py --dir "$DIR" --subset unseen --md eval/bilingual/results-unseen.md > /dev/null   # 논문 주 결과 (개발 중에 보지 않은 문항)
+python eval/bilingual/report.py --dir "$DIR" --subset unseen --md eval/bilingual/results-unseen.md --tex "$RES/tables/results.tex" > /dev/null   # 논문 주 결과와 표 I
 python eval/bilingual/report.py --dir "$DIR" --subset fresh-repos --md eval/bilingual/results-fresh-repos.md > /dev/null   # 개발 중에 한 번도 보지 않은 7개 저장소
 python eval/bilingual/report.py --dir "$DIR" --subset dev-repos --md eval/bilingual/results-dev-repos.md > /dev/null   # 개발에 쓴 3개 저장소의 보지 않은 문항 (과적합 점검)
-log "끝: eval/bilingual/results-all.md, results-test.md, results-unseen.md, results-fresh-repos.md, results-dev-repos.md"
+python eval/bilingual/leak.py --dir "$DIR" --md eval/bilingual/leak-check.md > /dev/null
+python eval/bilingual/errors.py --dir "$DIR" > "$RES/error-candidates.md"   # 분류는 사람이 읽고 붙인다 (error-analysis.md)
+log "끝: eval/bilingual/results-*.md, leak-check.md, measurements/, $RES/tables/"
