@@ -23,7 +23,9 @@
         "exclude"
       ],
       "q_ko_dict": "성공한 CONNECT 응답에서는 framing 헤더 빼줘 response remove exclude",
-      "q_ko_llm": "remove framing headers from successful CONNECT responses"
+      "q_ko_llm": "remove framing headers from successful CONNECT responses",
+      "q_ko_loan": "성공한 CONNECT 리스폰스에서는 프레이밍 헤더 빼줘",
+      "q_para": "successful CONNECT responses still include framing headers"
     },
     {
       "q": "drop tower-log from the default features",
@@ -40,7 +42,9 @@
       "q_ko_mt_src": "기본 feature에서 tower-log 제외",
       "q_ko_dict_terms": [],
       "q_ko_dict": "기본 feature에서 tower-log 제외",
-      "q_ko_llm": "exclude tower-log from default features"
+      "q_ko_llm": "exclude tower-log from default features",
+      "q_ko_loan": "디폴트 피처에서 tower-log 제외",
+      "q_para": "please take tower-log out of the default features"
     },
     {
       "q": "axum-extra: reject trailing content in JsonDeserializer",
@@ -60,7 +64,9 @@
         "deny"
       ],
       "q_ko_dict": "axum-extra: JsonDeserializer에서 뒤에 남는 내용이 있으면 거부하게 해줘 reject deny",
-      "q_ko_llm": "axum-extra: reject trailing content in JsonDeserializer"
+      "q_ko_llm": "axum-extra: reject trailing content in JsonDeserializer",
+      "q_ko_loan": "axum-extra: JsonDeserializer에서 뒤에 남는 내용이 있으면 리젝하게 해줘",
+      "q_para": "axum-extra: JsonDeserializer lets trailing content through"
     },
     {
       "q": "axum-macros: report invalid TypedPath capture names without panicking",
@@ -80,7 +86,9 @@
         "error"
       ],
       "q_ko_dict": "axum-macros: TypedPath 캡처 이름이 잘못돼도 패닉 말고 에러로 알려줘 name error",
-      "q_ko_llm": "axum-macros: return error instead of panic on invalid TypedPath capture name"
+      "q_ko_llm": "axum-macros: return error instead of panic on invalid TypedPath capture name",
+      "q_ko_loan": "axum-macros: TypedPath 캡처 네임이 잘못돼도 패닉 말고 에러로 알려줘",
+      "q_para": "axum-macros: how can invalid TypedPath capture names produce an error instead of a panic?"
     },
     {
       "q": "Don't wrap merged service routes in another Route",
@@ -99,7 +107,9 @@
         "service"
       ],
       "q_ko_dict": "병합한 서비스 라우트를 Route로 한 번 더 감싸는 문제 service",
-      "q_ko_llm": "merged service routes wrapped in Route twice"
+      "q_ko_llm": "merged service routes wrapped in Route twice",
+      "q_ko_loan": "머지한 서비스 라우트를 Route로 한 번 더 래핑하는 이슈",
+      "q_para": "stop wrapping merged service routes inside an extra Route"
     },
     {
       "q": "axum-extra: Avoid duplicate typed header error output",
@@ -120,7 +130,9 @@
         "dedupe"
       ],
       "q_ko_dict": "axum-extra: typed header 에러가 중복으로 출력되는 문제 error duplicate dedupe",
-      "q_ko_llm": "axum-extra: typed header error printed twice"
+      "q_ko_llm": "axum-extra: typed header error printed twice",
+      "q_ko_loan": "axum-extra: 타입드 헤더 에러가 중복으로 출력되는 이슈",
+      "q_para": "axum-extra: typed header error output is duplicated"
     },
     {
       "q": "remove v07 path checks",
@@ -148,7 +160,9 @@
         "clear"
       ],
       "q_ko_dict": "v07 경로 검사 코드 지워줘 route path check validate guard delete remove clear",
-      "q_ko_llm": "remove v07 path validation code"
+      "q_ko_llm": "remove v07 path validation code",
+      "q_ko_loan": "v07 패스 체크 코드 지워줘",
+      "q_para": "can we get rid of the v07 path checks?"
     },
     {
       "q": "add `ConnectionLimits` for bounding connection lifetime",
@@ -171,7 +185,9 @@
         "create"
       ],
       "q_ko_dict": "연결 수명 제한용 `ConnectionLimits`는 어디에 추가하면 돼? connect link edge add create",
-      "q_ko_llm": "add ConnectionLimits for connection lifetime limits"
+      "q_ko_llm": "add ConnectionLimits for connection lifetime limits",
+      "q_ko_loan": "커넥션 라이프타임 리밋용 `ConnectionLimits`는 어디에 추가하면 돼?",
+      "q_para": "add `ConnectionLimits` so connection lifetime can be capped"
     },
     {
       "q": "handle missing optional typed headers",
@@ -191,7 +207,9 @@
         "process"
       ],
       "q_ko_dict": "optional typed header가 없을 땐 어디서 처리해? handle process",
-      "q_ko_llm": "handle missing optional typed header"
+      "q_ko_llm": "handle missing optional typed header",
+      "q_ko_loan": "옵셔널 타입드 헤더가 없을 땐 어디서 핸들링해?",
+      "q_para": "missing optional typed headers aren't handled"
     },
     {
       "q": "add Event::raw for fully custom payloads",
@@ -211,7 +229,9 @@
         "create"
       ],
       "q_ko_dict": "페이로드를 완전히 직접 구성할 수 있게 Event::raw 추가해줘 add create",
-      "q_ko_llm": "add Event::raw to build the payload fully by hand"
+      "q_ko_llm": "add Event::raw to build the payload fully by hand",
+      "q_ko_loan": "페이로드를 완전히 직접 빌드할 수 있게 Event::raw 추가해줘",
+      "q_para": "can we add Event::raw so I can send completely custom payloads?"
     },
     {
       "q": "axum-extra: avoid multipart boundary collisions",
@@ -228,7 +248,9 @@
       "q_ko_mt_src": "axum-extra: multipart boundary 충돌 문제",
       "q_ko_dict_terms": [],
       "q_ko_dict": "axum-extra: multipart boundary 충돌 문제",
-      "q_ko_llm": "axum-extra: multipart boundary collision"
+      "q_ko_llm": "axum-extra: multipart boundary collision",
+      "q_ko_loan": "axum-extra: 멀티파트 바운더리 충돌 이슈",
+      "q_para": "axum-extra: multipart boundaries can collide"
     },
     {
       "q": "Avoid shared shutdown waiter contention",
@@ -245,7 +267,9 @@
       "q_ko_mt_src": "공유 shutdown waiter 경합을 피하려면 어디를 봐야 해?",
       "q_ko_dict_terms": [],
       "q_ko_dict": "공유 shutdown waiter 경합을 피하려면 어디를 봐야 해?",
-      "q_ko_llm": "avoid race on shared shutdown waiter"
+      "q_ko_llm": "avoid race on shared shutdown waiter",
+      "q_ko_loan": "셰어드 셧다운 웨이터 경합을 피하려면 어디를 봐야 해?",
+      "q_para": "how do we avoid contention on the shared shutdown waiter?"
     },
     {
       "q": "axum-core: fix nested error downcast",
@@ -265,7 +289,9 @@
         "fix"
       ],
       "q_ko_dict": "axum-core 중첩 에러 downcast 안 되는 거 어디서 고쳐? error fix",
-      "q_ko_llm": "axum-core nested error downcast not working"
+      "q_ko_llm": "axum-core nested error downcast not working",
+      "q_ko_loan": "axum-core 네스티드 에러 다운캐스트 안 되는 거 어디서 고쳐?",
+      "q_para": "axum-core: downcasting nested errors is broken"
     },
     {
       "q": "support `RawForm` extraction from `HEAD` query strings",
@@ -282,7 +308,9 @@
       "q_ko_mt_src": "`HEAD` 쿼리 스트링에서도 `RawForm` 추출되게 해줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "`HEAD` 쿼리 스트링에서도 `RawForm` 추출되게 해줘",
-      "q_ko_llm": "extract RawForm from query string for HEAD requests"
+      "q_ko_llm": "extract RawForm from query string for HEAD requests",
+      "q_ko_loan": "`HEAD` 쿼리 스트링에서도 `RawForm` 익스트랙트되게 해줘",
+      "q_para": "make `RawForm` extractable from the query string on `HEAD` requests"
     },
     {
       "q": "skip non-data frames in BytesMut",
@@ -299,7 +327,9 @@
       "q_ko_mt_src": "BytesMut에서 data 아닌 프레임 건너뛰는 건 어디서 해?",
       "q_ko_dict_terms": [],
       "q_ko_dict": "BytesMut에서 data 아닌 프레임 건너뛰는 건 어디서 해?",
-      "q_ko_llm": "skip non-data frames in BytesMut"
+      "q_ko_llm": "skip non-data frames in BytesMut",
+      "q_ko_loan": "BytesMut에서 데이터 아닌 프레임 스킵하는 건 어디서 해?",
+      "q_para": "have BytesMut skip frames that aren't data"
     },
     {
       "q": "deduplicate methods in the `Allow` header after merging `MethodRouter`s",
@@ -319,7 +349,9 @@
         "dedupe"
       ],
       "q_ko_dict": "`MethodRouter` 병합 후 `Allow` 헤더에 메서드가 중복되는 문제 duplicate dedupe",
-      "q_ko_llm": "duplicate methods in Allow header after merging MethodRouter"
+      "q_ko_llm": "duplicate methods in Allow header after merging MethodRouter",
+      "q_ko_loan": "`MethodRouter` 머지 후 `Allow` 헤더에 메서드가 중복되는 이슈",
+      "q_para": "`Allow` header ends up with duplicate methods after `MethodRouter`s are merged"
     },
     {
       "q": "Support affixed typed path captures",
@@ -339,7 +371,9 @@
         "character"
       ],
       "q_ko_dict": "앞뒤로 문자가 붙은 typed path 캡처도 지원해줘 char character",
-      "q_ko_llm": "support typed path captures with prefix and suffix characters"
+      "q_ko_llm": "support typed path captures with prefix and suffix characters",
+      "q_ko_loan": "앞뒤로 문자가 붙은 타입드 패스 캡처도 서포트해줘",
+      "q_para": "how can typed path captures with an affix be supported?"
     },
     {
       "q": "Exclude feature tokio/net for WASM builds",
@@ -359,7 +393,9 @@
         "setting"
       ],
       "q_ko_dict": "WASM 빌드에서 tokio/net feature 빼려면 어디서 설정해? config setting",
-      "q_ko_llm": "disable tokio/net feature for WASM builds"
+      "q_ko_llm": "disable tokio/net feature for WASM builds",
+      "q_ko_loan": "WASM 빌드에서 tokio/net 피처 빼려면 어디서 세팅해?",
+      "q_para": "don't pull in the tokio/net feature for WASM builds"
     },
     {
       "q": "document ws cancellation & delegation",
@@ -376,7 +412,9 @@
       "q_ko_mt_src": "ws 취소랑 위임 관련 문서화",
       "q_ko_dict_terms": [],
       "q_ko_dict": "ws 취소랑 위임 관련 문서화",
-      "q_ko_llm": "document ws cancellation and delegation"
+      "q_ko_llm": "document ws cancellation and delegation",
+      "q_ko_loan": "ws 캔슬레이션이랑 델리게이션 관련 문서화",
+      "q_para": "can we document how ws cancellation and delegation work?"
     },
     {
       "q": "add `#[diagnostic::on_unimplemented]` to `IntoResponse` and `IntoResponseParts`",
@@ -394,7 +432,9 @@
       "q_ko_mt_src": "`IntoResponse`랑 `IntoResponseParts`에 `#[diagnostic::on_unimplemented]` 붙여줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "`IntoResponse`랑 `IntoResponseParts`에 `#[diagnostic::on_unimplemented]` 붙여줘",
-      "q_ko_llm": "add #[diagnostic::on_unimplemented] to IntoResponse and IntoResponseParts"
+      "q_ko_llm": "add #[diagnostic::on_unimplemented] to IntoResponse and IntoResponseParts",
+      "q_ko_loan": "`IntoResponse`랑 `IntoResponseParts`에 `#[diagnostic::on_unimplemented]` 붙여줘",
+      "q_para": "put `#[diagnostic::on_unimplemented]` on `IntoResponse` and `IntoResponseParts`"
     },
     {
       "q": "Improve typed path by disallowing deprecated variable definitions",
@@ -417,7 +457,9 @@
         "guard"
       ],
       "q_ko_dict": "typed path에서 deprecated된 변수 정의 방식 막기 variable var block prevent guard",
-      "q_ko_llm": "disallow deprecated variable definition syntax in typed path"
+      "q_ko_llm": "disallow deprecated variable definition syntax in typed path",
+      "q_ko_loan": "타입드 패스에서 디프리케이트된 변수 정의 방식 막기",
+      "q_para": "typed path still allows deprecated variable definitions"
     },
     {
       "q": "Address tower-http deprecated warning",
@@ -439,7 +481,9 @@
         "fix"
       ],
       "q_ko_dict": "tower-http deprecated 경고 해결하려면 어디를 고쳐야 해? warn warning fix",
-      "q_ko_llm": "fix tower-http deprecation warnings"
+      "q_ko_llm": "fix tower-http deprecation warnings",
+      "q_ko_loan": "tower-http 디프리케이트 워닝 해결하려면 어디를 고쳐야 해?",
+      "q_para": "how do I fix the tower-http deprecation warning?"
     },
     {
       "q": "Set connect endpoint on correct field in MethodRouter",
@@ -459,7 +503,9 @@
         "setting"
       ],
       "q_ko_dict": "MethodRouter에서 connect 엔드포인트가 엉뚱한 필드에 설정되는 버그 config setting",
-      "q_ko_llm": "MethodRouter connect endpoint set on wrong field"
+      "q_ko_llm": "MethodRouter connect endpoint set on wrong field",
+      "q_ko_loan": "MethodRouter에서 connect 엔드포인트가 엉뚱한 필드에 세팅되는 버그",
+      "q_para": "MethodRouter sets the connect endpoint on the wrong field"
     },
     {
       "q": "Add customizable WebSocket subprotocol selection",
@@ -479,7 +525,9 @@
         "selection"
       ],
       "q_ko_dict": "WebSocket 서브프로토콜 선택을 커스터마이징할 수 있게 해줘 select selection",
-      "q_ko_llm": "allow customizing WebSocket subprotocol selection"
+      "q_ko_llm": "allow customizing WebSocket subprotocol selection",
+      "q_ko_loan": "WebSocket 서브프로토콜 선택을 커스터마이징할 수 있게 해줘",
+      "q_para": "let WebSocket subprotocol selection be customized"
     },
     {
       "q": "Avoid unwrap in fallback path",
@@ -502,7 +550,9 @@
         "replace"
       ],
       "q_ko_dict": "fallback 경로에서는 unwrap 안 쓰게 바꿔줘 route path change update replace",
-      "q_ko_llm": "avoid unwrap in fallback path"
+      "q_ko_llm": "avoid unwrap in fallback path",
+      "q_ko_loan": "폴백 패스에서는 unwrap 안 쓰게 바꿔줘",
+      "q_para": "get rid of the unwrap in the fallback path"
     },
     {
       "q": "Add method filtering to route_with_tsr",
@@ -523,7 +573,9 @@
         "filter"
       ],
       "q_ko_dict": "route_with_tsr에 메서드 필터링 넣으려면 어디 봐야 해? filter",
-      "q_ko_llm": "add method filtering to route_with_tsr"
+      "q_ko_llm": "add method filtering to route_with_tsr",
+      "q_ko_loan": "route_with_tsr에 메서드 필터링 넣으려면 어디 봐야 해?",
+      "q_para": "can route_with_tsr filter by method?"
     },
     {
       "q": "Use Result for validate_nest_path",
@@ -544,7 +596,9 @@
         "replace"
       ],
       "q_ko_dict": "validate_nest_path가 Result 쓰게 바꿔줘 change update replace",
-      "q_ko_llm": "make validate_nest_path return Result"
+      "q_ko_llm": "make validate_nest_path return Result",
+      "q_ko_loan": "validate_nest_path가 Result 쓰게 바꿔줘",
+      "q_para": "switch validate_nest_path over to using Result"
     },
     {
       "q": "Respect default body limit",
@@ -565,7 +619,9 @@
         "length"
       ],
       "q_ko_dict": "기본 body 크기 제한이 지켜지게 하려면 어디를 봐야 해? size len length",
-      "q_ko_llm": "enforce default body size limit"
+      "q_ko_llm": "enforce default body size limit",
+      "q_ko_loan": "디폴트 바디 사이즈 리밋이 지켜지게 하려면 어디를 봐야 해?",
+      "q_para": "default body limit isn't respected"
     },
     {
       "q": "Correct a small inconsistency",
@@ -585,7 +641,9 @@
         "edit"
       ],
       "q_ko_dict": "사소한 불일치 수정 update edit",
-      "q_ko_llm": "fix minor inconsistencies"
+      "q_ko_llm": "fix minor inconsistencies",
+      "q_ko_loan": "사소한 불일치 픽스",
+      "q_para": "fix a minor inconsistency"
     },
     {
       "q": "axum-extra: Add trailing newline to pretty JSON response",
@@ -607,7 +665,9 @@
         "linebreak"
       ],
       "q_ko_dict": "axum-extra pretty JSON 응답 끝에 줄바꿈 붙이는 건 어디서 해? response newline eol linebreak",
-      "q_ko_llm": "axum-extra append trailing newline to pretty JSON response"
+      "q_ko_llm": "axum-extra append trailing newline to pretty JSON response",
+      "q_ko_loan": "axum-extra 프리티 JSON 리스폰스 끝에 뉴라인 붙이는 건 어디서 해?",
+      "q_para": "axum-extra: pretty JSON response is missing a trailing newline"
     },
     {
       "q": "Fix integer underflow in `try_range_response` for empty files",
@@ -624,7 +684,9 @@
       "q_ko_mt_src": "빈 파일일 때 `try_range_response`에서 정수 언더플로 나는 버그",
       "q_ko_dict_terms": [],
       "q_ko_dict": "빈 파일일 때 `try_range_response`에서 정수 언더플로 나는 버그",
-      "q_ko_llm": "integer underflow in try_range_response for empty file"
+      "q_ko_llm": "integer underflow in try_range_response for empty file",
+      "q_ko_loan": "빈 파일일 때 `try_range_response`에서 인티저 언더플로 나는 버그",
+      "q_para": "integer underflow in `try_range_response` with empty files"
     },
     {
       "q": "move imports under the feature",
@@ -643,9 +705,13 @@
         "move"
       ],
       "q_ko_dict": "import를 feature 조건 아래로 옮겨줘 move",
-      "q_ko_llm": "move import under feature cfg"
+      "q_ko_llm": "move import under feature cfg",
+      "q_ko_loan": "import를 피처 조건 아래로 옮겨줘",
+      "q_para": "can the imports be moved behind the feature?"
     }
   ],
   "mt_model": "facebook/nllb-200-distilled-600M",
-  "llm_rewrite": "Claude (Claude Code subagent), Korean question only, prompt in eval/bilingual/README.md"
+  "llm_rewrite": "Claude (Claude Code subagent), Korean question only, prompt in eval/bilingual/README.md",
+  "loan_rewrite": "Claude Opus 5.5 (Claude Code subagent): q_ko rewritten with Hangul loanwords, a stress test, not native questions; prompt in eval/bilingual/README.md",
+  "para_rewrite": "Claude Opus 5.5 (Claude Code subagent): q reworded in English with the same guidelines as the Korean drafts (control for rewording); prompt in eval/bilingual/README.md"
 }
