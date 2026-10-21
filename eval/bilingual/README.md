@@ -103,6 +103,7 @@ It translates and dictionary-expands the Korean questions, then runs Lantern, BM
 | [../bench/run.mjs](../bench/run.mjs) `--set eval/bilingual` | Keyword search (two variants) and Lantern |
 | [baselines.py](baselines.py) | BM25 (file, 40-line chunk), dense retrieval (multilingual-e5-small; another model with e.g. `--embed-model BAAI/bge-m3 --tag bgem3`, not part of `run_all.sh` because it takes about 19 hours on 4 CPU cores), BM25 + dense with RRF. Tokens: identifiers whole and split into words, as in Lantern; Hangul runs are kept as whole tokens (they match only Korean comments or strings) |
 | [expand.py](expand.py) | Korean question + the English words Lantern's dictionary adds (`q_ko_dict`) and the dictionary hit rate |
+| [prompts.md](prompts.md) | The exact prompts of every LLM step: Korean drafts, their review, the KO→LLM rewrite, the English rewording control and the loanword stress test |
 | [ko_rating.py](ko_rating.py) | Sheet for the author to rate (not edit) 30 random LLM-written Korean questions for naturalness and meaning; criteria fixed in advance in [ko-rating-plan.md](ko-rating-plan.md) |
 | [native_sheet.py](native_sheet.py) | Sheet for Korean questions written from scratch by a person (`q_ko_native`) |
 | [leak.py](leak.py) | Leak check of the LLM rewrites (new identifiers, gold file names, overlap with the English original, verbatim rate before/after the model's training-data cutoff) |
