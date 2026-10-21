@@ -56,6 +56,7 @@ def main():
             new_ids = sorted(i for i in idents(llm) if i not in ko_l)
             gold_leak = sorted(stem(g) for g in q["golden"] if re.search(rf"\b{re.escape(stem(g))}\b", llm.lower()) and stem(g) not in ko_l)
             rows.append({"project": s["project"], "commit": q["commit"], "ko": ko, "llm": llm, "new_ids": new_ids, "gold_leak": gold_leak,
+                         "ko_ids": sorted(idents(ko)), "mt": q.get("q_ko_mt"),
                          "date": q.get("date") or "", "j_llm": jaccard(llm, q["q"]), "j_mt": jaccard(q.get("q_ko_mt"), q["q"]), "same": llm.strip().lower().rstrip(".") == q["q"].strip().lower().rstrip(".")})
     n = len(rows)
     ids = [r for r in rows if r["new_ids"]]
@@ -67,6 +68,11 @@ def main():
     print(f"- 정답 파일 이름이 재작성에만 나온 문항: {len(gold)} ({len(gold) / n * 100:.1f}%)")
     for r in gold:
         print(f"    {r['project']}: {r['ko']} → {r['llm']}  [{', '.join(r['gold_leak'])}]")
+    # 질문의 코드 식별자가 기계 번역·재작성에서 살아남는지
+    with_ids = [r for r in rows if r["ko_ids"]]
+    for label, key in (("기계 번역(q_ko_mt)", "mt"), ("LLM 재작성(q_ko_llm)", "llm")):
+        hurt = [r for r in with_ids if any(i not in (r[key] or "").lower() for i in r["ko_ids"])]
+        print(f"- 한국어 질문의 코드 식별자를 잃거나 망가뜨린 {label}: 식별자가 있는 {len(with_ids)}문항 중 {len(hurt)}")
     print(f"- 영어 원문과 낱말 겹침(Jaccard) 평균: LLM 재작성 {sum(r['j_llm'] for r in rows) / n:.3f}, 기계 번역 {sum(r['j_mt'] for r in rows) / n:.3f}")
     print(f"- 영어 원문과 (대소문자·마침표 빼고) 똑같은 재작성: {sum(r['same'] for r in rows)}")
     # 기억 점검: 재작성 모델의 학습 데이터 시점 뒤 커밋은 모델이 볼 수 없었다
