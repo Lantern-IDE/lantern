@@ -71,4 +71,5 @@ python eval/bilingual/scale.py --dir "$DIR" --lantern "$LANTERN"
 log "보고서"
 python eval/bilingual/report.py --dir "$DIR" --md eval/bilingual/결과-비교.md > /dev/null
 python eval/bilingual/report.py --dir "$DIR" --subset test --md eval/bilingual/결과-비교-test.md > /dev/null
-log "끝: eval/bilingual/결과-비교.md, 결과-비교-test.md"
+python eval/bilingual/report.py --dir "$DIR" --subset unseen --md eval/bilingual/결과-비교-unseen.md > /dev/null   # 논문 주 결과 (개발 중에 보지 않은 문항)
+log "끝: eval/bilingual/결과-비교.md, 결과-비교-test.md, 결과-비교-unseen.md"

@@ -83,7 +83,7 @@ It translates the Korean questions, then runs Lantern, BM25 / dense / RRF, Aider
 | [scale.py](scale.py) | Indexing time and peak memory, index size, per-question assembly time |
 | [report.py](report.py) | Recall@8k, R@10f, Acc@1/3/5, MRR, paired bootstrap 95% CIs, McNemar tests, LaTeX tables (`--tex`) |
 
-All methods get the same 8,000-token budget and the same file filter; tokens are estimated as 4 characters per token. Dev/test split: a question is dev if the first 8 hex digits of its commit hash, as an integer, modulo 10 are 0–2 (about 30%), otherwise test. Engine dictionaries and weights are tuned on dev only; results are reported on test.
+All methods get the same 8,000-token budget and the same file filter; tokens are estimated as 4 characters per token. The main results use the 261 questions that do not overlap with [eval/bench](../bench) (`report.py --subset unseen`, written to `결과-비교-unseen.md`), because eval/bench was used to check ranking and dictionary changes while developing the engine. Dev/test split: a question is dev if the first 8 hex digits of its commit hash, as an integer, modulo 10 are 0–2 (about 30%), otherwise test. Engine dictionaries and weights are tuned on dev only; results are reported on test.
 
 ## Limitations
 
