@@ -16,7 +16,12 @@
       "q_ko_draft": "DnsOverHttps에서 HTTP 에러 나면 UnknownHostException 던지게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "If there's an HTTP error on DnsOverHttps, throw the UnknownHostException.",
-      "q_ko_mt_src": "DnsOverHttps에서 HTTP 에러 나면 UnknownHostException 던지게 해줘"
+      "q_ko_mt_src": "DnsOverHttps에서 HTTP 에러 나면 UnknownHostException 던지게 해줘",
+      "q_ko_dict_terms": [
+        "error"
+      ],
+      "q_ko_dict": "DnsOverHttps에서 HTTP 에러 나면 UnknownHostException 던지게 해줘 error",
+      "q_ko_llm": "throw UnknownHostException on HTTP error in DnsOverHttps"
     },
     {
       "q": "Use a fixed size for DoH request body",
@@ -30,7 +35,15 @@
       "q_ko_draft": "DoH 요청 body 크기를 고정하려면 어디를 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you need to look to determine the size of the DoH request body?",
-      "q_ko_mt_src": "DoH 요청 body 크기를 고정하려면 어디를 봐야 해?"
+      "q_ko_mt_src": "DoH 요청 body 크기를 고정하려면 어디를 봐야 해?",
+      "q_ko_dict_terms": [
+        "request",
+        "size",
+        "len",
+        "length"
+      ],
+      "q_ko_dict": "DoH 요청 body 크기를 고정하려면 어디를 봐야 해? request size len length",
+      "q_ko_llm": "fix DoH request body size"
     },
     {
       "q": "Order ServiceMetadata records per the spec",
@@ -44,7 +57,13 @@
       "q_ko_draft": "ServiceMetadata 레코드를 스펙대로 정렬",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Service Metadata records are sorted by spectrum.",
-      "q_ko_mt_src": "ServiceMetadata 레코드를 스펙대로 정렬"
+      "q_ko_mt_src": "ServiceMetadata 레코드를 스펙대로 정렬",
+      "q_ko_dict_terms": [
+        "sort",
+        "order"
+      ],
+      "q_ko_dict": "ServiceMetadata 레코드를 스펙대로 정렬 sort order",
+      "q_ko_llm": "sort ServiceMetadata records per spec"
     },
     {
       "q": "retryOnConnectionFailure doesn't impact ECH retries",
@@ -58,7 +77,10 @@
       "q_ko_draft": "retryOnConnectionFailure가 ECH 재시도에는 영향 안 주게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Let the retryOnConnectionFailure not affect the ECH response.",
-      "q_ko_mt_src": "retryOnConnectionFailure가 ECH 재시도에는 영향 안 주게 해줘"
+      "q_ko_mt_src": "retryOnConnectionFailure가 ECH 재시도에는 영향 안 주게 해줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "retryOnConnectionFailure가 ECH 재시도에는 영향 안 주게 해줘",
+      "q_ko_llm": "retryOnConnectionFailure should not affect ECH retries"
     },
     {
       "q": "Don't close the multipart sink when a part closes its stream",
@@ -73,7 +95,10 @@
       "q_ko_draft": "파트가 자기 스트림 닫으면 multipart sink까지 닫히는 문제",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "The problem is that when the part closes its own stream, it closes down to the multipart sink.",
-      "q_ko_mt_src": "파트가 자기 스트림 닫으면 multipart sink까지 닫히는 문제"
+      "q_ko_mt_src": "파트가 자기 스트림 닫으면 multipart sink까지 닫히는 문제",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "파트가 자기 스트림 닫으면 multipart sink까지 닫히는 문제",
+      "q_ko_llm": "part closing its own stream closes multipart sink"
     },
     {
       "q": "Handle unsupported AliasMode records",
@@ -87,7 +112,13 @@
       "q_ko_draft": "지원 안 하는 AliasMode 레코드는 어디서 처리해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you handle unsupported AliasMode records?",
-      "q_ko_mt_src": "지원 안 하는 AliasMode 레코드는 어디서 처리해?"
+      "q_ko_mt_src": "지원 안 하는 AliasMode 레코드는 어디서 처리해?",
+      "q_ko_dict_terms": [
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "지원 안 하는 AliasMode 레코드는 어디서 처리해? handle process",
+      "q_ko_llm": "handle unsupported AliasMode records"
     },
     {
       "q": "Flush HTTP/1 request bodies before detachTimeout",
@@ -101,7 +132,12 @@
       "q_ko_draft": "detachTimeout 전에 HTTP/1 요청 body flush해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Please flush the HTTP/1 request before detachtimeout.",
-      "q_ko_mt_src": "detachTimeout 전에 HTTP/1 요청 body flush해줘"
+      "q_ko_mt_src": "detachTimeout 전에 HTTP/1 요청 body flush해줘",
+      "q_ko_dict_terms": [
+        "request"
+      ],
+      "q_ko_dict": "detachTimeout 전에 HTTP/1 요청 body flush해줘 request",
+      "q_ko_llm": "flush HTTP/1 request body before detachTimeout"
     },
     {
       "q": "Change DnsOverHttps to query the correct port per Attrleaf",
@@ -116,7 +152,19 @@
       "q_ko_draft": "DnsOverHttps가 Attrleaf에 맞는 포트로 조회하게 바꿔줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Change the DnsOverHttps to a port that matches the Attrleaf.",
-      "q_ko_mt_src": "DnsOverHttps가 Attrleaf에 맞는 포트로 조회하게 바꿔줘"
+      "q_ko_mt_src": "DnsOverHttps가 Attrleaf에 맞는 포트로 조회하게 바꿔줘",
+      "q_ko_dict_terms": [
+        "port",
+        "find",
+        "get",
+        "query",
+        "fetch",
+        "change",
+        "update",
+        "replace"
+      ],
+      "q_ko_dict": "DnsOverHttps가 Attrleaf에 맞는 포트로 조회하게 바꿔줘 port find get query fetch change update replace",
+      "q_ko_llm": "DnsOverHttps query with Attrleaf-compliant port"
     },
     {
       "q": "Start @StartStop fields for @Nested JUnit 5 tests",
@@ -130,7 +178,15 @@
       "q_ko_draft": "@Nested JUnit 5 테스트에서 @StartStop 필드가 시작 안 되는 문제",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "The @Nested JUnit 5 test doesn't start the @StartStop field.",
-      "q_ko_mt_src": "@Nested JUnit 5 테스트에서 @StartStop 필드가 시작 안 되는 문제"
+      "q_ko_mt_src": "@Nested JUnit 5 테스트에서 @StartStop 필드가 시작 안 되는 문제",
+      "q_ko_dict_terms": [
+        "test",
+        "spec",
+        "bootstrap",
+        "init"
+      ],
+      "q_ko_dict": "@Nested JUnit 5 테스트에서 @StartStop 필드가 시작 안 되는 문제 test spec bootstrap init",
+      "q_ko_llm": "@StartStop fields not started in @Nested JUnit 5 tests"
     },
     {
       "q": "reject hosts that fail IP canonicalization in verifyIpAddress",
@@ -144,7 +200,16 @@
       "q_ko_draft": "verifyIpAddress에서 IP 정규화 실패하는 호스트는 거부해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Reject the host that fails to fix the IP on verifyIpAddress.",
-      "q_ko_mt_src": "verifyIpAddress에서 IP 정규화 실패하는 호스트는 거부해줘"
+      "q_ko_mt_src": "verifyIpAddress에서 IP 정규화 실패하는 호스트는 거부해줘",
+      "q_ko_dict_terms": [
+        "fail",
+        "failure",
+        "error",
+        "reject",
+        "deny"
+      ],
+      "q_ko_dict": "verifyIpAddress에서 IP 정규화 실패하는 호스트는 거부해줘 fail failure error reject deny",
+      "q_ko_llm": "reject hosts failing IP normalization in verifyIpAddress"
     },
     {
       "q": "read DNS RDLENGTH as an unsigned 16-bit value",
@@ -158,7 +223,13 @@
       "q_ko_draft": "DNS RDLENGTH를 부호 없는 16비트로 읽기",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Read the DNS RDLENGTH in unencrypted 16 bits",
-      "q_ko_mt_src": "DNS RDLENGTH를 부호 없는 16비트로 읽기"
+      "q_ko_mt_src": "DNS RDLENGTH를 부호 없는 16비트로 읽기",
+      "q_ko_dict_terms": [
+        "read",
+        "load"
+      ],
+      "q_ko_dict": "DNS RDLENGTH를 부호 없는 16비트로 읽기 read load",
+      "q_ko_llm": "read DNS RDLENGTH as unsigned 16-bit"
     },
     {
       "q": "Cache empty results on the failure schedule.",
@@ -172,7 +243,17 @@
       "q_ko_draft": "빈 결과도 실패 스케줄대로 캐시해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Keep the empty results on the failure schedule.",
-      "q_ko_mt_src": "빈 결과도 실패 스케줄대로 캐시해줘"
+      "q_ko_mt_src": "빈 결과도 실패 스케줄대로 캐시해줘",
+      "q_ko_dict_terms": [
+        "fail",
+        "failure",
+        "error",
+        "schedule",
+        "cron",
+        "cache"
+      ],
+      "q_ko_dict": "빈 결과도 실패 스케줄대로 캐시해줘 fail failure error schedule cron cache",
+      "q_ko_llm": "cache empty results per failure schedule"
     },
     {
       "q": "read HTTPS mandatory SvcParamKeys as 16-bit values",
@@ -186,7 +267,14 @@
       "q_ko_draft": "HTTPS mandatory SvcParamKeys를 16비트 값으로 읽는 건 어디서 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you read the HTTPS mandatory SvcParamKeys at 16 bits?",
-      "q_ko_mt_src": "HTTPS mandatory SvcParamKeys를 16비트 값으로 읽는 건 어디서 해?"
+      "q_ko_mt_src": "HTTPS mandatory SvcParamKeys를 16비트 값으로 읽는 건 어디서 해?",
+      "q_ko_dict_terms": [
+        "value",
+        "read",
+        "load"
+      ],
+      "q_ko_dict": "HTTPS mandatory SvcParamKeys를 16비트 값으로 읽는 건 어디서 해? value read load",
+      "q_ko_llm": "read HTTPS mandatory SvcParamKeys as 16-bit values"
     },
     {
       "q": "Rename includeHttps to includeServiceMetadata",
@@ -200,7 +288,12 @@
       "q_ko_draft": "includeHttps를 includeServiceMetadata로 이름 변경",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "includeHttps to includeServiceMetadata",
-      "q_ko_mt_src": "includeHttps를 includeServiceMetadata로 이름 변경"
+      "q_ko_mt_src": "includeHttps를 includeServiceMetadata로 이름 변경",
+      "q_ko_dict_terms": [
+        "name"
+      ],
+      "q_ko_dict": "includeHttps를 includeServiceMetadata로 이름 변경 name",
+      "q_ko_llm": "rename includeHttps to includeServiceMetadata"
     },
     {
       "q": "Reject malformed messages that have infinite loops",
@@ -214,7 +307,14 @@
       "q_ko_draft": "무한 루프가 생기는 잘못된 메시지는 거부해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Reject the wrong message from the infinite loop.",
-      "q_ko_mt_src": "무한 루프가 생기는 잘못된 메시지는 거부해줘"
+      "q_ko_mt_src": "무한 루프가 생기는 잘못된 메시지는 거부해줘",
+      "q_ko_dict_terms": [
+        "message",
+        "reject",
+        "deny"
+      ],
+      "q_ko_dict": "무한 루프가 생기는 잘못된 메시지는 거부해줘 message reject deny",
+      "q_ko_llm": "reject malformed messages causing infinite loop"
     },
     {
       "q": "Add RFC 1008 (QUERY Method) support",
@@ -229,7 +329,13 @@
       "q_ko_draft": "RFC 1008 (QUERY 메서드) 지원 추가",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "RFC 1008 (QUERY method) support added",
-      "q_ko_mt_src": "RFC 1008 (QUERY 메서드) 지원 추가"
+      "q_ko_mt_src": "RFC 1008 (QUERY 메서드) 지원 추가",
+      "q_ko_dict_terms": [
+        "add",
+        "create"
+      ],
+      "q_ko_dict": "RFC 1008 (QUERY 메서드) 지원 추가 add create",
+      "q_ko_llm": "add RFC 1008 (QUERY method) support"
     },
     {
       "q": "Don't crash route selection when the system proxy selector throws",
@@ -243,7 +349,16 @@
       "q_ko_draft": "시스템 프록시 셀렉터가 예외 던질 때 라우트 선택이 안 죽게 하려면 어디를 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "When the system proxy selector throws an exception, where do you need to fix it to keep the routing options from dying?",
-      "q_ko_mt_src": "시스템 프록시 셀렉터가 예외 던질 때 라우트 선택이 안 죽게 하려면 어디를 고쳐야 해?"
+      "q_ko_mt_src": "시스템 프록시 셀렉터가 예외 던질 때 라우트 선택이 안 죽게 하려면 어디를 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "exception",
+        "error",
+        "select",
+        "selection",
+        "fix"
+      ],
+      "q_ko_dict": "시스템 프록시 셀렉터가 예외 던질 때 라우트 선택이 안 죽게 하려면 어디를 고쳐야 해? exception error select selection fix",
+      "q_ko_llm": "route selection should not crash when system proxy selector throws"
     },
     {
       "q": "guard null fields in Entry.writeTo() to fix NPE",
@@ -257,7 +372,10 @@
       "q_ko_draft": "Entry.writeTo()에서 null 필드 때문에 NPE 나는 버그",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Because of the null field in Entry.writeTo ((() NPE I bug",
-      "q_ko_mt_src": "Entry.writeTo()에서 null 필드 때문에 NPE 나는 버그"
+      "q_ko_mt_src": "Entry.writeTo()에서 null 필드 때문에 NPE 나는 버그",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "Entry.writeTo()에서 null 필드 때문에 NPE 나는 버그",
+      "q_ko_llm": "NPE in Entry.writeTo() from null fields"
     },
     {
       "q": "Fix some failing tests that CI hasn't been running",
@@ -271,7 +389,17 @@
       "q_ko_draft": "CI가 안 돌리고 있던 실패 테스트 몇 개 고쳐줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Fix a couple of failed tests that CI wasn't working on.",
-      "q_ko_mt_src": "CI가 안 돌리고 있던 실패 테스트 몇 개 고쳐줘"
+      "q_ko_mt_src": "CI가 안 돌리고 있던 실패 테스트 몇 개 고쳐줘",
+      "q_ko_dict_terms": [
+        "fail",
+        "failure",
+        "error",
+        "test",
+        "spec",
+        "fix"
+      ],
+      "q_ko_dict": "CI가 안 돌리고 있던 실패 테스트 몇 개 고쳐줘 fail failure error test spec fix",
+      "q_ko_llm": "fix failing tests not run by CI"
     },
     {
       "q": "Fix SSL Handshake issue affecting MockWebserver on Android 24",
@@ -285,7 +413,10 @@
       "q_ko_draft": "Android 24에서 MockWebserver SSL 핸드셰이크 문제",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "MockWebserver SSL handshake issue on Android 24",
-      "q_ko_mt_src": "Android 24에서 MockWebserver SSL 핸드셰이크 문제"
+      "q_ko_mt_src": "Android 24에서 MockWebserver SSL 핸드셰이크 문제",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "Android 24에서 MockWebserver SSL 핸드셰이크 문제",
+      "q_ko_llm": "MockWebserver SSL handshake issue on Android 24"
     },
     {
       "q": "Fix RequestBody events on upgraded connections",
@@ -300,7 +431,16 @@
       "q_ko_draft": "업그레이드된 연결에서 RequestBody 이벤트 잘못 나오는 거 어디서 고쳐?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you fix the wrong RequestBody event in an upgraded connection?",
-      "q_ko_mt_src": "업그레이드된 연결에서 RequestBody 이벤트 잘못 나오는 거 어디서 고쳐?"
+      "q_ko_mt_src": "업그레이드된 연결에서 RequestBody 이벤트 잘못 나오는 거 어디서 고쳐?",
+      "q_ko_dict_terms": [
+        "connect",
+        "link",
+        "edge",
+        "event",
+        "fix"
+      ],
+      "q_ko_dict": "업그레이드된 연결에서 RequestBody 이벤트 잘못 나오는 거 어디서 고쳐? connect link edge event fix",
+      "q_ko_llm": "wrong RequestBody events on upgraded connections"
     },
     {
       "q": "Fix merge issue with modules and logging",
@@ -314,7 +454,12 @@
       "q_ko_draft": "모듈이랑 logging 쪽 머지 문제 고쳐줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Fix the problem with the module and logging.",
-      "q_ko_mt_src": "모듈이랑 logging 쪽 머지 문제 고쳐줘"
+      "q_ko_mt_src": "모듈이랑 logging 쪽 머지 문제 고쳐줘",
+      "q_ko_dict_terms": [
+        "fix"
+      ],
+      "q_ko_dict": "모듈이랑 logging 쪽 머지 문제 고쳐줘 fix",
+      "q_ko_llm": "fix merge issues in module and logging"
     },
     {
       "q": "Discard trailing data after a deflated message",
@@ -328,7 +473,12 @@
       "q_ko_draft": "deflate된 메시지 뒤에 남은 데이터는 어디서 버려?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you leave the data behind the deflated message?",
-      "q_ko_mt_src": "deflate된 메시지 뒤에 남은 데이터는 어디서 버려?"
+      "q_ko_mt_src": "deflate된 메시지 뒤에 남은 데이터는 어디서 버려?",
+      "q_ko_dict_terms": [
+        "message"
+      ],
+      "q_ko_dict": "deflate된 메시지 뒤에 남은 데이터는 어디서 버려? message",
+      "q_ko_llm": "discard trailing data after deflated message"
     },
     {
       "q": "Handle interrupts with shutdownNow() gracefully",
@@ -343,7 +493,13 @@
       "q_ko_draft": "shutdownNow()로 인터럽트 걸렸을 때 깔끔하게 처리하려면 어디 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "When you get interrupted by shutdownNow, where do you need to look to clean it up?",
-      "q_ko_mt_src": "shutdownNow()로 인터럽트 걸렸을 때 깔끔하게 처리하려면 어디 봐야 해?"
+      "q_ko_mt_src": "shutdownNow()로 인터럽트 걸렸을 때 깔끔하게 처리하려면 어디 봐야 해?",
+      "q_ko_dict_terms": [
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "shutdownNow()로 인터럽트 걸렸을 때 깔끔하게 처리하려면 어디 봐야 해? handle process",
+      "q_ko_llm": "handle interrupt from shutdownNow() gracefully"
     },
     {
       "q": "Add QUERY method support",
@@ -358,7 +514,13 @@
       "q_ko_draft": "QUERY 메서드 지원 추가",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "QUERY Method Support Added",
-      "q_ko_mt_src": "QUERY 메서드 지원 추가"
+      "q_ko_mt_src": "QUERY 메서드 지원 추가",
+      "q_ko_dict_terms": [
+        "add",
+        "create"
+      ],
+      "q_ko_dict": "QUERY 메서드 지원 추가 add create",
+      "q_ko_llm": "add QUERY method support"
     },
     {
       "q": "Update com.squareup.okio to v3.16.0",
@@ -372,7 +534,10 @@
       "q_ko_draft": "com.squareup.okio를 v3.16.0으로 올려줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Upload the com.squareup.okio to v3.16.0.",
-      "q_ko_mt_src": "com.squareup.okio를 v3.16.0으로 올려줘"
+      "q_ko_mt_src": "com.squareup.okio를 v3.16.0으로 올려줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "com.squareup.okio를 v3.16.0으로 올려줘",
+      "q_ko_llm": "bump com.squareup.okio to v3.16.0"
     },
     {
       "q": "Add test demonstrating topPrivateDomain on Robolectric",
@@ -386,7 +551,15 @@
       "q_ko_draft": "Robolectric에서 topPrivateDomain 동작 보여주는 테스트 추가",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Add a test showing topPrivateDomain action from Robolectric",
-      "q_ko_mt_src": "Robolectric에서 topPrivateDomain 동작 보여주는 테스트 추가"
+      "q_ko_mt_src": "Robolectric에서 topPrivateDomain 동작 보여주는 테스트 추가",
+      "q_ko_dict_terms": [
+        "test",
+        "spec",
+        "add",
+        "create"
+      ],
+      "q_ko_dict": "Robolectric에서 topPrivateDomain 동작 보여주는 테스트 추가 test spec add create",
+      "q_ko_llm": "add Robolectric test showing topPrivateDomain behavior"
     },
     {
       "q": "Avoid a ClassCastException in ResponseBodySource.close",
@@ -402,7 +575,10 @@
       "q_ko_draft": "ResponseBodySource.close에서 ClassCastException 안 나게 하려면 어디 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I look to prevent ClassCastException from coming out of ResponseBodySource.close?",
-      "q_ko_mt_src": "ResponseBodySource.close에서 ClassCastException 안 나게 하려면 어디 봐야 해?"
+      "q_ko_mt_src": "ResponseBodySource.close에서 ClassCastException 안 나게 하려면 어디 봐야 해?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "ResponseBodySource.close에서 ClassCastException 안 나게 하려면 어디 봐야 해?",
+      "q_ko_llm": "avoid ClassCastException in ResponseBodySource.close"
     },
     {
       "q": "Fix breaking change from alpha.17 release",
@@ -416,7 +592,12 @@
       "q_ko_draft": "alpha.17 릴리스에서 생긴 breaking change는 어디서 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I fix the breaking change in the alpha.17 release?",
-      "q_ko_mt_src": "alpha.17 릴리스에서 생긴 breaking change는 어디서 고쳐야 해?"
+      "q_ko_mt_src": "alpha.17 릴리스에서 생긴 breaking change는 어디서 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "fix"
+      ],
+      "q_ko_dict": "alpha.17 릴리스에서 생긴 breaking change는 어디서 고쳐야 해? fix",
+      "q_ko_llm": "fix breaking change from alpha.17 release"
     },
     {
       "q": "Update rfc document link",
@@ -430,7 +611,10 @@
       "q_ko_draft": "rfc 문서 링크 업데이트",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Update the link to the rfc document",
-      "q_ko_mt_src": "rfc 문서 링크 업데이트"
+      "q_ko_mt_src": "rfc 문서 링크 업데이트",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "rfc 문서 링크 업데이트",
+      "q_ko_llm": "update rfc document links"
     },
     {
       "q": "Use HTTP/2 in RecordedRequest",
@@ -445,7 +629,10 @@
       "q_ko_draft": "RecordedRequest에서 HTTP/2 쓰려면 어디 건드리면 돼?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where can I tap to use HTTP/2 on RecordedRequest?",
-      "q_ko_mt_src": "RecordedRequest에서 HTTP/2 쓰려면 어디 건드리면 돼?"
+      "q_ko_mt_src": "RecordedRequest에서 HTTP/2 쓰려면 어디 건드리면 돼?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "RecordedRequest에서 HTTP/2 쓰려면 어디 건드리면 돼?",
+      "q_ko_llm": "use HTTP/2 in RecordedRequest"
     },
     {
       "q": "Stop using experimental coroutines APIs",
@@ -459,8 +646,16 @@
       "q_ko_draft": "실험적 코루틴 API 그만 쓰게 바꿔줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "I need you to stop using the experimental corotene API.",
-      "q_ko_mt_src": "실험적 코루틴 API 그만 쓰게 바꿔줘"
+      "q_ko_mt_src": "실험적 코루틴 API 그만 쓰게 바꿔줘",
+      "q_ko_dict_terms": [
+        "change",
+        "update",
+        "replace"
+      ],
+      "q_ko_dict": "실험적 코루틴 API 그만 쓰게 바꿔줘 change update replace",
+      "q_ko_llm": "stop using experimental coroutine APIs"
     }
   ],
-  "mt_model": "facebook/nllb-200-distilled-600M"
+  "mt_model": "facebook/nllb-200-distilled-600M",
+  "llm_rewrite": "Claude (Claude Code subagent), Korean question only, prompt in eval/bilingual/README.md"
 }

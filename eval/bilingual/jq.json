@@ -16,7 +16,10 @@
       "q_ko_draft": "strftime/1, strflocaltime/1이 빈 결과를 허용 안 하는 문제",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Strftime/1, strflocaltime/1 does not allow empty results",
-      "q_ko_mt_src": "strftime/1, strflocaltime/1이 빈 결과를 허용 안 하는 문제"
+      "q_ko_mt_src": "strftime/1, strflocaltime/1이 빈 결과를 허용 안 하는 문제",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "strftime/1, strflocaltime/1이 빈 결과를 허용 안 하는 문제",
+      "q_ko_llm": "strftime/1 and strflocaltime/1 don't allow empty result"
     },
     {
       "q": "Skip to the next RS after a parse error in --seq mode",
@@ -30,7 +33,14 @@
       "q_ko_draft": "--seq 모드에서 파싱 에러 나면 다음 RS까지 건너뛰게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "If you fail to pass in seq mode, let me jump to the next RS.",
-      "q_ko_mt_src": "--seq 모드에서 파싱 에러 나면 다음 RS까지 건너뛰게 해줘"
+      "q_ko_mt_src": "--seq 모드에서 파싱 에러 나면 다음 RS까지 건너뛰게 해줘",
+      "q_ko_dict_terms": [
+        "parse",
+        "parser",
+        "error"
+      ],
+      "q_ko_dict": "--seq 모드에서 파싱 에러 나면 다음 RS까지 건너뛰게 해줘 parse parser error",
+      "q_ko_llm": "skip to next RS on parse error in --seq mode"
     },
     {
       "q": "Improve performance of string output",
@@ -44,7 +54,15 @@
       "q_ko_draft": "문자열 출력 성능 올리려면 어디를 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you need to look if you want to increase the output of the string?",
-      "q_ko_mt_src": "문자열 출력 성능 올리려면 어디를 봐야 해?"
+      "q_ko_mt_src": "문자열 출력 성능 올리려면 어디를 봐야 해?",
+      "q_ko_dict_terms": [
+        "string",
+        "str",
+        "performance",
+        "perf"
+      ],
+      "q_ko_dict": "문자열 출력 성능 올리려면 어디를 봐야 해? string str performance perf",
+      "q_ko_llm": "improve string output performance"
     },
     {
       "q": "Fix assertion failure on too many parameters in a nested function",
@@ -58,7 +76,14 @@
       "q_ko_draft": "중첩 함수에 파라미터가 너무 많으면 assertion 실패하는 버그",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "If there are too many parameters in the overlay function, the assertion fails.",
-      "q_ko_mt_src": "중첩 함수에 파라미터가 너무 많으면 assertion 실패하는 버그"
+      "q_ko_mt_src": "중첩 함수에 파라미터가 너무 많으면 assertion 실패하는 버그",
+      "q_ko_dict_terms": [
+        "fail",
+        "failure",
+        "error"
+      ],
+      "q_ko_dict": "중첩 함수에 파라미터가 너무 많으면 assertion 실패하는 버그 fail failure error",
+      "q_ko_llm": "assertion failure when nested function has too many parameters"
     },
     {
       "q": "Exit with the given status for negative `halt_error` codes",
@@ -72,7 +97,18 @@
       "q_ko_draft": "`halt_error`에 음수 코드를 주면 그 값 그대로 종료 상태로 나가게 하려면 어디 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "If you give the negative code to `halt_error`, where do you need to fix it to get it out of the closed state?",
-      "q_ko_mt_src": "`halt_error`에 음수 코드를 주면 그 값 그대로 종료 상태로 나가게 하려면 어디 고쳐야 해?"
+      "q_ko_mt_src": "`halt_error`에 음수 코드를 주면 그 값 그대로 종료 상태로 나가게 하려면 어디 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "value",
+        "shutdown",
+        "close",
+        "exit",
+        "state",
+        "status",
+        "fix"
+      ],
+      "q_ko_dict": "`halt_error`에 음수 코드를 주면 그 값 그대로 종료 상태로 나가게 하려면 어디 고쳐야 해? value shutdown close exit state status fix",
+      "q_ko_llm": "halt_error with negative code exits with that value as exit status"
     },
     {
       "q": "Fix undefined behavior on out-of-range array index in has() and del()",
@@ -86,7 +122,16 @@
       "q_ko_draft": "has()랑 del()에서 범위 밖 배열 인덱스로 생기는 undefined behavior 고쳐줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Fix the undefined behavior that arises as an out-of-range ranking index from has and del.",
-      "q_ko_mt_src": "has()랑 del()에서 범위 밖 배열 인덱스로 생기는 undefined behavior 고쳐줘"
+      "q_ko_mt_src": "has()랑 del()에서 범위 밖 배열 인덱스로 생기는 undefined behavior 고쳐줘",
+      "q_ko_dict_terms": [
+        "array",
+        "vec",
+        "list",
+        "index",
+        "fix"
+      ],
+      "q_ko_dict": "has()랑 del()에서 범위 밖 배열 인덱스로 생기는 undefined behavior 고쳐줘 array vec list index fix",
+      "q_ko_llm": "fix undefined behavior from out-of-range array index in has() and del()"
     },
     {
       "q": "Strip UTF-8 BOM at the start of each input file",
@@ -102,7 +147,13 @@
       "q_ko_draft": "입력 파일마다 맨 앞의 UTF-8 BOM 떼는 건 어디서 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you get the UTF-8 BOM in front of each input file?",
-      "q_ko_mt_src": "입력 파일마다 맨 앞의 UTF-8 BOM 떼는 건 어디서 해?"
+      "q_ko_mt_src": "입력 파일마다 맨 앞의 UTF-8 BOM 떼는 건 어디서 해?",
+      "q_ko_dict_terms": [
+        "input",
+        "form"
+      ],
+      "q_ko_dict": "입력 파일마다 맨 앞의 UTF-8 BOM 떼는 건 어디서 해? input form",
+      "q_ko_llm": "strip leading UTF-8 BOM from each input file"
     },
     {
       "q": "Prefer getentropy() over arc4random() to seed the string hash",
@@ -116,7 +167,15 @@
       "q_ko_draft": "문자열 해시 시드에 arc4random()보다 getentropy()를 우선 쓰게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Let's use getentropy instead of arc4random.",
-      "q_ko_mt_src": "문자열 해시 시드에 arc4random()보다 getentropy()를 우선 쓰게 해줘"
+      "q_ko_mt_src": "문자열 해시 시드에 arc4random()보다 getentropy()를 우선 쓰게 해줘",
+      "q_ko_dict_terms": [
+        "4random",
+        "string",
+        "str",
+        "hash"
+      ],
+      "q_ko_dict": "문자열 해시 시드에 arc4random()보다 getentropy()를 우선 쓰게 해줘 4random string str hash",
+      "q_ko_llm": "prefer getentropy() over arc4random() for string hash seed"
     },
     {
       "q": "Fix reduce to preserve its input across init backtracking",
@@ -132,7 +191,13 @@
       "q_ko_draft": "init 백트래킹할 때 reduce 입력이 유지 안 되는 버그",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "It's a bug that doesn't keep the input down when you backtrack init.",
-      "q_ko_mt_src": "init 백트래킹할 때 reduce 입력이 유지 안 되는 버그"
+      "q_ko_mt_src": "init 백트래킹할 때 reduce 입력이 유지 안 되는 버그",
+      "q_ko_dict_terms": [
+        "input",
+        "form"
+      ],
+      "q_ko_dict": "init 백트래킹할 때 reduce 입력이 유지 안 되는 버그 input form",
+      "q_ko_llm": "reduce input not preserved when backtracking into init"
     },
     {
       "q": "Implement `range/3` in C for consistent error handling",
@@ -148,7 +213,14 @@
       "q_ko_reviewed": "llm",
       "q_ko_note": "검토(LLM): '일관되게'가 구현을 꾸미는 것처럼 읽혀서 목적(for)이 드러나게 고침",
       "q_ko_mt": "Implement `range/3` into C to try to make the error handling consistent.",
-      "q_ko_mt_src": "에러 처리 일관되게 하려고 `range/3`를 C로 구현"
+      "q_ko_mt_src": "에러 처리 일관되게 하려고 `range/3`를 C로 구현",
+      "q_ko_dict_terms": [
+        "error",
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "에러 처리 일관되게 하려고 `range/3`를 C로 구현 error handle process",
+      "q_ko_llm": "implement range/3 in C for consistent error handling"
     },
     {
       "q": "Use WriteConsoleW() in priv_fwrite() too",
@@ -163,7 +235,10 @@
       "q_ko_draft": "priv_fwrite()에서도 WriteConsoleW() 쓰게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "I'll also use WriteConsoleW.",
-      "q_ko_mt_src": "priv_fwrite()에서도 WriteConsoleW() 쓰게 해줘"
+      "q_ko_mt_src": "priv_fwrite()에서도 WriteConsoleW() 쓰게 해줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "priv_fwrite()에서도 WriteConsoleW() 쓰게 해줘",
+      "q_ko_llm": "use WriteConsoleW() in priv_fwrite() too"
     },
     {
       "q": "Fix gmtime and localtime on negative timestamps with fractional seconds",
@@ -177,7 +252,13 @@
       "q_ko_draft": "소수점 초가 있는 음수 타임스탬프를 gmtime, localtime이 제대로 처리하게 하려면 어디 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "So where do we look for a negative time stamp with a minor second to get gmtime and localtime to handle it properly?",
-      "q_ko_mt_src": "소수점 초가 있는 음수 타임스탬프를 gmtime, localtime이 제대로 처리하게 하려면 어디 봐야 해?"
+      "q_ko_mt_src": "소수점 초가 있는 음수 타임스탬프를 gmtime, localtime이 제대로 처리하게 하려면 어디 봐야 해?",
+      "q_ko_dict_terms": [
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "소수점 초가 있는 음수 타임스탬프를 gmtime, localtime이 제대로 처리하게 하려면 어디 봐야 해? handle process",
+      "q_ko_llm": "gmtime and localtime handle negative timestamps with fractional seconds"
     },
     {
       "q": "Reject raw NUL bytes in the parser instead of silently truncating tokens",
@@ -192,7 +273,15 @@
       "q_ko_reviewed": "llm",
       "q_ko_note": "검토(LLM): silently는 개발 문맥에서 '몰래'보다 '조용히'가 자연스러움",
       "q_ko_mt": "When the raw null byte comes out of your browser, don't cut the token silently.",
-      "q_ko_mt_src": "파서에서 raw NUL 바이트 나오면 토큰 조용히 자르지 말고 거부해줘"
+      "q_ko_mt_src": "파서에서 raw NUL 바이트 나오면 토큰 조용히 자르지 말고 거부해줘",
+      "q_ko_dict_terms": [
+        "parser",
+        "token",
+        "reject",
+        "deny"
+      ],
+      "q_ko_dict": "파서에서 raw NUL 바이트 나오면 토큰 조용히 자르지 말고 거부해줘 parser token reject deny",
+      "q_ko_llm": "reject raw NUL bytes in parser instead of silently truncating token"
     },
     {
       "q": "Cast char to unsigned char before passing to isspace",
@@ -206,7 +295,10 @@
       "q_ko_draft": "isspace에 넘기기 전에 char를 unsigned char로 캐스팅",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Casting char to unsigned char before moving to isspace",
-      "q_ko_mt_src": "isspace에 넘기기 전에 char를 unsigned char로 캐스팅"
+      "q_ko_mt_src": "isspace에 넘기기 전에 char를 unsigned char로 캐스팅",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "isspace에 넘기기 전에 char를 unsigned char로 캐스팅",
+      "q_ko_llm": "cast char to unsigned char before passing to isspace"
     },
     {
       "q": "Tighten string length bounds and propagate invalid jv in implode",
@@ -221,7 +313,15 @@
       "q_ko_draft": "implode에서 문자열 길이 범위 더 엄격하게 보고 invalid jv는 전파하게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "See the string length range more strictly from the implode and let invalid jv propagate",
-      "q_ko_mt_src": "implode에서 문자열 길이 범위 더 엄격하게 보고 invalid jv는 전파하게 해줘"
+      "q_ko_mt_src": "implode에서 문자열 길이 범위 더 엄격하게 보고 invalid jv는 전파하게 해줘",
+      "q_ko_dict_terms": [
+        "string",
+        "str",
+        "length",
+        "len"
+      ],
+      "q_ko_dict": "implode에서 문자열 길이 범위 더 엄격하게 보고 invalid jv는 전파하게 해줘 string str length len",
+      "q_ko_llm": "stricter string length range check in implode and propagate invalid jv"
     },
     {
       "q": "Fix heap-buffer-overflow in raw file loading",
@@ -235,7 +335,10 @@
       "q_ko_draft": "raw 파일 로딩 중 heap-buffer-overflow 나는 버그",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Heap-buffer-overflow in raw file loading I bug",
-      "q_ko_mt_src": "raw 파일 로딩 중 heap-buffer-overflow 나는 버그"
+      "q_ko_mt_src": "raw 파일 로딩 중 heap-buffer-overflow 나는 버그",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "raw 파일 로딩 중 heap-buffer-overflow 나는 버그",
+      "q_ko_llm": "heap-buffer-overflow when loading raw file"
     },
     {
       "q": "Fix undefined pointer arithmetic in UTF-8 helpers",
@@ -249,7 +352,12 @@
       "q_ko_draft": "UTF-8 헬퍼에서 정의되지 않은 포인터 연산은 어디서 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I fix pointer operations that aren't defined in the UTF-8 helper?",
-      "q_ko_mt_src": "UTF-8 헬퍼에서 정의되지 않은 포인터 연산은 어디서 고쳐야 해?"
+      "q_ko_mt_src": "UTF-8 헬퍼에서 정의되지 않은 포인터 연산은 어디서 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "fix"
+      ],
+      "q_ko_dict": "UTF-8 헬퍼에서 정의되지 않은 포인터 연산은 어디서 고쳐야 해? fix",
+      "q_ko_llm": "fix undefined pointer arithmetic in UTF-8 helpers"
     },
     {
       "q": "Guard deep structural equality and comparison recursion",
@@ -265,7 +373,13 @@
       "q_ko_draft": "깊은 구조의 동등성·비교 재귀 방어",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Defending the equality of deep structures and the re-establishment of democracy.",
-      "q_ko_mt_src": "깊은 구조의 동등성·비교 재귀 방어"
+      "q_ko_mt_src": "깊은 구조의 동등성·비교 재귀 방어",
+      "q_ko_dict_terms": [
+        "guard",
+        "protect"
+      ],
+      "q_ko_dict": "깊은 구조의 동등성·비교 재귀 방어 guard protect",
+      "q_ko_llm": "guard recursion in deep structure equality and comparison"
     },
     {
       "q": "Detect circular module imports to prevent stack overflow",
@@ -279,7 +393,14 @@
       "q_ko_draft": "모듈 순환 import 감지해서 스택 오버플로 막아줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Detect the module's circulation import and block it from stacking overflows.",
-      "q_ko_mt_src": "모듈 순환 import 감지해서 스택 오버플로 막아줘"
+      "q_ko_mt_src": "모듈 순환 import 감지해서 스택 오버플로 막아줘",
+      "q_ko_dict_terms": [
+        "block",
+        "prevent",
+        "guard"
+      ],
+      "q_ko_dict": "모듈 순환 import 감지해서 스택 오버플로 막아줘 block prevent guard",
+      "q_ko_llm": "detect circular module imports to prevent stack overflow"
     },
     {
       "q": "Reject numeric literals longer than DEC_MAX_DIGITS (999999999)",
@@ -294,7 +415,13 @@
       "q_ko_draft": "DEC_MAX_DIGITS(999999999)보다 긴 숫자 리터럴은 거부하게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "DEC_MAX_DIGITS 999999999) Let me decline the literal of a number that is longer than 999999999.",
-      "q_ko_mt_src": "DEC_MAX_DIGITS(999999999)보다 긴 숫자 리터럴은 거부하게 해줘"
+      "q_ko_mt_src": "DEC_MAX_DIGITS(999999999)보다 긴 숫자 리터럴은 거부하게 해줘",
+      "q_ko_dict_terms": [
+        "reject",
+        "deny"
+      ],
+      "q_ko_dict": "DEC_MAX_DIGITS(999999999)보다 긴 숫자 리터럴은 거부하게 해줘 reject deny",
+      "q_ko_llm": "reject number literals longer than DEC_MAX_DIGITS(999999999)"
     },
     {
       "q": "Limit recursive object merge depth to prevent stack overflow",
@@ -308,7 +435,10 @@
       "q_ko_draft": "재귀 객체 병합 깊이 제한해서 스택 오버플로 막으려면 어디 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you need to look if you want to limit the depth of the rebound object merger and block it with a stack of overflows?",
-      "q_ko_mt_src": "재귀 객체 병합 깊이 제한해서 스택 오버플로 막으려면 어디 봐야 해?"
+      "q_ko_mt_src": "재귀 객체 병합 깊이 제한해서 스택 오버플로 막으려면 어디 봐야 해?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "재귀 객체 병합 깊이 제한해서 스택 오버플로 막으려면 어디 봐야 해?",
+      "q_ko_llm": "limit recursive object merge depth to prevent stack overflow"
     },
     {
       "q": "Fix signed-int overflow in `stack_reallocate`",
@@ -322,7 +452,10 @@
       "q_ko_draft": "`stack_reallocate`의 signed int 오버플로",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "`stack_reallocate `s signed int overflowed",
-      "q_ko_mt_src": "`stack_reallocate`의 signed int 오버플로"
+      "q_ko_mt_src": "`stack_reallocate`의 signed int 오버플로",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "`stack_reallocate`의 signed int 오버플로",
+      "q_ko_llm": "signed int overflow in stack_reallocate"
     },
     {
       "q": "Limit the containment check depth",
@@ -337,7 +470,14 @@
       "q_ko_draft": "포함 관계 검사 깊이 제한은 어디서 걸어?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you walk the depth limits of the inclusion relationship check?",
-      "q_ko_mt_src": "포함 관계 검사 깊이 제한은 어디서 걸어?"
+      "q_ko_mt_src": "포함 관계 검사 깊이 제한은 어디서 걸어?",
+      "q_ko_dict_terms": [
+        "check",
+        "validate",
+        "guard"
+      ],
+      "q_ko_dict": "포함 관계 검사 깊이 제한은 어디서 걸어? check validate guard",
+      "q_ko_llm": "depth limit for containment check"
     },
     {
       "q": "Limit path depth to prevent stack overflow",
@@ -351,7 +491,10 @@
       "q_ko_draft": "스택 오버플로 안 나게 path 깊이 제한해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Don't go over the stack. Restrict the depth of the path.",
-      "q_ko_mt_src": "스택 오버플로 안 나게 path 깊이 제한해줘"
+      "q_ko_mt_src": "스택 오버플로 안 나게 path 깊이 제한해줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "스택 오버플로 안 나게 path 깊이 제한해줘",
+      "q_ko_llm": "limit path depth to prevent stack overflow"
     },
     {
       "q": "Fix NUL truncation in the JSON parser",
@@ -365,7 +508,13 @@
       "q_ko_draft": "JSON 파서에서 NUL 때문에 잘리는 거 어디서 고쳐?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you fix the NUL cutoff in JSON?",
-      "q_ko_mt_src": "JSON 파서에서 NUL 때문에 잘리는 거 어디서 고쳐?"
+      "q_ko_mt_src": "JSON 파서에서 NUL 때문에 잘리는 거 어디서 고쳐?",
+      "q_ko_dict_terms": [
+        "parser",
+        "fix"
+      ],
+      "q_ko_dict": "JSON 파서에서 NUL 때문에 잘리는 거 어디서 고쳐? parser fix",
+      "q_ko_llm": "fix JSON parser truncation at NUL"
     },
     {
       "q": "Fix use-after-free in args2obj() array argument path",
@@ -379,7 +528,19 @@
       "q_ko_draft": "args2obj() 배열 인자 경로의 use-after-free",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "args2obj() use-after-free of the array multiplier path",
-      "q_ko_mt_src": "args2obj() 배열 인자 경로의 use-after-free"
+      "q_ko_mt_src": "args2obj() 배열 인자 경로의 use-after-free",
+      "q_ko_dict_terms": [
+        "2obj",
+        "array",
+        "vec",
+        "list",
+        "arg",
+        "param",
+        "route",
+        "path"
+      ],
+      "q_ko_dict": "args2obj() 배열 인자 경로의 use-after-free 2obj array vec list arg param route path",
+      "q_ko_llm": "use-after-free in args2obj() array argument path"
     },
     {
       "q": "Fix crash when importing a module with errors twice",
@@ -393,7 +554,12 @@
       "q_ko_draft": "에러 있는 모듈을 두 번 import할 때 크래시 나는 곳 어디야?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I crash when I import this module twice?",
-      "q_ko_mt_src": "에러 있는 모듈을 두 번 import할 때 크래시 나는 곳 어디야?"
+      "q_ko_mt_src": "에러 있는 모듈을 두 번 import할 때 크래시 나는 곳 어디야?",
+      "q_ko_dict_terms": [
+        "error"
+      ],
+      "q_ko_dict": "에러 있는 모듈을 두 번 import할 때 크래시 나는 곳 어디야? error",
+      "q_ko_llm": "crash when importing module with errors twice"
     },
     {
       "q": "Limit number of function parameters and definitions to prevent SEGV",
@@ -407,7 +573,10 @@
       "q_ko_draft": "SEGV 안 나게 함수 파라미터 수랑 정의 수 제한해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "SEGV's not coming out. Restrict the function parameter definition.",
-      "q_ko_mt_src": "SEGV 안 나게 함수 파라미터 수랑 정의 수 제한해줘"
+      "q_ko_mt_src": "SEGV 안 나게 함수 파라미터 수랑 정의 수 제한해줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "SEGV 안 나게 함수 파라미터 수랑 정의 수 제한해줘",
+      "q_ko_llm": "limit function parameter count and definition count to prevent SEGV"
     },
     {
       "q": "Fix slurping raw input not to corrupt multi-byte characters (fix #3389)",
@@ -422,7 +591,18 @@
       "q_ko_draft": "raw 입력 slurp할 때 멀티바이트 문자 깨지는 문제 (#3389)",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Multibyte character breaking issue when slurping raw input (#3389)",
-      "q_ko_mt_src": "raw 입력 slurp할 때 멀티바이트 문자 깨지는 문제 (#3389)"
+      "q_ko_mt_src": "raw 입력 slurp할 때 멀티바이트 문자 깨지는 문제 (#3389)",
+      "q_ko_dict_terms": [
+        "input",
+        "form",
+        "char",
+        "character",
+        "broken",
+        "encoding",
+        "render"
+      ],
+      "q_ko_dict": "raw 입력 slurp할 때 멀티바이트 문자 깨지는 문제 (#3389) input form char character broken encoding render",
+      "q_ko_llm": "multibyte characters broken when slurping raw input (#3389)"
     },
     {
       "q": "Increase the maximum printing depth from 256 to 10000 (fixes #3413)",
@@ -436,7 +616,14 @@
       "q_ko_draft": "최대 출력 깊이 256에서 10000으로 늘려줘 (#3413)",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Increase the maximum output depth from 256 to 10,000.",
-      "q_ko_mt_src": "최대 출력 깊이 256에서 10000으로 늘려줘 (#3413)"
+      "q_ko_mt_src": "최대 출력 깊이 256에서 10000으로 늘려줘 (#3413)",
+      "q_ko_dict_terms": [
+        "increase",
+        "extend",
+        "grow"
+      ],
+      "q_ko_dict": "최대 출력 깊이 256에서 10000으로 늘려줘 (#3413) increase extend grow",
+      "q_ko_llm": "increase max output depth from 256 to 10000 (#3413)"
     },
     {
       "q": "Use jv_mem_alloc to allocate dtoa_context in tsd_dtoa_context_get",
@@ -450,7 +637,13 @@
       "q_ko_draft": "tsd_dtoa_context_get에서 dtoa_context 할당을 jv_mem_alloc으로 하려면 어디 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I look to make the dtoa_context allocation from tsd_dtoa_context_get to jv_mem_alloc?",
-      "q_ko_mt_src": "tsd_dtoa_context_get에서 dtoa_context 할당을 jv_mem_alloc으로 하려면 어디 봐야 해?"
+      "q_ko_mt_src": "tsd_dtoa_context_get에서 dtoa_context 할당을 jv_mem_alloc으로 하려면 어디 봐야 해?",
+      "q_ko_dict_terms": [
+        "allocate",
+        "capacity"
+      ],
+      "q_ko_dict": "tsd_dtoa_context_get에서 dtoa_context 할당을 jv_mem_alloc으로 하려면 어디 봐야 해? allocate capacity",
+      "q_ko_llm": "allocate dtoa_context with jv_mem_alloc in tsd_dtoa_context_get"
     },
     {
       "q": "Fix syntax error assertion failure (fix #3348)",
@@ -464,8 +657,16 @@
       "q_ko_draft": "문법 에러에서 assertion 실패하는 버그 (#3348)",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Failure of assertion in grammar error (#3348)",
-      "q_ko_mt_src": "문법 에러에서 assertion 실패하는 버그 (#3348)"
+      "q_ko_mt_src": "문법 에러에서 assertion 실패하는 버그 (#3348)",
+      "q_ko_dict_terms": [
+        "error",
+        "fail",
+        "failure"
+      ],
+      "q_ko_dict": "문법 에러에서 assertion 실패하는 버그 (#3348) error fail failure",
+      "q_ko_llm": "assertion failure on syntax error (#3348)"
     }
   ],
-  "mt_model": "facebook/nllb-200-distilled-600M"
+  "mt_model": "facebook/nllb-200-distilled-600M",
+  "llm_rewrite": "Claude (Claude Code subagent), Korean question only, prompt in eval/bilingual/README.md"
 }

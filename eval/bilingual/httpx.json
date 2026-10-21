@@ -17,7 +17,10 @@
       "q_ko_draft": "`FunctionAuth`도 `__all__`에 노출해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "I want you to expose me to FunctionAuth.",
-      "q_ko_mt_src": "`FunctionAuth`도 `__all__`에 노출해줘"
+      "q_ko_mt_src": "`FunctionAuth`도 `__all__`에 노출해줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "`FunctionAuth`도 `__all__`에 노출해줘",
+      "q_ko_llm": "expose FunctionAuth in __all__"
     },
     {
       "q": "Display proxy protocol scheme on error",
@@ -31,7 +34,13 @@
       "q_ko_draft": "에러 날 때 프록시 프로토콜 scheme 보여주려면 어디 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I fix to show you the proxy protocol scheme on that day?",
-      "q_ko_mt_src": "에러 날 때 프록시 프로토콜 scheme 보여주려면 어디 고쳐야 해?"
+      "q_ko_mt_src": "에러 날 때 프록시 프로토콜 scheme 보여주려면 어디 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "error",
+        "fix"
+      ],
+      "q_ko_dict": "에러 날 때 프록시 프로토콜 scheme 보여주려면 어디 고쳐야 해? error fix",
+      "q_ko_llm": "show proxy protocol scheme in error"
     },
     {
       "q": "Fix `verify=False`, `cert=...` case.",
@@ -45,7 +54,10 @@
       "q_ko_draft": "`verify=False`에 `cert=...`까지 준 경우 버그",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "`verify=False` to `cert=...` if you give it to bug",
-      "q_ko_mt_src": "`verify=False`에 `cert=...`까지 준 경우 버그"
+      "q_ko_mt_src": "`verify=False`에 `cert=...`까지 준 경우 버그",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "`verify=False`에 `cert=...`까지 준 경우 버그",
+      "q_ko_llm": "bug when verify=False is combined with cert=..."
     },
     {
       "q": "Fix `extensions` type annotation.",
@@ -60,7 +72,13 @@
       "q_ko_draft": "`extensions` 타입 어노테이션 고쳐줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "I need you to fix the type annotation.",
-      "q_ko_mt_src": "`extensions` 타입 어노테이션 고쳐줘"
+      "q_ko_mt_src": "`extensions` 타입 어노테이션 고쳐줘",
+      "q_ko_dict_terms": [
+        "type",
+        "fix"
+      ],
+      "q_ko_dict": "`extensions` 타입 어노테이션 고쳐줘 type fix",
+      "q_ko_llm": "fix extensions type annotation"
     },
     {
       "q": "Error on verify as str.",
@@ -74,7 +92,12 @@
       "q_ko_draft": "verify에 str이 들어오면 에러 내는 건 어디서 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "When you enter a str in verify, where do you make an error?",
-      "q_ko_mt_src": "verify에 str이 들어오면 에러 내는 건 어디서 해?"
+      "q_ko_mt_src": "verify에 str이 들어오면 에러 내는 건 어디서 해?",
+      "q_ko_dict_terms": [
+        "error"
+      ],
+      "q_ko_dict": "verify에 str이 들어오면 에러 내는 건 어디서 해? error",
+      "q_ko_llm": "raise error when verify is str"
     },
     {
       "q": "Handle empty zstd responses",
@@ -89,7 +112,14 @@
       "q_ko_draft": "빈 zstd 응답은 어디서 처리해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you handle the empty zstd response?",
-      "q_ko_mt_src": "빈 zstd 응답은 어디서 처리해?"
+      "q_ko_mt_src": "빈 zstd 응답은 어디서 처리해?",
+      "q_ko_dict_terms": [
+        "response",
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "빈 zstd 응답은 어디서 처리해? response handle process",
+      "q_ko_llm": "handle empty zstd response"
     },
     {
       "q": "Cleanup `Request` method parameter.",
@@ -103,7 +133,10 @@
       "q_ko_draft": "`Request`의 method 파라미터 정리해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "I need you to sort out the method parameter for `Request`.",
-      "q_ko_mt_src": "`Request`의 method 파라미터 정리해줘"
+      "q_ko_mt_src": "`Request`의 method 파라미터 정리해줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "`Request`의 method 파라미터 정리해줘",
+      "q_ko_llm": "clean up method parameter of Request"
     },
     {
       "q": "add socks5h proxy support",
@@ -118,7 +151,14 @@
       "q_ko_draft": "socks5h 프록시 지원 추가",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Socks5h proxy support added",
-      "q_ko_mt_src": "socks5h 프록시 지원 추가"
+      "q_ko_mt_src": "socks5h 프록시 지원 추가",
+      "q_ko_dict_terms": [
+        "5h",
+        "add",
+        "create"
+      ],
+      "q_ko_dict": "socks5h 프록시 지원 추가 5h add create",
+      "q_ko_llm": "add socks5h proxy support"
     },
     {
       "q": "Just use default `safe=...` characters for `urlescape`",
@@ -132,7 +172,13 @@
       "q_ko_draft": "`urlescape`는 그냥 기본 `safe=...` 문자 쓰게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "`urlescape`, just let me write the basic `safe=...`",
-      "q_ko_mt_src": "`urlescape`는 그냥 기본 `safe=...` 문자 쓰게 해줘"
+      "q_ko_mt_src": "`urlescape`는 그냥 기본 `safe=...` 문자 쓰게 해줘",
+      "q_ko_dict_terms": [
+        "char",
+        "character"
+      ],
+      "q_ko_dict": "`urlescape`는 그냥 기본 `safe=...` 문자 쓰게 해줘 char character",
+      "q_ko_llm": "use default safe=... characters in urlescape"
     },
     {
       "q": "Review urlescape percent-safe set, and use + behavior for form spaces.",
@@ -147,7 +193,18 @@
       "q_ko_draft": "urlescape의 퍼센트 인코딩 안 하는 문자 집합 다시 보고, form 공백은 +로 처리하게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Look back at the unencoded text set as the percentage of urlescape, and let the form blank be dealt with as a +.",
-      "q_ko_mt_src": "urlescape의 퍼센트 인코딩 안 하는 문자 집합 다시 보고, form 공백은 +로 처리하게 해줘"
+      "q_ko_mt_src": "urlescape의 퍼센트 인코딩 안 하는 문자 집합 다시 보고, form 공백은 +로 처리하게 해줘",
+      "q_ko_dict_terms": [
+        "encoding",
+        "char",
+        "character",
+        "whitespace",
+        "space",
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "urlescape의 퍼센트 인코딩 안 하는 문자 집합 다시 보고, form 공백은 +로 처리하게 해줘 encoding char character whitespace space handle process",
+      "q_ko_llm": "revisit urlescape non-percent-encoded character set, encode form spaces as +"
     },
     {
       "q": "Review URL percent escaping sets, from whatwg.",
@@ -161,7 +218,15 @@
       "q_ko_draft": "whatwg 기준으로 URL 퍼센트 이스케이프 문자 집합 재검토",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Whatwg re-examination of the URL percentage of the escaped text set",
-      "q_ko_mt_src": "whatwg 기준으로 URL 퍼센트 이스케이프 문자 집합 재검토"
+      "q_ko_mt_src": "whatwg 기준으로 URL 퍼센트 이스케이프 문자 집합 재검토",
+      "q_ko_dict_terms": [
+        "threshold",
+        "criteria",
+        "char",
+        "character"
+      ],
+      "q_ko_dict": "whatwg 기준으로 URL 퍼센트 이스케이프 문자 집합 재검토 threshold criteria char character",
+      "q_ko_llm": "revisit URL percent-escape character sets per whatwg"
     },
     {
       "q": "Clarified error when header value is None",
@@ -175,7 +240,14 @@
       "q_ko_draft": "헤더 값이 None일 때 에러 메시지 더 명확하게",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "The error message is clearer when the header value is none",
-      "q_ko_mt_src": "헤더 값이 None일 때 에러 메시지 더 명확하게"
+      "q_ko_mt_src": "헤더 값이 None일 때 에러 메시지 더 명확하게",
+      "q_ko_dict_terms": [
+        "value",
+        "error",
+        "message"
+      ],
+      "q_ko_dict": "헤더 값이 None일 때 에러 메시지 더 명확하게 value error message",
+      "q_ko_llm": "clearer error message when header value is None"
     },
     {
       "q": "Improve InvalidURL error message.",
@@ -189,7 +261,14 @@
       "q_ko_draft": "InvalidURL 에러 메시지 개선하려면 어디를 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I need to fix the InvalidURL error message?",
-      "q_ko_mt_src": "InvalidURL 에러 메시지 개선하려면 어디를 고쳐야 해?"
+      "q_ko_mt_src": "InvalidURL 에러 메시지 개선하려면 어디를 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "error",
+        "message",
+        "fix"
+      ],
+      "q_ko_dict": "InvalidURL 에러 메시지 개선하려면 어디를 고쳐야 해? error message fix",
+      "q_ko_llm": "improve InvalidURL error message"
     },
     {
       "q": "Use proxy ssl context consistently",
@@ -203,7 +282,10 @@
       "q_ko_draft": "프록시 ssl context를 일관되게 안 쓰는 문제",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "The problem is that we don't use the proxy ssl context consistently.",
-      "q_ko_mt_src": "프록시 ssl context를 일관되게 안 쓰는 문제"
+      "q_ko_mt_src": "프록시 ssl context를 일관되게 안 쓰는 문제",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "프록시 ssl context를 일관되게 안 쓰는 문제",
+      "q_ko_llm": "proxy ssl context not used consistently"
     },
     {
       "q": "Keep clients in sync",
@@ -217,7 +299,12 @@
       "q_ko_draft": "클라이언트들끼리 어긋나지 않게 맞춰줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Make sure the clients don't go against each other.",
-      "q_ko_mt_src": "클라이언트들끼리 어긋나지 않게 맞춰줘"
+      "q_ko_mt_src": "클라이언트들끼리 어긋나지 않게 맞춰줘",
+      "q_ko_dict_terms": [
+        "client"
+      ],
+      "q_ko_dict": "클라이언트들끼리 어긋나지 않게 맞춰줘 client",
+      "q_ko_llm": "keep clients consistent with each other"
     },
     {
       "q": "Update /advanced/#<anchor> links -> /advanced/clients/#<anchor>",
@@ -231,7 +318,14 @@
       "q_ko_draft": "/advanced/#<anchor> 링크를 /advanced/clients/#<anchor>로 바꿔줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Change the link to advanced clients.",
-      "q_ko_mt_src": "/advanced/#<anchor> 링크를 /advanced/clients/#<anchor>로 바꿔줘"
+      "q_ko_mt_src": "/advanced/#<anchor> 링크를 /advanced/clients/#<anchor>로 바꿔줘",
+      "q_ko_dict_terms": [
+        "change",
+        "update",
+        "replace"
+      ],
+      "q_ko_dict": "/advanced/#<anchor> 링크를 /advanced/clients/#<anchor>로 바꿔줘 change update replace",
+      "q_ko_llm": "change /advanced/#<anchor> links to /advanced/clients/#<anchor>"
     },
     {
       "q": "Fix RFC 2069 mode digest authentication",
@@ -245,7 +339,14 @@
       "q_ko_draft": "RFC 2069 모드 digest 인증 버그 어디서 고쳐?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where did you fix the RFC 2069 mode digest authentication bug?",
-      "q_ko_mt_src": "RFC 2069 모드 digest 인증 버그 어디서 고쳐?"
+      "q_ko_mt_src": "RFC 2069 모드 digest 인증 버그 어디서 고쳐?",
+      "q_ko_dict_terms": [
+        "auth",
+        "authenticate",
+        "fix"
+      ],
+      "q_ko_dict": "RFC 2069 모드 digest 인증 버그 어디서 고쳐? auth authenticate fix",
+      "q_ko_llm": "fix RFC 2069 mode digest auth bug"
     },
     {
       "q": "Fixed `iter_text` adding an empty string",
@@ -260,7 +361,16 @@
       "q_ko_draft": "`iter_text`가 빈 문자열을 끼워 넣는 문제",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "The problem is that `iter_text` put a blank string in it.",
-      "q_ko_mt_src": "`iter_text`가 빈 문자열을 끼워 넣는 문제"
+      "q_ko_mt_src": "`iter_text`가 빈 문자열을 끼워 넣는 문제",
+      "q_ko_dict_terms": [
+        "string",
+        "str",
+        "insert",
+        "add",
+        "put"
+      ],
+      "q_ko_dict": "`iter_text`가 빈 문자열을 끼워 넣는 문제 string str insert add put",
+      "q_ko_llm": "iter_text yields empty strings"
     },
     {
       "q": "Lazily import 'netrc' module",
@@ -274,7 +384,10 @@
       "q_ko_draft": "'netrc' 모듈은 필요할 때 import하게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Let me import the netrc module when I need it.",
-      "q_ko_mt_src": "'netrc' 모듈은 필요할 때 import하게 해줘"
+      "q_ko_mt_src": "'netrc' 모듈은 필요할 때 import하게 해줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "'netrc' 모듈은 필요할 때 import하게 해줘",
+      "q_ko_llm": "lazily import 'netrc' module when needed"
     },
     {
       "q": "Drop unneccessary `binascii` import",
@@ -288,7 +401,10 @@
       "q_ko_draft": "불필요한 `binascii` import 제거",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Remove unnecessary `binascii` import",
-      "q_ko_mt_src": "불필요한 `binascii` import 제거"
+      "q_ko_mt_src": "불필요한 `binascii` import 제거",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "불필요한 `binascii` import 제거",
+      "q_ko_llm": "remove unnecessary binascii import"
     },
     {
       "q": "Add support for Python 3.12",
@@ -303,7 +419,13 @@
       "q_ko_draft": "Python 3.12 지원 추가하려면 어디를 손봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I go to add Python 3.12 support?",
-      "q_ko_mt_src": "Python 3.12 지원 추가하려면 어디를 손봐야 해?"
+      "q_ko_mt_src": "Python 3.12 지원 추가하려면 어디를 손봐야 해?",
+      "q_ko_dict_terms": [
+        "add",
+        "create"
+      ],
+      "q_ko_dict": "Python 3.12 지원 추가하려면 어디를 손봐야 해? add create",
+      "q_ko_llm": "add Python 3.12 support"
     },
     {
       "q": "Raise ValueError on `Response.encoding` being set after `Response.text` has been accessed",
@@ -317,7 +439,13 @@
       "q_ko_draft": "`Response.text`에 접근한 뒤 `Response.encoding`을 설정하면 ValueError 내게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "If you're going to get to `Response.text` and set `Response.encoding`, give me ValueError.",
-      "q_ko_mt_src": "`Response.text`에 접근한 뒤 `Response.encoding`을 설정하면 ValueError 내게 해줘"
+      "q_ko_mt_src": "`Response.text`에 접근한 뒤 `Response.encoding`을 설정하면 ValueError 내게 해줘",
+      "q_ko_dict_terms": [
+        "config",
+        "setting"
+      ],
+      "q_ko_dict": "`Response.text`에 접근한 뒤 `Response.encoding`을 설정하면 ValueError 내게 해줘 config setting",
+      "q_ko_llm": "raise ValueError when setting Response.encoding after accessing Response.text"
     },
     {
       "q": "More robust check for upload files in binary mode",
@@ -331,7 +459,12 @@
       "q_ko_draft": "업로드 파일이 바이너리 모드인지 더 확실하게 체크",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Upload the file to make sure it's in binary mode.",
-      "q_ko_mt_src": "업로드 파일이 바이너리 모드인지 더 확실하게 체크"
+      "q_ko_mt_src": "업로드 파일이 바이너리 모드인지 더 확실하게 체크",
+      "q_ko_dict_terms": [
+        "upload"
+      ],
+      "q_ko_dict": "업로드 파일이 바이너리 모드인지 더 확실하게 체크 upload",
+      "q_ko_llm": "stricter check that upload file is opened in binary mode"
     },
     {
       "q": "NO_PROXY should support IPv4, IPv6 and localhost",
@@ -345,7 +478,10 @@
       "q_ko_draft": "NO_PROXY에서 IPv4, IPv6, localhost 지원하려면 어디를 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I look to support IPv4, IPv6 and localhost on NO_PROXY?",
-      "q_ko_mt_src": "NO_PROXY에서 IPv4, IPv6, localhost 지원하려면 어디를 봐야 해?"
+      "q_ko_mt_src": "NO_PROXY에서 IPv4, IPv6, localhost 지원하려면 어디를 봐야 해?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "NO_PROXY에서 IPv4, IPv6, localhost 지원하려면 어디를 봐야 해?",
+      "q_ko_llm": "support IPv4, IPv6, and localhost in NO_PROXY"
     },
     {
       "q": "Change LineDecoder to match stdlib splitlines, resulting in significant speed up",
@@ -359,7 +495,16 @@
       "q_ko_draft": "LineDecoder를 표준 라이브러리 splitlines에 맞게 바꿔서 속도 크게 올려줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Change the LineDecoder to the standard library splitlines and speed it up.",
-      "q_ko_mt_src": "LineDecoder를 표준 라이브러리 splitlines에 맞게 바꿔서 속도 크게 올려줘"
+      "q_ko_mt_src": "LineDecoder를 표준 라이브러리 splitlines에 맞게 바꿔서 속도 크게 올려줘",
+      "q_ko_dict_terms": [
+        "change",
+        "update",
+        "replace",
+        "speed",
+        "performance"
+      ],
+      "q_ko_dict": "LineDecoder를 표준 라이브러리 splitlines에 맞게 바꿔서 속도 크게 올려줘 change update replace speed performance",
+      "q_ko_llm": "rework LineDecoder to match stdlib splitlines for big speedup"
     },
     {
       "q": "Use '%20' for encoding spaces in query parameters.",
@@ -374,7 +519,14 @@
       "q_ko_draft": "쿼리 파라미터 공백은 '%20'으로 인코딩",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Query parameter spaces are encoded as '20%'.",
-      "q_ko_mt_src": "쿼리 파라미터 공백은 '%20'으로 인코딩"
+      "q_ko_mt_src": "쿼리 파라미터 공백은 '%20'으로 인코딩",
+      "q_ko_dict_terms": [
+        "whitespace",
+        "space",
+        "encoding"
+      ],
+      "q_ko_dict": "쿼리 파라미터 공백은 '%20'으로 인코딩 whitespace space encoding",
+      "q_ko_llm": "encode query parameter spaces as '%20'"
     },
     {
       "q": "Raise TypeError if content is passed a 'dict' instance.",
@@ -388,7 +540,10 @@
       "q_ko_draft": "content에 'dict' 인스턴스 넘기면 TypeError 내는 건 어디서 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you generate TypeError when you override the \"dict\" instances in content?",
-      "q_ko_mt_src": "content에 'dict' 인스턴스 넘기면 TypeError 내는 건 어디서 해?"
+      "q_ko_mt_src": "content에 'dict' 인스턴스 넘기면 TypeError 내는 건 어디서 해?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "content에 'dict' 인스턴스 넘기면 TypeError 내는 건 어디서 해?",
+      "q_ko_llm": "raise TypeError when passing 'dict' instance to content"
     },
     {
       "q": "Add back in URL.raw with NamedTuple",
@@ -403,7 +558,14 @@
       "q_ko_draft": "URL.raw를 NamedTuple로 다시 넣어줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Put the URL.raw back into NamedTuple.",
-      "q_ko_mt_src": "URL.raw를 NamedTuple로 다시 넣어줘"
+      "q_ko_mt_src": "URL.raw를 NamedTuple로 다시 넣어줘",
+      "q_ko_dict_terms": [
+        "insert",
+        "add",
+        "put"
+      ],
+      "q_ko_dict": "URL.raw를 NamedTuple로 다시 넣어줘 insert add put",
+      "q_ko_llm": "restore URL.raw as NamedTuple"
     },
     {
       "q": "Remove typeshed iscoroutine workaround",
@@ -418,7 +580,10 @@
       "q_ko_draft": "typeshed iscoroutine 우회 코드 제거",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Remove the typeshed iscoroutine bypass code",
-      "q_ko_mt_src": "typeshed iscoroutine 우회 코드 제거"
+      "q_ko_mt_src": "typeshed iscoroutine 우회 코드 제거",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "typeshed iscoroutine 우회 코드 제거",
+      "q_ko_llm": "remove typeshed iscoroutine workaround"
     },
     {
       "q": "Switch `extensions` from `Dict` to `Mapping`.",
@@ -433,7 +598,15 @@
       "q_ko_draft": "`extensions`를 `Dict`에서 `Mapping`으로 바꾸려면 어디 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you need to fix it if you want to change `extensions` from `Dict` to `Mapping`?",
-      "q_ko_mt_src": "`extensions`를 `Dict`에서 `Mapping`으로 바꾸려면 어디 고쳐야 해?"
+      "q_ko_mt_src": "`extensions`를 `Dict`에서 `Mapping`으로 바꾸려면 어디 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "change",
+        "update",
+        "replace",
+        "fix"
+      ],
+      "q_ko_dict": "`extensions`를 `Dict`에서 `Mapping`으로 바꾸려면 어디 고쳐야 해? change update replace fix",
+      "q_ko_llm": "change extensions from Dict to Mapping"
     },
     {
       "q": "Drop .read/.aread from SyncByteStream/AsyncByteStream",
@@ -448,7 +621,10 @@
       "q_ko_draft": "SyncByteStream/AsyncByteStream에서 .read/.aread 제거",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Remove .read/.aread from SyncByteStream/AsyncByteStream",
-      "q_ko_mt_src": "SyncByteStream/AsyncByteStream에서 .read/.aread 제거"
+      "q_ko_mt_src": "SyncByteStream/AsyncByteStream에서 .read/.aread 제거",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "SyncByteStream/AsyncByteStream에서 .read/.aread 제거",
+      "q_ko_llm": "remove .read/.aread from SyncByteStream/AsyncByteStream"
     },
     {
       "q": "Allow str content for multipart upload files",
@@ -463,8 +639,14 @@
       "q_ko_draft": "multipart 업로드 파일 content로 str도 받으려면 어디 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I look if I want to get str as the content of the multipart upload file?",
-      "q_ko_mt_src": "multipart 업로드 파일 content로 str도 받으려면 어디 봐야 해?"
+      "q_ko_mt_src": "multipart 업로드 파일 content로 str도 받으려면 어디 봐야 해?",
+      "q_ko_dict_terms": [
+        "upload"
+      ],
+      "q_ko_dict": "multipart 업로드 파일 content로 str도 받으려면 어디 봐야 해? upload",
+      "q_ko_llm": "accept str as multipart upload file content"
     }
   ],
-  "mt_model": "facebook/nllb-200-distilled-600M"
+  "mt_model": "facebook/nllb-200-distilled-600M",
+  "llm_rewrite": "Claude (Claude Code subagent), Korean question only, prompt in eval/bilingual/README.md"
 }
