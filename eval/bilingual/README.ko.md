@@ -75,7 +75,7 @@ python eval/bilingual/ko_sheet.py import 검토표.xlsx   # 검토표 → 각 JS
 
 - **한국어 + 사전** (`q_ko_dict`, [expand.py](expand.py)): Lantern의 사전이 넓힌 영어 낱말(`lantern context --json`의 `query_terms` 중 질문에 원래 있던 식별자에서 나오지 않은 영어 낱말)을 한국어 질문 뒤에 붙입니다. BM25와 임베딩 비교 대상도 Lantern과 같은 사전을 쓰게 됩니다. 사전이 걸리는 문항은 320개 중 236개(개발 중에 보지 않은 261개 중 191개)입니다. Lantern은 같은 사전을 스스로 적용하므로 이 형태로는 재지 않습니다
 - **한국어 → LLM 재작성** (`q_ko_llm`): 코딩 에이전트가 모델 호출 한 번을 더 써서 할 수 있는 일입니다. LLM 에이전트(Claude, Claude Code 하위 에이전트)에게 한국어 질문과 저장소 이름만 주고, 영어 README에 적은 지시문으로 320개를 한 번에 쓰게 했습니다 (식별자는 그대로, 질문에 없는 정보는 더하지 않음, 저장소·코드·웹은 보지 않음)
-  - 모델은 Claude Opus 5.5(`claude-opus-5-5`)로, 한국어 질문의 초안·검토를 맡은 모델과 같습니다. [leak.py](leak.py)로 점검하면 개발 중에 보지 않은 261문항에서 한국어 질문에 없던 식별자나 정답 파일 이름을 더한 재작성은 없지만, 47개(18%)는 영어 커밋 제목과 글자 그대로 같고 원문과 낱말이 겹치는 정도도 기계 번역보다 큽니다(Jaccard 0.71 대 0.42). 그 47개를 빼도 혼합 방식은 처음 3개 66.4(영어 68.7, 한국어 56.5)입니다. 같은 모델이라 유리할 수 있는 강한 참고점으로 보고, 상한으로 보지 않습니다
+  - 모델은 Claude Opus 5.5(`claude-opus-5-5`)로, 한국어 질문의 초안·검토를 맡은 모델과 같습니다. [leak.py](leak.py)로 점검하면 개발 중에 보지 않은 261문항에서 한국어 질문에 없던 식별자나 정답 파일 이름을 더한 재작성은 없지만, 47개(18%)는 영어 커밋 제목과 글자 그대로 같고 원문과 낱말이 겹치는 정도도 기계 번역보다 큽니다(Jaccard 0.71 대 0.42). 그 47개를 빼도 혼합 방식은 처음 3개 66.4(영어 68.7, 한국어 56.5)입니다. 원문 그대로 되돌아오는 비율은 모델 학습 데이터 시점(2026년 6월) 뒤 커밋에서도 비슷해서(15.5% 대 이전 20.0%, Fisher p=0.42) 커밋 이력을 기억해서라기보다 번역이 투명해서로 봅니다. 같은 모델이라 유리할 수 있는 강한 참고점으로 보고, 상한으로 보지 않습니다. 비용([rewrite_latency.py](rewrite_latency.py), 질문마다 Claude Code로 한 번 호출, 30문항): API 시간 중앙값 2.6초(90% 4.8초), 출력 약 29토큰, 정가 기준 질문당 약 $0.01
 - **한국어 + 사전, 절반 가중** (`ko-dictw`, 비교 대상만): 같은 사전 낱말을 Lantern처럼 따로, 절반 가중치로 셉니다 (질문 낱말의 BM25 점수 + 넓힌 낱말의 BM25 점수 × 0.5). 흔한 동사가 질문의 식별자를 누르지 않게 하려는 것입니다. 임베딩 쪽은 `ko-dict`와 같은 글을 받습니다
 - **사람이 쓴 질문** (`q_ko_native`): [native_sheet.py](native_sheet.py)가 개발 중에 보지 않은 문항에서 저장소마다 4개(40개)를 골라 영어 커밋 메시지만 보이는 표를 만듭니다. 사람이 번역 도구 없이 한국어 질문을 처음부터 쓰고 `import`하면, `report.py`가 같은 문항의 LLM 한국어 질문과 나란히 보여 줍니다
 
@@ -99,7 +99,8 @@ bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [aider가 깔린 파
 | [baselines.py](baselines.py) | BM25(파일·40줄 조각), 다국어 임베딩(multilingual-e5-small. 다른 모델은 `--embed-model BAAI/bge-m3 --tag bgem3`처럼 따로, 4코어로 19시간쯤 걸려 `run_all.sh`에서는 뺌), BM25+임베딩 RRF. 낱말: 식별자는 Lantern처럼 통째로 + 낱말로 쪼갬, 한글은 붙어 있는 덩어리 그대로 (한국어 주석·문자열에만 맞음) |
 | [expand.py](expand.py) | 한국어 질문 + Lantern 사전이 넓힌 영어 낱말(`q_ko_dict`), 사전 적중률 |
 | [native_sheet.py](native_sheet.py) | 사람이 처음부터 쓰는 한국어 질문 표 (`q_ko_native`) |
-| [leak.py](leak.py) | LLM 재작성 누출 점검 (새 식별자, 정답 파일 이름, 영어 원문과의 겹침) |
+| [leak.py](leak.py) | LLM 재작성 누출 점검 (새 식별자, 정답 파일 이름, 영어 원문과의 겹침, 모델 학습 시점 전후의 원문 복원 비율) |
+| [rewrite_latency.py](rewrite_latency.py) | LLM 재작성의 지연 시간·토큰·비용 (질문마다 실제 모델 호출, 계정 사용량을 씀) |
 | [errors.py](errors.py) | Lantern이 영어로만 맞힌 문항. 원인은 [오류-분석.md](오류-분석.md)에서 사람이 나눔 (26개 중 16개가 사전에 없는 낱말, 그중 11개가 외래어) |
 | [repomap_baseline.py](repomap_baseline.py) | Aider RepoMap (aider-chat 0.86.2, 질문 낱말을 언급된 식별자로) |
 | [embed_server.py](embed_server.py) | Lantern 의미 검색을 같은 임베딩 모델로 재는 로컬 `/embeddings` 서버 |
