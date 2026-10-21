@@ -46,13 +46,12 @@ LABEL = {
     "lantern-no-name": "Lantern − 식별자 가산",
     "lantern-no-graph": "Lantern − 호출 그래프",
     "lantern-no-cochange": "Lantern − 함께 바뀐 파일",
+    "lantern-no-copies": "Lantern − 보관용 사본 강등",
     "lantern-sem": "**Lantern + 임베딩 (e5-small)**",
 }
-LANGS = {"en": "영어", "ko": "한국어", "ko-dict": "한국어+사전", "ko-dictw": "한국어+사전(절반 가중)", "ko-mt": "한국어→기계 번역", "ko-llm": "한국어→LLM 재작성", "ko-native": "사람이 쓴 한국어"}
+LANGS = {"en": "영어", "en-para": "영어 바꿔 말하기(LLM)", "ko": "한국어", "ko-dict": "한국어+사전", "ko-dictw": "한국어+사전(절반 가중)", "ko-mt": "한국어→기계 번역", "ko-llm": "한국어→LLM 재작성", "ko-loan": "외래어를 많이 쓴 한국어(LLM)", "ko-native": "사람이 쓴 한국어"}
 # 논문 표에 쓰는 영어 이름
 TEX_LABEL = {
-    "grep": "Keyword (file)",
-    "snippets": "Keyword (snippet)",
     "bm25-file": "BM25 (file)",
     "bm25-chunk": "BM25 (chunk)",
     "dense": "Dense (mE5-small)",
@@ -73,8 +72,9 @@ TEX_LANG = {"en": "EN", "ko": "KO", "ko-dictw": "KO+dict", "ko-mt": "KO$\\to$MT"
 
 
 def tex_table(res, keep, order, subset):
-    """언어마다 Acc@3·MRR 두 칸. 각 열의 가장 큰 값은 굵게"""
+    """언어마다 Acc@3·MRR 두 칸. 각 열의 가장 큰 값은 굵게. TEX_LABEL에 없는 방법(보조 변형)은 논문 표에서 뺀다"""
     langs = [l for l in TEX_LANG if any(k[0] == l for k in res)]
+    order = [m for m in order if m in TEX_LABEL]
     vals = {}
     for lang in langs:
         for m in order:
@@ -92,7 +92,8 @@ def tex_table(res, keep, order, subset):
         "Columns are the question every method gets: English, Korean, Korean plus Lantern's dictionary terms "
         "(KO+dict; at half weight for BM25, appended for dense retrieval; compare with Lantern's own KO column), "
         "and Korean translated by NLLB (KO$\\to$MT) or rewritten by an LLM (KO$\\to$LLM). "
-        "Indented rows remove one Lantern component.}",
+        "Indented rows remove one Lantern component. --: not run (Lantern applies the dictionary itself; "
+        "RepoMap and the ablations were not run on every form). Keyword search is in the full report.}",
         "\\label{tab:results}",
         "\\setlength{\\tabcolsep}{3pt}",
         "\\begin{tabular}{l" + "rr" * len(langs) + "}",
@@ -257,6 +258,20 @@ KEY = [
     ("ko-dictw", "bm25-chunk", "ko", "bm25-chunk"),
     ("ko-dictw", "bm25-chunk", "ko-dict", "bm25-chunk"),
     ("ko-llm", "lantern-sem", "en", "lantern-sem"),
+    # 영어를 영어로 바꿔 말하기만 한 통제: 하락이 말 바꿈 때문인지 언어 때문인지
+    ("en-para", "hybrid", "en", "hybrid"),
+    ("en-para", "lantern", "en", "lantern"),
+    ("en-para", "bm25-chunk", "en", "bm25-chunk"),
+    ("en-para", "lantern-sem", "en", "lantern-sem"),
+    ("ko", "hybrid", "en-para", "hybrid"),
+    ("ko", "lantern", "en-para", "lantern"),
+    # 외래어를 많이 쓴 한국어 (LLM이 만든 스트레스 테스트, 사람이 쓴 질문이 아님)
+    ("ko-loan", "lantern", "ko-loan", "hybrid"),
+    ("ko-loan", "lantern", "ko", "lantern"),
+    ("ko-loan", "hybrid", "ko", "hybrid"),
+    ("ko-loan", "bm25-chunk", "ko", "bm25-chunk"),
+    ("ko-loan", "lantern-sem", "ko-loan", "hybrid"),
+    ("ko-loan", "lantern-sem", "ko", "lantern-sem"),
     ("ko-llm", "hybrid", "ko-mt", "hybrid"),
 ]
 
@@ -366,6 +381,21 @@ def subgroups(questions, res, keep, order):
     return out + [""]
 
 
+def sensitivity(res, keep):
+    """BM25에 사전 낱말을 얼마의 가중치로 더할지 (0 = 사전 없음, 1.0 = 그냥 덧붙임)"""
+    steps = [("0", "ko"), ("0.25", "ko-dictw25"), ("0.5", "ko-dictw"), ("0.75", "ko-dictw75"), ("1.0", "ko-dict")]
+    if not any((lang, "bm25-chunk") in res for _, lang in steps[1:4] if lang != "ko-dictw"):
+        return []
+    out = ["## 사전 가중치 민감도 (BM25, 한국어+사전)", "", "| 가중치 | BM25 (파일) Acc@3 | BM25 (파일) MRR | BM25 (조각) Acc@3 | BM25 (조각) MRR |", "|---|---|---|---|---|"]
+    for w, lang in steps:
+        cells = []
+        for m in ("bm25-file", "bm25-chunk"):
+            rows = [v for c, v in res.get((lang, m), {}).items() if keep(c)]
+            cells += [pct(mean([x["acc3"] for x in rows])), f"{mean([x['mrr'] for x in rows]):.3f}"] if rows else ["--", "--"]
+        out.append(f"| {w} | " + " | ".join(cells) + " |")
+    return out + ["", "Lantern이 쓰는 가중치는 0.5. 1.0은 사전 낱말을 질문에 그냥 덧붙인 것과 같다.", ""]
+
+
 def native(questions, res, keep, order):
     """사람이 직접 쓴 한국어 질문(q_ko_native)이 있는 문항에서 LLM이 쓴 한국어 질문과 나란히"""
     cs = [c for c, q in questions.items() if keep(c) and q.get("q_ko_native")]
@@ -455,6 +485,7 @@ def main():
     out += per_repo(questions, res, keep, order)
     out += subgroups(questions, res, keep, order)
     out += native(questions, res, keep, order)
+    out += sensitivity(res, keep)
     text = "\n".join(out)
     print(text)
     if a.tex:
