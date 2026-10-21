@@ -38,6 +38,8 @@ One JSON file per repository: `project`, `url`, `ref` (snapshot), and `questions
 | `q_ko_dict`, `q_ko_dict_terms` | `q_ko` plus the English words Lantern's Korean dictionary adds to it (`q_ko_dict_terms`, empty if the dictionary does not fire), so the baselines can get the same dictionary |
 | `q_ko_llm` | `q_ko` rewritten into an English code-search query by an LLM (see below), for the rewrite-then-retrieve baseline |
 | `q_ko_native`, `q_ko_native_by` | Optional: a Korean question written from scratch by a person ([native_sheet.py](native_sheet.py)) |
+| `q_para` | `q` reworded in English by an LLM (control for rewording, see below) |
+| `q_ko_loan` | `q_ko` rewritten by an LLM with more Hangul loanwords (stress test, see below) |
 | `golden` | Gold files, repository-relative |
 | `commit`, `parent`, `date` | The commit, its parent (where retrieval runs), and the commit date |
 
@@ -77,7 +79,9 @@ Each form gives every method the same input, so the effect of each step can be s
   > You are the query-rewriting step of a coding agent. A developer asked a question in Korean about an open-source repository; before searching the code, you rewrite it as an English code-search query. (1) Write a short English query (one line) that a coding agent would use to search this repository for the code to read or change: say what the code does or what should change, in the words developers use in English code and commit messages. (2) Keep every code identifier, option, flag, header, function and type name from the Korean exactly as written. (3) Do not add information that is not in the Korean question (no guessed file names, function names or causes), and do not look anything up: do not open any repository, website, commit or source code. Work only from the Korean text and the repository name. (4) One query per item; no explanations.
 
   The model was Claude Opus 5.5 (`claude-opus-5-5`), the same model that drafted and checked the Korean questions. [leak.py](leak.py) checks the rewrites: on the 261 unseen questions, no rewrite adds a code identifier or gold file name that is not in the Korean question, but 47 (18%) reproduce the English commit subject verbatim, and rewrites share more words with it than the NLLB back-translations (Jaccard 0.71 vs 0.42). Without those 47, the hybrid still reaches A@3 66.4 (English 68.7, Korean 56.5). Verbatim reconstructions are about as frequent for commits after the model's training-data cutoff (June 2026: 18/116 = 15.5% vs 29/145 = 20.0% before, Fisher p = 0.42), so they point to transparent translation rather than memorized commit history. Treat this baseline as a strong reference point that may be favored by the shared model, not as an upper bound. Cost ([rewrite_latency.py](rewrite_latency.py), one call per question through Claude Code, 30 questions): median 2.6 s of API time (90th percentile 4.8 s), about 29 output tokens and $0.01 at list price per question.
-- **Korean + dictionary, half weight** (`ko-dictw`, baselines only): the same dictionary words, but scored separately at half weight as Lantern does (BM25 score of the question words + 0.5 × BM25 score of the added words), so common verbs do not outweigh the question's identifiers. The dense side gets the same text as `ko-dict`.
+- **English reworded** (`q_para`, `en-para`): a control for rewording alone. The same model rewrote each English subject in its own words, with the same guidelines as the Korean drafts (natural phrasing, mixed requests/questions/issue titles, identifiers kept, nothing added), but staying in English. The drop from `en` to `en-para` is what rewording costs; the rest of the drop to `ko` is the language.
+- **Korean with more loanwords** (`q_ko_loan`, `ko-loan`): a stress test, not native questions. The same model rewrote each Korean question the way developers who use many Hangul loanwords type (요청 → 리퀘스트, 기본값 → 디폴트, progress → 프로그레스), keeping identifiers and meaning; 51 of 320 had nothing to change. On the 261 unseen questions the dictionary then fires on 147 (56%, vs 191) and 56 questions have no English word (vs 27). Chunk-level BM25, the hybrid and Lantern then lose another 8.0, 7.3 and 6.1 A@3 points; Lantern (49.8) still ties the hybrid (48.7).
+- **Korean + dictionary, half weight** (`ko-dictw`, baselines only): the same dictionary words, but scored separately at half weight as Lantern does (BM25 score of the question words + 0.5 × BM25 score of the added words), so common verbs do not outweigh the question's identifiers. The dense side gets the same text as `ko-dict`. Sensitivity (`--dict-weight`, unseen 261): chunk-level BM25 A@3 is 51.3 without the dictionary and 54.0 / 55.9 / 55.6 / 54.4 at weight 0.25 / 0.5 / 0.75 / 1.0 (1.0 = appending, `ko-dict`), so the dictionary matters more than the exact weight.
 - **Written by a person** (`q_ko_native`): [native_sheet.py](native_sheet.py) picks 4 unseen questions per repository (40) and makes a sheet that shows only the English commit message; a person writes the Korean question from scratch without translation tools, and `import` stores it. `report.py` then compares the same questions with the LLM-written Korean.
 
 ```bash
@@ -92,7 +96,7 @@ cargo build --release -p lantern-context
 bash eval/bilingual/run_all.sh <folder for the clones> [python with aider-chat installed]
 ```
 
-It translates and dictionary-expands the Korean questions, then runs Lantern, BM25 / dense / RRF, Aider RepoMap, Lantern with dense retrieval, and the scale measurement for every question form, and writes a comparison report (`결과-비교.md` for all questions, `결과-비교-test.md` for the test split, `결과-비교-unseen.md` for the main results). There are no model API calls and nothing costs money (`q_ko_llm` is stored, not regenerated), but building embeddings on a CPU takes several hours the first time (vectors are cached).
+It translates and dictionary-expands the Korean questions, then runs Lantern, BM25 / dense / RRF, Aider RepoMap, Lantern with dense retrieval, and the scale measurement for every question form, and writes a comparison report (`results-all.md` for all questions, `results-test.md` for the test split, `results-unseen.md` for the main results). There are no model API calls and nothing costs money (`q_ko_llm` is stored, not regenerated), but building embeddings on a CPU takes several hours the first time (vectors are cached).
 
 | Script | What it does |
 |---|---|
@@ -101,15 +105,34 @@ It translates and dictionary-expands the Korean questions, then runs Lantern, BM
 | [expand.py](expand.py) | Korean question + the English words Lantern's dictionary adds (`q_ko_dict`) and the dictionary hit rate |
 | [native_sheet.py](native_sheet.py) | Sheet for Korean questions written from scratch by a person (`q_ko_native`) |
 | [leak.py](leak.py) | Leak check of the LLM rewrites (new identifiers, gold file names, overlap with the English original, verbatim rate before/after the model's training-data cutoff) |
+| [hybrid_cost.py](hybrid_cost.py) | Cost of the BM25 + dense hybrid on the same CPU: embedding every chunk from scratch, and time per question |
+| [scale_questions.txt](scale_questions.txt) | Questions used only to time context assembly on a repository outside the benchmark (`scale.py --extra vscode=<clone>`) |
 | [rewrite_latency.py](rewrite_latency.py) | Latency, tokens and price of the LLM rewrite, one real model call per question (uses your account) |
-| [errors.py](errors.py) | Questions Lantern answers in English but not in Korean; causes are classified by hand in [오류-분석.md](오류-분석.md) (16 of 26 miss a dictionary word, 11 of them Hangul transliterations of English terms) |
+| [errors.py](errors.py) | Questions Lantern answers in English but not in Korean; causes are classified by hand in [error-analysis.md](error-analysis.md) (16 of 26 miss a dictionary word, 11 of them Hangul transliterations of English terms) |
 | [repomap_baseline.py](repomap_baseline.py) | Aider RepoMap (aider-chat 0.86.2; question words passed as mentioned identifiers) |
 | [embed_server.py](embed_server.py) | Local `/embeddings` server so Lantern's semantic search uses the same embedding model |
 | [translate.py](translate.py) | Korean → English machine translation |
 | [scale.py](scale.py) | Indexing time and peak memory, index size, per-question assembly time |
 | [report.py](report.py) | Recall@8k, R@10f, Acc@1/3/5, MRR, paired bootstrap 95% CIs (per question, and per repository for the key comparisons), McNemar tests with Holm correction, per-repository and per-subgroup tables, LaTeX tables (`--tex`) |
 
-All methods get the same 8,000-token budget and the same file filter; tokens are estimated as 4 characters per token. The main results use the 261 questions that do not overlap with [eval/bench](../bench) (`report.py --subset unseen`, written to `결과-비교-unseen.md`), because eval/bench was used to check ranking and dictionary changes while developing the engine. Dev/test split: a question is dev if the first 8 hex digits of its commit hash, as an integer, modulo 10 are 0–2 (about 30%), otherwise test. Engine dictionaries and weights are tuned on dev only; results are reported on test.
+All methods get the same 8,000-token budget and the same file filter; tokens are estimated as 4 characters per token. The main results use the 261 questions that do not overlap with [eval/bench](../bench) (`report.py --subset unseen`, written to `results-unseen.md`), because eval/bench was used to check ranking and dictionary changes while developing the engine. Dev/test split: a question is dev if the first 8 hex digits of its commit hash, as an integer, modulo 10 are 0–2 (about 30%), otherwise test. Engine dictionaries and weights are tuned on dev only; results are reported on test.
+
+## Cost of the hybrid baseline
+
+[hybrid_cost.py](hybrid_cost.py) on the same CPU as Lantern's scale table (Intel Core i5-11400), multilingual-e5-small with 4 threads, every chunk embedded from scratch at each repository's snapshot; per question = BM25 + query embedding + similarity + RRF + packing, median of 10 Korean questions. Lantern indexes the same repositories in 2–5 s and assembles a context in 5–12 ms.
+
+| Repository | Chunks | BM25 index (s) | Embedding (s) | Per question (ms) |
+|---|---|---|---|---|
+| axios | 1,393 | 1.7 | 137 | 16 |
+| axum | 1,357 | 1.2 | 139 | 17 |
+| commons-lang | 5,003 | 4.2 | 588 | 29 |
+| flask | 502 | 0.4 | 54 | 17 |
+| gin | 661 | 0.7 | 78 | 20 |
+| hono | 2,380 | 2.1 | 262 | 18 |
+| httpx | 473 | 0.5 | 54 | 19 |
+| jq | 1,251 | 0.4 | 147 | 18 |
+| okhttp | 4,025 | 3.4 | 433 | 25 |
+| vite | 3,877 | 2.5 | 334 | 33 |
 
 ## Limitations
 
