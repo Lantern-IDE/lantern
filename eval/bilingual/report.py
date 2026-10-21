@@ -48,7 +48,7 @@ LABEL = {
     "lantern-no-cochange": "Lantern − 함께 바뀐 파일",
     "lantern-sem": "**Lantern + 임베딩 (e5-small)**",
 }
-LANGS = {"en": "영어", "ko": "한국어", "ko-dict": "한국어+사전", "ko-mt": "한국어→기계 번역", "ko-llm": "한국어→LLM 재작성", "ko-native": "사람이 쓴 한국어"}
+LANGS = {"en": "영어", "ko": "한국어", "ko-dict": "한국어+사전", "ko-dictw": "한국어+사전(절반 가중)", "ko-mt": "한국어→기계 번역", "ko-llm": "한국어→LLM 재작성", "ko-native": "사람이 쓴 한국어"}
 # 논문 표에 쓰는 영어 이름
 TEX_LABEL = {
     "grep": "Keyword (file)",
@@ -68,7 +68,8 @@ TEX_LABEL = {
     "lantern-sem": "\\textbf{Lantern + Dense}",
 }
 SUBSET_TEX = {"all": "all questions", "unseen": "questions not used during development", "test": "test split", "dev": "dev split", "2026": "2026 commits"}
-TEX_LANG = {"en": "EN", "ko": "KO", "ko-dict": "KO+dict", "ko-mt": "KO$\\to$MT", "ko-llm": "KO$\\to$LLM"}
+# 논문 표의 사전 열은 Lantern과 같은 결합(절반 가중, ko-dictw). 그냥 덧붙인 ko-dict는 보고서(md)에만
+TEX_LANG = {"en": "EN", "ko": "KO", "ko-dictw": "KO+dict", "ko-mt": "KO$\\to$MT", "ko-llm": "KO$\\to$LLM"}
 
 
 def tex_table(res, keep, order, subset):
@@ -87,10 +88,10 @@ def tex_table(res, keep, order, subset):
         f"% report.py --subset {subset} 로 만든 표. 손으로 고치지 말고 다시 만든다",
         f"\\begin{{{env}}}[t]",
         "\\centering",
-        f"\\caption{{File-level context retrieval within an 8k-token budget ({SUBSET_TEX[subset]}, $n={n}$): Acc@3 (\\%) and MRR. "
-        "Each column is the question every method receives: English, Korean, Korean plus the English terms Lantern's dictionary adds "
-        "(KO+dict; Lantern applies the same dictionary itself, so its KO column is the comparable one), and Korean translated by NLLB "
-        "(KO$\\to$MT) or rewritten into an English search query by an LLM (KO$\\to$LLM). Indented rows remove one component from Lantern.}",
+        f"\\caption{{File-level retrieval within an 8k-token budget, Acc@3 (\\%) and MRR ({SUBSET_TEX[subset]}, $n={n}$). "
+        "Columns are the question every method gets: English, Korean, Korean plus Lantern's dictionary terms at half weight "
+        "(KO+dict; compare with Lantern's own KO column), and Korean translated by NLLB (KO$\\to$MT) or rewritten by an LLM (KO$\\to$LLM). "
+        "Indented rows remove one Lantern component.}",
         "\\label{tab:results}",
         "\\setlength{\\tabcolsep}{3pt}",
         "\\begin{tabular}{l" + "rr" * len(langs) + "}",
@@ -235,6 +236,8 @@ KEY = [
     ("ko", "lantern", "ko", "hybrid"),
     ("ko", "lantern", "ko-dict", "hybrid"),
     ("ko", "lantern", "ko-dict", "bm25-chunk"),
+    ("ko", "lantern", "ko-dictw", "hybrid"),
+    ("ko", "lantern", "ko-dictw", "bm25-chunk"),
     ("ko", "lantern", "ko-mt", "hybrid"),
     ("ko", "lantern", "ko-llm", "hybrid"),
     ("ko-llm", "lantern", "ko-llm", "hybrid"),
@@ -249,6 +252,10 @@ KEY = [
     ("ko", "lantern", "ko", "lantern-no-dict"),
     ("ko-dict", "hybrid", "ko", "hybrid"),
     ("ko-dict", "bm25-chunk", "ko", "bm25-chunk"),
+    ("ko-dictw", "hybrid", "ko", "hybrid"),
+    ("ko-dictw", "bm25-chunk", "ko", "bm25-chunk"),
+    ("ko-dictw", "bm25-chunk", "ko-dict", "bm25-chunk"),
+    ("ko-llm", "lantern-sem", "en", "lantern-sem"),
     ("ko-llm", "hybrid", "ko-mt", "hybrid"),
 ]
 
@@ -345,7 +352,7 @@ def subgroups(questions, res, keep, order):
         "한국어 질문에 영어 낱말이 있는 문항": lambda q: any(t.isascii() for t in terms(q.get("q_ko", ""))),
         "한국어 질문에 영어 낱말이 없는 문항": lambda q: not any(t.isascii() for t in terms(q.get("q_ko", ""))),
     }
-    cols = [(l, m) for l, m in [("en", "lantern"), ("en", "hybrid"), ("ko", "bm25-chunk"), ("ko", "hybrid"), ("ko-dict", "hybrid"), ("ko", "lantern"),
+    cols = [(l, m) for l, m in [("en", "lantern"), ("en", "hybrid"), ("ko", "bm25-chunk"), ("ko", "hybrid"), ("ko-dict", "hybrid"), ("ko-dictw", "hybrid"), ("ko", "lantern"),
                                 ("ko", "lantern-no-dict"), ("ko", "lantern-sem"), ("ko-llm", "hybrid")] if (l, m) in res]
     out = ["## 한국어 문항 나눠 보기 (Acc@3)", "", "| 문항 | 수 | " + " | ".join(name(l, m) for l, m in cols) + " |", "|---|---|" + "---|" * len(cols)]
     for label, pred in groups.items():
