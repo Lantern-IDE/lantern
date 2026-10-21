@@ -35,6 +35,9 @@ One JSON file per repository: `project`, `url`, `ref` (snapshot), and `questions
 | `q_ko_draft` | Korean draft written by an LLM agent that did not know this engine |
 | `q_ko` | Korean question after review (`null` until reviewed); `q_ko_reviewed` says who reviewed (`"llm"`, or `true` for a person via the review sheet) |
 | `q_ko_mt` | `q_ko` machine-translated back to English (NLLB-200 600M), for the translate-then-retrieve baseline |
+| `q_ko_dict`, `q_ko_dict_terms` | `q_ko` plus the English words Lantern's Korean dictionary adds to it (`q_ko_dict_terms`, empty if the dictionary does not fire), so the baselines can get the same dictionary |
+| `q_ko_llm` | `q_ko` rewritten into an English code-search query by an LLM (see below), for the rewrite-then-retrieve baseline |
+| `q_ko_native`, `q_ko_native_by` | Optional: a Korean question written from scratch by a person ([native_sheet.py](native_sheet.py)) |
 | `golden` | Gold files, repository-relative |
 | `commit`, `parent`, `date` | The commit, its parent (where retrieval runs), and the commit date |
 
@@ -64,6 +67,23 @@ Guidelines: write as a Korean developer would actually ask a colleague or an AI 
 
 For the **translate-then-retrieve** baseline, `q_ko` is translated back to English with a local model (NLLB-200 distilled 600M, CC-BY-NC 4.0) into `q_ko_mt` ([translate.py](translate.py)).
 
+## Other forms of the Korean question
+
+Each form gives every method the same input, so the effect of each step can be separated.
+
+- **Korean + dictionary** (`q_ko_dict`, [expand.py](expand.py)): the English words Lantern's dictionary adds (the ASCII `query_terms` of `lantern context --json` that do not come from the question's own identifiers) are appended to the Korean question. BM25 and the embedding baselines then get the same dictionary as Lantern. The dictionary fires on 236 of 320 questions (191 of the 261 unseen ones). Lantern is not run on this form, since it applies the same dictionary itself.
+- **Korean → LLM rewrite** (`q_ko_llm`): what a coding agent could do with one extra model call. An LLM agent (Claude, as a Claude Code subagent) received only the Korean questions and repository names, with this instruction, and wrote all 320 in one pass:
+
+  > You are the query-rewriting step of a coding agent. A developer asked a question in Korean about an open-source repository; before searching the code, you rewrite it as an English code-search query. (1) Write a short English query (one line) that a coding agent would use to search this repository for the code to read or change: say what the code does or what should change, in the words developers use in English code and commit messages. (2) Keep every code identifier, option, flag, header, function and type name from the Korean exactly as written. (3) Do not add information that is not in the Korean question (no guessed file names, function names or causes), and do not look anything up: do not open any repository, website, commit or source code. Work only from the Korean text and the repository name. (4) One query per item; no explanations.
+
+  The Korean questions were themselves written from the English commit subjects by the same model family, so the rewrite can land close to the original English: treat this baseline as optimistic.
+- **Written by a person** (`q_ko_native`): [native_sheet.py](native_sheet.py) picks 4 unseen questions per repository (40) and makes a sheet that shows only the English commit message; a person writes the Korean question from scratch without translation tools, and `import` stores it. `report.py` then compares the same questions with the LLM-written Korean.
+
+```bash
+python eval/bilingual/native_sheet.py export native.xlsx
+python eval/bilingual/native_sheet.py import native.xlsx
+```
+
 ## Reproducing
 
 ```bash
@@ -71,17 +91,19 @@ cargo build --release -p lantern-context
 bash eval/bilingual/run_all.sh <folder for the clones> [python with aider-chat installed]
 ```
 
-It translates the Korean questions, then runs Lantern, BM25 / dense / RRF, Aider RepoMap, Lantern with dense retrieval, and the scale measurement, and writes a comparison report (`결과-비교.md` for all questions, `결과-비교-test.md` for the test split). There are no model API calls and nothing costs money, but building embeddings on a CPU takes a few hours the first time (vectors are cached).
+It translates and dictionary-expands the Korean questions, then runs Lantern, BM25 / dense / RRF, Aider RepoMap, Lantern with dense retrieval, and the scale measurement for every question form, and writes a comparison report (`결과-비교.md` for all questions, `결과-비교-test.md` for the test split, `결과-비교-unseen.md` for the main results). There are no model API calls and nothing costs money (`q_ko_llm` is stored, not regenerated), but building embeddings on a CPU takes several hours the first time (vectors are cached).
 
 | Script | What it does |
 |---|---|
 | [../bench/run.mjs](../bench/run.mjs) `--set eval/bilingual` | Keyword search (two variants) and Lantern |
-| [baselines.py](baselines.py) | BM25 (file, 40-line chunk), dense retrieval (multilingual-e5-small), BM25 + dense with RRF |
+| [baselines.py](baselines.py) | BM25 (file, 40-line chunk), dense retrieval (multilingual-e5-small; another model with e.g. `--embed-model BAAI/bge-m3 --tag bgem3`, not part of `run_all.sh` because it takes about 19 hours on 4 CPU cores), BM25 + dense with RRF. Tokens: identifiers whole and split into words, as in Lantern; Hangul runs are kept as whole tokens (they match only Korean comments or strings) |
+| [expand.py](expand.py) | Korean question + the English words Lantern's dictionary adds (`q_ko_dict`) and the dictionary hit rate |
+| [native_sheet.py](native_sheet.py) | Sheet for Korean questions written from scratch by a person (`q_ko_native`) |
 | [repomap_baseline.py](repomap_baseline.py) | Aider RepoMap (aider-chat 0.86.2; question words passed as mentioned identifiers) |
 | [embed_server.py](embed_server.py) | Local `/embeddings` server so Lantern's semantic search uses the same embedding model |
 | [translate.py](translate.py) | Korean → English machine translation |
 | [scale.py](scale.py) | Indexing time and peak memory, index size, per-question assembly time |
-| [report.py](report.py) | Recall@8k, R@10f, Acc@1/3/5, MRR, paired bootstrap 95% CIs, McNemar tests, LaTeX tables (`--tex`) |
+| [report.py](report.py) | Recall@8k, R@10f, Acc@1/3/5, MRR, paired bootstrap 95% CIs (per question, and per repository for the key comparisons), McNemar tests with Holm correction, per-repository and per-subgroup tables, LaTeX tables (`--tex`) |
 
 All methods get the same 8,000-token budget and the same file filter; tokens are estimated as 4 characters per token. The main results use the 261 questions that do not overlap with [eval/bench](../bench) (`report.py --subset unseen`, written to `결과-비교-unseen.md`), because eval/bench was used to check ranking and dictionary changes while developing the engine. Dev/test split: a question is dev if the first 8 hex digits of its commit hash, as an integer, modulo 10 are 0–2 (about 30%), otherwise test. Engine dictionaries and weights are tuned on dev only; results are reported on test.
 
@@ -90,7 +112,10 @@ All methods get the same 8,000-token budget and the same file filter; tokens are
 - Commit messages are written after the fact and contain more identifiers than real user questions (only commits that mention a gold file name are skipped).
 - Gold files are the files that were changed; files one had to read but did not change are not gold.
 - Korean questions are LLM translations checked by an LLM, not questions written by Korean developers, and some LLM phrasing may remain.
-- Because the drafts came from English, translating them back can land close to the original wording, which may favor translate-then-retrieve (hence the translation model differs from the drafting LLM).
+- Because the drafts came from English, translating them back can land close to the original wording, which may favor translate-then-retrieve (hence the translation model differs from the drafting LLM) and even more the LLM rewrite (same model family as the drafting LLM).
+- Lantern's Korean dictionary was written with an AI coding assistant, and the Korean questions by an LLM; a model of the same family may share vocabulary with the dictionary even without seeing it. The person-written subset (`q_ko_native`) is meant to measure this.
+- Dense retrieval uses only the small multilingual-e5-small (also for Lantern + dense, so those comparisons are matched); larger multilingual models such as BGE-M3 were not evaluated.
+- Ten repositories: repository-level bootstrap intervals are wide, and results vary by repository (see the per-repository table in the report).
 - These are popular repositories, so older commits may be in model training data. Commit dates are kept so 2026-only results can be reported.
 
 ## License

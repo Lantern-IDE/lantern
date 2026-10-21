@@ -35,6 +35,9 @@
 | `q_ko_draft` | 이 엔진을 모르는 LLM 에이전트가 쓴 한국어 초안 |
 | `q_ko` | 검토한 한국어 질문 (검토 전에는 `null`). 누가 검토했는지는 `q_ko_reviewed` (`"llm"`, 사람이 검토표로 했으면 `true`) |
 | `q_ko_mt` | `q_ko`를 NLLB-200 600M으로 다시 영어로 옮긴 것 ('번역한 뒤 검색' 비교용) |
+| `q_ko_dict`, `q_ko_dict_terms` | `q_ko`에 Lantern의 한국어 사전이 넓힌 영어 낱말(`q_ko_dict_terms`, 사전이 안 걸리면 빈 목록)을 붙인 것. 비교 대상에도 같은 사전을 주려고 |
+| `q_ko_llm` | `q_ko`를 LLM이 영어 코드 검색어로 다시 쓴 것 (아래), 'LLM이 다시 쓴 뒤 검색' 비교용 |
+| `q_ko_native`, `q_ko_native_by` | 선택: 사람이 처음부터 쓴 한국어 질문 ([native_sheet.py](native_sheet.py)) |
 | `golden` | 정답 파일 (저장소 기준 경로) |
 | `commit`, `parent`, `date` | 커밋, 그 부모(찾는 시점), 커밋 날짜 |
 
@@ -66,6 +69,20 @@ python eval/bilingual/ko_sheet.py import 검토표.xlsx   # 검토표 → 각 JS
 
 **번역한 뒤 검색** 비교용으로 한국어 질문을 로컬 번역 모델(NLLB-200 600M, CC-BY-NC 4.0)로 다시 영어로 옮겨 `q_ko_mt`에 둡니다 (`python eval/bilingual/translate.py`).
 
+## 한국어 질문의 다른 형태
+
+모든 방법에 같은 입력을 줘서, 단계마다의 효과를 가릅니다.
+
+- **한국어 + 사전** (`q_ko_dict`, [expand.py](expand.py)): Lantern의 사전이 넓힌 영어 낱말(`lantern context --json`의 `query_terms` 중 질문에 원래 있던 식별자에서 나오지 않은 영어 낱말)을 한국어 질문 뒤에 붙입니다. BM25와 임베딩 비교 대상도 Lantern과 같은 사전을 쓰게 됩니다. 사전이 걸리는 문항은 320개 중 236개(개발 중에 보지 않은 261개 중 191개)입니다. Lantern은 같은 사전을 스스로 적용하므로 이 형태로는 재지 않습니다
+- **한국어 → LLM 재작성** (`q_ko_llm`): 코딩 에이전트가 모델 호출 한 번을 더 써서 할 수 있는 일입니다. LLM 에이전트(Claude, Claude Code 하위 에이전트)에게 한국어 질문과 저장소 이름만 주고, 영어 README에 적은 지시문으로 320개를 한 번에 쓰게 했습니다 (식별자는 그대로, 질문에 없는 정보는 더하지 않음, 저장소·코드·웹은 보지 않음)
+  - 한국어 질문도 같은 계열의 모델이 영어 커밋 제목에서 옮긴 것이라, 다시 쓴 영어가 원문에 가까워질 수 있습니다. 이 비교 대상은 실제보다 유리하다고 봅니다
+- **사람이 쓴 질문** (`q_ko_native`): [native_sheet.py](native_sheet.py)가 개발 중에 보지 않은 문항에서 저장소마다 4개(40개)를 골라 영어 커밋 메시지만 보이는 표를 만듭니다. 사람이 번역 도구 없이 한국어 질문을 처음부터 쓰고 `import`하면, `report.py`가 같은 문항의 LLM 한국어 질문과 나란히 보여 줍니다
+
+```bash
+python eval/bilingual/native_sheet.py export 작성표.xlsx
+python eval/bilingual/native_sheet.py import 작성표.xlsx
+```
+
 ## 재기
 
 ```bash
@@ -73,17 +90,19 @@ cargo build --release -p lantern-context
 bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [aider가 깔린 파이썬]
 ```
 
-한국어 질문 번역(NLLB) → Lantern → BM25·임베딩·RRF → Aider RepoMap → Lantern+임베딩 → 규모 순으로 재고, [결과-비교.md](결과-비교.md)(전체)와 `결과-비교-test.md`(평가용 세트)를 씁니다. 모델 호출이 없어 무료지만, CPU에서 처음 임베딩을 만드느라 몇 시간 걸립니다 (벡터는 캐시해서 다음부터 빠름).
+한국어 질문 번역(NLLB)·사전 확장 → Lantern → BM25·임베딩·RRF → Aider RepoMap → Lantern+임베딩 → 규모 순으로 질문 형태마다 재고, [결과-비교.md](결과-비교.md)(전체), `결과-비교-test.md`(평가용 세트), `결과-비교-unseen.md`(주 결과)를 씁니다. 모델 API 호출이 없어 무료지만 (`q_ko_llm`은 저장해 둔 것을 씀), CPU에서 처음 임베딩을 만드느라 몇 시간 걸립니다 (벡터는 캐시해서 다음부터 빠름).
 
 | 스크립트 | 하는 일 |
 |---|---|
 | [../bench/run.mjs](../bench/run.mjs) `--set eval/bilingual` | 키워드 검색 2가지와 Lantern |
-| [baselines.py](baselines.py) | BM25(파일·40줄 조각), 다국어 임베딩(multilingual-e5-small), BM25+임베딩 RRF |
+| [baselines.py](baselines.py) | BM25(파일·40줄 조각), 다국어 임베딩(multilingual-e5-small. 다른 모델은 `--embed-model BAAI/bge-m3 --tag bgem3`처럼 따로, 4코어로 19시간쯤 걸려 `run_all.sh`에서는 뺌), BM25+임베딩 RRF. 낱말: 식별자는 Lantern처럼 통째로 + 낱말로 쪼갬, 한글은 붙어 있는 덩어리 그대로 (한국어 주석·문자열에만 맞음) |
+| [expand.py](expand.py) | 한국어 질문 + Lantern 사전이 넓힌 영어 낱말(`q_ko_dict`), 사전 적중률 |
+| [native_sheet.py](native_sheet.py) | 사람이 처음부터 쓰는 한국어 질문 표 (`q_ko_native`) |
 | [repomap_baseline.py](repomap_baseline.py) | Aider RepoMap (aider-chat 0.86.2, 질문 낱말을 언급된 식별자로) |
 | [embed_server.py](embed_server.py) | Lantern 의미 검색을 같은 임베딩 모델로 재는 로컬 `/embeddings` 서버 |
 | [translate.py](translate.py) | 한국어 질문 → 영어 기계 번역 (번역한 뒤 검색 비교) |
 | [scale.py](scale.py) | 인덱싱 시간·메모리·인덱스 크기·질문당 조립 시간 |
-| [report.py](report.py) | Recall@8k, R@10f, Acc@1/3/5, MRR, 부트스트랩 95% 구간, McNemar, 논문용 LaTeX 표(`--tex`) |
+| [report.py](report.py) | Recall@8k, R@10f, Acc@1/3/5, MRR, 부트스트랩 95% 구간 (문항 단위, 핵심 비교는 저장소 단위도), McNemar와 Holm 보정, 저장소별·문항 묶음별 표, 논문용 LaTeX 표(`--tex`) |
 
 주 결과는 [eval/bench](../bench)와 겹치지 않는 261문항입니다 (`report.py --subset unseen`, `결과-비교-unseen.md`). eval/bench는 엔진의 순위·사전을 고칠 때 확인에 썼기 때문입니다. 평가용·개발용 세트: 커밋 해시 앞 8자리 정수를 10으로 나눈 나머지가 0~2면 개발용(약 30%), 나머지는 평가용입니다. 엔진의 사전·가중치는 개발용으로만 맞추고, 보고는 평가용으로 합니다.
 
@@ -92,7 +111,10 @@ bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [aider가 깔린 파
 - 커밋 메시지는 고친 뒤에 쓴 글이라, 실제 사용자 질문보다 식별자가 많이 들어 있습니다 (파일 이름이 나오는 커밋만 거름)
 - 정답은 '고친 파일'이라, 읽어야 했지만 고치지 않은 파일은 정답에 없습니다
 - 한국어 질문은 LLM이 옮기고 LLM이 검토한 것이라, 한국 개발자가 직접 쓴 질문이 아니고 LLM 말투가 일부 남을 수 있습니다
-- 초안이 영어에서 나왔으므로, 같은 계열의 번역기로 다시 옮기면 원문에 가깝게 돌아가 '번역한 뒤 검색'이 실제보다 유리할 수 있습니다 (그래서 초안을 쓴 LLM과 다른 번역 모델을 씀)
+- 초안이 영어에서 나왔으므로, 같은 계열의 번역기로 다시 옮기면 원문에 가깝게 돌아가 '번역한 뒤 검색'이 실제보다 유리할 수 있습니다 (그래서 초안을 쓴 LLM과 다른 번역 모델을 씀). 초안을 쓴 LLM과 같은 계열인 'LLM 재작성'은 더 유리할 수 있습니다
+- Lantern의 한국어 사전은 AI 코딩 도구로 썼고 한국어 질문은 LLM이 썼으므로, 같은 계열의 모델이면 사전을 보지 않고도 낱말이 겹칠 수 있습니다. 사람이 쓴 질문(`q_ko_native`)으로 이것을 재려고 합니다
+- 임베딩은 작은 multilingual-e5-small만 썼습니다 (Lantern+임베딩도 같은 모델이라 그 비교는 맞춰져 있음). BGE-M3 같은 더 큰 다국어 모델은 재지 않았습니다
+- 저장소가 10개뿐이라 저장소 단위 부트스트랩 구간이 넓고, 저장소마다 결과가 다릅니다 (보고서의 저장소별 표)
 - 인기 저장소라 오래된 커밋은 모델 학습 데이터에 들어 있을 수 있습니다. 2026년 커밋만 따로 잴 수 있게 커밋 날짜를 함께 봅니다
 
 ## 라이선스
