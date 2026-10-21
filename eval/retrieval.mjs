@@ -28,13 +28,15 @@ const GOLDEN = opt("golden", "");
 const BUDGET = Number(opt("budget", "8000"));
 const LANTERN_BIN = path.resolve(opt("lantern", path.join(HERE, "..", "target", "release", process.platform === "win32" ? "lantern.exe" : "lantern")));
 const OUT = path.resolve(opt("out", path.join(HERE, "results")));
+// --list-files: 키워드 검색이 보는 파일 목록만 JSON으로 내고 끝낸다 (eval/bilingual/check_files.py)
+const LIST_FILES = argv.includes("--list-files");
 
-if (!fs.existsSync(PROJECT) || !GOLDEN) {
+if (!fs.existsSync(PROJECT) || (!GOLDEN && !LIST_FILES)) {
   console.error("--project <평가할 프로젝트 폴더>와 --golden <정답 파일 JSON>이 필요합니다. 형식은 eval/README.md");
   process.exit(2);
 }
 const LANG = opt("lang", "en");
-const golden = JSON.parse(fs.readFileSync(path.resolve(GOLDEN), "utf8"));
+const golden = LIST_FILES ? { questions: [] } : JSON.parse(fs.readFileSync(path.resolve(GOLDEN), "utf8"));
 const FIELD = { en: "q", "en-para": "q_para", ko: "q_ko", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-dict": "q_ko_dict", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native", "ko-native-b": "q_ko_native_b" }[LANG];
 if (!FIELD) {
   console.error(`--lang은 en, en-para, ko, ko-mt, ko-llm, ko-dict, ko-loan, ko-native, ko-native-b 중 하나: ${LANG}`);
@@ -59,26 +61,40 @@ function checkout(rev) {
   if (rev) execFileSync("git", ["-C", PROJECT, "-c", "core.longpaths=true", "checkout", "-q", "--detach", rev], { stdio: "ignore" });
 }
 
-// ── 프로젝트 파일 (맥락 엔진과 같은 기준: 코드 파일, 무시 폴더 제외) ─────────
-const CODE = /\.(ts|tsx|js|jsx|mjs|cjs|py|rs|java|go|cs|kt|kts|c|h|cpp|cc|cxx|hpp|hh|hxx|ipp)$/;
-const IGNORE = new Set([".git", "node_modules", "target", "dist", "build", ".next", ".lantern", "coverage", ".turbo", ".venv", "__pycache__"]);
-function* walk(dir) {
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (IGNORE.has(e.name)) continue;
-    const p = path.join(dir, e.name);
-    if (e.isDirectory()) yield* walk(p);
-    else if (e.isFile() && CODE.test(e.name)) yield p;
-  }
+// ── 프로젝트 파일 (맥락 엔진과 같은 기준, indexer.rs walk·index_project) ─────────
+// .gitignore·.git/info/exclude·전역 제외에 걸리지 않고(git이 판단), 숨긴 경로와 늘 건너뛰는 폴더 밑이 아닌 코드 파일,
+// 1 MiB 이하, 바이너리·압축 파일 제외. eval/bilingual/baselines.py와 같고 check_files.py가 엔진 색인과 비교한다
+const CODE = /\.(ts|mts|cts|tsx|js|jsx|mjs|cjs|py|pyi|rs|java|go|cs|kt|kts|c|h|cpp|cc|cxx|hpp|hh|hxx|ipp)$/i;
+const SKIP_DIRS = new Set(["node_modules", "target", "dist", "build", "out", ".next", ".nuxt", "vendor", "__pycache__", ".venv", "venv", ".git", ".lantern", "coverage"]);
+const MAX_FILE_BYTES = 1024 * 1024;
+const lsFiles = (...a) =>
+  execFileSync("git", ["-C", PROJECT, "-c", "core.longpaths=true", "ls-files", "-z", ...a], { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 }).split("\0");
+function listFiles() {
+  // 추적 중이어도 무시 규칙에 걸리면 엔진은 건너뛴다
+  const ignored = new Set(lsFiles("--cached", "--ignored", "--exclude-standard"));
+  const listed = [...new Set(lsFiles("--cached", "--others", "--exclude-standard"))].filter((r) => !ignored.has(r));
+  return listed
+    .filter((r) => {
+      const parts = r.split("/");
+      if (!r || !CODE.test(parts.at(-1)) || parts.some((x) => x.startsWith(".")) || parts.slice(0, -1).some((x) => SKIP_DIRS.has(x))) return false;
+      const st = fs.lstatSync(path.join(PROJECT, ...parts), { throwIfNoEntry: false });
+      return st?.isFile() ?? false;
+    })
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
-const rel = (p) => path.relative(PROJECT, p).split(path.sep).join("/");
-// 맥락 엔진과 같은 기준으로 빌드 결과물(한 줄이 매우 긴 압축 파일)은 뺀다 (indexer.rs is_unindexable)
-const minified = (t) => t.length > 20_000 && t.length / t.split("\n").length > 500;
+// 바이너리(앞 8KB에 NUL)이거나 한 줄이 매우 긴 번들·압축 파일 (indexer.rs is_unindexable, 바이트 기준)
+const unindexable = (b) => b.subarray(0, 8192).includes(0) || (b.length > 20_000 && Math.floor(b.length / (b.filter((x) => x === 10).length + 1)) > 500);
 const readFiles = () =>
-  [...walk(PROJECT)]
-    .filter((p) => fs.statSync(p).size < 400_000)
-    .map((p) => ({ path: rel(p), text: fs.readFileSync(p, "utf8") }))
-    .filter((f) => !minified(f.text));
+  listFiles()
+    .filter((r) => fs.statSync(path.join(PROJECT, ...r.split("/"))).size <= MAX_FILE_BYTES)
+    .map((r) => ({ path: r, bytes: fs.readFileSync(path.join(PROJECT, ...r.split("/"))) }))
+    .filter((f) => !unindexable(f.bytes))
+    .map((f) => ({ path: f.path, text: f.bytes.toString("utf8") }));
 let files = readFiles();
+if (LIST_FILES) {
+  process.stdout.write(JSON.stringify(files.map((f) => f.path)) + "\n");
+  process.exit(0);
+}
 // 토큰은 맥락 엔진과 같은 거친 추정 (글자 4개 ≈ 1토큰)
 const tokens = (s) => Math.ceil(s.length / 4);
 
