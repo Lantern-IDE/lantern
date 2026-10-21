@@ -3,6 +3,12 @@
   "url": "https://github.com/vitejs/vite",
   "ref": "74ae7099f9fd1d5cd1adcd32bcbb2c92d8937007",
   "made_by": "eval/bench/make.mjs",
+  "ko_drafts": "Claude Opus 5.5 (claude-opus-5-5, Claude Code subagents): q_ko_draft from q only (prompt 1), reviewed into q_ko by a second agent (prompt 2, q_ko_reviewed = \"llm\"); prompts in eval/bilingual/prompts.md",
+  "mt_model": "facebook/nllb-200-distilled-600M",
+  "llm_model": "claude-opus-5-5",
+  "llm_rewrite": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite.json",
+  "para_rewrite": "Claude Opus 5.5 (claude-opus-5-5, Claude Code subagent, one pass over all questions): q reworded in English with the same guidelines as the Korean drafts (control for rewording); prompt 4 in eval/bilingual/prompts.md",
+  "loan_rewrite": "Claude Opus 5.5 (claude-opus-5-5, Claude Code subagent, one pass over all questions): q_ko rewritten with Hangul loanwords, a stress test, not native questions; prompt 5 in eval/bilingual/prompts.md",
   "questions": [
     {
       "q": "handle missing chunk import maps",
@@ -24,9 +30,11 @@
         "process"
       ],
       "q_ko_dict": "chunk import map이 없을 때는 어디서 처리해? handle process",
-      "q_ko_llm": "handle missing chunk import map",
+      "q_ko_llm": "handle missing chunk import map fallback when import map is absent",
       "q_ko_loan": "청크 임포트 맵이 없을 때는 어디서 핸들링해?",
-      "q_para": "how should a missing chunk import map be handled?"
+      "q_para": "how should a missing chunk import map be handled?",
+      "q_ko_llm_src": "chunk import map이 없을 때는 어디서 처리해?",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "don't fail on a literal `%` in `url()`",
@@ -47,9 +55,11 @@
         "error"
       ],
       "q_ko_dict": "`url()` 안에 `%`가 그대로 있으면 실패하는 문제 fail failure error",
-      "q_ko_llm": "url() fails with raw % inside",
+      "q_ko_llm": "Fix failure when CSS `url()` contains a raw unescaped `%`",
       "q_ko_loan": "`url()` 안에 `%`가 그대로 있으면 페일하는 이슈",
-      "q_para": "a literal `%` in `url()` causes a failure"
+      "q_para": "a literal `%` in `url()` causes a failure",
+      "q_ko_llm_src": "`url()` 안에 `%`가 그대로 있으면 실패하는 문제",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "skip patches dir hash for nub lockfile",
@@ -68,9 +78,13 @@
         "hash"
       ],
       "q_ko_dict": "nub lockfile이면 patches 디렉터리 해시는 건너뛰게 해줘 hash",
-      "q_ko_llm": "skip patches directory hash for nub lockfile",
+      "q_ko_llm": "skip hashing patches directory when lockfile is nub lockfile",
       "q_ko_loan": "nub 락파일이면 patches 디렉터리 해시는 스킵하게 해줘",
-      "q_para": "can we skip hashing the patches dir for the nub lockfile?"
+      "q_para": "can we skip hashing the patches dir for the nub lockfile?",
+      "q_ko_llm_src": "nub lockfile이면 patches 디렉터리 해시는 건너뛰게 해줘",
+      "q_ko_loan_dict_terms": [
+        "hash"
+      ]
     },
     {
       "q": "map forwarded error stacks through the bundle source maps",
@@ -91,9 +105,15 @@
         "mapper"
       ],
       "q_ko_dict": "전달받은 에러 스택을 번들 소스맵으로 매핑해줘 error map mapper",
-      "q_ko_llm": "map received error stack to bundle sourcemap",
+      "q_ko_llm": "map received error stack trace to bundled source map (rewrite stacktrace with sourcemap)",
       "q_ko_loan": "전달받은 에러 스택을 번들 소스맵으로 매핑해줘",
-      "q_para": "how do I map forwarded error stacks through the bundle source maps?"
+      "q_para": "how do I map forwarded error stacks through the bundle source maps?",
+      "q_ko_llm_src": "전달받은 에러 스택을 번들 소스맵으로 매핑해줘",
+      "q_ko_loan_dict_terms": [
+        "error",
+        "map",
+        "mapper"
+      ]
     },
     {
       "q": "handle socket errors on upgrade requests not taken by the HMR server",
@@ -117,9 +137,15 @@
         "process"
       ],
       "q_ko_dict": "HMR 서버가 안 가져간 upgrade 요청의 소켓 에러는 어디서 처리해? server request socket error handle process",
-      "q_ko_llm": "handle socket errors on upgrade requests not taken by HMR server",
+      "q_ko_llm": "handle socket error for upgrade requests not handled by HMR WebSocket server",
       "q_ko_loan": "HMR 서버가 안 가져간 업그레이드 리퀘스트의 소켓 에러는 어디서 핸들링해?",
-      "q_para": "socket errors on upgrade requests the HMR server doesn't take aren't handled"
+      "q_para": "socket errors on upgrade requests the HMR server doesn't take aren't handled",
+      "q_ko_llm_src": "HMR 서버가 안 가져간 upgrade 요청의 소켓 에러는 어디서 처리해?",
+      "q_ko_loan_dict_terms": [
+        "server",
+        "socket",
+        "error"
+      ]
     },
     {
       "q": "fall back to yarn.lock for lockfile hash",
@@ -139,9 +165,14 @@
         "fix"
       ],
       "q_ko_dict": "lockfile 해시에서 yarn.lock으로 fallback하려면 어디를 고쳐야 해? hash fix",
-      "q_ko_llm": "fall back to yarn.lock in lockfile hash",
+      "q_ko_llm": "lockfile hash fallback to yarn.lock when computing dependency optimizer lockfile hash",
       "q_ko_loan": "락파일 해시에서 yarn.lock으로 폴백하려면 어디를 고쳐야 해?",
-      "q_para": "use yarn.lock as a fallback for the lockfile hash"
+      "q_para": "use yarn.lock as a fallback for the lockfile hash",
+      "q_ko_llm_src": "lockfile 해시에서 yarn.lock으로 fallback하려면 어디를 고쳐야 해?",
+      "q_ko_loan_dict_terms": [
+        "hash",
+        "fix"
+      ]
     },
     {
       "q": "normalize served output files",
@@ -158,9 +189,11 @@
       "q_ko_mt_src": "서빙하는 output 파일 정규화",
       "q_ko_dict_terms": [],
       "q_ko_dict": "서빙하는 output 파일 정규화",
-      "q_ko_llm": "normalize served output files",
+      "q_ko_llm": "normalize served output file paths",
       "q_ko_loan": "서빙하는 아웃풋 파일 노멀라이즈",
-      "q_para": "where should served output files be normalized?"
+      "q_para": "where should served output files be normalized?",
+      "q_ko_llm_src": "서빙하는 output 파일 정규화",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "correct preloads when chunkImportMap is enabled with non-root base",
@@ -177,9 +210,11 @@
       "q_ko_mt_src": "base가 루트가 아닐 때 chunkImportMap 켜면 preload가 틀어지는 문제",
       "q_ko_dict_terms": [],
       "q_ko_dict": "base가 루트가 아닐 때 chunkImportMap 켜면 preload가 틀어지는 문제",
-      "q_ko_llm": "wrong preload with chunkImportMap enabled when base is not root",
+      "q_ko_llm": "preload paths wrong when chunkImportMap enabled with non-root base",
       "q_ko_loan": "base가 루트가 아닐 때 chunkImportMap 인에이블하면 프리로드가 틀어지는 이슈",
-      "q_para": "preloads are wrong when chunkImportMap is enabled with a non-root base"
+      "q_para": "preloads are wrong when chunkImportMap is enabled with a non-root base",
+      "q_ko_llm_src": "base가 루트가 아닐 때 chunkImportMap 켜면 preload가 틀어지는 문제",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "avoid adding filesystem root to watcher",
@@ -199,9 +234,14 @@
         "create"
       ],
       "q_ko_dict": "watcher에 파일시스템 루트는 추가 안 되게 해줘 add create",
-      "q_ko_llm": "don't add filesystem root to watcher",
+      "q_ko_llm": "Prevent adding the filesystem root directory to the file watcher (skip watching `/` or drive root paths).",
       "q_ko_loan": "와처에 파일시스템 루트는 추가 안 되게 해줘",
-      "q_para": "how do I keep the filesystem root from being added to the watcher?"
+      "q_para": "how do I keep the filesystem root from being added to the watcher?",
+      "q_ko_llm_src": "watcher에 파일시스템 루트는 추가 안 되게 해줘",
+      "q_ko_loan_dict_terms": [
+        "add",
+        "create"
+      ]
     },
     {
       "q": "remove input option unescaping for now",
@@ -223,9 +263,16 @@
         "exclude"
       ],
       "q_ko_dict": "input 옵션 unescape 처리는 일단 빼줘 handle process remove exclude",
-      "q_ko_llm": "remove input option unescape handling for now",
+      "q_ko_llm": "remove unescape handling of input option for now",
       "q_ko_loan": "input 옵션 언이스케이프 처리는 일단 빼줘",
-      "q_para": "drop the input option unescaping for now"
+      "q_para": "drop the input option unescaping for now",
+      "q_ko_llm_src": "input 옵션 unescape 처리는 일단 빼줘",
+      "q_ko_loan_dict_terms": [
+        "handle",
+        "process",
+        "remove",
+        "exclude"
+      ]
     },
     {
       "q": "a restart requested during a restart used to be dropped (fix #23392)",
@@ -244,9 +291,11 @@
         "request"
       ],
       "q_ko_dict": "재시작 도중에 요청된 재시작이 버려지던 문제 (#23392) request",
-      "q_ko_llm": "restart requested during restart is dropped (#23392)",
+      "q_ko_llm": "Fix server restart requested during an in-progress restart being dropped (#23392)",
       "q_ko_loan": "리스타트 도중에 리퀘스트된 리스타트가 버려지던 이슈 (#23392)",
-      "q_para": "a restart requested while another restart is running gets dropped (fix #23392)"
+      "q_para": "a restart requested while another restart is running gets dropped (fix #23392)",
+      "q_ko_llm_src": "재시작 도중에 요청된 재시작이 버려지던 문제 (#23392)",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "don't treat modules ending with js-like query as js",
@@ -263,9 +312,11 @@
       "q_ko_mt_src": "js 같은 쿼리로 끝나는 모듈을 js로 판단하는 곳 어디야?",
       "q_ko_dict_terms": [],
       "q_ko_dict": "js 같은 쿼리로 끝나는 모듈을 js로 판단하는 곳 어디야?",
-      "q_ko_llm": "detect modules ending with js-like query as js",
+      "q_ko_llm": "detect module as JS when id ends with .js followed by query string (isJSRequest query)",
       "q_ko_loan": "js 같은 쿼리로 끝나는 모듈을 js로 판단하는 곳 어디야?",
-      "q_para": "why are modules ending in a js-like query treated as js?"
+      "q_para": "why are modules ending in a js-like query treated as js?",
+      "q_ko_llm_src": "js 같은 쿼리로 끝나는 모듈을 js로 판단하는 곳 어디야?",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "wait for in-flight stylesheets in preload helper (fix #23652)",
@@ -282,9 +333,11 @@
       "q_ko_mt_src": "preload helper에서 로딩 중인 스타일시트 기다리게 해줘 (#23652)",
       "q_ko_dict_terms": [],
       "q_ko_dict": "preload helper에서 로딩 중인 스타일시트 기다리게 해줘 (#23652)",
-      "q_ko_llm": "wait for loading stylesheets in preload helper (#23652)",
+      "q_ko_llm": "preload helper wait for already-loading stylesheets (link rel=stylesheet still loading) before resolving (#23652)",
       "q_ko_loan": "프리로드 헬퍼에서 로딩 중인 스타일시트 기다리게 해줘 (#23652)",
-      "q_para": "make the preload helper wait for stylesheets that are still in flight (fix #23652)"
+      "q_para": "make the preload helper wait for stylesheets that are still in flight (fix #23652)",
+      "q_ko_llm_src": "preload helper에서 로딩 중인 스타일시트 기다리게 해줘 (#23652)",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "avoid mutating hmr defaults (fix #23575)",
@@ -304,9 +357,11 @@
         "edit"
       ],
       "q_ko_dict": "hmr 기본값을 직접 수정해버리는 문제 (#23575) update edit",
-      "q_ko_llm": "hmr defaults mutated directly (#23575)",
+      "q_ko_llm": "Fix bug where hmr default options object is mutated directly (#23575)",
       "q_ko_loan": "hmr 디폴트를 직접 뮤테이트해버리는 이슈 (#23575)",
-      "q_para": "how do I stop the hmr defaults from being mutated? (fix #23575)"
+      "q_para": "how do I stop the hmr defaults from being mutated? (fix #23575)",
+      "q_ko_llm_src": "hmr 기본값을 직접 수정해버리는 문제 (#23575)",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "skip caching CSS of chunks in a cycle (fix #23628)",
@@ -325,9 +380,11 @@
         "cache"
       ],
       "q_ko_dict": "순환에 걸린 chunk의 CSS는 캐시 안 하려면 어디 봐야 해? (#23628) cache",
-      "q_ko_llm": "don't cache CSS of chunks in cycles (#23628)",
+      "q_ko_llm": "skip caching CSS for chunks in circular imports (cyclic chunk dependency) in css plugin (#23628)",
       "q_ko_loan": "사이클에 걸린 청크의 CSS는 캐싱 안 하려면 어디 봐야 해? (#23628)",
-      "q_para": "don't cache the CSS of chunks that are in a cycle (fix #23628)"
+      "q_para": "don't cache the CSS of chunks that are in a cycle (fix #23628)",
+      "q_ko_llm_src": "순환에 걸린 chunk의 CSS는 캐시 안 하려면 어디 봐야 해? (#23628)",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "skip cloning call sites that have no source map",
@@ -344,9 +401,11 @@
       "q_ko_mt_src": "소스맵 없는 call site는 복제하지 말고 건너뛰어줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "소스맵 없는 call site는 복제하지 말고 건너뛰어줘",
-      "q_ko_llm": "skip call sites without sourcemap instead of cloning",
+      "q_ko_llm": "skip call sites without source map instead of cloning them in stack trace rewriting",
       "q_ko_loan": "소스맵 없는 콜 사이트는 클론하지 말고 스킵해줘",
-      "q_para": "can we skip cloning call sites without a source map?"
+      "q_para": "can we skip cloning call sites without a source map?",
+      "q_ko_llm_src": "소스맵 없는 call site는 복제하지 말고 건너뛰어줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "normalize file before root check in `ensureWatchedFile`",
@@ -363,9 +422,11 @@
       "q_ko_mt_src": "`ensureWatchedFile`에서 root 체크 전에 file부터 정규화해줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "`ensureWatchedFile`에서 root 체크 전에 file부터 정규화해줘",
-      "q_ko_llm": "normalize file before root check in ensureWatchedFile",
+      "q_ko_llm": "normalize file path before root check in `ensureWatchedFile`",
       "q_ko_loan": "`ensureWatchedFile`에서 root 체크 전에 file부터 노멀라이즈해줘",
-      "q_para": "in `ensureWatchedFile`, normalize the file before the root check"
+      "q_para": "in `ensureWatchedFile`, normalize the file before the root check",
+      "q_ko_llm_src": "`ensureWatchedFile`에서 root 체크 전에 file부터 정규화해줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "check `fs.serve` for `?vite-wasm-instance`",
@@ -387,9 +448,13 @@
         "fix"
       ],
       "q_ko_dict": "`?vite-wasm-instance`에도 `fs.serve` 검사하려면 어디를 고쳐야 해? check validate guard fix",
-      "q_ko_llm": "apply fs.serve check to ?vite-wasm-instance",
+      "q_ko_llm": "apply fs.serve access check to ?vite-wasm-instance requests in dev server",
       "q_ko_loan": "`?vite-wasm-instance`에도 `fs.serve` 체크하려면 어디를 고쳐야 해?",
-      "q_para": "`?vite-wasm-instance` isn't checked against `fs.serve`"
+      "q_para": "`?vite-wasm-instance` isn't checked against `fs.serve`",
+      "q_ko_llm_src": "`?vite-wasm-instance`에도 `fs.serve` 검사하려면 어디를 고쳐야 해?",
+      "q_ko_loan_dict_terms": [
+        "fix"
+      ]
     },
     {
       "q": "avoid encoding intermediate source maps",
@@ -409,9 +474,13 @@
         "encoding"
       ],
       "q_ko_dict": "중간 소스맵 인코딩 안 하기 encoding",
-      "q_ko_llm": "don't encode intermediate sourcemaps",
+      "q_ko_llm": "Avoid encoding intermediate sourcemaps",
       "q_ko_loan": "중간 소스맵 인코딩 안 하기",
-      "q_para": "can we avoid encoding the intermediate source maps?"
+      "q_para": "can we avoid encoding the intermediate source maps?",
+      "q_ko_llm_src": "중간 소스맵 인코딩 안 하기",
+      "q_ko_loan_dict_terms": [
+        "encoding"
+      ]
     },
     {
       "q": "release previous environments after initialization",
@@ -432,9 +501,11 @@
         "reset"
       ],
       "q_ko_dict": "초기화 끝나면 이전 environment 해제하는 건 어디서 해? init initialize reset",
-      "q_ko_llm": "dispose previous environment after initialization",
+      "q_ko_llm": "dispose previous environment after initialization completes",
       "q_ko_loan": "이니셜라이즈 끝나면 이전 environment 릴리스하는 건 어디서 해?",
-      "q_para": "how do I release previous environments once initialization is done?"
+      "q_para": "how do I release previous environments once initialization is done?",
+      "q_ko_llm_src": "초기화 끝나면 이전 environment 해제하는 건 어디서 해?",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "avoid quadratic link scan in the preload helper",
@@ -453,9 +524,11 @@
         "time"
       ],
       "q_ko_dict": "preload helper의 link 탐색이 제곱 시간 걸리는 문제 time",
-      "q_ko_llm": "quadratic link lookup in preload helper",
+      "q_ko_llm": "preload helper quadratic time when searching existing link elements",
       "q_ko_loan": "프리로드 헬퍼의 link 서치가 쿼드라틱 타임 걸리는 이슈",
-      "q_para": "preload helper does a quadratic link scan"
+      "q_para": "preload helper does a quadratic link scan",
+      "q_ko_llm_src": "preload helper의 link 탐색이 제곱 시간 걸리는 문제",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "pass queries to `renderBuiltUrl`",
@@ -474,9 +547,11 @@
       "q_ko_mt_src": "`renderBuiltUrl`에 쿼리도 넘겨줘",
       "q_ko_dict_terms": [],
       "q_ko_dict": "`renderBuiltUrl`에 쿼리도 넘겨줘",
-      "q_ko_llm": "pass query to renderBuiltUrl",
+      "q_ko_llm": "pass query string to `renderBuiltUrl` for built asset URLs",
       "q_ko_loan": "`renderBuiltUrl`에 쿼리도 패스해줘",
-      "q_para": "can queries be passed to `renderBuiltUrl`?"
+      "q_para": "can queries be passed to `renderBuiltUrl`?",
+      "q_ko_llm_src": "`renderBuiltUrl`에 쿼리도 넘겨줘",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "serve lazy chunk sourcemaps",
@@ -493,9 +568,11 @@
       "q_ko_mt_src": "lazy chunk 소스맵은 어디서 서빙해?",
       "q_ko_dict_terms": [],
       "q_ko_dict": "lazy chunk 소스맵은 어디서 서빙해?",
-      "q_ko_llm": "serve lazy chunk sourcemaps",
+      "q_ko_llm": "where are sourcemaps for lazy chunks served",
       "q_ko_loan": "레이지 청크 소스맵은 어디서 서빙해?",
-      "q_para": "lazy chunk sourcemaps aren't served"
+      "q_para": "lazy chunk sourcemaps aren't served",
+      "q_ko_llm_src": "lazy chunk 소스맵은 어디서 서빙해?",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "use `tinyexec` instead of `cross-spawn`",
@@ -516,9 +593,15 @@
         "replace"
       ],
       "q_ko_dict": "`cross-spawn` 대신 `tinyexec` 쓰게 바꿔줘 change update replace",
-      "q_ko_llm": "use tinyexec instead of cross-spawn",
+      "q_ko_llm": "Replace `cross-spawn` with `tinyexec` for spawning child processes",
       "q_ko_loan": "`cross-spawn` 대신 `tinyexec` 쓰게 바꿔줘",
-      "q_para": "replace `cross-spawn` with `tinyexec`"
+      "q_para": "replace `cross-spawn` with `tinyexec`",
+      "q_ko_llm_src": "`cross-spawn` 대신 `tinyexec` 쓰게 바꿔줘",
+      "q_ko_loan_dict_terms": [
+        "change",
+        "update",
+        "replace"
+      ]
     },
     {
       "q": "skip URL source roots when injecting sources content",
@@ -539,9 +622,16 @@
         "put"
       ],
       "q_ko_dict": "sources content 넣을 때 URL source root는 어디서 걸러? insert add put",
-      "q_ko_llm": "filter URL source root when adding sources content",
+      "q_ko_llm": "where are URL sourceRoot values skipped/filtered when injecting sourcesContent into sourcemaps",
       "q_ko_loan": "소스 콘텐츠 넣을 때 URL 소스 루트는 어디서 필터링해?",
-      "q_para": "how do I skip URL source roots when injecting sources content?"
+      "q_para": "how do I skip URL source roots when injecting sources content?",
+      "q_ko_llm_src": "sources content 넣을 때 URL source root는 어디서 걸러?",
+      "q_ko_loan_dict_terms": [
+        "insert",
+        "add",
+        "put",
+        "filter"
+      ]
     },
     {
       "q": "resolve pending discovered dep processing on close before init",
@@ -561,9 +651,14 @@
         "process"
       ],
       "q_ko_dict": "init 전에 close되면 대기 중인 discovered dep 처리를 resolve해줘 handle process",
-      "q_ko_llm": "resolve pending discovered dep processing when closed before init",
+      "q_ko_llm": "resolve pending discovered deps processing promise when dep optimizer is closed before init",
       "q_ko_loan": "init 전에 close되면 펜딩된 디스커버드 디펜던시 처리를 리졸브해줘",
-      "q_para": "pending discovered dep processing doesn't resolve when closing before init"
+      "q_para": "pending discovered dep processing doesn't resolve when closing before init",
+      "q_ko_llm_src": "init 전에 close되면 대기 중인 discovered dep 처리를 resolve해줘",
+      "q_ko_loan_dict_terms": [
+        "handle",
+        "process"
+      ]
     },
     {
       "q": "add router only options for tanstack router/start",
@@ -583,9 +678,14 @@
         "create"
       ],
       "q_ko_dict": "tanstack router/start용 router 전용 옵션 추가 add create",
-      "q_ko_llm": "add router-specific option for tanstack router/start",
+      "q_ko_llm": "add router-specific option for TanStack Router/Start",
       "q_ko_loan": "tanstack router/start용 라우터 전용 옵션 추가",
-      "q_para": "add options that apply only to the router for tanstack router/start"
+      "q_para": "add options that apply only to the router for tanstack router/start",
+      "q_ko_llm_src": "tanstack router/start용 router 전용 옵션 추가",
+      "q_ko_loan_dict_terms": [
+        "add",
+        "create"
+      ]
     },
     {
       "q": "replace `find` with `some`",
@@ -602,9 +702,11 @@
       "q_ko_mt_src": "`find` 대신 `some` 쓰기",
       "q_ko_dict_terms": [],
       "q_ko_dict": "`find` 대신 `some` 쓰기",
-      "q_ko_llm": "use some instead of find",
+      "q_ko_llm": "Use `some` instead of `find` for boolean existence checks on arrays",
       "q_ko_loan": "`find` 대신 `some` 쓰기",
-      "q_para": "can we use `some` instead of `find`?"
+      "q_para": "can we use `some` instead of `find`?",
+      "q_ko_llm_src": "`find` 대신 `some` 쓰기",
+      "q_ko_loan_dict_terms": []
     },
     {
       "q": "don't skip imports whose binding starts with type",
@@ -625,9 +727,15 @@
         "init"
       ],
       "q_ko_dict": "binding이 type으로 시작하는 import를 건너뛰는 버그 start bootstrap init",
-      "q_ko_llm": "imports with binding starting with type are skipped",
+      "q_ko_llm": "import binding name starting with \"type\" incorrectly skipped as type-only import",
       "q_ko_loan": "바인딩이 type으로 시작하는 import를 스킵하는 버그",
-      "q_para": "imports whose binding starts with type get skipped"
+      "q_para": "imports whose binding starts with type get skipped",
+      "q_ko_llm_src": "binding이 type으로 시작하는 import를 건너뛰는 버그",
+      "q_ko_loan_dict_terms": [
+        "start",
+        "bootstrap",
+        "init"
+      ]
     },
     {
       "q": "assets regexp use non-capture",
@@ -646,9 +754,13 @@
         "regex"
       ],
       "q_ko_dict": "assets 정규식에 비캡처 그룹 쓰기 regex",
-      "q_ko_llm": "use non-capturing group in assets regex",
+      "q_ko_llm": "use non-capturing groups in assets regex",
       "q_ko_loan": "assets 정규식에 논캡처링 그룹 쓰기",
-      "q_para": "make the assets regexp non-capturing"
+      "q_para": "make the assets regexp non-capturing",
+      "q_ko_llm_src": "assets 정규식에 비캡처 그룹 쓰기",
+      "q_ko_loan_dict_terms": [
+        "regex"
+      ]
     },
     {
       "q": "pre-compile context matchers at server creation",
@@ -670,9 +782,16 @@
         "create"
       ],
       "q_ko_dict": "서버 만들 때 context matcher 미리 컴파일해둬 server build make create",
-      "q_ko_llm": "precompile context matcher when creating server",
+      "q_ko_llm": "precompile proxy context matcher when creating server instead of per request",
       "q_ko_loan": "서버 만들 때 컨텍스트 매처 미리 컴파일해둬",
-      "q_para": "can the context matchers be compiled up front when the server is created?"
+      "q_para": "can the context matchers be compiled up front when the server is created?",
+      "q_ko_llm_src": "서버 만들 때 context matcher 미리 컴파일해둬",
+      "q_ko_loan_dict_terms": [
+        "server",
+        "build",
+        "make",
+        "create"
+      ]
     },
     {
       "q": "add nub package manager support",
@@ -692,13 +811,14 @@
         "create"
       ],
       "q_ko_dict": "nub 패키지 매니저 지원 추가하려면 어디를 봐야 해? add create",
-      "q_ko_llm": "add nub package manager support",
+      "q_ko_llm": "add support for nub package manager detection and install commands",
       "q_ko_loan": "nub 패키지 매니저 서포트 추가하려면 어디를 봐야 해?",
-      "q_para": "how do I add support for the nub package manager?"
+      "q_para": "how do I add support for the nub package manager?",
+      "q_ko_llm_src": "nub 패키지 매니저 지원 추가하려면 어디를 봐야 해?",
+      "q_ko_loan_dict_terms": [
+        "add",
+        "create"
+      ]
     }
-  ],
-  "mt_model": "facebook/nllb-200-distilled-600M",
-  "llm_rewrite": "Claude (Claude Code subagent), Korean question only, prompt in eval/bilingual/README.md",
-  "loan_rewrite": "Claude Opus 5.5 (Claude Code subagent): q_ko rewritten with Hangul loanwords, a stress test, not native questions; prompt in eval/bilingual/README.md",
-  "para_rewrite": "Claude Opus 5.5 (Claude Code subagent): q reworded in English with the same guidelines as the Korean drafts (control for rewording); prompt in eval/bilingual/README.md"
+  ]
 }
