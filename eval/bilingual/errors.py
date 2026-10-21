@@ -3,7 +3,7 @@
     python eval/bilingual/errors.py --dir <클론 폴더> [--subset unseen|all]
 
 문항마다 사전이 넓힌 낱말, 질문에 있던 영어 낱말, 한국어로 물었을 때 정답 파일의 순위(예산 밖이면 -)를 표로 쓴다.
-원인 분류는 사람이 읽고 붙인다 (오류-분석.md).
+원인 분류는 사람이 읽고 붙인다 (error-analysis.md).
 """
 
 import argparse
