@@ -49,7 +49,7 @@ LABEL = {
     "lantern-no-copies": "Lantern − 보관용 사본 강등",
     "lantern-sem": "**Lantern + 임베딩 (e5-small)**",
 }
-LANGS = {"en": "영어", "en-para": "영어 바꿔 말하기(LLM)", "ko": "한국어", "ko-dict": "한국어+사전", "ko-dictw": "한국어+사전(절반 가중)", "ko-mt": "한국어→기계 번역", "ko-llm": "한국어→LLM 재작성", "ko-loan": "외래어를 많이 쓴 한국어(LLM)", "ko-native": "사람이 쓴 한국어"}
+LANGS = {"en": "영어", "en-para": "영어 바꿔 말하기(LLM)", "ko": "한국어", "ko-dict": "한국어+사전", "ko-dictw": "한국어+사전(절반 가중)", "ko-mt": "한국어→기계 번역", "ko-llm": "한국어→LLM 재작성", "ko-loan": "외래어를 많이 쓴 한국어(LLM)", "ko-native": "사람이 쓴 한국어", "ko-native-b": "사람이 쓴 한국어(B)"}
 # 논문 표에 쓰는 영어 이름
 TEX_LABEL = {
     "bm25-file": "BM25 (file)",
@@ -66,7 +66,7 @@ TEX_LABEL = {
     "lantern-no-cochange": "\\quad $-$ co-change",
     "lantern-sem": "\\textbf{Lantern + Dense}",
 }
-SUBSET_TEX = {"all": "all questions", "unseen": "questions not used during development", "test": "test split", "dev": "dev split", "2026": "2026 commits"}
+SUBSET_TEX = {"all": "all questions", "unseen": "questions not used during development", "fresh-repos": "repositories not used during development", "test": "test split", "dev": "dev split", "2026": "2026 commits"}
 # 논문 표의 사전 열은 Lantern과 같은 결합(절반 가중, ko-dictw). 그냥 덧붙인 ko-dict는 보고서(md)에만
 TEX_LANG = {"en": "EN", "ko": "KO", "ko-dictw": "KO+dict", "ko-mt": "KO$\\to$MT", "ko-llm": "KO$\\to$LLM"}
 
@@ -89,11 +89,9 @@ def tex_table(res, keep, order, subset):
         f"\\begin{{{env}}}[t]",
         "\\centering",
         f"\\caption{{File-level retrieval within an 8k-token budget, Acc@3 (\\%) and MRR ({SUBSET_TEX[subset]}, $n={n}$). "
-        "Columns are the question every method gets: English, Korean, Korean plus Lantern's dictionary terms "
-        "(KO+dict; at half weight for BM25, appended for dense retrieval; compare with Lantern's own KO column), "
-        "and Korean translated by NLLB (KO$\\to$MT) or rewritten by an LLM (KO$\\to$LLM). "
-        "Indented rows remove one Lantern component. --: not run (Lantern applies the dictionary itself; "
-        "RepoMap and the ablations were not run on every form). Keyword search is in the full report.}",
+        "Columns: the question each method gets, in English, in Korean, in Korean plus Lantern's dictionary terms "
+        "(KO+dict: half weight for BM25, appended for dense; compare with Lantern's KO), translated by NLLB or rewritten by an LLM. "
+        "Indented rows remove one Lantern component; --: not run. Keyword search: full report.}",
         "\\label{tab:results}",
         "\\setlength{\\tabcolsep}{3pt}",
         "\\begin{tabular}{l" + "rr" * len(langs) + "}",
@@ -397,41 +395,70 @@ def sensitivity(res, keep):
 
 
 def native(questions, res, keep, order):
-    """사람이 직접 쓴 한국어 질문(q_ko_native)이 있는 문항에서 LLM이 쓴 한국어 질문과 나란히"""
-    cs = [c for c, q in questions.items() if keep(c) and q.get("q_ko_native")]
-    if not cs:
-        return []
-    out = [f"## 사람이 쓴 한국어 질문 ({len(cs)}문항, 같은 문항의 LLM 한국어 질문과 비교)", "", "| 방법 | 영어 Acc@3 | LLM 한국어 Acc@3 | 사람 한국어 Acc@3 | 영어 MRR | LLM 한국어 MRR | 사람 한국어 MRR |", "|---|---|---|---|---|---|---|"]
-    for m in order:
-        if ("ko-native", m) not in res:
+    """사람이 직접 쓴 한국어 질문(작성자 A: q_ko_native, B: q_ko_native_b)이 있는 문항에서 LLM이 쓴 한국어 질문과 나란히.
+    비교는 미리 정해 둔 것만 (native-plan.md): 사람 질문에서 Lantern − 혼합, 사람 − LLM 한국어, 영어 → 사람 한국어 하락의 차이"""
+    out = []
+    for lang_h, field, who in (("ko-native", "q_ko_native", "A"), ("ko-native-b", "q_ko_native_b", "B")):
+        cs = [c for c, q in questions.items() if keep(c) and q.get(field)]
+        if not cs:
             continue
-        cells = []
-        for metric in ("acc3", "mrr"):
-            for lang in ("en", "ko", "ko-native"):
-                v = [res[(lang, m)][c][metric] for c in cs if c in res.get((lang, m), {})]
-                cells.append(("--" if not v else pct(mean(v)) if metric == "acc3" else f"{mean(v):.3f}"))
-        out.append(f"| {LABEL[m]} | " + " | ".join(cells) + " |")
-    return out + [""]
+        out += [f"## 사람이 쓴 한국어 질문, 작성자 {who} ({len(cs)}문항, 같은 문항의 LLM 한국어 질문과 비교)", "",
+                "| 방법 | 영어 Acc@3 | LLM 한국어 Acc@3 | 사람 한국어 Acc@3 | 영어 MRR | LLM 한국어 MRR | 사람 한국어 MRR |", "|---|---|---|---|---|---|---|"]
+        for m in order:
+            if (lang_h, m) not in res:
+                continue
+            cells = []
+            for metric in ("acc3", "mrr"):
+                for lang in ("en", "ko", lang_h):
+                    v = [res[(lang, m)][c][metric] for c in cs if c in res.get((lang, m), {})]
+                    cells.append(("--" if not v else pct(mean(v)) if metric == "acc3" else f"{mean(v):.3f}"))
+            out.append(f"| {LABEL[m]} | " + " | ".join(cells) + " |")
+        out += ["", "| 비교 (같은 문항, 95% 구간) | Acc@3 차이 | 구간 | MRR 차이 | 구간 |", "|---|---|---|---|---|"]
+        pairs = [(f"Lantern − 혼합 [사람 {who}]", (lang_h, "lantern"), (lang_h, "hybrid"), None),
+                 (f"Lantern [사람 {who} − LLM 한국어]", (lang_h, "lantern"), ("ko", "lantern"), None),
+                 (f"혼합 [사람 {who} − LLM 한국어]", (lang_h, "hybrid"), ("ko", "hybrid"), None),
+                 (f"하락의 차이: Lantern − 혼합 [사람 {who} − 영어]", (lang_h, "lantern"), ("en", "lantern"), ((lang_h, "hybrid"), ("en", "hybrid")))]
+        for label, ka, kb, drop in pairs:
+            keys = [ka, kb] + (list(drop) if drop else [])
+            if not all(k in res for k in keys):
+                continue
+            cc = [c for c in cs if all(c in res[k] for k in keys)]
+            row = [label]
+            for metric in ("acc3", "mrr"):
+                a = [float(res[ka][c][metric]) - float(res[kb][c][metric]) for c in cc]
+                b = [float(res[drop[0]][c][metric]) - float(res[drop[1]][c][metric]) for c in cc] if drop else [0.0] * len(cc)
+                d, lo, hi = bootstrap_diff(a, b)
+                f = pct if metric == "acc3" else (lambda x: f"{x:+.3f}")
+                row += [f(d), f"{f(lo)}~{f(hi)}"]
+            out.append("| " + " | ".join(row) + " |")
+        out.append("")
+    return out
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--set", default=HERE)
-    ap.add_argument("--subset", default="all", choices=["all", "unseen", "test", "dev", "2026"])
+    ap.add_argument("--subset", default="all", choices=["all", "unseen", "fresh-repos", "test", "dev", "2026"])
     ap.add_argument("--md", default=None)
     ap.add_argument("--tex", default=None)
     a = ap.parse_args()
     questions, res = load(a.dir, a.set)
     seen = set()
+    dev_repos = set()  # 개발 중 확인에 쓴 예전 세트(eval/bench)의 저장소
     for f in glob.glob(os.path.join(HERE, "..", "bench", "*.json")):
         with open(f, encoding="utf-8") as fh:
-            seen |= {q["commit"] for q in json.load(fh)["questions"]}
+            b = json.load(fh)
+        seen |= {q["commit"] for q in b["questions"]}
+        dev_repos.add(b["project"])
 
     def keep(c):
         q = questions[c]
         if a.subset == "unseen":
             return c not in seen
+        if a.subset == "fresh-repos":
+            # 개발 중에 한 번도 보지 않은 저장소의 문항만 (저장소 수준의 누출까지 뺀 결과)
+            return q["project"] not in dev_repos
         if a.subset in ("test", "dev"):
             return split_of(c) == a.subset
         if a.subset == "2026":
