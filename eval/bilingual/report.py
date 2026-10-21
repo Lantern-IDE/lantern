@@ -89,8 +89,9 @@ def tex_table(res, keep, order, subset):
         f"\\begin{{{env}}}[t]",
         "\\centering",
         f"\\caption{{File-level retrieval within an 8k-token budget, Acc@3 (\\%) and MRR ({SUBSET_TEX[subset]}, $n={n}$). "
-        "Columns are the question every method gets: English, Korean, Korean plus Lantern's dictionary terms at half weight "
-        "(KO+dict; compare with Lantern's own KO column), and Korean translated by NLLB (KO$\\to$MT) or rewritten by an LLM (KO$\\to$LLM). "
+        "Columns are the question every method gets: English, Korean, Korean plus Lantern's dictionary terms "
+        "(KO+dict; at half weight for BM25, appended for dense retrieval; compare with Lantern's own KO column), "
+        "and Korean translated by NLLB (KO$\\to$MT) or rewritten by an LLM (KO$\\to$LLM). "
         "Indented rows remove one Lantern component.}",
         "\\label{tab:results}",
         "\\setlength{\\tabcolsep}{3pt}",
