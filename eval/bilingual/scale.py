@@ -52,29 +52,43 @@ def main():
     ap.add_argument("--lantern", required=True)
     ap.add_argument("--set", default=HERE)
     ap.add_argument("--tex", default=None)
+    ap.add_argument("--extra", action="append", default=[], help="벤치마크 밖의 큰 저장소 이름=경로 (예: vscode=C:/clones/vscode). 지금 커밋 그대로 잰다")
+    ap.add_argument("--extra-questions", default=os.path.join(HERE, "scale_questions.txt"), help="큰 저장소의 조립 시간을 잴 질문 (한 줄에 하나)")
     a = ap.parse_args()
     results_dir = os.path.join(a.dir, "results", os.path.basename(os.path.normpath(a.set)))
     rows = []
+    targets = []
     for f in sorted(glob.glob(os.path.join(a.set, "*.json"))):
         with open(f, encoding="utf-8") as fh:
             s = json.load(fh)
-        name = s["project"]
-        repo = os.path.abspath(os.path.join(a.dir, name))
-        subprocess.run(["git", "-C", repo, "-c", "core.longpaths=true", "checkout", "-q", "--detach", s["ref"]], check=True)
+        targets.append((s["project"], os.path.abspath(os.path.join(a.dir, s["project"])), s["ref"]))
+    targets += [(e.split("=", 1)[0], os.path.abspath(e.split("=", 1)[1]), None) for e in a.extra]
+    for name, repo, ref in targets:
+        if ref:
+            subprocess.run(["git", "-C", repo, "-c", "core.longpaths=true", "checkout", "-q", "--detach", ref], check=True)
         idx = tempfile.mkdtemp(prefix=f"lantern-scale-{name}-")
         env = {**os.environ, "LANTERN_INDEX_DIR": idx}
         full_s, full_mb = run_measured([a.lantern, "-C", repo, "index", "--full"], env)
         again_s, _ = run_measured([a.lantern, "-C", repo, "index"], env)
         out = subprocess.run([a.lantern, "-C", repo, "stats"], env=env, capture_output=True, text=True, encoding="utf-8").stdout
         nums = [int(x.replace(",", "")) for x in re.findall(r"[\d,]+", out.splitlines()[0])] if out else []
+        if not nums or nums[0] == 0:
+            raise SystemExit(f"{name}: 인덱싱한 파일이 없습니다 ({repo}). 클론이 비었는지 확인하세요")
         size = dir_mb(idx)
-        shutil.rmtree(idx, ignore_errors=True)
         ms = []
-        pat = re.compile(rf"^retrieval-{re.escape(name)}-\d{{4}}-.*\.json$")
-        cands = sorted(x for x in os.listdir(results_dir) if pat.match(x)) if os.path.isdir(results_dir) else []
-        if cands:
-            with open(os.path.join(results_dir, cands[-1]), encoding="utf-8") as fh:
-                ms = [r["lantern"]["ms"] for r in json.load(fh)["rows"] if r["lantern"].get("ms") is not None]
+        if ref:
+            pat = re.compile(rf"^retrieval-{re.escape(name)}-\d{{4}}-.*\.json$")
+            cands = sorted(x for x in os.listdir(results_dir) if pat.match(x)) if os.path.isdir(results_dir) else []
+            if cands:
+                with open(os.path.join(results_dir, cands[-1]), encoding="utf-8") as fh:
+                    ms = [r["lantern"]["ms"] for r in json.load(fh)["rows"] if r["lantern"].get("ms") is not None]
+        else:
+            # 벤치마크 밖 저장소: 정해 둔 질문으로 맥락을 조립해 엔진이 알려 주는 조립 시간을 모은다
+            with open(a.extra_questions, encoding="utf-8") as fh:
+                for q in [x.strip() for x in fh if x.strip() and not x.startswith("#")]:
+                    out = subprocess.run([a.lantern, "-C", repo, "context", "--json", "--", q], env=env, capture_output=True, text=True, encoding="utf-8", check=True).stdout
+                    ms.append(json.loads(out)["elapsed_ms"])
+        shutil.rmtree(idx, ignore_errors=True)
         row = {
             "project": name,
             "files": nums[0] if nums else None,
@@ -84,6 +98,7 @@ def main():
             "reindex_s": again_s,
             "size_mb": size,
             "assemble_ms": statistics.median(ms) if ms else None,
+            "extra": ref is None,
         }
         rows.append(row)
         print(f"{name:13} 파일 {row['files']:>5} 심볼 {row['symbols']:>6} | 인덱싱 {full_s:5.1f}초 최대 {full_mb:4.0f}MB | 다시 {again_s:4.2f}초 | 인덱스 {size:5.1f}MB | 조립 중앙값 {row['assemble_ms'] or 0:5.1f}ms", flush=True)
@@ -92,7 +107,10 @@ def main():
             "% scale.py로 만든 표. 손으로 고치지 말고 다시 만든다",
             "\\begin{table}[t]",
             "\\centering",
-            "\\caption{Indexing cost and per-question context assembly time (median) on a desktop CPU (Intel Core i5-11400, 6 cores, 32 GB RAM), no model calls.}",
+            "\\caption{Lantern's cost on a desktop CPU (Intel Core i5-11400, 6 cores, 32 GB RAM), no model calls. Files: code files indexed; "
+            "Index: first full indexing; Peak: peak memory while indexing; Size: index on disk; Query: median context assembly time per question"
+            + (f" (benchmark questions; for {', '.join(r['project'] for r in rows if r.get('extra'))}, the questions in \\texttt{{eval/bilingual/scale\\_questions.txt}})" if any(r.get("extra") for r in rows) else "")
+            + ".}",
             "\\label{tab:scale}",
             "\\setlength{\\tabcolsep}{3pt}",
             "\\begin{tabular}{lrrrrr}",

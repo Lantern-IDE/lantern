@@ -1,0 +1,11 @@
+# scale.py --extra 로 벤치마크 밖 큰 저장소(vscode)의 맥락 조립 시간을 잴 때 쓰는 질문 (정답 없음, 시간만 잼)
+where is the undo stack for text model edits
+how does the editor decide the end-of-line sequence of a file
+where are keybindings resolved to commands
+add a setting to limit the number of open editors
+fix the minimap not updating after folding
+에디터에서 줄 바꿈 문자를 정하는 곳
+파일 탐색기에서 숨김 파일을 거르는 로직은 어디 있어?
+터미널 탭 이름 바꾸는 기능 추가해줘
+확장 프로그램 설치가 실패하면 다시 시도하는 부분 고쳐줘
+검색 결과에서 정규식 오류를 보여 주는 곳
