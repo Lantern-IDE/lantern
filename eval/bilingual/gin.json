@@ -16,7 +16,14 @@
       "q_ko_draft": "풀에서 가져온 capacity가 stale하면 skippedNodes 늘려줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "If the capacity from the pool stale, increase the skippedNodes.",
-      "q_ko_mt_src": "풀에서 가져온 capacity가 stale하면 skippedNodes 늘려줘"
+      "q_ko_mt_src": "풀에서 가져온 capacity가 stale하면 skippedNodes 늘려줘",
+      "q_ko_dict_terms": [
+        "increase",
+        "extend",
+        "grow"
+      ],
+      "q_ko_dict": "풀에서 가져온 capacity가 stale하면 skippedNodes 늘려줘 increase extend grow",
+      "q_ko_llm": "increase skippedNodes when pooled capacity is stale"
     },
     {
       "q": "include HTTP QUERY method in Any",
@@ -30,7 +37,10 @@
       "q_ko_draft": "Any에 HTTP QUERY 메서드가 빠져 있는 문제",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Any problem with the HTTP QUERY method.",
-      "q_ko_mt_src": "Any에 HTTP QUERY 메서드가 빠져 있는 문제"
+      "q_ko_mt_src": "Any에 HTTP QUERY 메서드가 빠져 있는 문제",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "Any에 HTTP QUERY 메서드가 빠져 있는 문제",
+      "q_ko_llm": "Any missing HTTP QUERY method"
     },
     {
       "q": "load Keys under the mutex in Copy",
@@ -44,7 +54,10 @@
       "q_ko_draft": "Copy에서 Keys는 뮤텍스 잡고 읽게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Copy the keys, grab the mutex and let me read it.",
-      "q_ko_mt_src": "Copy에서 Keys는 뮤텍스 잡고 읽게 해줘"
+      "q_ko_mt_src": "Copy에서 Keys는 뮤텍스 잡고 읽게 해줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "Copy에서 Keys는 뮤텍스 잡고 읽게 해줘",
+      "q_ko_llm": "read Keys under mutex in Copy"
     },
     {
       "q": "reset skipped-nodes stack on getValue entry to prevent slice overflow panic",
@@ -58,7 +71,14 @@
       "q_ko_draft": "getValue 들어갈 때 skipped-nodes 스택 리셋해서 슬라이스 오버플로 패닉 막아줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "When you enter getValue, reset the skip-nodes stack and stop the panic from slicing over.",
-      "q_ko_mt_src": "getValue 들어갈 때 skipped-nodes 스택 리셋해서 슬라이스 오버플로 패닉 막아줘"
+      "q_ko_mt_src": "getValue 들어갈 때 skipped-nodes 스택 리셋해서 슬라이스 오버플로 패닉 막아줘",
+      "q_ko_dict_terms": [
+        "block",
+        "prevent",
+        "guard"
+      ],
+      "q_ko_dict": "getValue 들어갈 때 skipped-nodes 스택 리셋해서 슬라이스 오버플로 패닉 막아줘 block prevent guard",
+      "q_ko_llm": "reset skipped-nodes stack on getValue entry to prevent slice overflow panic"
     },
     {
       "q": "add default ReadHeaderTimeout to http.Server in Run methods",
@@ -72,7 +92,10 @@
       "q_ko_draft": "Run 메서드들에서 http.Server에 기본 ReadHeaderTimeout 넣으려면 어디를 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I look to put the default ReadHeaderTimeout on the http.Server in Run Methods?",
-      "q_ko_mt_src": "Run 메서드들에서 http.Server에 기본 ReadHeaderTimeout 넣으려면 어디를 봐야 해?"
+      "q_ko_mt_src": "Run 메서드들에서 http.Server에 기본 ReadHeaderTimeout 넣으려면 어디를 봐야 해?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "Run 메서드들에서 http.Server에 기본 ReadHeaderTimeout 넣으려면 어디를 봐야 해?",
+      "q_ko_llm": "set default ReadHeaderTimeout on http.Server in Run methods"
     },
     {
       "q": "add support for the HTTP QUERY method (RFC 10008)",
@@ -87,7 +110,13 @@
       "q_ko_draft": "HTTP QUERY 메서드(RFC 10008) 지원 추가",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "HTTP QUERY method (RFC 10008) Added support",
-      "q_ko_mt_src": "HTTP QUERY 메서드(RFC 10008) 지원 추가"
+      "q_ko_mt_src": "HTTP QUERY 메서드(RFC 10008) 지원 추가",
+      "q_ko_dict_terms": [
+        "add",
+        "create"
+      ],
+      "q_ko_dict": "HTTP QUERY 메서드(RFC 10008) 지원 추가 add create",
+      "q_ko_llm": "add HTTP QUERY method support (RFC 10008)"
     },
     {
       "q": "add QUERY method shortcut for RFC 10008",
@@ -101,7 +130,13 @@
       "q_ko_draft": "RFC 10008 QUERY 메서드 단축 함수는 어디에 추가하면 돼?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where can I add the RFC 10008 QUERY method shortcut function?",
-      "q_ko_mt_src": "RFC 10008 QUERY 메서드 단축 함수는 어디에 추가하면 돼?"
+      "q_ko_mt_src": "RFC 10008 QUERY 메서드 단축 함수는 어디에 추가하면 돼?",
+      "q_ko_dict_terms": [
+        "add",
+        "create"
+      ],
+      "q_ko_dict": "RFC 10008 QUERY 메서드 단축 함수는 어디에 추가하면 돼? add create",
+      "q_ko_llm": "add RFC 10008 QUERY method shortcut function"
     },
     {
       "q": "skip chmod on pre-existing dirs in SaveUploadedFile",
@@ -115,7 +150,10 @@
       "q_ko_draft": "SaveUploadedFile에서 이미 있던 디렉터리에도 chmod 하는 문제",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "There's also a chmod issue in the directory that's already in SaveUploadedFile.",
-      "q_ko_mt_src": "SaveUploadedFile에서 이미 있던 디렉터리에도 chmod 하는 문제"
+      "q_ko_mt_src": "SaveUploadedFile에서 이미 있던 디렉터리에도 chmod 하는 문제",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "SaveUploadedFile에서 이미 있던 디렉터리에도 chmod 하는 문제",
+      "q_ko_llm": "SaveUploadedFile chmods already existing directory"
     },
     {
       "q": "record recovered panics in c.Errors",
@@ -129,7 +167,12 @@
       "q_ko_draft": "recover한 패닉을 c.Errors에 남기려면 어디 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you fix a recovered panic to stay in c.Errors?",
-      "q_ko_mt_src": "recover한 패닉을 c.Errors에 남기려면 어디 고쳐야 해?"
+      "q_ko_mt_src": "recover한 패닉을 c.Errors에 남기려면 어디 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "fix"
+      ],
+      "q_ko_dict": "recover한 패닉을 c.Errors에 남기려면 어디 고쳐야 해? fix",
+      "q_ko_llm": "record recovered panic in c.Errors"
     },
     {
       "q": "panic on Hijack/CloseNotify when wrapper unsupported",
@@ -143,7 +186,10 @@
       "q_ko_draft": "래퍼가 지원 안 할 때 Hijack/CloseNotify에서 패닉 내는 부분 어디야?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where's the part where the rapper panics on Hijack/CloseNotify when he doesn't support it?",
-      "q_ko_mt_src": "래퍼가 지원 안 할 때 Hijack/CloseNotify에서 패닉 내는 부분 어디야?"
+      "q_ko_mt_src": "래퍼가 지원 안 할 때 Hijack/CloseNotify에서 패닉 내는 부분 어디야?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "래퍼가 지원 안 할 때 Hijack/CloseNotify에서 패닉 내는 부분 어디야?",
+      "q_ko_llm": "panic in Hijack/CloseNotify when wrapper doesn't support it"
     },
     {
       "q": "add support for encoding.UnmarshalText in uri/query binding",
@@ -157,7 +203,13 @@
       "q_ko_draft": "uri/query 바인딩에서 encoding.UnmarshalText 지원 추가해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Add support for encoding.UnmarshalText from the uri/query binding.",
-      "q_ko_mt_src": "uri/query 바인딩에서 encoding.UnmarshalText 지원 추가해줘"
+      "q_ko_mt_src": "uri/query 바인딩에서 encoding.UnmarshalText 지원 추가해줘",
+      "q_ko_dict_terms": [
+        "add",
+        "create"
+      ],
+      "q_ko_dict": "uri/query 바인딩에서 encoding.UnmarshalText 지원 추가해줘 add create",
+      "q_ko_llm": "support encoding.UnmarshalText in uri/query binding"
     },
     {
       "q": "replace hardcoded localhost IPs with constants",
@@ -171,7 +223,14 @@
       "q_ko_draft": "하드코딩된 localhost IP를 상수로 바꿔줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Change the hard-coded localhost IP to a variable.",
-      "q_ko_mt_src": "하드코딩된 localhost IP를 상수로 바꿔줘"
+      "q_ko_mt_src": "하드코딩된 localhost IP를 상수로 바꿔줘",
+      "q_ko_dict_terms": [
+        "change",
+        "update",
+        "replace"
+      ],
+      "q_ko_dict": "하드코딩된 localhost IP를 상수로 바꿔줘 change update replace",
+      "q_ko_llm": "replace hardcoded localhost IP with constant"
     },
     {
       "q": "optimize line reading in stack function",
@@ -185,7 +244,14 @@
       "q_ko_draft": "stack 함수 줄 읽기 최적화",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Optimize the stack function to read the string",
-      "q_ko_mt_src": "stack 함수 줄 읽기 최적화"
+      "q_ko_mt_src": "stack 함수 줄 읽기 최적화",
+      "q_ko_dict_terms": [
+        "line",
+        "read",
+        "load"
+      ],
+      "q_ko_dict": "stack 함수 줄 읽기 최적화 line read load",
+      "q_ko_llm": "optimize line reading in stack function"
     },
     {
       "q": "add option to use escaped path",
@@ -199,7 +265,15 @@
       "q_ko_draft": "이스케이프된 경로 쓰는 옵션 추가해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Add an option to use an escaped route.",
-      "q_ko_mt_src": "이스케이프된 경로 쓰는 옵션 추가해줘"
+      "q_ko_mt_src": "이스케이프된 경로 쓰는 옵션 추가해줘",
+      "q_ko_dict_terms": [
+        "route",
+        "path",
+        "add",
+        "create"
+      ],
+      "q_ko_dict": "이스케이프된 경로 쓰는 옵션 추가해줘 route path add create",
+      "q_ko_llm": "add option to use escaped path"
     },
     {
       "q": "replace regex with custom functions in redirectTrailingSlash",
@@ -214,7 +288,12 @@
       "q_ko_draft": "redirectTrailingSlash에서 정규식 대신 직접 짠 함수 쓰려면 어디를 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "So where do I look to use the direct trailing function instead of the regular one in redirectTrailingSlash?",
-      "q_ko_mt_src": "redirectTrailingSlash에서 정규식 대신 직접 짠 함수 쓰려면 어디를 봐야 해?"
+      "q_ko_mt_src": "redirectTrailingSlash에서 정규식 대신 직접 짠 함수 쓰려면 어디를 봐야 해?",
+      "q_ko_dict_terms": [
+        "regex"
+      ],
+      "q_ko_dict": "redirectTrailingSlash에서 정규식 대신 직접 짠 함수 쓰려면 어디를 봐야 해? regex",
+      "q_ko_llm": "replace regex with custom function in redirectTrailingSlash"
     },
     {
       "q": "improve empty slice/array handling in form binding",
@@ -228,7 +307,13 @@
       "q_ko_draft": "form 바인딩의 빈 slice/array 처리 개선",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Improve the blank slice/array processing of form binding",
-      "q_ko_mt_src": "form 바인딩의 빈 slice/array 처리 개선"
+      "q_ko_mt_src": "form 바인딩의 빈 slice/array 처리 개선",
+      "q_ko_dict_terms": [
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "form 바인딩의 빈 slice/array 처리 개선 handle process",
+      "q_ko_llm": "improve empty slice/array handling in form binding"
     },
     {
       "q": "refine hijack behavior for response lifecycle",
@@ -242,7 +327,12 @@
       "q_ko_draft": "응답 라이프사이클에 맞게 hijack 동작 다듬어줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "I need you to adjust the hijack to the response lifecycle.",
-      "q_ko_mt_src": "응답 라이프사이클에 맞게 hijack 동작 다듬어줘"
+      "q_ko_mt_src": "응답 라이프사이클에 맞게 hijack 동작 다듬어줘",
+      "q_ko_dict_terms": [
+        "response"
+      ],
+      "q_ko_dict": "응답 라이프사이클에 맞게 hijack 동작 다듬어줘 response",
+      "q_ko_llm": "refine hijack behavior to match response lifecycle"
     },
     {
       "q": "use sync.OnceValue to simplify engine function",
@@ -256,7 +346,10 @@
       "q_ko_draft": "engine 함수를 sync.OnceValue로 단순화하려면 어디부터 보면 돼?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do we look to simplify the engine function to sync.OnceValue?",
-      "q_ko_mt_src": "engine 함수를 sync.OnceValue로 단순화하려면 어디부터 보면 돼?"
+      "q_ko_mt_src": "engine 함수를 sync.OnceValue로 단순화하려면 어디부터 보면 돼?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "engine 함수를 sync.OnceValue로 단순화하려면 어디부터 보면 돼?",
+      "q_ko_llm": "simplify engine function with sync.OnceValue"
     },
     {
       "q": "remove headers parameter from writeHeader",
@@ -270,7 +363,10 @@
       "q_ko_draft": "writeHeader의 headers 파라미터 제거",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Remove the headers parameter of the writeHeader",
-      "q_ko_mt_src": "writeHeader의 headers 파라미터 제거"
+      "q_ko_mt_src": "writeHeader의 headers 파라미터 제거",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "writeHeader의 headers 파라미터 제거",
+      "q_ko_llm": "remove headers parameter from writeHeader"
     },
     {
       "q": "refactor `Keys` type to `map[any]any`",
@@ -285,7 +381,12 @@
       "q_ko_draft": "`Keys` 타입을 `map[any]any`로 리팩터링",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "`Keys` type refactoring to `map[any]any`",
-      "q_ko_mt_src": "`Keys` 타입을 `map[any]any`로 리팩터링"
+      "q_ko_mt_src": "`Keys` 타입을 `map[any]any`로 리팩터링",
+      "q_ko_dict_terms": [
+        "type"
+      ],
+      "q_ko_dict": "`Keys` 타입을 `map[any]any`로 리팩터링 type",
+      "q_ko_llm": "refactor Keys type to map[any]any"
     },
     {
       "q": "replace interface{} with any in type declarations",
@@ -300,7 +401,15 @@
       "q_ko_draft": "타입 선언에 있는 interface{}를 any로 바꿔줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Change the interface in the type declaration to any.",
-      "q_ko_mt_src": "타입 선언에 있는 interface{}를 any로 바꿔줘"
+      "q_ko_mt_src": "타입 선언에 있는 interface{}를 any로 바꿔줘",
+      "q_ko_dict_terms": [
+        "type",
+        "change",
+        "update",
+        "replace"
+      ],
+      "q_ko_dict": "타입 선언에 있는 interface{}를 any로 바꿔줘 type change update replace",
+      "q_ko_llm": "replace interface{} with any in type declarations"
     },
     {
       "q": "use strings.Cut to replace strings.SplitN",
@@ -315,7 +424,10 @@
       "q_ko_draft": "strings.SplitN 대신 strings.Cut 쓰기",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Instead of writing strings.SplitN, write strings.Cut.",
-      "q_ko_mt_src": "strings.SplitN 대신 strings.Cut 쓰기"
+      "q_ko_mt_src": "strings.SplitN 대신 strings.Cut 쓰기",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "strings.SplitN 대신 strings.Cut 쓰기",
+      "q_ko_llm": "use strings.Cut instead of strings.SplitN"
     },
     {
       "q": "change Unwrap method receiver to value type",
@@ -329,7 +441,16 @@
       "q_ko_draft": "Unwrap 메서드 리시버를 값 타입으로 바꿔줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Change the Unwrap Method receiver to the value type.",
-      "q_ko_mt_src": "Unwrap 메서드 리시버를 값 타입으로 바꿔줘"
+      "q_ko_mt_src": "Unwrap 메서드 리시버를 값 타입으로 바꿔줘",
+      "q_ko_dict_terms": [
+        "value",
+        "type",
+        "change",
+        "update",
+        "replace"
+      ],
+      "q_ko_dict": "Unwrap 메서드 리시버를 값 타입으로 바꿔줘 value type change update replace",
+      "q_ko_llm": "change Unwrap method receiver to value type"
     },
     {
       "q": "add literal colon support",
@@ -344,7 +465,13 @@
       "q_ko_draft": "리터럴 콜론 지원은 어디서 처리해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you get the rectal column support?",
-      "q_ko_mt_src": "리터럴 콜론 지원은 어디서 처리해?"
+      "q_ko_mt_src": "리터럴 콜론 지원은 어디서 처리해?",
+      "q_ko_dict_terms": [
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "리터럴 콜론 지원은 어디서 처리해? handle process",
+      "q_ko_llm": "literal colon support"
     },
     {
       "q": "simplify SliceValidationError Error method",
@@ -358,7 +485,10 @@
       "q_ko_draft": "SliceValidationError의 Error 메서드 단순화",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "SliceValidationError error method simplified",
-      "q_ko_mt_src": "SliceValidationError의 Error 메서드 단순화"
+      "q_ko_mt_src": "SliceValidationError의 Error 메서드 단순화",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "SliceValidationError의 Error 메서드 단순화",
+      "q_ko_llm": "simplify SliceValidationError Error method"
     },
     {
       "q": "Export, test and document OnlyFilesFS",
@@ -373,7 +503,13 @@
       "q_ko_draft": "OnlyFilesFS export하고 테스트랑 문서도 붙여줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Export OnlyFilesFS and get me some tests and documents.",
-      "q_ko_mt_src": "OnlyFilesFS export하고 테스트랑 문서도 붙여줘"
+      "q_ko_mt_src": "OnlyFilesFS export하고 테스트랑 문서도 붙여줘",
+      "q_ko_dict_terms": [
+        "test",
+        "spec"
+      ],
+      "q_ko_dict": "OnlyFilesFS export하고 테스트랑 문서도 붙여줘 test spec",
+      "q_ko_llm": "export OnlyFilesFS with tests and docs"
     },
     {
       "q": "dereference pointer to struct",
@@ -387,7 +523,10 @@
       "q_ko_draft": "구조체 포인터 역참조",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Structural pointers reverse.",
-      "q_ko_mt_src": "구조체 포인터 역참조"
+      "q_ko_mt_src": "구조체 포인터 역참조",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "구조체 포인터 역참조",
+      "q_ko_llm": "dereference struct pointer"
     },
     {
       "q": "ability to skip logs based on user-defined logic",
@@ -401,7 +540,17 @@
       "q_ko_draft": "사용자가 정한 로직으로 로그를 건너뛸 수 있게 하려면 어디를 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you need to look if you want to allow the user to skip logs to a specific log?",
-      "q_ko_mt_src": "사용자가 정한 로직으로 로그를 건너뛸 수 있게 하려면 어디를 봐야 해?"
+      "q_ko_mt_src": "사용자가 정한 로직으로 로그를 건너뛸 수 있게 하려면 어디를 봐야 해?",
+      "q_ko_dict_terms": [
+        "user",
+        "set",
+        "resolve",
+        "determine",
+        "log",
+        "logger"
+      ],
+      "q_ko_dict": "사용자가 정한 로직으로 로그를 건너뛸 수 있게 하려면 어디를 봐야 해? user set resolve determine log logger",
+      "q_ko_llm": "allow skipping logs with user-defined logic"
     },
     {
       "q": "Ready release gin 1.9.1 (by: thinkerou)",
@@ -415,7 +564,10 @@
       "q_ko_draft": "gin 1.9.1 릴리스 준비 (by: thinkerou)",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Gin 1.9.1 release ready (by: thinkerou)",
-      "q_ko_mt_src": "gin 1.9.1 릴리스 준비 (by: thinkerou)"
+      "q_ko_mt_src": "gin 1.9.1 릴리스 준비 (by: thinkerou)",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "gin 1.9.1 릴리스 준비 (by: thinkerou)",
+      "q_ko_llm": "prepare gin 1.9.1 release (by: thinkerou)"
     },
     {
       "q": "Adjust the position of some functions",
@@ -429,7 +581,10 @@
       "q_ko_draft": "일부 함수 위치 조정",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Adjusting the position of some functions",
-      "q_ko_mt_src": "일부 함수 위치 조정"
+      "q_ko_mt_src": "일부 함수 위치 조정",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "일부 함수 위치 조정",
+      "q_ko_llm": "move some functions"
     },
     {
       "q": "Fix the value of ginSupportMinGoVer constant by semantic",
@@ -443,7 +598,13 @@
       "q_ko_draft": "ginSupportMinGoVer 상수 값을 의미에 맞게 고쳐줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "GinSupportMinGoVer, correct the constant value to the meaning.",
-      "q_ko_mt_src": "ginSupportMinGoVer 상수 값을 의미에 맞게 고쳐줘"
+      "q_ko_mt_src": "ginSupportMinGoVer 상수 값을 의미에 맞게 고쳐줘",
+      "q_ko_dict_terms": [
+        "value",
+        "fix"
+      ],
+      "q_ko_dict": "ginSupportMinGoVer 상수 값을 의미에 맞게 고쳐줘 value fix",
+      "q_ko_llm": "fix ginSupportMinGoVer constant value to match its meaning"
     },
     {
       "q": "switch min version of go to 1.15",
@@ -457,8 +618,17 @@
       "q_ko_draft": "Go 최소 버전을 1.15로 바꾸려면 어디를 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "What do you need to fix if you want to change the Go minimum to 1.15?",
-      "q_ko_mt_src": "Go 최소 버전을 1.15로 바꾸려면 어디를 고쳐야 해?"
+      "q_ko_mt_src": "Go 최소 버전을 1.15로 바꾸려면 어디를 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "change",
+        "update",
+        "replace",
+        "fix"
+      ],
+      "q_ko_dict": "Go 최소 버전을 1.15로 바꾸려면 어디를 고쳐야 해? change update replace fix",
+      "q_ko_llm": "change minimum Go version to 1.15"
     }
   ],
-  "mt_model": "facebook/nllb-200-distilled-600M"
+  "mt_model": "facebook/nllb-200-distilled-600M",
+  "llm_rewrite": "Claude (Claude Code subagent), Korean question only, prompt in eval/bilingual/README.md"
 }

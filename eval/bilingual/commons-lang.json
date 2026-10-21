@@ -16,7 +16,14 @@
       "q_ko_draft": "FastDateFormat 캐시의 타임존 키가 mutable한 문제 고쳐줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "I need you to fix a mutable timezone key in the FastDateFormat cache.",
-      "q_ko_mt_src": "FastDateFormat 캐시의 타임존 키가 mutable한 문제 고쳐줘"
+      "q_ko_mt_src": "FastDateFormat 캐시의 타임존 키가 mutable한 문제 고쳐줘",
+      "q_ko_dict_terms": [
+        "cache",
+        "key",
+        "fix"
+      ],
+      "q_ko_dict": "FastDateFormat 캐시의 타임존 키가 mutable한 문제 고쳐줘 cache key fix",
+      "q_ko_llm": "FastDateFormat cache uses mutable time zone key"
     },
     {
       "q": "Reflection builders' cycle registry unregisters per-visit: cycle-SAFE but DAG-exponential, a 40-level reference diamond drives ~2^40 traversals and unbounded output (f032).",
@@ -30,7 +37,16 @@
       "q_ko_draft": "리플렉션 빌더의 순환 레지스트리가 방문마다 등록을 해제함. 순환엔 안전하지만 DAG에선 지수적이라 40단계 다이아몬드 참조면 순회가 ~2^40번 돌고 출력도 끝없이 커짐 (f032)",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Reflection Builder's cycle registry deletes registration every visit. It's safe to cycle, but it's indexed in the DAG because if you look at a 40-step diamond, the cycle rotates ~2^40 times and the output also increases endlessly (f032)",
-      "q_ko_mt_src": "리플렉션 빌더의 순환 레지스트리가 방문마다 등록을 해제함. 순환엔 안전하지만 DAG에선 지수적이라 40단계 다이아몬드 참조면 순회가 ~2^40번 돌고 출력도 끝없이 커짐 (f032)"
+      "q_ko_mt_src": "리플렉션 빌더의 순환 레지스트리가 방문마다 등록을 해제함. 순환엔 안전하지만 DAG에선 지수적이라 40단계 다이아몬드 참조면 순회가 ~2^40번 돌고 출력도 끝없이 커짐 (f032)",
+      "q_ko_dict_terms": [
+        "safe",
+        "safety",
+        "level",
+        "stage",
+        "step"
+      ],
+      "q_ko_dict": "리플렉션 빌더의 순환 레지스트리가 방문마다 등록을 해제함. 순환엔 안전하지만 DAG에선 지수적이라 40단계 다이아몬드 참조면 순회가 ~2^40번 돌고 출력도 끝없이 커짐 (f032) safe safety level stage step",
+      "q_ko_llm": "reflection builder cycle registry unregisters on every visit, exponential traversal on DAG with 40-level diamond references (~2^40) and unbounded output (f032)"
     },
     {
       "q": "StrBuilder.indexOf materializes the whole builder as a String per call; deleteAll/replaceAll multiply it into ~750 GB churn on a 1 MB builder (f026).",
@@ -44,7 +60,14 @@
       "q_ko_draft": "StrBuilder.indexOf가 호출할 때마다 빌더 전체를 String으로 만듦. deleteAll/replaceAll에선 이게 곱해져서 1 MB 빌더에 ~750 GB를 할당했다 버리는 문제 (f026)",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Every time StrBuilder.indexOf calls the entire builder to String. In deleteAll/replaceAll, this multiplies and assigns about 750 GB to the 1 MB builder.",
-      "q_ko_mt_src": "StrBuilder.indexOf가 호출할 때마다 빌더 전체를 String으로 만듦. deleteAll/replaceAll에선 이게 곱해져서 1 MB 빌더에 ~750 GB를 할당했다 버리는 문제 (f026)"
+      "q_ko_mt_src": "StrBuilder.indexOf가 호출할 때마다 빌더 전체를 String으로 만듦. deleteAll/replaceAll에선 이게 곱해져서 1 MB 빌더에 ~750 GB를 할당했다 버리는 문제 (f026)",
+      "q_ko_dict_terms": [
+        "call",
+        "invoke",
+        "alloc"
+      ],
+      "q_ko_dict": "StrBuilder.indexOf가 호출할 때마다 빌더 전체를 String으로 만듦. deleteAll/replaceAll에선 이게 곱해져서 1 MB 빌더에 ~750 GB를 할당했다 버리는 문제 (f026) call invoke alloc",
+      "q_ko_llm": "StrBuilder.indexOf converts whole builder to String on every call, multiplied in deleteAll/replaceAll allocating ~750 GB for 1 MB builder (f026)"
     },
     {
       "q": "Attacker-controlled exception message forges frames in getRootCauseStackTrace output AND suppresses all real frames, beyond cosmetic log spoofing (f025).",
@@ -58,7 +81,15 @@
       "q_ko_draft": "공격자가 조작한 예외 메시지로 getRootCauseStackTrace 출력에 가짜 프레임을 끼워 넣고 진짜 프레임은 전부 숨길 수 있음. 단순 로그 위조 수준이 아님 (f025)",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "An exception message manipulated by the attacker is to insert a fake frame into the getRootCauseStackTrace output and hide the entire real frame.",
-      "q_ko_mt_src": "공격자가 조작한 예외 메시지로 getRootCauseStackTrace 출력에 가짜 프레임을 끼워 넣고 진짜 프레임은 전부 숨길 수 있음. 단순 로그 위조 수준이 아님 (f025)"
+      "q_ko_mt_src": "공격자가 조작한 예외 메시지로 getRootCauseStackTrace 출력에 가짜 프레임을 끼워 넣고 진짜 프레임은 전부 숨길 수 있음. 단순 로그 위조 수준이 아님 (f025)",
+      "q_ko_dict_terms": [
+        "exception",
+        "error",
+        "message",
+        "log"
+      ],
+      "q_ko_dict": "공격자가 조작한 예외 메시지로 getRootCauseStackTrace 출력에 가짜 프레임을 끼워 넣고 진짜 프레임은 전부 숨길 수 있음. 단순 로그 위조 수준이 아님 (f025) exception error message log",
+      "q_ko_llm": "crafted exception message injects fake frames into getRootCauseStackTrace output and hides all real frames (f025)"
     },
     {
       "q": "default caches the first failure forever, has no size bound or eviction, and runs the user computation inside the ConcurrentHashMap bin lock (blocking unrelated keys, deadlocking reentrant use) (f011).",
@@ -72,7 +103,14 @@
       "q_ko_draft": "default가 첫 실패를 영원히 캐시하고, 크기 제한도 eviction도 없고, 사용자 계산을 ConcurrentHashMap bin 락 안에서 돌림 (관련 없는 키까지 막히고 재진입하면 데드락) (f011)",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "The default caches the first failure forever, with no size restriction or eviction, and turns the user calculations inside the ConcurrentHashMap bin lock (blocking to unrelated keys and re-entering de-lock) (f011)",
-      "q_ko_mt_src": "default가 첫 실패를 영원히 캐시하고, 크기 제한도 eviction도 없고, 사용자 계산을 ConcurrentHashMap bin 락 안에서 돌림 (관련 없는 키까지 막히고 재진입하면 데드락) (f011)"
+      "q_ko_mt_src": "default가 첫 실패를 영원히 캐시하고, 크기 제한도 eviction도 없고, 사용자 계산을 ConcurrentHashMap bin 락 안에서 돌림 (관련 없는 키까지 막히고 재진입하면 데드락) (f011)",
+      "q_ko_dict_terms": [
+        "fail",
+        "failure",
+        "error"
+      ],
+      "q_ko_dict": "default가 첫 실패를 영원히 캐시하고, 크기 제한도 eviction도 없고, 사용자 계산을 ConcurrentHashMap bin 락 안에서 돌림 (관련 없는 키까지 막히고 재진입하면 데드락) (f011) fail failure error",
+      "q_ko_llm": "default caches first failure forever, no size limit or eviction, runs user computation inside ConcurrentHashMap bin lock blocking unrelated keys and deadlocking on reentry (f011)"
     },
     {
       "q": "keep stripStart and stripEnd off surrogate pair boundaries",
@@ -86,7 +124,10 @@
       "q_ko_draft": "stripStart, stripEnd가 서로게이트 쌍 중간에서 자르지 않게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "StripStart, keep StripEnd from cutting into each other's pairs.",
-      "q_ko_mt_src": "stripStart, stripEnd가 서로게이트 쌍 중간에서 자르지 않게 해줘"
+      "q_ko_mt_src": "stripStart, stripEnd가 서로게이트 쌍 중간에서 자르지 않게 해줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "stripStart, stripEnd가 서로게이트 쌍 중간에서 자르지 않게 해줘",
+      "q_ko_llm": "stripStart and stripEnd should not split surrogate pairs"
     },
     {
       "q": "Keep chop from splitting a trailing surrogate pair",
@@ -100,7 +141,10 @@
       "q_ko_draft": "chop이 끝에 있는 서로게이트 쌍을 쪼개는 문제",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "The problem of splitting the pairs of chops at the end of each gate.",
-      "q_ko_mt_src": "chop이 끝에 있는 서로게이트 쌍을 쪼개는 문제"
+      "q_ko_mt_src": "chop이 끝에 있는 서로게이트 쌍을 쪼개는 문제",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "chop이 끝에 있는 서로게이트 쌍을 쪼개는 문제",
+      "q_ko_llm": "chop splits trailing surrogate pair"
     },
     {
       "q": "Handle ParsePosition index beyond source string length cleanly",
@@ -114,7 +158,18 @@
       "q_ko_draft": "ParsePosition 인덱스가 원본 문자열 길이를 넘을 때 깔끔하게 처리하려면 어디를 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "When the ParsePosition index exceeds the original string length, where do you need to look if you want to handle it neatly?",
-      "q_ko_mt_src": "ParsePosition 인덱스가 원본 문자열 길이를 넘을 때 깔끔하게 처리하려면 어디를 봐야 해?"
+      "q_ko_mt_src": "ParsePosition 인덱스가 원본 문자열 길이를 넘을 때 깔끔하게 처리하려면 어디를 봐야 해?",
+      "q_ko_dict_terms": [
+        "index",
+        "string",
+        "str",
+        "length",
+        "len",
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "ParsePosition 인덱스가 원본 문자열 길이를 넘을 때 깔끔하게 처리하려면 어디를 봐야 해? index string str length len handle process",
+      "q_ko_llm": "handle ParsePosition index beyond source string length gracefully"
     },
     {
       "q": "fix getMatchingMethod false ambiguity for boxed primitive args",
@@ -128,7 +183,13 @@
       "q_ko_draft": "박싱된 primitive 인자에서 getMatchingMethod가 모호하다고 잘못 판단하는 버그",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "A bug that mistakenly judges the getMatchingMethod to be ambiguous",
-      "q_ko_mt_src": "박싱된 primitive 인자에서 getMatchingMethod가 모호하다고 잘못 판단하는 버그"
+      "q_ko_mt_src": "박싱된 primitive 인자에서 getMatchingMethod가 모호하다고 잘못 판단하는 버그",
+      "q_ko_dict_terms": [
+        "arg",
+        "param"
+      ],
+      "q_ko_dict": "박싱된 primitive 인자에서 getMatchingMethod가 모호하다고 잘못 판단하는 버그 arg param",
+      "q_ko_llm": "getMatchingMethod wrongly reports ambiguity for boxed primitive arguments"
     },
     {
       "q": "fix unescapeCsv bounds error on a single quote field",
@@ -142,7 +203,13 @@
       "q_ko_draft": "따옴표 하나짜리 필드에서 unescapeCsv 범위 에러 나는 거 고쳐줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "UnescapeCsv range in a quotation field where I'll fix it",
-      "q_ko_mt_src": "따옴표 하나짜리 필드에서 unescapeCsv 범위 에러 나는 거 고쳐줘"
+      "q_ko_mt_src": "따옴표 하나짜리 필드에서 unescapeCsv 범위 에러 나는 거 고쳐줘",
+      "q_ko_dict_terms": [
+        "error",
+        "fix"
+      ],
+      "q_ko_dict": "따옴표 하나짜리 필드에서 unescapeCsv 범위 에러 나는 거 고쳐줘 error fix",
+      "q_ko_llm": "fix unescapeCsv range error on field with a single quote"
     },
     {
       "q": "keep initials from splitting a supplementary code point",
@@ -156,7 +223,13 @@
       "q_ko_draft": "initials가 supplementary 코드 포인트를 쪼개지 않게 하려면 어디 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I fix the initials to keep the supplementary code points from splitting?",
-      "q_ko_mt_src": "initials가 supplementary 코드 포인트를 쪼개지 않게 하려면 어디 고쳐야 해?"
+      "q_ko_mt_src": "initials가 supplementary 코드 포인트를 쪼개지 않게 하려면 어디 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "point",
+        "fix"
+      ],
+      "q_ko_dict": "initials가 supplementary 코드 포인트를 쪼개지 않게 하려면 어디 고쳐야 해? point fix",
+      "q_ko_llm": "initials should not split supplementary code points"
     },
     {
       "q": "strip L suffix for oversized hex literals in createNumber",
@@ -170,7 +243,10 @@
       "q_ko_draft": "createNumber에서 범위 넘는 16진수 리터럴의 L 접미사는 어디서 떼?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you take the L-supplement of a 16-digit literal beyond the range from createNumber?",
-      "q_ko_mt_src": "createNumber에서 범위 넘는 16진수 리터럴의 L 접미사는 어디서 떼?"
+      "q_ko_mt_src": "createNumber에서 범위 넘는 16진수 리터럴의 L 접미사는 어디서 떼?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "createNumber에서 범위 넘는 16진수 리터럴의 L 접미사는 어디서 떼?",
+      "q_ko_llm": "strip L suffix from out-of-range hex literal in createNumber"
     },
     {
       "q": "Add tests to ensure nulls compare correctly",
@@ -184,7 +260,15 @@
       "q_ko_draft": "null 비교가 제대로 되는지 확인하는 테스트 추가해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Add a test to see if the null comparison is correct.",
-      "q_ko_mt_src": "null 비교가 제대로 되는지 확인하는 테스트 추가해줘"
+      "q_ko_mt_src": "null 비교가 제대로 되는지 확인하는 테스트 추가해줘",
+      "q_ko_dict_terms": [
+        "test",
+        "spec",
+        "add",
+        "create"
+      ],
+      "q_ko_dict": "null 비교가 제대로 되는지 확인하는 테스트 추가해줘 test spec add create",
+      "q_ko_llm": "add test verifying null comparison"
     },
     {
       "q": "reject doubled leading sign in createBigInteger",
@@ -198,7 +282,13 @@
       "q_ko_draft": "createBigInteger에서 앞에 부호가 두 번 붙은 입력은 어디서 걸러?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "In createBigInteger, where do you get the entries that have two letters in front of them?",
-      "q_ko_mt_src": "createBigInteger에서 앞에 부호가 두 번 붙은 입력은 어디서 걸러?"
+      "q_ko_mt_src": "createBigInteger에서 앞에 부호가 두 번 붙은 입력은 어디서 걸러?",
+      "q_ko_dict_terms": [
+        "input",
+        "form"
+      ],
+      "q_ko_dict": "createBigInteger에서 앞에 부호가 두 번 붙은 입력은 어디서 걸러? input form",
+      "q_ko_llm": "reject input with double leading sign in createBigInteger"
     },
     {
       "q": "fix lookup translator code point count for supplementary keys",
@@ -212,7 +302,14 @@
       "q_ko_draft": "lookup translator가 supplementary 키의 코드 포인트 수를 잘못 세는 버그",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "bug that miscalculated the number of code points in the supplementary key",
-      "q_ko_mt_src": "lookup translator가 supplementary 키의 코드 포인트 수를 잘못 세는 버그"
+      "q_ko_mt_src": "lookup translator가 supplementary 키의 코드 포인트 수를 잘못 세는 버그",
+      "q_ko_dict_terms": [
+        "key",
+        "point",
+        "count"
+      ],
+      "q_ko_dict": "lookup translator가 supplementary 키의 코드 포인트 수를 잘못 세는 버그 key point count",
+      "q_ko_llm": "lookup translator miscounts code points of supplementary keys"
     },
     {
       "q": "NaN bypass in primitive double range validators.",
@@ -226,7 +323,14 @@
       "q_ko_draft": "primitive double 범위 검증에서 NaN이 그냥 통과되는 곳 어디야?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where's the NaN just passing through primitive double-range verification?",
-      "q_ko_mt_src": "primitive double 범위 검증에서 NaN이 그냥 통과되는 곳 어디야?"
+      "q_ko_mt_src": "primitive double 범위 검증에서 NaN이 그냥 통과되는 곳 어디야?",
+      "q_ko_dict_terms": [
+        "validate",
+        "verify",
+        "validation"
+      ],
+      "q_ko_dict": "primitive double 범위 검증에서 NaN이 그냥 통과되는 곳 어디야? validate verify validation",
+      "q_ko_llm": "NaN passes primitive double range validation"
     },
     {
       "q": "Annotation lookup matches unrelated overloads via assignable-parameter resolution",
@@ -240,7 +344,18 @@
       "q_ko_draft": "애노테이션 조회가 할당 가능한 파라미터로 판정하다 상관없는 오버로드까지 매칭하는 문제",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "The problem is that the annotation board determines the allowable parameters to match up to the overload that doesn't matter.",
-      "q_ko_mt_src": "애노테이션 조회가 할당 가능한 파라미터로 판정하다 상관없는 오버로드까지 매칭하는 문제"
+      "q_ko_mt_src": "애노테이션 조회가 할당 가능한 파라미터로 판정하다 상관없는 오버로드까지 매칭하는 문제",
+      "q_ko_dict_terms": [
+        "find",
+        "get",
+        "query",
+        "fetch",
+        "alloc",
+        "allocate",
+        "capacity"
+      ],
+      "q_ko_dict": "애노테이션 조회가 할당 가능한 파라미터로 판정하다 상관없는 오버로드까지 매칭하는 문제 find get query fetch alloc allocate capacity",
+      "q_ko_llm": "annotation lookup matches unrelated overloads via assignable parameter check"
     },
     {
       "q": "No need to end exception messages with an exclamation!",
@@ -256,7 +371,16 @@
       "q_ko_draft": "예외 메시지 끝에 느낌표 붙일 필요 없으니 빼줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "You don't have to put a feeling tag at the end of the exception message, so take it off.",
-      "q_ko_mt_src": "예외 메시지 끝에 느낌표 붙일 필요 없으니 빼줘"
+      "q_ko_mt_src": "예외 메시지 끝에 느낌표 붙일 필요 없으니 빼줘",
+      "q_ko_dict_terms": [
+        "exception",
+        "error",
+        "message",
+        "remove",
+        "exclude"
+      ],
+      "q_ko_dict": "예외 메시지 끝에 느낌표 붙일 필요 없으니 빼줘 exception error message remove exclude",
+      "q_ko_llm": "remove trailing exclamation mark from exception messages"
     },
     {
       "q": "Make stopInstant be in sync with stopTimeNanos for split",
@@ -270,7 +394,12 @@
       "q_ko_draft": "split할 때 stopInstant를 stopTimeNanos랑 맞추려면 어디를 고쳐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do I need to fix to match stopInstant to stopTimeNanos when I split?",
-      "q_ko_mt_src": "split할 때 stopInstant를 stopTimeNanos랑 맞추려면 어디를 고쳐야 해?"
+      "q_ko_mt_src": "split할 때 stopInstant를 stopTimeNanos랑 맞추려면 어디를 고쳐야 해?",
+      "q_ko_dict_terms": [
+        "fix"
+      ],
+      "q_ko_dict": "split할 때 stopInstant를 stopTimeNanos랑 맞추려면 어디를 고쳐야 해? fix",
+      "q_ko_llm": "align stopInstant with stopTimeNanos on split"
     },
     {
       "q": "Use a single return in indexesOf() methods",
@@ -284,7 +413,10 @@
       "q_ko_draft": "indexesOf() 메서드들 return 하나로 정리해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Put the methods back together.",
-      "q_ko_mt_src": "indexesOf() 메서드들 return 하나로 정리해줘"
+      "q_ko_mt_src": "indexesOf() 메서드들 return 하나로 정리해줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "indexesOf() 메서드들 return 하나로 정리해줘",
+      "q_ko_llm": "use single return in indexesOf() methods"
     },
     {
       "q": "Fix ClassNotFoundException message variable",
@@ -298,7 +430,14 @@
       "q_ko_draft": "ClassNotFoundException 메시지 변수 잘못 들어간 곳 어디야?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where did the ClassNotFoundException message variable go wrong?",
-      "q_ko_mt_src": "ClassNotFoundException 메시지 변수 잘못 들어간 곳 어디야?"
+      "q_ko_mt_src": "ClassNotFoundException 메시지 변수 잘못 들어간 곳 어디야?",
+      "q_ko_dict_terms": [
+        "message",
+        "variable",
+        "var"
+      ],
+      "q_ko_dict": "ClassNotFoundException 메시지 변수 잘못 들어간 곳 어디야? message variable var",
+      "q_ko_llm": "wrong variable in ClassNotFoundException message"
     },
     {
       "q": "Inline single use local variable",
@@ -312,7 +451,13 @@
       "q_ko_draft": "한 번만 쓰는 지역 변수 인라인해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Line up the one-time local variable.",
-      "q_ko_mt_src": "한 번만 쓰는 지역 변수 인라인해줘"
+      "q_ko_mt_src": "한 번만 쓰는 지역 변수 인라인해줘",
+      "q_ko_dict_terms": [
+        "variable",
+        "var"
+      ],
+      "q_ko_dict": "한 번만 쓰는 지역 변수 인라인해줘 variable var",
+      "q_ko_llm": "inline single-use local variables"
     },
     {
       "q": "Sort the available TimeZone IDs once.",
@@ -327,7 +472,13 @@
       "q_ko_draft": "사용 가능한 TimeZone ID를 한 번만 정렬하게 하려면 어디 봐야 해?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do you need to look to sort out the available TimeZone IDs once?",
-      "q_ko_mt_src": "사용 가능한 TimeZone ID를 한 번만 정렬하게 하려면 어디 봐야 해?"
+      "q_ko_mt_src": "사용 가능한 TimeZone ID를 한 번만 정렬하게 하려면 어디 봐야 해?",
+      "q_ko_dict_terms": [
+        "sort",
+        "order"
+      ],
+      "q_ko_dict": "사용 가능한 TimeZone ID를 한 번만 정렬하게 하려면 어디 봐야 해? sort order",
+      "q_ko_llm": "sort available TimeZone IDs only once"
     },
     {
       "q": "Deprecate SOFT_MAX_ARRAY_LENGTH in favor of MAX_ARRAY_LENGTH",
@@ -341,7 +492,13 @@
       "q_ko_draft": "SOFT_MAX_ARRAY_LENGTH는 deprecated 처리하고 MAX_ARRAY_LENGTH 쓰게 해줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Let the SOFT_MAX_ARRAY_LENGTH process the deprecated and use the MAX_ARRAY_LENGTH.",
-      "q_ko_mt_src": "SOFT_MAX_ARRAY_LENGTH는 deprecated 처리하고 MAX_ARRAY_LENGTH 쓰게 해줘"
+      "q_ko_mt_src": "SOFT_MAX_ARRAY_LENGTH는 deprecated 처리하고 MAX_ARRAY_LENGTH 쓰게 해줘",
+      "q_ko_dict_terms": [
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "SOFT_MAX_ARRAY_LENGTH는 deprecated 처리하고 MAX_ARRAY_LENGTH 쓰게 해줘 handle process",
+      "q_ko_llm": "deprecate SOFT_MAX_ARRAY_LENGTH in favor of MAX_ARRAY_LENGTH"
     },
     {
       "q": "Use for each on array",
@@ -355,7 +512,14 @@
       "q_ko_draft": "배열 순회에 for-each 쓰기",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Write for-each in the array.",
-      "q_ko_mt_src": "배열 순회에 for-each 쓰기"
+      "q_ko_mt_src": "배열 순회에 for-each 쓰기",
+      "q_ko_dict_terms": [
+        "array",
+        "vec",
+        "list"
+      ],
+      "q_ko_dict": "배열 순회에 for-each 쓰기 array vec list",
+      "q_ko_llm": "use for-each loop for array iteration"
     },
     {
       "q": "Improve handling of parameterized types and variable unrolling",
@@ -369,7 +533,16 @@
       "q_ko_draft": "파라미터화 타입이랑 변수 unrolling 처리 개선",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Parameterized type and variable unrolling processing improvement",
-      "q_ko_mt_src": "파라미터화 타입이랑 변수 unrolling 처리 개선"
+      "q_ko_mt_src": "파라미터화 타입이랑 변수 unrolling 처리 개선",
+      "q_ko_dict_terms": [
+        "type",
+        "variable",
+        "var",
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "파라미터화 타입이랑 변수 unrolling 처리 개선 type variable var handle process",
+      "q_ko_llm": "improve parameterized type and variable unrolling handling"
     },
     {
       "q": "Use interface in private method signature",
@@ -383,7 +556,15 @@
       "q_ko_draft": "private 메서드 시그니처에 인터페이스 타입 쓰게 바꿔줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "I need you to change the interface type for the private method signature.",
-      "q_ko_mt_src": "private 메서드 시그니처에 인터페이스 타입 쓰게 바꿔줘"
+      "q_ko_mt_src": "private 메서드 시그니처에 인터페이스 타입 쓰게 바꿔줘",
+      "q_ko_dict_terms": [
+        "type",
+        "change",
+        "update",
+        "replace"
+      ],
+      "q_ko_dict": "private 메서드 시그니처에 인터페이스 타입 쓰게 바꿔줘 type change update replace",
+      "q_ko_llm": "use interface types in private method signatures"
     },
     {
       "q": "Make test Java15BugFastDateParserTest more lenient on Java 26-ea",
@@ -397,7 +578,10 @@
       "q_ko_draft": "Java 26-ea에서 Java15BugFastDateParserTest를 좀 더 느슨하게 하려면 어디부터 보면 돼?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where do we look to make the BugFastDateParserTest a little slower in Java 26-ea?",
-      "q_ko_mt_src": "Java 26-ea에서 Java15BugFastDateParserTest를 좀 더 느슨하게 하려면 어디부터 보면 돼?"
+      "q_ko_mt_src": "Java 26-ea에서 Java15BugFastDateParserTest를 좀 더 느슨하게 하려면 어디부터 보면 돼?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "Java 26-ea에서 Java15BugFastDateParserTest를 좀 더 느슨하게 하려면 어디부터 보면 돼?",
+      "q_ko_llm": "relax Java15BugFastDateParserTest on Java 26-ea"
     },
     {
       "q": "Remove redundant extends in generics",
@@ -411,7 +595,10 @@
       "q_ko_draft": "제네릭에 불필요한 extends 붙은 곳 어디야?",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "Where's the unnecessary extends on generic?",
-      "q_ko_mt_src": "제네릭에 불필요한 extends 붙은 곳 어디야?"
+      "q_ko_mt_src": "제네릭에 불필요한 extends 붙은 곳 어디야?",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "제네릭에 불필요한 extends 붙은 곳 어디야?",
+      "q_ko_llm": "remove unnecessary extends in generics"
     },
     {
       "q": "Migrate from deprecated method",
@@ -426,7 +613,10 @@
       "q_ko_reviewed": "llm",
       "q_ko_note": "검토(LLM): '부분 갈아타줘'는 목적어 호응이 어색해서 '~에서 갈아타줘'로 고침",
       "q_ko_mt": "Replace it with a deprecated method.",
-      "q_ko_mt_src": "deprecated 메서드에서 갈아타줘"
+      "q_ko_mt_src": "deprecated 메서드에서 갈아타줘",
+      "q_ko_dict_terms": [],
+      "q_ko_dict": "deprecated 메서드에서 갈아타줘",
+      "q_ko_llm": "migrate off deprecated methods"
     },
     {
       "q": "Fix internal inverted logic in private isEnum() method and correct its usage in getFirstEnum()",
@@ -440,7 +630,12 @@
       "q_ko_draft": "private isEnum() 로직이 반대로 돼 있는 거 고치고 getFirstEnum()에서 쓰는 부분도 바로잡아줘",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "I need you to fix what's wrong with the logic, and I need you to fix what's wrong with getFirstEnum.",
-      "q_ko_mt_src": "private isEnum() 로직이 반대로 돼 있는 거 고치고 getFirstEnum()에서 쓰는 부분도 바로잡아줘"
+      "q_ko_mt_src": "private isEnum() 로직이 반대로 돼 있는 거 고치고 getFirstEnum()에서 쓰는 부분도 바로잡아줘",
+      "q_ko_dict_terms": [
+        "fix"
+      ],
+      "q_ko_dict": "private isEnum() 로직이 반대로 돼 있는 거 고치고 getFirstEnum()에서 쓰는 부분도 바로잡아줘 fix",
+      "q_ko_llm": "fix inverted private isEnum() logic and its use in getFirstEnum()"
     },
     {
       "q": "Deprecate obsolete system property constants.",
@@ -455,8 +650,15 @@
       "q_ko_draft": "더 이상 안 쓰는 시스템 프로퍼티 상수 deprecated 처리",
       "q_ko_reviewed": "llm",
       "q_ko_mt": "System property constant deprecated processing no longer used",
-      "q_ko_mt_src": "더 이상 안 쓰는 시스템 프로퍼티 상수 deprecated 처리"
+      "q_ko_mt_src": "더 이상 안 쓰는 시스템 프로퍼티 상수 deprecated 처리",
+      "q_ko_dict_terms": [
+        "handle",
+        "process"
+      ],
+      "q_ko_dict": "더 이상 안 쓰는 시스템 프로퍼티 상수 deprecated 처리 handle process",
+      "q_ko_llm": "deprecate unused system property constants"
     }
   ],
-  "mt_model": "facebook/nllb-200-distilled-600M"
+  "mt_model": "facebook/nllb-200-distilled-600M",
+  "llm_rewrite": "Claude (Claude Code subagent), Korean question only, prompt in eval/bilingual/README.md"
 }
