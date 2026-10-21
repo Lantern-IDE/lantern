@@ -12,8 +12,10 @@
   ko-mt = 한국어를 기계 번역한 영어(q_ko_mt), ko-llm = 한국어를 LLM이 영어 검색어로 다시 쓴 것(q_ko_llm)
 - 임베딩 입력은 512토큰에서 자른다 (모델마다 같은 조건). e5 계열은 query:/passage: 접두어를 붙인다
 
-파일을 고르는 기준(코드 확장자, 무시 폴더, 400KB 미만, 압축 파일 제외)과 토큰 추정(글자 4개 ≈ 1토큰)은
-eval/retrieval.mjs와 같다. 지표는 report.py가 Lantern 결과와 함께 계산한다.
+파일은 엔진(indexer.rs)과 같은 기준으로 고른다: .gitignore에 걸리거나 숨긴 경로와 늘 건너뛰는 폴더(vendor 등) 제외,
+코드 확장자, 1 MiB 이하, 바이너리·압축 파일 제외. eval/retrieval.mjs(키워드 검색)도 같고, check_files.py가 엔진 색인과
+파일 목록이 똑같은지 확인한다. 내용도 엔진처럼 바이트 그대로 읽어(줄바꿈 CRLF 포함) 토큰 추정(글자 4개 ≈ 1토큰)이 엔진과 같다.
+지표는 report.py가 Lantern 결과와 함께 계산한다.
 """
 
 import argparse
@@ -30,34 +32,55 @@ import time
 from collections import Counter, defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-CODE = re.compile(r"\.(ts|mts|cts|tsx|js|jsx|mjs|cjs|py|pyi|rs|java|go|cs|kt|kts|c|h|cpp|cc|cxx|hpp|hh|hxx|ipp)$")
-IGNORE = {".git", "node_modules", "target", "dist", "build", ".next", ".lantern", "coverage", ".turbo", ".venv", "__pycache__"}
+# 엔진과 같은 기준 (lang.rs Lang::from_path, indexer.rs SKIP_DIRS·MAX_FILE_BYTES·is_unindexable)
+CODE = re.compile(r"\.(ts|mts|cts|tsx|js|jsx|mjs|cjs|py|pyi|rs|java|go|cs|kt|kts|c|h|cpp|cc|cxx|hpp|hh|hxx|ipp)$", re.IGNORECASE)
+SKIP_DIRS = {"node_modules", "target", "dist", "build", "out", ".next", ".nuxt", "vendor", "__pycache__", ".venv", "venv", ".git", ".lantern", "coverage"}
+MAX_FILE_BYTES = 1024 * 1024
 CHUNK_LINES = 40
 RRF_K = 60
 EMBED_MODEL = "intfloat/multilingual-e5-small"
+# 잰 모델의 Hugging Face 판 (다시 잴 때 같은 가중치를 받게)
+REVISION = {"intfloat/multilingual-e5-small": "614241f622f53c4eeff9890bdc4f31cfecc418b3", "facebook/nllb-200-distilled-600M": "f8d333a098d19b4fd9a8b18f94170487ad3f821d"}
 STOP = set("the a an and or of to in on for with by from is are be as at it this that when if not no into via".split())
 
 
 def git(repo, *args):
-    return subprocess.run(["git", "-C", repo, "-c", "core.longpaths=true", *args], check=True, capture_output=True, text=True).stdout
+    return subprocess.run(["git", "-C", repo, "-c", "core.longpaths=true", *args], check=True, capture_output=True, text=True, encoding="utf-8").stdout
+
+
+def unindexable(b):
+    """바이너리(앞 8KB에 NUL)이거나 한 줄이 매우 긴 번들·압축 파일 (indexer.rs is_unindexable과 같음, 바이트 기준)"""
+    return b"\0" in b[:8192] or (len(b) > 20_000 and len(b) // (b.count(b"\n") + 1) > 500)
+
+
+def list_files(root):
+    """엔진이 색인하는 파일 경로 (indexer.rs walk): .gitignore·.git/info/exclude·전역 제외에 걸리지 않고(git이 판단),
+    숨긴 경로(.으로 시작)와 늘 건너뛰는 폴더 밑이 아닌 코드 파일"""
+    listed = git(root, "ls-files", "-z", "--cached", "--others", "--exclude-standard").split("\0")
+    # 추적 중이어도 무시 규칙에 걸리면 엔진은 건너뛴다
+    ignored = set(git(root, "ls-files", "-z", "--cached", "--ignored", "--exclude-standard").split("\0"))
+    out = []
+    for rel in sorted(set(listed) - ignored):
+        parts = rel.split("/")
+        if not rel or not CODE.search(parts[-1]) or any(x.startswith(".") for x in parts) or any(x in SKIP_DIRS for x in parts[:-1]):
+            continue
+        p = os.path.join(root, *parts)
+        if os.path.isfile(p) and not os.path.islink(p):
+            out.append(rel)
+    return out
 
 
 def read_files(root):
+    """엔진과 같은 파일을 (경로, 내용)으로: 1 MiB를 넘거나 바이너리·압축 파일이면 뺀다"""
     out = []
-    for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [d for d in dirnames if d not in IGNORE]
-        for name in filenames:
-            if not CODE.search(name):
-                continue
-            p = os.path.join(dirpath, name)
-            if os.path.getsize(p) >= 400_000:
-                continue
-            with open(p, encoding="utf-8", errors="replace") as fh:
-                text = fh.read()
-            if len(text) > 20_000 and len(text) / max(1, text.count("\n") + 1) > 500:
-                continue  # 빌드 결과물 (한 줄이 매우 긴 압축 파일)
-            out.append((os.path.relpath(p, root).replace(os.sep, "/"), text))
-    out.sort()
+    for rel in list_files(root):
+        p = os.path.join(root, *rel.split("/"))
+        if os.path.getsize(p) > MAX_FILE_BYTES:
+            continue
+        with open(p, "rb") as fh:
+            b = fh.read()
+        if not unindexable(b):
+            out.append((rel, b.decode("utf-8", errors="replace")))
     return out
 
 
@@ -164,7 +187,7 @@ class Embedder:
     def __init__(self, cache_path, model=EMBED_MODEL):
         from sentence_transformers import SentenceTransformer  # 무거워서 쓸 때만
 
-        self.model = SentenceTransformer(model, device="cpu")
+        self.model = SentenceTransformer(model, device="cpu", revision=REVISION.get(model))
         self.model.max_seq_length = 512
         e5 = "e5" in model.lower()
         self.qp, self.dp = ("query: ", "passage: ") if e5 else ("", "")
