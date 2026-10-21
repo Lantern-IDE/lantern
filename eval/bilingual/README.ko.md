@@ -102,6 +102,7 @@ bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [aider가 깔린 파
 | [../bench/run.mjs](../bench/run.mjs) `--set eval/bilingual` | 키워드 검색 2가지와 Lantern |
 | [baselines.py](baselines.py) | BM25(파일·40줄 조각), 다국어 임베딩(multilingual-e5-small. 다른 모델은 `--embed-model BAAI/bge-m3 --tag bgem3`처럼 따로, 4코어로 19시간쯤 걸려 `run_all.sh`에서는 뺌), BM25+임베딩 RRF. 낱말: 식별자는 Lantern처럼 통째로 + 낱말로 쪼갬, 한글은 붙어 있는 덩어리 그대로 (한국어 주석·문자열에만 맞음) |
 | [expand.py](expand.py) | 한국어 질문 + Lantern 사전이 넓힌 영어 낱말(`q_ko_dict`), 사전 적중률 |
+| [prompts.md](prompts.md) | LLM 단계마다 쓴 지시문 원문: 한국어 초안, 검토, LLM 재작성, 영어 바꿔 말하기 통제, 외래어 스트레스 테스트 |
 | [ko_rating.py](ko_rating.py) | 저자가 LLM 한국어 질문 30개(무작위)를 고치지 않고 자연스러움·뜻만 평가하는 표. 기준은 [ko-rating-plan.md](ko-rating-plan.md)에 미리 정함 |
 | [native_sheet.py](native_sheet.py) | 사람이 처음부터 쓰는 한국어 질문 표 (`q_ko_native`) |
 | [leak.py](leak.py) | LLM 재작성 누출 점검 (새 식별자, 정답 파일 이름, 영어 원문과의 겹침, 모델 학습 시점 전후의 원문 복원 비율) |
