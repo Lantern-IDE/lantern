@@ -29,6 +29,8 @@ python eval/bilingual/expand.py --lantern "$LANTERN"
 KO=ko,ko-dict,ko-mt,ko-llm,ko-loan
 NATIVE=$(python -c "import glob,json;print(any(q.get('q_ko_native') for f in glob.glob('eval/bilingual/*.json') for q in json.load(open(f,encoding='utf-8'))['questions']))")
 [ "$NATIVE" = True ] && KO=$KO,ko-native
+NATIVE_B=$(python -c "import glob,json;print(any(q.get('q_ko_native_b') for f in glob.glob('eval/bilingual/*.json') for q in json.load(open(f,encoding='utf-8'))['questions']))")
+[ "$NATIVE_B" = True ] && KO=$KO,ko-native-b
 
 log "Lantern (en, en-para, $KO)"
 node eval/bench/run.mjs --dir "$DIR" --set eval/bilingual --langs en,en-para,$KO --lantern "$LANTERN"
@@ -80,11 +82,12 @@ cp eval/bilingual/결과.md "$RES/결과-lantern-sem.md"
 cp "$RES/결과-lantern.md" eval/bilingual/결과.md
 
 log "규모 (VSCODE=<vscode 클론>을 주면 큰 저장소도), 혼합 검색 비용"
-python eval/bilingual/scale.py --dir "$DIR" --lantern "$LANTERN" ${VSCODE:+--extra vscode=$VSCODE}
+python eval/bilingual/scale.py --dir "$DIR" --lantern "$LANTERN" ${VSCODE:+--extra vscode=$VSCODE}   # 논문의 vscode는 커밋 76e9dff
 python eval/bilingual/hybrid_cost.py --dir "$DIR" --threads 4 --out "$RES/../hybrid_cost.json"
 
 log "보고서"
 python eval/bilingual/report.py --dir "$DIR" --md eval/bilingual/results-all.md > /dev/null
 python eval/bilingual/report.py --dir "$DIR" --subset test --md eval/bilingual/results-test.md > /dev/null
 python eval/bilingual/report.py --dir "$DIR" --subset unseen --md eval/bilingual/results-unseen.md > /dev/null   # 논문 주 결과 (개발 중에 보지 않은 문항)
-log "끝: eval/bilingual/results-all.md, results-test.md, results-unseen.md"
+python eval/bilingual/report.py --dir "$DIR" --subset fresh-repos --md eval/bilingual/results-fresh-repos.md > /dev/null   # 개발 중에 한 번도 보지 않은 7개 저장소
+log "끝: eval/bilingual/results-all.md, results-test.md, results-unseen.md, results-fresh-repos.md"

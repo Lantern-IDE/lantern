@@ -37,7 +37,7 @@ for (const f of sets) {
     execFileSync("git", ["-C", repo, "config", "core.longpaths", "true"]);
   }
   execFileSync("git", ["-C", repo, "checkout", "-q", "-f", "--detach", set.ref], { stdio: "inherit" });
-  const field = { en: "q", "en-para": "q_para", ko: "q_ko", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-dict": "q_ko_dict", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native" };
+  const field = { en: "q", "en-para": "q_para", ko: "q_ko", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-dict": "q_ko_dict", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native", "ko-native-b": "q_ko_native_b" };
   for (const lang of LANGS.filter((l) => set.questions.some((q) => q[field[l]]))) {
     console.log(`\n== ${set.project} (${lang})`);
     const extra = LANTERN ? ["--lantern", LANTERN] : [];
@@ -50,7 +50,7 @@ for (const f of sets) {
   }
 }
 
-const LANG_LABEL = { en: "영어", "en-para": "영어 바꿔 말하기", ko: "한국어", "ko-mt": "한국어→번역", "ko-llm": "한국어→LLM 재작성", "ko-dict": "한국어+사전", "ko-loan": "외래어 한국어", "ko-native": "사람이 쓴 한국어" };
+const LANG_LABEL = { en: "영어", "en-para": "영어 바꿔 말하기", ko: "한국어", "ko-mt": "한국어→번역", "ko-llm": "한국어→LLM 재작성", "ko-dict": "한국어+사전", "ko-loan": "외래어 한국어", "ko-native": "사람이 쓴 한국어", "ko-native-b": "사람이 쓴 한국어(B)" };
 const pct = (x) => `${Math.round(x * 100)}%`;
 const avg = (rows, f) => rows.reduce((n, r) => n + f(r), 0) / rows.length;
 const line = (label, rows) =>
