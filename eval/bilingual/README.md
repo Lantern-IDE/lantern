@@ -82,10 +82,10 @@ Each form gives every method the same input, so the effect of each step can be s
 - **English reworded** (`q_para`, `en-para`): a control for rewording alone. The same model rewrote each English subject in its own words, with the same guidelines as the Korean drafts (natural phrasing, mixed requests/questions/issue titles, identifiers kept, nothing added), but staying in English. The drop from `en` to `en-para` is what rewording costs; the rest of the drop to `ko` is the language.
 - **Korean with more loanwords** (`q_ko_loan`, `ko-loan`): a stress test, not native questions. The same model rewrote each Korean question the way developers who use many Hangul loanwords type (요청 → 리퀘스트, 기본값 → 디폴트, progress → 프로그레스), keeping identifiers and meaning; 51 of 320 had nothing to change. On the 261 unseen questions the dictionary then fires on 147 (56%, vs 191) and 56 questions have no English word (vs 27). Chunk-level BM25, the hybrid and Lantern then lose another 8.0, 7.3 and 6.1 A@3 points; Lantern (49.8) still ties the hybrid (48.7).
 - **Korean + dictionary, half weight** (`ko-dictw`, baselines only): the same dictionary words, but scored separately at half weight as Lantern does (BM25 score of the question words + 0.5 × BM25 score of the added words), so common verbs do not outweigh the question's identifiers. The dense side gets the same text as `ko-dict`. Sensitivity (`--dict-weight`, unseen 261): chunk-level BM25 A@3 is 51.3 without the dictionary and 54.0 / 55.9 / 55.6 / 54.4 at weight 0.25 / 0.5 / 0.75 / 1.0 (1.0 = appending, `ko-dict`), so the dictionary matters more than the exact weight.
-- **Written by a person** (`q_ko_native`): [native_sheet.py](native_sheet.py) picks 4 unseen questions per repository (40) and makes a sheet that shows only the English commit message; a person writes the Korean question from scratch without translation tools, and `import` stores it. `report.py` then compares the same questions with the LLM-written Korean.
+- **Written by developers** (`q_ko_native`, `q_ko_native_b`): [native_sheet.py](native_sheet.py) picks 6 questions per repository from the 7 repositories never used during development (42) and makes a sheet plus an HTML page that shows each commit's code change with file names removed, not the commit subject (showing the subject would make people translate it). A developer writes how they would ask a coding agent for that change, without translation tools; a second developer can write the same question independently (B). Writers are recorded as codes only, and agree that the questions are published here. The analysis is fixed in advance in [native-plan.md](native-plan.md); `import` also drops questions that name a gold file, as the plan says.
 
 ```bash
-python eval/bilingual/native_sheet.py export native.xlsx
+python eval/bilingual/native_sheet.py export native.xlsx --dir <clones>   # also writes native.html
 python eval/bilingual/native_sheet.py import native.xlsx
 ```
 
@@ -116,6 +116,14 @@ It translates and dictionary-expands the Korean questions, then runs Lantern, BM
 | [report.py](report.py) | Recall@8k, R@10f, Acc@1/3/5, MRR, paired bootstrap 95% CIs (per question, and per repository for the key comparisons), McNemar tests with Holm correction, per-repository and per-subgroup tables, LaTeX tables (`--tex`) |
 
 All methods get the same 8,000-token budget and the same file filter; tokens are estimated as 4 characters per token. The main results use the 261 questions that do not overlap with [eval/bench](../bench) (`report.py --subset unseen`, written to `results-unseen.md`), because eval/bench was used to check ranking and dictionary changes while developing the engine. Dev/test split: a question is dev if the first 8 hex digits of its commit hash, as an integer, modulo 10 are 0–2 (about 30%), otherwise test. Engine dictionaries and weights are tuned on dev only; results are reported on test.
+
+## Repositories never used during development
+
+The 59 development questions come from flask, hono and commons-lang. On the other seven repositories (224 questions, `report.py --subset fresh-repos`, [results-fresh-repos.md](results-fresh-repos.md)) the conclusions are the same: Lantern trails the hybrid in English (A@3 −8.9), ties it in Korean (+1.3), its smaller drop from English is significant even by repository (+10.3, [1.8, 19.2]), removing the dictionary costs 4.9, and chunk-level BM25 with the dictionary at half weight matches it.
+
+## Notes on Lantern's cost measurements
+
+`scale.py` measures full indexing from an empty index three times and reports the median, with a warm file cache (the first run on a fresh vscode clone took 92 s; with a warm cache the median of three runs is 42 s); Lantern parses with up to 8 threads. vscode is measured at commit `76e9dff` with the ten questions in [scale_questions.txt](scale_questions.txt); an earlier draft reported 136 ms from two ad-hoc questions. The engine is unchanged across all measurements (last engine change d108680); a rebuilt binary gives identical file lists on gin and flask.
 
 ## Cost of the hybrid baseline
 
