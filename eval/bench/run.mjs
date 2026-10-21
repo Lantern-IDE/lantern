@@ -37,7 +37,7 @@ for (const f of sets) {
     execFileSync("git", ["-C", repo, "config", "core.longpaths", "true"]);
   }
   execFileSync("git", ["-C", repo, "checkout", "-q", "-f", "--detach", set.ref], { stdio: "inherit" });
-  const field = { en: "q", ko: "q_ko", "ko-mt": "q_ko_mt" };
+  const field = { en: "q", ko: "q_ko", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-dict": "q_ko_dict", "ko-native": "q_ko_native" };
   for (const lang of LANGS.filter((l) => set.questions.some((q) => q[field[l]]))) {
     console.log(`\n== ${set.project} (${lang})`);
     const extra = LANTERN ? ["--lantern", LANTERN] : [];
@@ -50,6 +50,7 @@ for (const f of sets) {
   }
 }
 
+const LANG_LABEL = { en: "영어", ko: "한국어", "ko-mt": "한국어→번역", "ko-llm": "한국어→LLM 재작성", "ko-dict": "한국어+사전", "ko-native": "사람이 쓴 한국어" };
 const pct = (x) => `${Math.round(x * 100)}%`;
 const avg = (rows, f) => rows.reduce((n, r) => n + f(r), 0) / rows.length;
 const line = (label, rows) =>
@@ -67,8 +68,8 @@ const md = [
   "",
   "| 저장소 (언어) | 질문 | 키워드 적중률 | 키워드(조각) 적중률 | Lantern 적중률 | 키워드 앞 3개 | 키워드(조각) 앞 3개 | Lantern 앞 3개 | 무작위 |",
   "|---|---|---|---|---|---|---|---|---|",
-  ...table.map((r) => line(`[${r.project}](${r.url}/tree/${r.ref.slice(0, 10)}) ${{ en: "영어", ko: "한국어", "ko-mt": "한국어→번역" }[r.lang]}`, [r])),
-  ...[["en", "영어"], ["ko", "한국어"], ["ko-mt", "한국어→번역"]].filter(([l]) => table.some((r) => r.lang === l)).map(([l, label]) => line(`**합계 (${label})**`, table.filter((r) => r.lang === l))),
+  ...table.map((r) => line(`[${r.project}](${r.url}/tree/${r.ref.slice(0, 10)}) ${LANG_LABEL[r.lang]}`, [r])),
+  ...Object.entries(LANG_LABEL).filter(([l]) => table.some((r) => r.lang === l)).map(([l, label]) => line(`**합계 (${label})**`, table.filter((r) => r.lang === l))),
   "",
   "키워드: 질문의 단어로 grep → 많이 맞은 파일부터 통째로 읽기. 키워드(조각): 같은 grep에서 맞은 줄 앞뒤 12줄만 가져와 예산을 여러 파일에 나누기.",
   "",

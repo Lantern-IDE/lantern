@@ -6,7 +6,7 @@
 # 미리: cargo build --release -p lantern-context
 #       pip install sentence-transformers transformers sentencepiece psutil openpyxl
 #       python -m venv .venv-aider && .venv-aider/Scripts/pip install aider-chat==0.86.2   (RepoMap, 선택)
-# 순서: 한국어 질문 번역(NLLB) → Lantern → 구성 요소별 기여 → BM25·임베딩·RRF → RepoMap → Lantern+임베딩 → 규모 → 보고서
+# 순서: 한국어 질문 번역(NLLB)·사전 확장 → Lantern → 구성 요소별 기여 → BM25·임베딩·RRF → RepoMap → Lantern+임베딩 → 규모 → 보고서
 # 결과: <클론 폴더>/results/bilingual/, 보고서는 eval/bilingual/결과-비교.md
 set -euo pipefail
 DIR=${1:?클론 폴더}
@@ -20,11 +20,17 @@ export PYTHONIOENCODING=utf-8
 cd "$ROOT"
 log() { echo "[$(date +%H:%M:%S)] $*"; }
 
-log "한국어 질문 번역 (NLLB-200)"
+log "한국어 질문 번역 (NLLB-200), 사전으로 넓힌 한국어 질문"
 python eval/bilingual/translate.py
+python eval/bilingual/expand.py --lantern "$LANTERN"
+# q_ko_llm(LLM이 영어 검색어로 다시 쓴 것)은 한 번 만들어 JSON에 두었다 (README의 '질문 언어'). 다시 만들지 않는다.
+# 사람이 직접 쓴 한국어 질문(q_ko_native, native_sheet.py)이 있으면 그것도 잰다
+KO=ko,ko-dict,ko-mt,ko-llm
+NATIVE=$(python -c "import glob,json;print(any(q.get('q_ko_native') for f in glob.glob('eval/bilingual/*.json') for q in json.load(open(f,encoding='utf-8'))['questions']))")
+[ "$NATIVE" = True ] && KO=$KO,ko-native
 
-log "Lantern (en, ko, ko-mt)"
-node eval/bench/run.mjs --dir "$DIR" --set eval/bilingual --langs en,ko,ko-mt --lantern "$LANTERN"
+log "Lantern (en, $KO)"
+node eval/bench/run.mjs --dir "$DIR" --set eval/bilingual --langs en,$KO --lantern "$LANTERN"
 cp eval/bilingual/결과.md "$RES/결과-lantern.md"
 
 log "Lantern 구성 요소별 기여 (단계를 하나씩 끔)"
@@ -36,10 +42,12 @@ for step in dict name graph cochange; do
 done
 cp "$RES/결과-lantern.md" eval/bilingual/결과.md
 
-log "BM25·임베딩·RRF"
-for lang in en ko ko-mt; do
+log "BM25·임베딩·RRF (multilingual-e5-small)"
+for lang in en ${KO//,/ }; do
   python eval/bilingual/baselines.py --dir "$DIR" --lang $lang --methods bm25-file,bm25-chunk,dense,hybrid
 done
+# 더 큰 임베딩 모델은 따로 (예: --embed-model BAAI/bge-m3 --tag bgem3). CPU에서 조각 약 5만 8천 개를 새로 만들어야 해서
+# 4코어로 19시간쯤 걸려 기본 순서에서는 뺐다. 벡터는 문항마다 저장되므로 멈췄다가 이어서 돌릴 수 있다
 
 if [ -n "$AIDER_PY" ]; then
   log "Aider RepoMap"
@@ -57,7 +65,7 @@ MARK=$(mktemp)
 LANTERN_EMBED_URL=http://127.0.0.1:8711/v1 LANTERN_EMBED_MODEL=intfloat/multilingual-e5-small \
 LANTERN_EMBED_QUERY="query: {query}" LANTERN_EMBED_DOC="passage: {path}
 {text}" \
-  node eval/bench/run.mjs --dir "$DIR" --set eval/bilingual --langs en,ko,ko-mt --lantern "$LANTERN"
+  node eval/bench/run.mjs --dir "$DIR" --set eval/bilingual --langs en,${KO/,ko-dict/} --lantern "$LANTERN"
 mkdir -p "$RES/lantern-sem"
 find "$RES" -maxdepth 1 -name 'retrieval-*' -newer "$MARK" -exec mv {} "$RES/lantern-sem/" \;
 kill $SERVER 2>/dev/null || true
