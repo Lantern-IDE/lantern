@@ -1,6 +1,6 @@
 """Lantern과 비교 대상의 결과를 같은 지표로 묶는다.
 
-    python eval/bilingual/report.py --dir <클론 폴더> [--set eval/bilingual] [--md <결과 파일>] [--subset all|test|dev|2026]
+    python eval/bilingual/report.py --dir <클론 폴더> [--set eval/bilingual] [--md <결과 파일>] [--subset all|unseen|test|dev|2026]
         [--tex <논문용 LaTeX 표 파일>]
 
 읽는 것
@@ -14,6 +14,8 @@
 - MRR: 처음 나온 정답 파일 순위의 역수 (예산 안에 없으면 0)
 - R@10f: 앞 10개 파일 안에 든 정답 파일 비율 (파일을 많이 담을수록 유리한 효과를 뺀 적중률)
 세트 나누기: 커밋 해시 앞 8자리를 정수로 본 값의 10으로 나눈 나머지가 0~2면 dev(약 30%), 나머지는 test.
+unseen: 예전 60문항 세트(eval/bench)와 같은 커밋을 뺀 문항. 그 세트는 엔진의 순위·사전을 고칠 때 확인에 썼으므로
+개발 중에 보지 않은 문항만으로 보려면 이것을 쓴다 (주 결과).
 신뢰구간: 문항 단위 paired bootstrap 10,000회 95%. 이진 지표(Acc@3) 차이는 McNemar 정확 검정.
 """
 
@@ -58,7 +60,7 @@ TEX_LABEL = {
     "lantern-no-cochange": "\\quad $-$ co-change",
     "lantern-sem": "\\textbf{Lantern + Dense}",
 }
-SUBSET_TEX = {"all": "all questions", "test": "test split", "dev": "dev split", "2026": "2026 commits"}
+SUBSET_TEX = {"all": "all questions", "unseen": "questions not used during development", "test": "test split", "dev": "dev split", "2026": "2026 commits"}
 TEX_LANG = {"en": "English", "ko": "Korean", "ko-mt": "Korean$\\to$MT"}
 
 
@@ -134,7 +136,8 @@ def load(dir_, set_dir):
     variants = [(rdir, ("grep", "snippets", "lantern"), None)]
     if os.path.isdir(rdir):
         variants += [(os.path.join(rdir, d), ("lantern",), d) for d in sorted(os.listdir(rdir)) if d.startswith("lantern-")]
-    for proj in {q["project"] for q in questions.values()}:
+    # 정렬해서 돈다: 집합 순서(PYTHONHASHSEED)에 따라 문항 순서가 바뀌면 부트스트랩 구간도 바뀐다
+    for proj in sorted({q["project"] for q in questions.values()}):
         for vdir, kinds, rename in variants:
             for lang, suffix in (("en", ""), ("ko", "-ko"), ("ko-mt", "-ko-mt")):
                 pat = re.compile(rf"^retrieval-{re.escape(proj)}{suffix}-\d{{4}}-.*\.json$")
@@ -192,14 +195,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--set", default=HERE)
-    ap.add_argument("--subset", default="all", choices=["all", "test", "dev", "2026"])
+    ap.add_argument("--subset", default="all", choices=["all", "unseen", "test", "dev", "2026"])
     ap.add_argument("--md", default=None)
     ap.add_argument("--tex", default=None)
     a = ap.parse_args()
     questions, res = load(a.dir, a.set)
+    seen = set()
+    for f in glob.glob(os.path.join(HERE, "..", "bench", "*.json")):
+        with open(f, encoding="utf-8") as fh:
+            seen |= {q["commit"] for q in json.load(fh)["questions"]}
 
     def keep(c):
         q = questions[c]
+        if a.subset == "unseen":
+            return c not in seen
         if a.subset in ("test", "dev"):
             return split_of(c) == a.subset
         if a.subset == "2026":
