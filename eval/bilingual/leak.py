@@ -37,6 +37,7 @@ def main():
     ap.add_argument("--dir", default=None)
     ap.add_argument("--set", default=HERE)
     ap.add_argument("--subset", default="unseen", choices=["unseen", "all"])
+    ap.add_argument("--cutoff", default="2026-07-01", help="재작성 모델의 학습 데이터 시점 다음 날 (Claude Opus 5.5: 2026년 6월까지)")
     a = ap.parse_args()
     seen = set()
     if a.subset == "unseen":
@@ -55,7 +56,7 @@ def main():
             new_ids = sorted(i for i in idents(llm) if i not in ko_l)
             gold_leak = sorted(stem(g) for g in q["golden"] if re.search(rf"\b{re.escape(stem(g))}\b", llm.lower()) and stem(g) not in ko_l)
             rows.append({"project": s["project"], "commit": q["commit"], "ko": ko, "llm": llm, "new_ids": new_ids, "gold_leak": gold_leak,
-                         "j_llm": jaccard(llm, q["q"]), "j_mt": jaccard(q.get("q_ko_mt"), q["q"]), "same": llm.strip().lower().rstrip(".") == q["q"].strip().lower().rstrip(".")})
+                         "date": q.get("date") or "", "j_llm": jaccard(llm, q["q"]), "j_mt": jaccard(q.get("q_ko_mt"), q["q"]), "same": llm.strip().lower().rstrip(".") == q["q"].strip().lower().rstrip(".")})
     n = len(rows)
     ids = [r for r in rows if r["new_ids"]]
     gold = [r for r in rows if r["gold_leak"]]
@@ -68,6 +69,10 @@ def main():
         print(f"    {r['project']}: {r['ko']} → {r['llm']}  [{', '.join(r['gold_leak'])}]")
     print(f"- 영어 원문과 낱말 겹침(Jaccard) 평균: LLM 재작성 {sum(r['j_llm'] for r in rows) / n:.3f}, 기계 번역 {sum(r['j_mt'] for r in rows) / n:.3f}")
     print(f"- 영어 원문과 (대소문자·마침표 빼고) 똑같은 재작성: {sum(r['same'] for r in rows)}")
+    # 기억 점검: 재작성 모델의 학습 데이터 시점 뒤 커밋은 모델이 볼 수 없었다
+    for label, part in (("이전", [r for r in rows if r["date"] < a.cutoff]), ("이후", [r for r in rows if r["date"] >= a.cutoff])):
+        if part:
+            print(f"    모델 학습 데이터 시점({a.cutoff}) {label} 커밋: {sum(r['same'] for r in part)}/{len(part)} ({sum(r['same'] for r in part) / len(part) * 100:.1f}%)")
     if a.dir:
         suspect = {r["commit"] for r in ids + gold}
         same = {r["commit"] for r in rows if r["same"]}
