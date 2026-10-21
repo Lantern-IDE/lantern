@@ -1,18 +1,21 @@
 """벤치마크 저장소마다 Lantern의 규모·속도를 잰다 (모델 호출 없음).
 
-    python eval/bilingual/scale.py --dir <클론 폴더> --lantern <엔진 실행 파일> [--set eval/bilingual] [--tex <표 파일>]
+    python eval/bilingual/scale.py --dir <클론 폴더> --lantern <엔진 실행 파일> [--set eval/bilingual] [--json <원자료>] [--tex <표 파일>]
+    python eval/bilingual/scale.py --from eval/bilingual/measurements/scale.json --tex <표 파일>   (다시 재지 않고 저장한 원자료로 표만)
 
 - 처음 인덱싱(빈 인덱스에서 index --full)의 걸린 시간과 최대 메모리(RSS)
 - 바뀐 것이 없을 때 다시 인덱싱한 시간
 - 인덱스 크기, 파일·심볼·참조 수 (lantern stats --json)
 - 질문당 맥락 조립 시간: 벤치마크 측정 결과(retrieval-*.json의 Lantern ms) 평균
 각 저장소는 벤치마크의 기준 커밋으로 맞춘 뒤 잰다. 인덱스는 임시 폴더에 만든다. psutil이 필요하다.
+--json에는 반복마다 잰 값과 질문마다의 조립 시간까지 남긴다 (시간 측정이라 다시 재면 조금씩 다르다).
 """
 
 import argparse
 import glob
 import json
 import os
+import platform
 import re
 import shutil
 import statistics
@@ -55,7 +58,14 @@ def main():
     ap.add_argument("--extra", action="append", default=[], help="벤치마크 밖의 큰 저장소 이름=경로 (예: vscode=C:/clones/vscode). 지금 커밋 그대로 잰다")
     ap.add_argument("--extra-questions", default=os.path.join(HERE, "scale_questions.txt"), help="큰 저장소의 조립 시간을 잴 질문 (한 줄에 하나)")
     ap.add_argument("--repeat", type=int, default=3, help="처음 인덱싱을 몇 번 재서 중앙값을 쓸지")
+    ap.add_argument("--json", default=None, help="잰 값을 모두 남길 파일")
+    ap.add_argument("--from", dest="from_json", default=None, help="다시 재지 않고 이 원자료로 표만 만든다")
     a = ap.parse_args()
+    if a.from_json:
+        with open(a.from_json, encoding="utf-8") as fh:
+            saved = json.load(fh)
+        write_tex(a.tex, saved["rows"], saved["repeat"])
+        return
     results_dir = os.path.join(a.dir, "results", os.path.basename(os.path.normpath(a.set)))
     rows = []
     targets = []
@@ -100,6 +110,8 @@ def main():
         shutil.rmtree(idx, ignore_errors=True)
         row = {
             "project": name,
+            "runs": [{"index_s": round(t, 3), "peak_mb": round(mb, 1)} for t, mb in runs],
+            "assemble_ms_all": ms,
             "files": nums[0] if nums else None,
             "symbols": nums[1] if len(nums) > 1 else None,
             "index_s": full_s,
@@ -113,16 +125,28 @@ def main():
         }
         rows.append(row)
         print(f"{name:13} 파일 {row['files']:>5} 심볼 {row['symbols']:>6} | 인덱싱 {full_s:5.1f}초 최대 {full_mb:4.0f}MB | 다시 {again_s:4.2f}초 | 인덱스 {size:5.1f}MB | 조립 중앙값 {row['assemble_ms'] or 0:5.1f}ms", flush=True)
-    if a.tex:
+    if a.json:
+        os.makedirs(os.path.dirname(os.path.abspath(a.json)), exist_ok=True)
+        with open(a.json, "w", encoding="utf-8", newline="\n") as fh:
+            json.dump({"machine": {"processor": platform.processor(), "cores": psutil.cpu_count(logical=False), "threads": psutil.cpu_count(),
+                                   "ram_gb": round(psutil.virtual_memory().total / 2**30)}, "repeat": a.repeat, "rows": rows}, fh, ensure_ascii=False, indent=1)
+            fh.write("\n")
+    write_tex(a.tex, rows, a.repeat)
+
+
+def write_tex(path, rows, repeat):
+    if path:
+        # IEEEtran 표 캡션은 작은 대문자라 대소문자를 가리는 커밋·경로는 \textup으로 감싼다
+        extra = ", ".join(r["project"] + " at commit \\textup{" + r["commit"] + "}" for r in rows if r.get("extra"))
         lines = [
             "% scale.py로 만든 표. 손으로 고치지 말고 다시 만든다",
             "\\begin{table}[t]",
             "\\centering",
             "\\caption{Lantern's cost on a desktop CPU (Intel Core i5-11400, 6 cores, 32 GB RAM), no model calls. Files: code files indexed; "
-            f"Index: full indexing from an empty index (median of {a.repeat} runs, warm file cache, up to 8 parsing threads); Peak: peak memory while indexing; "
+            f"Index: full indexing from an empty index (median of {repeat} runs, warm file cache, up to 8 parsing threads); Peak: peak memory while indexing; "
             "Size: index on disk, which grows with symbols and references rather than files; "
             "Query: median context assembly time per question"
-            + (f" (benchmark questions; for {', '.join(r['project'] + ' at commit ' + r['commit'] for r in rows if r.get('extra'))}, the questions in \\texttt{{eval/bilingual/scale\\_questions.txt}})" if any(r.get("extra") for r in rows) else "")
+            + (f" (benchmark questions; for {extra}, the questions in \\textup{{\\texttt{{eval/bilingual/scale\\_questions.txt}}}})" if extra else "")
             + ".}",
             "\\label{tab:scale}",
             "\\setlength{\\tabcolsep}{3pt}",
@@ -134,8 +158,8 @@ def main():
         for r in rows:
             lines.append(f"{r['project']} & {r['files']:,} & {r['index_s']:.1f} & {r['index_mb']:.0f} & {r['size_mb']:.1f} & {r['assemble_ms']:.0f} \\\\")
         lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}", ""]
-        os.makedirs(os.path.dirname(os.path.abspath(a.tex)), exist_ok=True)
-        with open(a.tex, "w", encoding="utf-8", newline="\n") as fh:
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
             fh.write("\n".join(lines))
 
 
