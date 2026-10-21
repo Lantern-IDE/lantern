@@ -201,7 +201,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--set", default=HERE)
-    ap.add_argument("--lang", default="en", choices=["en", "en-para", "ko", "ko-dict", "ko-dictw", "ko-mt", "ko-llm", "ko-loan", "ko-native"])
+    ap.add_argument("--lang", default="en", choices=["en", "en-para", "ko", "ko-dict", "ko-dictw", "ko-mt", "ko-llm", "ko-loan", "ko-native", "ko-native-b"])
     ap.add_argument("--methods", default="bm25-file,bm25-chunk")
     ap.add_argument("--budget", type=int, default=8000)
     ap.add_argument("--out", default=None)
@@ -215,7 +215,7 @@ def main():
     suffix = f"-{a.tag}" if a.tag else ""
     out_dir = a.out or os.path.join(a.dir, "results", os.path.basename(os.path.normpath(a.set)), "baselines")
     os.makedirs(out_dir, exist_ok=True)
-    field = {"en": "q", "en-para": "q_para", "ko": "q_ko", "ko-dict": "q_ko_dict", "ko-dictw": "q_ko_dict", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native"}[a.lang]
+    field = {"en": "q", "en-para": "q_para", "ko": "q_ko", "ko-dict": "q_ko_dict", "ko-dictw": "q_ko_dict", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native", "ko-native-b": "q_ko_native_b"}[a.lang]
     need_dense = any(m in ("dense", "hybrid") for m in methods)
 
     for f in sorted(glob.glob(os.path.join(a.set, "*.json"))):
