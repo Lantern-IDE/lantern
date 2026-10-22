@@ -52,7 +52,7 @@ LABEL = {
 # 질문 형태의 짧은 이름 (표 안)과 절 제목
 LANGS = {"en": "EN", "en-para": "EN-para", "ko": "KO", "ko-dict": "KO+dict appended", "ko-dictw": "KO+dict", "ko-mt": "KO→MT", "ko-llm": "KO→LLM",
          "ko-llm2": "KO→LLM run 2", "ko-llm3": "KO→LLM run 3", "ko-llm-norepo": "KO→LLM no repo",
-         "ko-loan": "KO-loan", "ko-native": "KO-native A", "ko-native-b": "KO-native B"}
+         "ko-loan": "KO-loan", "ko-nllb": "KO-NLLB", "ko-nllb-dictw": "KO-NLLB+dict", "ko-native": "KO-native A", "ko-native-b": "KO-native B"}
 LANG_TITLE = {
     "en": "English questions (EN: commit subjects)",
     "en-para": "English questions reworded in English by an LLM (EN-para: control for rewording)",
@@ -65,6 +65,8 @@ LANG_TITLE = {
     "ko-llm3": "KO→LLM, third run with the same setting (KO→LLM run 3)",
     "ko-llm-norepo": "KO→LLM without the repository name (KO→LLM no repo: control for the model's knowledge of the repository)",
     "ko-loan": "Korean rewritten with many Hangul loanwords by an LLM (KO-loan: stress test, not native questions)",
+    "ko-nllb": "English subject translated into Korean by NLLB-200 (KO-NLLB: Korean that no Claude model wrote, control for shared vocabulary; added after the freeze)",
+    "ko-nllb-dictw": "KO-NLLB + Lantern's dictionary terms (KO-NLLB+dict, combined as in KO+dict)",
     "ko-native": "Korean written by developer A (KO-native A)",
     "ko-native-b": "Korean written by developer B (KO-native B)",
 }
@@ -86,7 +88,7 @@ TEX_LABEL = {
 }
 SUBSET_TEX = {"all": "all questions", "unseen": "questions not used during development", "fresh-repos": "repositories not used during development", "dev-repos": "unseen questions from the development repositories", "test": "test split", "dev": "dev split", "2026": "2026 commits"}
 # 논문 표의 사전 열은 Lantern과 같은 결합(절반 가중, ko-dictw). 그냥 덧붙인 ko-dict는 보고서(md)에만
-TEX_LANG = {"en": "EN", "ko": "KO", "ko-dictw": "KO+dict", "ko-mt": "KO$\\to$MT", "ko-llm": "KO$\\to$LLM"}
+TEX_LANG = {"en": "EN", "en-para": "EN-para", "ko": "KO", "ko-dictw": "KO+dict", "ko-mt": "KO$\\to$MT", "ko-llm": "KO$\\to$LLM"}
 
 
 def tex_table(res, keep, order, subset):
@@ -108,9 +110,9 @@ def tex_table(res, keep, order, subset):
         "\\centering",
         # IEEEtran 표 캡션은 작은 대문자라 대소문자를 가리는 이름은 \textup으로 감싼다
         f"\\caption{{File-level retrieval within an 8k-token budget: top-3 accuracy (A@3, \\%) and MRR ({SUBSET_TEX[subset]}, $n={n}$). "
-        "Columns: the question each method gets, in English, in Korean, in Korean plus Lantern's dictionary terms "
+        "Columns: the question each method gets: English, English reworded by the LLM that wrote the Korean (\\textup{EN-para}), Korean, Korean plus Lantern's dictionary terms "
         "(\\textup{KO+dict}: half weight for BM25, appended for dense; compare with Lantern's KO), translated by NLLB or rewritten by an LLM. "
-        "Indented rows remove one Lantern component; --: not run. Keyword search: full report.}",
+        "Indented rows remove one Lantern component; --: not run.}",
         "\\label{tab:results}",
         "\\setlength{\\tabcolsep}{3pt}",
         "\\begin{tabular}{l" + "rr" * len(langs) + "}",
@@ -299,7 +301,19 @@ KEY = [
     ("ko-llm-norepo", "hybrid", "ko", "hybrid"),
     ("ko", "lantern", "ko-llm-norepo", "hybrid"),
     ("ko", "lantern-sem", "ko-llm-norepo", "hybrid"),
+    # 동결 뒤 추가: NLLB가 영어 제목을 옮긴 한국어 (같은 어휘 편향 통제, 미리 정한 비교는 nllb-ko-plan.md)
+    ("ko-nllb", "lantern", "ko-nllb", "hybrid"),
+    ("ko-nllb", "lantern", "ko-nllb", "lantern-no-dict"),
+    ("ko-nllb", "lantern", "ko-nllb-dictw", "bm25-chunk"),
+    ("ko-nllb", "lantern", "ko-nllb-dictw", "hybrid"),
+    ("ko-nllb-dictw", "bm25-chunk", "ko-nllb", "bm25-chunk"),
+    ("ko-nllb-dictw", "hybrid", "ko-nllb", "hybrid"),
+    ("ko-nllb", "lantern-sem", "ko-nllb", "hybrid"),
+    ("ko-nllb", "lantern", "ko", "lantern"),
+    ("ko-nllb", "hybrid", "ko", "hybrid"),
 ]
+# 영어에서의 하락을 비교할 한국어 형태 (ko-nllb는 동결 뒤 추가)
+DROP_LANGS = ["ko", "ko-nllb"]
 REWRITE_RUNS = ["ko-llm", "ko-llm2", "ko-llm3"]
 CUTOFF = "2026-07-01"  # 재작성 모델(Claude Opus 5.5)의 학습 데이터 시점 다음 날
 # 영어 → 한국어 하락의 차이: (A의 하락) − (B의 하락)
@@ -346,13 +360,13 @@ def key_comparisons(questions, res, keep):
             if metric == "acc3":
                 row.append(f"{mcnemar([A[c]['acc3'] for c in cs], [B[c]['acc3'] for c in cs]):.3g}")
         out.append("| " + " | ".join(row) + " |")
-    for ma, mb in DROPS:
-        keys = [("en", ma), ("ko", ma), ("en", mb), ("ko", mb)]
+    for kl, (ma, mb) in [(kl, d) for kl in DROP_LANGS for d in DROPS]:
+        keys = [("en", ma), (kl, ma), ("en", mb), (kl, mb)]
         if not all(k in res for k in keys):
             continue
         cs = [c for c in res[keys[0]] if all(c in res[k] for k in keys) and keep(c)]
         g = [questions[c]["project"] for c in cs]
-        row = [f"drop of {LABEL[ma]} (KO − EN)", f"drop of {LABEL[mb]}", str(len(cs))]
+        row = [f"drop of {LABEL[ma]} ({LANGS[kl]} − EN)", f"drop of {LABEL[mb]}", str(len(cs))]
         for metric in ("acc3", "mrr"):
             v = lambda k, c: float(res[k][c][metric])  # noqa: E731
             a = [v(keys[1], c) - v(keys[0], c) for c in cs]
@@ -510,6 +524,21 @@ def native(questions, res, keep, order):
     return out
 
 
+def dict_hits(questions, keep):
+    """사전이 하나라도 영어 낱말을 더한 질문 수 (expand.py가 남긴 *_dict_terms). KO-NLLB는 다른 모델이 쓴 한국어에서의 비교"""
+    forms = [("KO", "q_ko"), ("KO-loan", "q_ko_loan"), ("KO-NLLB", "q_ko_nllb")]
+    rows = []
+    for label, field in forms:
+        qs = [q for c, q in questions.items() if keep(c) and q.get(field) and f"{field}_dict_terms" in q]
+        if qs:
+            hit = sum(bool(q[f"{field}_dict_terms"]) for q in qs)
+            rows.append(f"| {label} | {len(qs)} | {hit} | {hit / len(qs) * 100:.1f} |")
+    if not rows:
+        return []
+    return ["## Dictionary hit rate (questions where Lantern's dictionary adds an English word)", "",
+            "| Question form | n | hit | % |", "|---|---|---|---|", *rows, ""]
+
+
 INTRO = [
     "Generated by `eval/bilingual/report.py`; do not edit by hand.",
     "",
@@ -529,7 +558,9 @@ INTRO = [
     "appended for dense); KO+dict appended = the terms appended to the question for every method; KO→MT = KO translated by NLLB-200; "
     "KO→LLM = KO rewritten into an English search query by an LLM, one call per question (runs 2 and 3 repeat it; no repo = without the "
     "repository name); KO-loan = KO rewritten with many Hangul loanwords "
-    "by an LLM (stress test, not native questions); KO-native A/B = Korean written by developers (only if collected).",
+    "by an LLM (stress test, not native questions); KO-NLLB = the English subject translated into Korean by NLLB-200, Korean that no Claude model wrote "
+    "(control for shared vocabulary, added after the freeze); KO-NLLB+dict = KO-NLLB plus the dictionary terms, combined as in KO+dict; "
+    "KO-native A/B = Korean written by developers (only if collected).",
     "",
 ]
 
@@ -601,10 +632,12 @@ def main():
                 out.append(f"| {LABEL[m]} | {pct(rd[0])} {ci(pct, rd[1], rd[2])} | {pct(ad[0])} {ci(pct, ad[1], ad[2])} | {p:.3g} | {ph:.3g} |")
         out.append("")
     # 영어 → 한국어 하락 (같은 문항)
-    if any(k[0] == "ko" for k in res):
-        out += ["## Drop from English to Korean (KO − EN, same questions, 95% interval)", "", "| Method | n | Recall@8k | A@3 |", "|---|---|---|---|"]
+    for kl, title in (("ko", "Korean"), ("ko-nllb", "NLLB-translated Korean")):
+        if not any(k[0] == kl for k in res):
+            continue
+        out += [f"## Drop from English to {title} ({LANGS[kl]} − EN, same questions, 95% interval)", "", "| Method | n | Recall@8k | A@3 |", "|---|---|---|---|"]
         for m in order:
-            en, ko = res.get(("en", m), {}), res.get(("ko", m), {})
+            en, ko = res.get(("en", m), {}), res.get((kl, m), {})
             cs = [c for c in en if c in ko and keep(c)]
             if not cs:
                 continue
@@ -618,6 +651,7 @@ def main():
     out += native(questions, res, keep, order)
     out += rewrite_runs(questions, res, keep)
     out += sensitivity(res, keep)
+    out += dict_hits(questions, keep)
     text = "\n".join(out)
     print(text)
     if a.tex:

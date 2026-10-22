@@ -137,16 +137,16 @@ def main():
 def write_tex(path, rows, repeat):
     if path:
         # IEEEtran 표 캡션은 작은 대문자라 대소문자를 가리는 커밋·경로는 \textup으로 감싼다
-        extra = ", ".join(r["project"] + " at commit \\textup{" + r["commit"] + "}" for r in rows if r.get("extra"))
+        extra = ", ".join(r["project"] + " at \\textup{" + r["commit"] + "}" for r in rows if r.get("extra"))
         lines = [
             "% scale.py로 만든 표. 손으로 고치지 말고 다시 만든다",
             "\\begin{table}[t]",
             "\\centering",
-            "\\caption{Lantern's cost on a desktop CPU (Intel Core i5-11400, 6 cores, 32 GB RAM), no model calls. Files: code files indexed; "
-            f"Index: full indexing from an empty index (median of {repeat} runs, warm file cache, up to 8 parsing threads); Peak: peak memory while indexing; "
-            "Size: index on disk, which grows with symbols and references rather than files; "
-            "Query: median context assembly time per question"
-            + (f" (benchmark questions; for {extra}, the questions in \\textup{{\\texttt{{eval/bilingual/scale\\_questions.txt}}}})" if extra else "")
+            # 논문 쪽수가 빠듯해 짧게. 자세한 조건은 eval/bilingual/README.md
+            "\\caption{Lantern's cost on a desktop CPU (i5-11400, 6 cores, 32 GB), no model calls. "
+            f"Index: full build from an empty index (median of {repeat} runs, warm cache, up to 8 threads); Peak: memory while indexing; "
+            "Size: index on disk; Query: median context assembly per question"
+            + (f" ({extra}: \\textup{{\\texttt{{eval/bilingual/scale\\_questions.txt}}}})" if extra else "")
             + ".}",
             "\\label{tab:scale}",
             "\\setlength{\\tabcolsep}{3pt}",

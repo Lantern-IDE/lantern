@@ -224,7 +224,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--set", default=HERE)
-    ap.add_argument("--lang", default="en", choices=["en", "en-para", "ko", "ko-dict", "ko-dictw", "ko-mt", "ko-llm", "ko-llm2", "ko-llm3", "ko-llm-norepo", "ko-loan", "ko-native", "ko-native-b"])
+    ap.add_argument("--lang", default="en", choices=["en", "en-para", "ko", "ko-dict", "ko-dictw", "ko-mt", "ko-llm", "ko-llm2", "ko-llm3", "ko-llm-norepo", "ko-loan", "ko-nllb", "ko-nllb-dictw", "ko-native", "ko-native-b"])
     ap.add_argument("--methods", default="bm25-file,bm25-chunk")
     ap.add_argument("--budget", type=int, default=8000)
     ap.add_argument("--out", default=None)
@@ -238,7 +238,9 @@ def main():
     suffix = f"-{a.tag}" if a.tag else ""
     out_dir = a.out or os.path.join(a.dir, "results", os.path.basename(os.path.normpath(a.set)), "baselines")
     os.makedirs(out_dir, exist_ok=True)
-    field = {"en": "q", "en-para": "q_para", "ko": "q_ko", "ko-dict": "q_ko_dict", "ko-dictw": "q_ko_dict", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-llm2": "q_ko_llm_2", "ko-llm3": "q_ko_llm_3", "ko-llm-norepo": "q_ko_llm_norepo", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native", "ko-native-b": "q_ko_native_b"}[a.lang]
+    field = {"en": "q", "en-para": "q_para", "ko": "q_ko", "ko-dict": "q_ko_dict", "ko-dictw": "q_ko_dict", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-llm2": "q_ko_llm_2", "ko-llm3": "q_ko_llm_3", "ko-llm-norepo": "q_ko_llm_norepo", "ko-loan": "q_ko_loan", "ko-nllb": "q_ko_nllb", "ko-nllb-dictw": "q_ko_nllb_dict", "ko-native": "q_ko_native", "ko-native-b": "q_ko_native_b"}[a.lang]
+    # 사전 낱말을 Lantern처럼 따로 절반 가중치로 주는 형태: (원래 한국어 필드, 사전 낱말 필드). 임베딩에는 덧붙인 질문(field)을 준다
+    dictw = {"ko-dictw": ("q_ko", "q_ko_dict_terms"), "ko-nllb-dictw": ("q_ko_nllb", "q_ko_nllb_dict_terms")}.get(a.lang)
     need_dense = any(m in ("dense", "hybrid") for m in methods)
 
     for f in sorted(glob.glob(os.path.join(a.set, "*.json"))):
@@ -265,10 +267,10 @@ def main():
             query = q[field]
             qt = terms(query)
             extra = []
-            if a.lang == "ko-dictw":
+            if dictw:
                 # Lantern처럼: 사전이 넓힌 낱말은 따로, 절반 가중치로 (흔한 동사가 질문의 식별자를 누르지 않게)
-                qt = terms(q["q_ko"])
-                extra = [t for t in terms(" ".join(q.get("q_ko_dict_terms") or [])) if t not in qt]
+                qt = terms(q[dictw[0]])
+                extra = [t for t in terms(" ".join(q.get(dictw[1]) or [])) if t not in qt]
             row = {"commit": q["commit"], "q": query, "golden": q["golden"], "methods": {}}
             if "bm25-file" in methods:
                 order = ranked(lex_scores(BM25([terms(p + " " + t) for p, t in files]), qt, extra, a.dict_weight))
