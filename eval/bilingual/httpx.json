@@ -36,7 +36,15 @@
       "q_ko_llm_2": "Export `FunctionAuth` in `__all__`",
       "q_ko_llm_2_src": "`FunctionAuth`도 `__all__`에 노출해줘",
       "q_ko_llm_3": "Export `FunctionAuth` in `__all__` as public API",
-      "q_ko_llm_3_src": "`FunctionAuth`도 `__all__`에 노출해줘"
+      "q_ko_llm_3_src": "`FunctionAuth`도 `__all__`에 노출해줘",
+      "q_ko_nllb": "`FunctionAuth`를 `__all__`로 표시한다",
+      "q_ko_nllb_src": "Expose `FunctionAuth` in `__all__`",
+      "q_ko_nllb_dict_terms": [
+        "display",
+        "show",
+        "render"
+      ],
+      "q_ko_nllb_dict": "`FunctionAuth`를 `__all__`로 표시한다 display show render"
     },
     {
       "q": "Display proxy protocol scheme on error",
@@ -69,7 +77,16 @@
       "q_ko_llm_2": "include proxy URL scheme in error message when proxy connection fails",
       "q_ko_llm_2_src": "에러 날 때 프록시 프로토콜 scheme 보여주려면 어디 고쳐야 해?",
       "q_ko_llm_3": "include proxy URL scheme in error message for unsupported or invalid proxy protocol",
-      "q_ko_llm_3_src": "에러 날 때 프록시 프로토콜 scheme 보여주려면 어디 고쳐야 해?"
+      "q_ko_llm_3_src": "에러 날 때 프록시 프로토콜 scheme 보여주려면 어디 고쳐야 해?",
+      "q_ko_nllb": "오류에 대한 프록시 프로토콜 기획을 표시",
+      "q_ko_nllb_src": "Display proxy protocol scheme on error",
+      "q_ko_nllb_dict_terms": [
+        "error",
+        "display",
+        "show",
+        "render"
+      ],
+      "q_ko_nllb_dict": "오류에 대한 프록시 프로토콜 기획을 표시 error display show render"
     },
     {
       "q": "Fix `verify=False`, `cert=...` case.",
@@ -96,7 +113,11 @@
       "q_ko_llm_2": "bug when verify=False is combined with cert=... client certificate in SSL context creation",
       "q_ko_llm_2_src": "`verify=False`에 `cert=...`까지 준 경우 버그",
       "q_ko_llm_3": "Bug when `verify=False` is combined with `cert=...`: the client certificate is ignored or not loaded into the SSL context.",
-      "q_ko_llm_3_src": "`verify=False`에 `cert=...`까지 준 경우 버그"
+      "q_ko_llm_3_src": "`verify=False`에 `cert=...`까지 준 경우 버그",
+      "q_ko_nllb": "`verify=False`, `cert=...",
+      "q_ko_nllb_src": "Fix `verify=False`, `cert=...` case.",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "`verify=False`, `cert=..."
     },
     {
       "q": "Fix `extensions` type annotation.",
@@ -129,7 +150,16 @@
       "q_ko_llm_2": "Fix type annotation for `extensions`",
       "q_ko_llm_2_src": "`extensions` 타입 어노테이션 고쳐줘",
       "q_ko_llm_3": "fix type annotation for `extensions`",
-      "q_ko_llm_3_src": "`extensions` 타입 어노테이션 고쳐줘"
+      "q_ko_llm_3_src": "`extensions` 타입 어노테이션 고쳐줘",
+      "q_ko_nllb": "` 확장 ` 타입 해설을 수정합니다.",
+      "q_ko_nllb_src": "Fix `extensions` type annotation.",
+      "q_ko_nllb_dict_terms": [
+        "extension",
+        "type",
+        "update",
+        "edit"
+      ],
+      "q_ko_nllb_dict": "` 확장 ` 타입 해설을 수정합니다. extension type update edit"
     },
     {
       "q": "Error on verify as str.",
@@ -160,7 +190,13 @@
       "q_ko_llm_2": "raise error when verify argument is passed as str",
       "q_ko_llm_2_src": "verify에 str이 들어오면 에러 내는 건 어디서 해?",
       "q_ko_llm_3": "Where httpx raises an error when a str is passed to the verify argument, checking the type of verify for SSL context creation.",
-      "q_ko_llm_3_src": "verify에 str이 들어오면 에러 내는 건 어디서 해?"
+      "q_ko_llm_3_src": "verify에 str이 들어오면 에러 내는 건 어디서 해?",
+      "q_ko_nllb": "확인에 대한 오류는 str.",
+      "q_ko_nllb_src": "Error on verify as str.",
+      "q_ko_nllb_dict_terms": [
+        "error"
+      ],
+      "q_ko_nllb_dict": "확인에 대한 오류는 str. error"
     },
     {
       "q": "Handle empty zstd responses",
@@ -192,7 +228,15 @@
       "q_ko_llm_2": "handle empty zstd encoded response body in ZStandardDecoder decode/flush",
       "q_ko_llm_2_src": "빈 zstd 응답은 어디서 처리해?",
       "q_ko_llm_3": "Where is an empty zstd-encoded response body handled in ZStandardDecoder decoding",
-      "q_ko_llm_3_src": "빈 zstd 응답은 어디서 처리해?"
+      "q_ko_llm_3_src": "빈 zstd 응답은 어디서 처리해?",
+      "q_ko_nllb": "빈 zstd 응답을 처리",
+      "q_ko_nllb_src": "Handle empty zstd responses",
+      "q_ko_nllb_dict_terms": [
+        "response",
+        "handle",
+        "process"
+      ],
+      "q_ko_nllb_dict": "빈 zstd 응답을 처리 response handle process"
     },
     {
       "q": "Cleanup `Request` method parameter.",
@@ -219,7 +263,16 @@
       "q_ko_llm_2": "Explain the `method` parameter of `Request`: accepted types and how it's normalized",
       "q_ko_llm_2_src": "`Request`의 method 파라미터 정리해줘",
       "q_ko_llm_3": "`Request` class `method` parameter: how it is accepted and handled",
-      "q_ko_llm_3_src": "`Request`의 method 파라미터 정리해줘"
+      "q_ko_llm_3_src": "`Request`의 method 파라미터 정리해줘",
+      "q_ko_nllb": "청소 `Request` 방법 매개 변수.",
+      "q_ko_nllb_src": "Cleanup `Request` method parameter.",
+      "q_ko_nllb_dict_terms": [
+        "param",
+        "parameter",
+        "variable",
+        "var"
+      ],
+      "q_ko_nllb_dict": "청소 `Request` 방법 매개 변수. param parameter variable var"
     },
     {
       "q": "add socks5h proxy support",
@@ -255,7 +308,14 @@
       "q_ko_llm_2": "add support for socks5h proxy scheme",
       "q_ko_llm_2_src": "socks5h 프록시 지원 추가",
       "q_ko_llm_3": "Add socks5h proxy scheme support (remote DNS resolution through SOCKS proxy)",
-      "q_ko_llm_3_src": "socks5h 프록시 지원 추가"
+      "q_ko_llm_3_src": "socks5h 프록시 지원 추가",
+      "q_ko_nllb": "5h 프록시 지원을 추가합니다",
+      "q_ko_nllb_src": "add socks5h proxy support",
+      "q_ko_nllb_dict_terms": [
+        "add",
+        "create"
+      ],
+      "q_ko_nllb_dict": "5h 프록시 지원을 추가합니다 add create"
     },
     {
       "q": "Just use default `safe=...` characters for `urlescape`",
@@ -285,7 +345,14 @@
       "q_ko_llm_2": "Make `urlescape` use the default `safe=...` characters",
       "q_ko_llm_2_src": "`urlescape`는 그냥 기본 `safe=...` 문자 쓰게 해줘",
       "q_ko_llm_3": "make `urlescape` use the default `safe=...` characters",
-      "q_ko_llm_3_src": "`urlescape`는 그냥 기본 `safe=...` 문자 쓰게 해줘"
+      "q_ko_llm_3_src": "`urlescape`는 그냥 기본 `safe=...` 문자 쓰게 해줘",
+      "q_ko_nllb": "그냥 기본 `safe=...` 문자를 사용하여 `urlescape`",
+      "q_ko_nllb_src": "Just use default `safe=...` characters for `urlescape`",
+      "q_ko_nllb_dict_terms": [
+        "char",
+        "character"
+      ],
+      "q_ko_nllb_dict": "그냥 기본 `safe=...` 문자를 사용하여 `urlescape` char character"
     },
     {
       "q": "Review urlescape percent-safe set, and use + behavior for form spaces.",
@@ -324,7 +391,14 @@
       "q_ko_llm_2": "Revisit the set of safe characters that urlescape leaves unencoded in percent-encoding, and encode spaces as \"+\" in form encoding",
       "q_ko_llm_2_src": "urlescape의 퍼센트 인코딩 안 하는 문자 집합 다시 보고, form 공백은 +로 처리하게 해줘",
       "q_ko_llm_3": "Review the urlescape safe characters set that are not percent-encoded, and encode spaces as + in form data.",
-      "q_ko_llm_3_src": "urlescape의 퍼센트 인코딩 안 하는 문자 집합 다시 보고, form 공백은 +로 처리하게 해줘"
+      "q_ko_llm_3_src": "urlescape의 퍼센트 인코딩 안 하는 문자 집합 다시 보고, form 공백은 +로 처리하게 해줘",
+      "q_ko_nllb": "우루스케이프 %-안전 세트를 검토하고, 양식 공간에 대해 + 행동을 사용하십시오.",
+      "q_ko_nllb_src": "Review urlescape percent-safe set, and use + behavior for form spaces.",
+      "q_ko_nllb_dict_terms": [
+        "safe",
+        "safety"
+      ],
+      "q_ko_nllb_dict": "우루스케이프 %-안전 세트를 검토하고, 양식 공간에 대해 + 행동을 사용하십시오. safe safety"
     },
     {
       "q": "Review URL percent escaping sets, from whatwg.",
@@ -359,7 +433,11 @@
       "q_ko_llm_2": "Review URL percent-encoding (percent escape) character sets against the WHATWG URL spec",
       "q_ko_llm_2_src": "whatwg 기준으로 URL 퍼센트 이스케이프 문자 집합 재검토",
       "q_ko_llm_3": "Review URL percent-encoding (escape) character sets against the WHATWG URL spec",
-      "q_ko_llm_3_src": "whatwg 기준으로 URL 퍼센트 이스케이프 문자 집합 재검토"
+      "q_ko_llm_3_src": "whatwg 기준으로 URL 퍼센트 이스케이프 문자 집합 재검토",
+      "q_ko_nllb": "Whatwg에서 URL % 탈출 집합을 검토하십시오.",
+      "q_ko_nllb_src": "Review URL percent escaping sets, from whatwg.",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "Whatwg에서 URL % 탈출 집합을 검토하십시오."
     },
     {
       "q": "Clarified error when header value is None",
@@ -393,7 +471,17 @@
       "q_ko_llm_2": "Make the error message clearer when a header value is None",
       "q_ko_llm_2_src": "헤더 값이 None일 때 에러 메시지 더 명확하게",
       "q_ko_llm_3": "Improve the error message when a header value is None",
-      "q_ko_llm_3_src": "헤더 값이 None일 때 에러 메시지 더 명확하게"
+      "q_ko_llm_3_src": "헤더 값이 None일 때 에러 메시지 더 명확하게",
+      "q_ko_nllb": "헤더 값이 0일 때 정해진 오류",
+      "q_ko_nllb_src": "Clarified error when header value is None",
+      "q_ko_nllb_dict_terms": [
+        "value",
+        "set",
+        "resolve",
+        "determine",
+        "error"
+      ],
+      "q_ko_nllb_dict": "헤더 값이 0일 때 정해진 오류 value set resolve determine error"
     },
     {
       "q": "Improve InvalidURL error message.",
@@ -428,7 +516,14 @@
       "q_ko_llm_2": "Find where the InvalidURL exception is raised and how its error message is built, so the message can be improved.",
       "q_ko_llm_2_src": "InvalidURL 에러 메시지 개선하려면 어디를 고쳐야 해?",
       "q_ko_llm_3": "where InvalidURL exception is raised and its error message constructed, to improve the InvalidURL error message",
-      "q_ko_llm_3_src": "InvalidURL 에러 메시지 개선하려면 어디를 고쳐야 해?"
+      "q_ko_llm_3_src": "InvalidURL 에러 메시지 개선하려면 어디를 고쳐야 해?",
+      "q_ko_nllb": "InvalidURL 오류 메시지를 개선합니다.",
+      "q_ko_nllb_src": "Improve InvalidURL error message.",
+      "q_ko_nllb_dict_terms": [
+        "error",
+        "message"
+      ],
+      "q_ko_nllb_dict": "InvalidURL 오류 메시지를 개선합니다. error message"
     },
     {
       "q": "Use proxy ssl context consistently",
@@ -455,7 +550,11 @@
       "q_ko_llm_2": "proxy SSL context not used consistently for proxy connections",
       "q_ko_llm_2_src": "프록시 ssl context를 일관되게 안 쓰는 문제",
       "q_ko_llm_3": "Make proxy SSL context get used consistently across proxy transport setup (proxy ssl_context, HTTPS proxy)",
-      "q_ko_llm_3_src": "프록시 ssl context를 일관되게 안 쓰는 문제"
+      "q_ko_llm_3_src": "프록시 ssl context를 일관되게 안 쓰는 문제",
+      "q_ko_nllb": "프록시 ssl 컨텍스트를 일관되게 사용",
+      "q_ko_nllb_src": "Use proxy ssl context consistently",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "프록시 ssl 컨텍스트를 일관되게 사용"
     },
     {
       "q": "Keep clients in sync",
@@ -486,7 +585,15 @@
       "q_ko_llm_2": "Keep the sync and async clients consistent so their behavior and API don't diverge",
       "q_ko_llm_2_src": "클라이언트들끼리 어긋나지 않게 맞춰줘",
       "q_ko_llm_3": "make Client and AsyncClient behavior consistent, keep sync and async clients in sync",
-      "q_ko_llm_3_src": "클라이언트들끼리 어긋나지 않게 맞춰줘"
+      "q_ko_llm_3_src": "클라이언트들끼리 어긋나지 않게 맞춰줘",
+      "q_ko_nllb": "클라이언트를 동기화하도록",
+      "q_ko_nllb_src": "Keep clients in sync",
+      "q_ko_nllb_dict_terms": [
+        "client",
+        "sync",
+        "synchronize"
+      ],
+      "q_ko_nllb_dict": "클라이언트를 동기화하도록 client sync synchronize"
     },
     {
       "q": "Update /advanced/#<anchor> links -> /advanced/clients/#<anchor>",
@@ -521,7 +628,11 @@
       "q_ko_llm_2": "Update docs links from /advanced/#<anchor> to /advanced/clients/#<anchor>",
       "q_ko_llm_2_src": "/advanced/#<anchor> 링크를 /advanced/clients/#<anchor>로 바꿔줘",
       "q_ko_llm_3": "update docs links from /advanced/#<anchor> to /advanced/clients/#<anchor>",
-      "q_ko_llm_3_src": "/advanced/#<anchor> 링크를 /advanced/clients/#<anchor>로 바꿔줘"
+      "q_ko_llm_3_src": "/advanced/#<anchor> 링크를 /advanced/clients/#<anchor>로 바꿔줘",
+      "q_ko_nllb": "업데이트 /Advanced/#<Anchor> 링크 -> /Advanced/clients/#<Anchor>",
+      "q_ko_nllb_src": "Update /advanced/#<anchor> links -> /advanced/clients/#<anchor>",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "업데이트 /Advanced/#<Anchor> 링크 -> /Advanced/clients/#<Anchor>"
     },
     {
       "q": "Fix RFC 2069 mode digest authentication",
@@ -554,7 +665,16 @@
       "q_ko_llm_2": "fix digest authentication bug in RFC 2069 mode (no qop) response computation",
       "q_ko_llm_2_src": "RFC 2069 모드 digest 인증 버그 어디서 고쳐?",
       "q_ko_llm_3": "Fix digest authentication bug in RFC 2069 mode (no qop) in DigestAuth",
-      "q_ko_llm_3_src": "RFC 2069 모드 digest 인증 버그 어디서 고쳐?"
+      "q_ko_llm_3_src": "RFC 2069 모드 digest 인증 버그 어디서 고쳐?",
+      "q_ko_nllb": "RFC 2069 모드 소화 인증을 수정",
+      "q_ko_nllb_src": "Fix RFC 2069 mode digest authentication",
+      "q_ko_nllb_dict_terms": [
+        "auth",
+        "authenticate",
+        "update",
+        "edit"
+      ],
+      "q_ko_nllb_dict": "RFC 2069 모드 소화 인증을 수정 auth authenticate update edit"
     },
     {
       "q": "Fixed `iter_text` adding an empty string",
@@ -592,7 +712,16 @@
       "q_ko_llm_2": "`iter_text` yields empty string chunks in response text decoding/streaming",
       "q_ko_llm_2_src": "`iter_text`가 빈 문자열을 끼워 넣는 문제",
       "q_ko_llm_3": "iter_text yields empty string chunks in response text decoding",
-      "q_ko_llm_3_src": "`iter_text`가 빈 문자열을 끼워 넣는 문제"
+      "q_ko_llm_3_src": "`iter_text`가 빈 문자열을 끼워 넣는 문제",
+      "q_ko_nllb": "고정된 `iter_text` 빈 문자열을 추가",
+      "q_ko_nllb_src": "Fixed `iter_text` adding an empty string",
+      "q_ko_nllb_dict_terms": [
+        "string",
+        "str",
+        "add",
+        "create"
+      ],
+      "q_ko_nllb_dict": "고정된 `iter_text` 빈 문자열을 추가 string str add create"
     },
     {
       "q": "Lazily import 'netrc' module",
@@ -619,7 +748,11 @@
       "q_ko_llm_2": "lazy import netrc module only when needed (NetRCAuth)",
       "q_ko_llm_2_src": "'netrc' 모듈은 필요할 때 import하게 해줘",
       "q_ko_llm_3": "Lazily import `netrc` module only when needed instead of at module top level",
-      "q_ko_llm_3_src": "'netrc' 모듈은 필요할 때 import하게 해줘"
+      "q_ko_llm_3_src": "'netrc' 모듈은 필요할 때 import하게 해줘",
+      "q_ko_nllb": "Lazily 수입 'netrc' 모듈",
+      "q_ko_nllb_src": "Lazily import 'netrc' module",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "Lazily 수입 'netrc' 모듈"
     },
     {
       "q": "Drop unneccessary `binascii` import",
@@ -646,7 +779,14 @@
       "q_ko_llm_2": "remove unused `binascii` import",
       "q_ko_llm_2_src": "불필요한 `binascii` import 제거",
       "q_ko_llm_3": "remove unused `binascii` import",
-      "q_ko_llm_3_src": "불필요한 `binascii` import 제거"
+      "q_ko_llm_3_src": "불필요한 `binascii` import 제거",
+      "q_ko_nllb": "불필요한 수입을 줄이고",
+      "q_ko_nllb_src": "Drop unneccessary `binascii` import",
+      "q_ko_nllb_dict_terms": [
+        "reduce",
+        "shrink"
+      ],
+      "q_ko_nllb_dict": "불필요한 수입을 줄이고 reduce shrink"
     },
     {
       "q": "Add support for Python 3.12",
@@ -680,7 +820,14 @@
       "q_ko_llm_2": "Add Python 3.12 support: update supported Python versions, classifiers and CI test matrix",
       "q_ko_llm_2_src": "Python 3.12 지원 추가하려면 어디를 손봐야 해?",
       "q_ko_llm_3": "add Python 3.12 support: update supported Python versions in package metadata classifiers and CI test matrix",
-      "q_ko_llm_3_src": "Python 3.12 지원 추가하려면 어디를 손봐야 해?"
+      "q_ko_llm_3_src": "Python 3.12 지원 추가하려면 어디를 손봐야 해?",
+      "q_ko_nllb": "파이썬 3.12에 대한 지원 추가",
+      "q_ko_nllb_src": "Add support for Python 3.12",
+      "q_ko_nllb_dict_terms": [
+        "add",
+        "create"
+      ],
+      "q_ko_nllb_dict": "파이썬 3.12에 대한 지원 추가 add create"
     },
     {
       "q": "Raise ValueError on `Response.encoding` being set after `Response.text` has been accessed",
@@ -710,7 +857,14 @@
       "q_ko_llm_2": "raise ValueError when setting `Response.encoding` after `Response.text` has been accessed",
       "q_ko_llm_2_src": "`Response.text`에 접근한 뒤 `Response.encoding`을 설정하면 ValueError 내게 해줘",
       "q_ko_llm_3": "raise ValueError when setting `Response.encoding` after `Response.text` has been accessed",
-      "q_ko_llm_3_src": "`Response.text`에 접근한 뒤 `Response.encoding`을 설정하면 ValueError 내게 해줘"
+      "q_ko_llm_3_src": "`Response.text`에 접근한 뒤 `Response.encoding`을 설정하면 ValueError 내게 해줘",
+      "q_ko_nllb": "ValueRaiseError on `Response.encoding`이 설정된 후 `Response.text`이 액세스되었습니다",
+      "q_ko_nllb_src": "Raise ValueError on `Response.encoding` being set after `Response.text` has been accessed",
+      "q_ko_nllb_dict_terms": [
+        "config",
+        "setting"
+      ],
+      "q_ko_nllb_dict": "ValueRaiseError on `Response.encoding`이 설정된 후 `Response.text`이 액세스되었습니다 config setting"
     },
     {
       "q": "More robust check for upload files in binary mode",
@@ -741,7 +895,16 @@
       "q_ko_llm_2": "Stricter check that uploaded files are opened in binary mode",
       "q_ko_llm_2_src": "업로드 파일이 바이너리 모드인지 더 확실하게 체크",
       "q_ko_llm_3": "Check more reliably that uploaded files are opened in binary mode, rejecting text-mode file objects in multipart file uploads",
-      "q_ko_llm_3_src": "업로드 파일이 바이너리 모드인지 더 확실하게 체크"
+      "q_ko_llm_3_src": "업로드 파일이 바이너리 모드인지 더 확실하게 체크",
+      "q_ko_nllb": "바이너리 모드에서 파일을 업로드하는 데 더 강력한 검사",
+      "q_ko_nllb_src": "More robust check for upload files in binary mode",
+      "q_ko_nllb_dict_terms": [
+        "upload",
+        "check",
+        "validate",
+        "guard"
+      ],
+      "q_ko_nllb_dict": "바이너리 모드에서 파일을 업로드하는 데 더 강력한 검사 upload check validate guard"
     },
     {
       "q": "NO_PROXY should support IPv4, IPv6 and localhost",
@@ -768,7 +931,11 @@
       "q_ko_llm_2": "NO_PROXY support for IPv4, IPv6 and localhost addresses in proxy environment variable handling",
       "q_ko_llm_2_src": "NO_PROXY에서 IPv4, IPv6, localhost 지원하려면 어디를 봐야 해?",
       "q_ko_llm_3": "NO_PROXY support for IPv4, IPv6 addresses and localhost in proxy environment variable handling",
-      "q_ko_llm_3_src": "NO_PROXY에서 IPv4, IPv6, localhost 지원하려면 어디를 봐야 해?"
+      "q_ko_llm_3_src": "NO_PROXY에서 IPv4, IPv6, localhost 지원하려면 어디를 봐야 해?",
+      "q_ko_nllb": "NO_PROXY는 IPv4, IPv6 및 localhost을 지원해야 합니다",
+      "q_ko_nllb_src": "NO_PROXY should support IPv4, IPv6 and localhost",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "NO_PROXY는 IPv4, IPv6 및 localhost을 지원해야 합니다"
     },
     {
       "q": "Change LineDecoder to match stdlib splitlines, resulting in significant speed up",
@@ -805,7 +972,14 @@
       "q_ko_llm_2": "Rewrite LineDecoder to match stdlib str.splitlines behavior for a big performance speedup",
       "q_ko_llm_2_src": "LineDecoder를 표준 라이브러리 splitlines에 맞게 바꿔서 속도 크게 올려줘",
       "q_ko_llm_3": "Rewrite LineDecoder to use str.splitlines for line splitting, matching stdlib splitlines behavior and improving performance",
-      "q_ko_llm_3_src": "LineDecoder를 표준 라이브러리 splitlines에 맞게 바꿔서 속도 크게 올려줘"
+      "q_ko_llm_3_src": "LineDecoder를 표준 라이브러리 splitlines에 맞게 바꿔서 속도 크게 올려줘",
+      "q_ko_nllb": "LineDecoder를 stdlib 스플릿라인과 일치하도록 변경하여 상당한 속도를 증가시킵니다.",
+      "q_ko_nllb_src": "Change LineDecoder to match stdlib splitlines, resulting in significant speed up",
+      "q_ko_nllb_dict_terms": [
+        "speed",
+        "performance"
+      ],
+      "q_ko_nllb_dict": "LineDecoder를 stdlib 스플릿라인과 일치하도록 변경하여 상당한 속도를 증가시킵니다. speed performance"
     },
     {
       "q": "Use '%20' for encoding spaces in query parameters.",
@@ -839,7 +1013,19 @@
       "q_ko_llm_2": "encode spaces in query params as '%20' instead of '+'",
       "q_ko_llm_2_src": "쿼리 파라미터 공백은 '%20'으로 인코딩",
       "q_ko_llm_3": "Encode spaces in query parameters as '%20'",
-      "q_ko_llm_3_src": "쿼리 파라미터 공백은 '%20'으로 인코딩"
+      "q_ko_llm_3_src": "쿼리 파라미터 공백은 '%20'으로 인코딩",
+      "q_ko_nllb": "쿼리 매개 변수에서 공간을 암호화하려면 '%20'를 사용한다.",
+      "q_ko_nllb_src": "Use '%20' for encoding spaces in query parameters.",
+      "q_ko_nllb_dict_terms": [
+        "param",
+        "parameter",
+        "variable",
+        "var",
+        "encrypt",
+        "hash",
+        "crypto"
+      ],
+      "q_ko_nllb_dict": "쿼리 매개 변수에서 공간을 암호화하려면 '%20'를 사용한다. param parameter variable var encrypt hash crypto"
     },
     {
       "q": "Raise TypeError if content is passed a 'dict' instance.",
@@ -866,7 +1052,11 @@
       "q_ko_llm_2": "where TypeError is raised when a 'dict' instance is passed as content",
       "q_ko_llm_2_src": "content에 'dict' 인스턴스 넘기면 TypeError 내는 건 어디서 해?",
       "q_ko_llm_3": "Where does httpx raise a TypeError when a `dict` instance is passed as `content`?",
-      "q_ko_llm_3_src": "content에 'dict' 인스턴스 넘기면 TypeError 내는 건 어디서 해?"
+      "q_ko_llm_3_src": "content에 'dict' 인스턴스 넘기면 TypeError 내는 건 어디서 해?",
+      "q_ko_nllb": "컨텐츠가 '디렉트' 인스턴스를 통과하면 TypeError을 올립니다.",
+      "q_ko_nllb_src": "Raise TypeError if content is passed a 'dict' instance.",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "컨텐츠가 '디렉트' 인스턴스를 통과하면 TypeError을 올립니다."
     },
     {
       "q": "Add back in URL.raw with NamedTuple",
@@ -902,7 +1092,14 @@
       "q_ko_llm_2": "restore URL.raw as a NamedTuple",
       "q_ko_llm_2_src": "URL.raw를 NamedTuple로 다시 넣어줘",
       "q_ko_llm_3": "Restore URL.raw to return a NamedTuple",
-      "q_ko_llm_3_src": "URL.raw를 NamedTuple로 다시 넣어줘"
+      "q_ko_llm_3_src": "URL.raw를 NamedTuple로 다시 넣어줘",
+      "q_ko_nllb": "NamedTuple로 URL.raw에 다시 추가",
+      "q_ko_nllb_src": "Add back in URL.raw with NamedTuple",
+      "q_ko_nllb_dict_terms": [
+        "add",
+        "create"
+      ],
+      "q_ko_nllb_dict": "NamedTuple로 URL.raw에 다시 추가 add create"
     },
     {
       "q": "Remove typeshed iscoroutine workaround",
@@ -930,7 +1127,11 @@
       "q_ko_llm_2": "Remove typeshed iscoroutine workaround",
       "q_ko_llm_2_src": "typeshed iscoroutine 우회 코드 제거",
       "q_ko_llm_3": "remove typeshed iscoroutine workaround",
-      "q_ko_llm_3_src": "typeshed iscoroutine 우회 코드 제거"
+      "q_ko_llm_3_src": "typeshed iscoroutine 우회 코드 제거",
+      "q_ko_nllb": "타이핑된 일정을 제거하는 방법",
+      "q_ko_nllb_src": "Remove typeshed iscoroutine workaround",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "타이핑된 일정을 제거하는 방법"
     },
     {
       "q": "Switch `extensions` from `Dict` to `Mapping`.",
@@ -968,7 +1169,13 @@
       "q_ko_llm_2": "change `extensions` type annotation from `Dict` to `Mapping`",
       "q_ko_llm_2_src": "`extensions`를 `Dict`에서 `Mapping`으로 바꾸려면 어디 고쳐야 해?",
       "q_ko_llm_3": "change `extensions` type annotation from `Dict` to `Mapping`",
-      "q_ko_llm_3_src": "`extensions`를 `Dict`에서 `Mapping`으로 바꾸려면 어디 고쳐야 해?"
+      "q_ko_llm_3_src": "`extensions`를 `Dict`에서 `Mapping`으로 바꾸려면 어디 고쳐야 해?",
+      "q_ko_nllb": "` 확장 `에서 `Dict`로 `Mapping`로 전환합니다.",
+      "q_ko_nllb_src": "Switch `extensions` from `Dict` to `Mapping`.",
+      "q_ko_nllb_dict_terms": [
+        "extension"
+      ],
+      "q_ko_nllb_dict": "` 확장 `에서 `Dict`로 `Mapping`로 전환합니다. extension"
     },
     {
       "q": "Drop .read/.aread from SyncByteStream/AsyncByteStream",
@@ -996,7 +1203,11 @@
       "q_ko_llm_2": "Remove .read/.aread methods from SyncByteStream/AsyncByteStream",
       "q_ko_llm_2_src": "SyncByteStream/AsyncByteStream에서 .read/.aread 제거",
       "q_ko_llm_3": "Remove .read/.aread methods from SyncByteStream/AsyncByteStream",
-      "q_ko_llm_3_src": "SyncByteStream/AsyncByteStream에서 .read/.aread 제거"
+      "q_ko_llm_3_src": "SyncByteStream/AsyncByteStream에서 .read/.aread 제거",
+      "q_ko_nllb": "SyncByteStream/AsyncByteStream에서 drop.read/.aread",
+      "q_ko_nllb_src": "Drop .read/.aread from SyncByteStream/AsyncByteStream",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "SyncByteStream/AsyncByteStream에서 drop.read/.aread"
     },
     {
       "q": "Allow str content for multipart upload files",
@@ -1028,10 +1239,17 @@
       "q_ko_llm_2": "Allow `str` as file content in multipart file uploads: handle the file content type in the multipart encoding (`files=`).",
       "q_ko_llm_2_src": "multipart 업로드 파일 content로 str도 받으려면 어디 봐야 해?",
       "q_ko_llm_3": "multipart file upload accept str as file content in addition to bytes",
-      "q_ko_llm_3_src": "multipart 업로드 파일 content로 str도 받으려면 어디 봐야 해?"
+      "q_ko_llm_3_src": "multipart 업로드 파일 content로 str도 받으려면 어디 봐야 해?",
+      "q_ko_nllb": "멀티파트 업로드 파일의 str 콘텐츠를 허용",
+      "q_ko_nllb_src": "Allow str content for multipart upload files",
+      "q_ko_nllb_dict_terms": [
+        "upload"
+      ],
+      "q_ko_nllb_dict": "멀티파트 업로드 파일의 str 콘텐츠를 허용 upload"
     }
   ],
   "llm_rewrite_norepo": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the Korean question (no repository name); prompt 3 (no-repository variant) in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-norepo.json",
   "llm_rewrite_2": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-2.json",
-  "llm_rewrite_3": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-3.json"
+  "llm_rewrite_3": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-3.json",
+  "nllb_ko_model": "facebook/nllb-200-distilled-600M"
 }

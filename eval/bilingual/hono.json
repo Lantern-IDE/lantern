@@ -38,7 +38,13 @@
       "q_ko_llm_2": "allow Blob as response body type in Context body/response",
       "q_ko_llm_2_src": "응답 body로 Blob도 반환할 수 있게 해줘",
       "q_ko_llm_3": "Allow returning a Blob as the response body",
-      "q_ko_llm_3_src": "응답 body로 Blob도 반환할 수 있게 해줘"
+      "q_ko_llm_3_src": "응답 body로 Blob도 반환할 수 있게 해줘",
+      "q_ko_nllb": "반응체로 Blob을 반환할 수 있도록 합니다.",
+      "q_ko_nllb_src": "allow returning a Blob as a response body",
+      "q_ko_nllb_dict_terms": [
+        "return"
+      ],
+      "q_ko_nllb_dict": "반응체로 Blob을 반환할 수 있도록 합니다. return"
     },
     {
       "q": "fail with a descriptive error on a malformed event",
@@ -73,7 +79,16 @@
       "q_ko_llm_2": "throw clear error when event has invalid or unexpected format in adapter handler",
       "q_ko_llm_2_src": "이벤트 형식이 잘못됐을 때 알아보기 쉬운 에러로 실패하게 하려면 어디를 봐야 해?",
       "q_ko_llm_3": "throw clear error when event format is invalid in adapter handler (unsupported/malformed event)",
-      "q_ko_llm_3_src": "이벤트 형식이 잘못됐을 때 알아보기 쉬운 에러로 실패하게 하려면 어디를 봐야 해?"
+      "q_ko_llm_3_src": "이벤트 형식이 잘못됐을 때 알아보기 쉬운 에러로 실패하게 하려면 어디를 봐야 해?",
+      "q_ko_nllb": "잘못된 이벤트에 대한 설명 오류로 실패",
+      "q_ko_nllb_src": "fail with a descriptive error on a malformed event",
+      "q_ko_nllb_dict_terms": [
+        "event",
+        "error",
+        "fail",
+        "failure"
+      ],
+      "q_ko_nllb_dict": "잘못된 이벤트에 대한 설명 오류로 실패 event error fail failure"
     },
     {
       "q": "sync content type detection with aws-lambda",
@@ -105,7 +120,14 @@
       "q_ko_llm_2": "align content type detection with aws-lambda adapter",
       "q_ko_llm_2_src": "content type 판별을 aws-lambda 쪽이랑 맞추려면 어디 고쳐야 해?",
       "q_ko_llm_3": "align content type detection with aws-lambda adapter",
-      "q_ko_llm_3_src": "content type 판별을 aws-lambda 쪽이랑 맞추려면 어디 고쳐야 해?"
+      "q_ko_llm_3_src": "content type 판별을 aws-lambda 쪽이랑 맞추려면 어디 고쳐야 해?",
+      "q_ko_nllb": "aws-lambda로 동기화 내용 유형 검출",
+      "q_ko_nllb_src": "sync content type detection with aws-lambda",
+      "q_ko_nllb_dict_terms": [
+        "sync",
+        "synchronize"
+      ],
+      "q_ko_nllb_dict": "aws-lambda로 동기화 내용 유형 검출 sync synchronize"
     },
     {
       "q": "preserve empty query parameters",
@@ -136,7 +158,16 @@
       "q_ko_llm_2": "preserve empty query parameters instead of dropping them when parsing query string",
       "q_ko_llm_2_src": "빈 쿼리 파라미터가 안 사라지게 하려면 어디를 고쳐야 해?",
       "q_ko_llm_3": "preserve empty query parameters instead of dropping them when parsing URL query string",
-      "q_ko_llm_3_src": "빈 쿼리 파라미터가 안 사라지게 하려면 어디를 고쳐야 해?"
+      "q_ko_llm_3_src": "빈 쿼리 파라미터가 안 사라지게 하려면 어디를 고쳐야 해?",
+      "q_ko_nllb": "빈 쿼리 매개 변수를 보존",
+      "q_ko_nllb_src": "preserve empty query parameters",
+      "q_ko_nllb_dict_terms": [
+        "param",
+        "parameter",
+        "variable",
+        "var"
+      ],
+      "q_ko_nllb_dict": "빈 쿼리 매개 변수를 보존 param parameter variable var"
     },
     {
       "q": "treat binary +xml archive media types as binary",
@@ -167,7 +198,14 @@
       "q_ko_llm_2": "Treat binary archive media types with +xml suffix as binary instead of text when checking content type",
       "q_ko_llm_2_src": "+xml 붙은 바이너리 아카이브 미디어 타입은 바이너리로 취급해줘",
       "q_ko_llm_3": "Treat binary archive media types with a +xml suffix as binary, not text",
-      "q_ko_llm_3_src": "+xml 붙은 바이너리 아카이브 미디어 타입은 바이너리로 취급해줘"
+      "q_ko_llm_3_src": "+xml 붙은 바이너리 아카이브 미디어 타입은 바이너리로 취급해줘",
+      "q_ko_nllb": "바이너리 +xml 아카이브 미디어 유형을 바이너리로 처리",
+      "q_ko_nllb_src": "treat binary +xml archive media types as binary",
+      "q_ko_nllb_dict_terms": [
+        "handle",
+        "process"
+      ],
+      "q_ko_nllb_dict": "바이너리 +xml 아카이브 미디어 유형을 바이너리로 처리 handle process"
     },
     {
       "q": "don't break responses with unparseable JSON bodies",
@@ -207,7 +245,16 @@
       "q_ko_llm_2": "Malformed JSON request body parse error breaks response, handle invalid JSON body parsing failure",
       "q_ko_llm_2_src": "JSON 바디를 파싱 못 하면 응답이 깨지는 문제",
       "q_ko_llm_3": "handle JSON body parse failure that results in broken/malformed error response",
-      "q_ko_llm_3_src": "JSON 바디를 파싱 못 하면 응답이 깨지는 문제"
+      "q_ko_llm_3_src": "JSON 바디를 파싱 못 하면 응답이 깨지는 문제",
+      "q_ko_nllb": "탐지할 수 없는 JSON 몸체로 응답을 깨지 마십시오.",
+      "q_ko_nllb_src": "don't break responses with unparseable JSON bodies",
+      "q_ko_nllb_dict_terms": [
+        "response",
+        "broken",
+        "encoding",
+        "render"
+      ],
+      "q_ko_nllb_dict": "탐지할 수 없는 JSON 몸체로 응답을 깨지 마십시오. response broken encoding render"
     },
     {
       "q": "don't match an empty path segment as a param",
@@ -237,7 +284,14 @@
       "q_ko_llm_2": "Router bug: empty path segment matched as a route parameter",
       "q_ko_llm_2_src": "빈 경로 세그먼트가 파라미터로 매칭되는 버그",
       "q_ko_llm_3": "Bug: router matches empty path segment as a route parameter (e.g. `/:id` matching an empty segment)",
-      "q_ko_llm_3_src": "빈 경로 세그먼트가 파라미터로 매칭되는 버그"
+      "q_ko_llm_3_src": "빈 경로 세그먼트가 파라미터로 매칭되는 버그",
+      "q_ko_nllb": "파람으로 빈 경로 세그먼트를 일치시키지 않습니다",
+      "q_ko_nllb_src": "don't match an empty path segment as a param",
+      "q_ko_nllb_dict_terms": [
+        "route",
+        "path"
+      ],
+      "q_ko_nllb_dict": "파람으로 빈 경로 세그먼트를 일치시키지 않습니다 route path"
     },
     {
       "q": "match media types and language tags case-insensitively",
@@ -271,7 +325,15 @@
       "q_ko_llm_2": "make media type and language tag matching case-insensitive in Accept/Accept-Language content negotiation",
       "q_ko_llm_2_src": "미디어 타입이랑 언어 태그는 대소문자 구분 없이 매칭하게 해줘",
       "q_ko_llm_3": "make media type and language tag matching case-insensitive in content negotiation (Accept, Accept-Language)",
-      "q_ko_llm_3_src": "미디어 타입이랑 언어 태그는 대소문자 구분 없이 매칭하게 해줘"
+      "q_ko_llm_3_src": "미디어 타입이랑 언어 태그는 대소문자 구분 없이 매칭하게 해줘",
+      "q_ko_nllb": "미디어 유형과 언어 태그를 경우에 따라 부합합니다",
+      "q_ko_nllb_src": "match media types and language tags case-insensitively",
+      "q_ko_nllb_dict_terms": [
+        "lang",
+        "language",
+        "locale"
+      ],
+      "q_ko_nllb_dict": "미디어 유형과 언어 태그를 경우에 따라 부합합니다 lang language locale"
     },
     {
       "q": "replace Suspense and ErrorBoundary content across newlines",
@@ -301,7 +363,13 @@
       "q_ko_llm_2": "Where multi-line Suspense and ErrorBoundary content is replaced in streamed JSX HTML output",
       "q_ko_llm_2_src": "여러 줄에 걸친 Suspense, ErrorBoundary 내용 치환은 어디서 해?",
       "q_ko_llm_3": "where multiline Suspense and ErrorBoundary content is replaced in streamed HTML",
-      "q_ko_llm_3_src": "여러 줄에 걸친 Suspense, ErrorBoundary 내용 치환은 어디서 해?"
+      "q_ko_llm_3_src": "여러 줄에 걸친 Suspense, ErrorBoundary 내용 치환은 어디서 해?",
+      "q_ko_nllb": "수스펜스 및 오류를 대체할 수 있습니다 새 라인을 가로지르는 제한 콘텐츠",
+      "q_ko_nllb_src": "replace Suspense and ErrorBoundary content across newlines",
+      "q_ko_nllb_dict_terms": [
+        "error"
+      ],
+      "q_ko_nllb_dict": "수스펜스 및 오류를 대체할 수 있습니다 새 라인을 가로지르는 제한 콘텐츠 error"
     },
     {
       "q": "optimize matching-head child lookup during reconciliation",
@@ -336,7 +404,15 @@
       "q_ko_llm_2": "optimize finding child with matching head during reconciliation (JSX DOM diff)",
       "q_ko_llm_2_src": "reconciliation 중 head가 일치하는 자식 찾기 최적화",
       "q_ko_llm_3": "optimize finding child with matching head during reconciliation",
-      "q_ko_llm_3_src": "reconciliation 중 head가 일치하는 자식 찾기 최적화"
+      "q_ko_llm_3_src": "reconciliation 중 head가 일치하는 자식 찾기 최적화",
+      "q_ko_nllb": "조화 과정에서 일치하는 머리 아이 검색을 최적화",
+      "q_ko_nllb_src": "optimize matching-head child lookup during reconciliation",
+      "q_ko_nllb_dict_terms": [
+        "search",
+        "find",
+        "query"
+      ],
+      "q_ko_nllb_dict": "조화 과정에서 일치하는 머리 아이 검색을 최적화 search find query"
     },
     {
       "q": "clamp a negative q to 0, not 1",
@@ -363,7 +439,11 @@
       "q_ko_llm_2": "clamp negative q quality value to 0 instead of 1 when parsing Accept header",
       "q_ko_llm_2_src": "음수 q는 1이 아니라 0으로 clamp해줘",
       "q_ko_llm_3": "clamp negative q quality value to 0 instead of 1 when parsing Accept header",
-      "q_ko_llm_3_src": "음수 q는 1이 아니라 0으로 clamp해줘"
+      "q_ko_llm_3_src": "음수 q는 1이 아니라 0으로 clamp해줘",
+      "q_ko_nllb": "음수 q를 0으로 눌러야 합니다. 1이 아닙니다.",
+      "q_ko_nllb_src": "clamp a negative q to 0, not 1",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "음수 q를 0으로 눌러야 합니다. 1이 아닙니다."
     },
     {
       "q": "treat the q parameter name as case-insensitive",
@@ -392,7 +472,17 @@
       "q_ko_llm_2": "Case-insensitive query parameter name matching for `q` in request query parsing",
       "q_ko_llm_2_src": "q 파라미터 이름을 대소문자 구분 없이 보려면 어디를 봐야 해?",
       "q_ko_llm_3": "case-insensitive query parameter name lookup for q in request query parsing",
-      "q_ko_llm_3_src": "q 파라미터 이름을 대소문자 구분 없이 보려면 어디를 봐야 해?"
+      "q_ko_llm_3_src": "q 파라미터 이름을 대소문자 구분 없이 보려면 어디를 봐야 해?",
+      "q_ko_nllb": "q 매개 변수 이름을 케이스에 민감하지 않은 것으로 간주합니다.",
+      "q_ko_nllb_src": "treat the q parameter name as case-insensitive",
+      "q_ko_nllb_dict_terms": [
+        "param",
+        "parameter",
+        "variable",
+        "var",
+        "name"
+      ],
+      "q_ko_nllb_dict": "q 매개 변수 이름을 케이스에 민감하지 않은 것으로 간주합니다. param parameter variable var name"
     },
     {
       "q": "skip accept entries with quality 0 when matching",
@@ -422,7 +512,14 @@
       "q_ko_llm_2": "Filter out Accept header entries with quality q=0 during content negotiation matching",
       "q_ko_llm_2_src": "매칭할 때 quality가 0인 accept 항목은 어디서 걸러?",
       "q_ko_llm_3": "filter out Accept header entries with quality q=0 when matching",
-      "q_ko_llm_3_src": "매칭할 때 quality가 0인 accept 항목은 어디서 걸러?"
+      "q_ko_llm_3_src": "매칭할 때 quality가 0인 accept 항목은 어디서 걸러?",
+      "q_ko_nllb": "점프하면 질 0을 가진 항목을 받아 들일 수 있습니다.",
+      "q_ko_nllb_src": "skip accept entries with quality 0 when matching",
+      "q_ko_nllb_dict_terms": [
+        "receive",
+        "fetch"
+      ],
+      "q_ko_nllb_dict": "점프하면 질 0을 가진 항목을 받아 들일 수 있습니다. receive fetch"
     },
     {
       "q": "reduce lookup work for large keyed updates",
@@ -463,7 +560,20 @@
       "q_ko_llm_2": "Reduce lookups in keyed bulk updates",
       "q_ko_llm_2_src": "key 있는 대량 업데이트에서 조회 작업 좀 줄여줘",
       "q_ko_llm_3": "reduce lookups during bulk update of keyed children/elements",
-      "q_ko_llm_3_src": "key 있는 대량 업데이트에서 조회 작업 좀 줄여줘"
+      "q_ko_llm_3_src": "key 있는 대량 업데이트에서 조회 작업 좀 줄여줘",
+      "q_ko_nllb": "큰 키 업데이트를 위한 검색 작업을 줄일 수 있습니다.",
+      "q_ko_nllb_src": "reduce lookup work for large keyed updates",
+      "q_ko_nllb_dict_terms": [
+        "key",
+        "search",
+        "find",
+        "query",
+        "job",
+        "task",
+        "reduce",
+        "shrink"
+      ],
+      "q_ko_nllb_dict": "큰 키 업데이트를 위한 검색 작업을 줄일 수 있습니다. key search find query job task reduce shrink"
     },
     {
       "q": "use forEach for consistent handler iteration",
@@ -490,7 +600,11 @@
       "q_ko_llm_2": "Use forEach consistently when iterating over handlers",
       "q_ko_llm_2_src": "핸들러 순회는 forEach로 통일",
       "q_ko_llm_3": "Iterate over handlers using forEach consistently instead of for loops",
-      "q_ko_llm_3_src": "핸들러 순회는 forEach로 통일"
+      "q_ko_llm_3_src": "핸들러 순회는 forEach로 통일",
+      "q_ko_nllb": "일관된 핸들러 반복을 위해",
+      "q_ko_nllb_src": "use forEach for consistent handler iteration",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "일관된 핸들러 반복을 위해"
     },
     {
       "q": "normalize root WebSocket URLs",
@@ -517,7 +631,11 @@
       "q_ko_llm_2": "where root WebSocket URL is normalized (root path / trailing slash handling for WebSocket URL)",
       "q_ko_llm_2_src": "루트 WebSocket URL 정규화는 어디서 해?",
       "q_ko_llm_3": "Where root WebSocket URL is normalized, e.g. adding a trailing slash or handling an empty path for the root path",
-      "q_ko_llm_3_src": "루트 WebSocket URL 정규화는 어디서 해?"
+      "q_ko_llm_3_src": "루트 WebSocket URL 정규화는 어디서 해?",
+      "q_ko_nllb": "루트 WebSocket URL를 정상화",
+      "q_ko_nllb_src": "normalize root WebSocket URLs",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "루트 WebSocket URL를 정상화"
     },
     {
       "q": "keep a param value of \"index\" in $url() and $path()",
@@ -546,7 +664,14 @@
       "q_ko_llm_2": "$url() and $path() drop path param when its value is \"index\"",
       "q_ko_llm_2_src": "$url()이랑 $path()에서 param 값이 \"index\"면 사라지는 문제",
       "q_ko_llm_3": "hono client $url() and $path() drop path param when its value is \"index\"",
-      "q_ko_llm_3_src": "$url()이랑 $path()에서 param 값이 \"index\"면 사라지는 문제"
+      "q_ko_llm_3_src": "$url()이랑 $path()에서 param 값이 \"index\"면 사라지는 문제",
+      "q_ko_nllb": "$url() 와 $path() 에서 \"인덱스\"의 파라미터 값을 유지하십시오.",
+      "q_ko_nllb_src": "keep a param value of \"index\" in $url() and $path()",
+      "q_ko_nllb_dict_terms": [
+        "index",
+        "value"
+      ],
+      "q_ko_nllb_dict": "$url() 와 $path() 에서 \"인덱스\"의 파라미터 값을 유지하십시오. index value"
     },
     {
       "q": "do not let abort listeners crash abort()",
@@ -573,7 +698,11 @@
       "q_ko_llm_2": "prevent abort() from throwing when an abort listener throws an error",
       "q_ko_llm_2_src": "abort 리스너 때문에 abort()가 죽지 않게 해줘",
       "q_ko_llm_3": "Prevent abort() from throwing when an abort event listener throws an error",
-      "q_ko_llm_3_src": "abort 리스너 때문에 abort()가 죽지 않게 해줘"
+      "q_ko_llm_3_src": "abort 리스너 때문에 abort()가 죽지 않게 해줘",
+      "q_ko_nllb": "청취자를 중단하지 마십시오.",
+      "q_ko_nllb_src": "do not let abort listeners crash abort()",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "청취자를 중단하지 마십시오."
     },
     {
       "q": "drop stale content length for cloned FormData",
@@ -608,7 +737,14 @@
       "q_ko_llm_2": "remove stale Content-Length header when cloning request with FormData body",
       "q_ko_llm_2_src": "복제한 FormData에 남은 예전 content length는 어디서 지워?",
       "q_ko_llm_3": "remove stale Content-Length header when cloning request with FormData body",
-      "q_ko_llm_3_src": "복제한 FormData에 남은 예전 content length는 어디서 지워?"
+      "q_ko_llm_3_src": "복제한 FormData에 남은 예전 content length는 어디서 지워?",
+      "q_ko_nllb": "복제된 FormData에 대한 구석된 내용의 길이를 drop",
+      "q_ko_nllb_src": "drop stale content length for cloned FormData",
+      "q_ko_nllb_dict_terms": [
+        "length",
+        "len"
+      ],
+      "q_ko_nllb_dict": "복제된 FormData에 대한 구석된 내용의 길이를 drop length len"
     },
     {
       "q": "support wildcard media types and specificity ordering in defaultMatch",
@@ -641,7 +777,13 @@
       "q_ko_llm_2": "defaultMatch support wildcard media types (e.g. */*, type/*) in Accept header matching and sort by specificity",
       "q_ko_llm_2_src": "defaultMatch에서 와일드카드 미디어 타입이랑 구체성 순 정렬 지원해줘",
       "q_ko_llm_3": "defaultMatch support wildcard media types and sort by specificity in Accept header content negotiation",
-      "q_ko_llm_3_src": "defaultMatch에서 와일드카드 미디어 타입이랑 구체성 순 정렬 지원해줘"
+      "q_ko_llm_3_src": "defaultMatch에서 와일드카드 미디어 타입이랑 구체성 순 정렬 지원해줘",
+      "q_ko_nllb": "기본적으로 와일드카드 미디어 타입 및 특수성 순서를 지원합니다",
+      "q_ko_nllb_src": "support wildcard media types and specificity ordering in defaultMatch",
+      "q_ko_nllb_dict_terms": [
+        "type"
+      ],
+      "q_ko_nllb_dict": "기본적으로 와일드카드 미디어 타입 및 특수성 순서를 지원합니다 type"
     },
     {
       "q": "skip an undefined entry inside a query array",
@@ -672,7 +814,15 @@
       "q_ko_llm_2": "skip undefined values in query parameter arrays when building the query string",
       "q_ko_llm_2_src": "쿼리 배열 안에 undefined 항목은 건너뛰게 해줘",
       "q_ko_llm_3": "skip undefined values in query array when building query string",
-      "q_ko_llm_3_src": "쿼리 배열 안에 undefined 항목은 건너뛰게 해줘"
+      "q_ko_llm_3_src": "쿼리 배열 안에 undefined 항목은 건너뛰게 해줘",
+      "q_ko_nllb": "쿼리 배열 내부에서 정의되지 않은 항목을 건너뛰",
+      "q_ko_nllb_src": "skip an undefined entry inside a query array",
+      "q_ko_nllb_dict_terms": [
+        "array",
+        "vec",
+        "list"
+      ],
+      "q_ko_nllb_dict": "쿼리 배열 내부에서 정의되지 않은 항목을 건너뛰 array vec list"
     },
     {
       "q": "associate wildcard middleware with matching routes",
@@ -710,7 +860,18 @@
       "q_ko_llm_2": "where wildcard middleware is attached to matching routes in the router",
       "q_ko_llm_2_src": "와일드카드 미들웨어를 매칭되는 라우트랑 연결하는 건 어디서 해?",
       "q_ko_llm_3": "where wildcard middleware is attached to matching routes in the router",
-      "q_ko_llm_3_src": "와일드카드 미들웨어를 매칭되는 라우트랑 연결하는 건 어디서 해?"
+      "q_ko_llm_3_src": "와일드카드 미들웨어를 매칭되는 라우트랑 연결하는 건 어디서 해?",
+      "q_ko_nllb": "와일드카드 미들웨어와 일치하는 경로를 연결",
+      "q_ko_nllb_src": "associate wildcard middleware with matching routes",
+      "q_ko_nllb_dict_terms": [
+        "middleware",
+        "route",
+        "path",
+        "connect",
+        "link",
+        "edge"
+      ],
+      "q_ko_nllb_dict": "와일드카드 미들웨어와 일치하는 경로를 연결 middleware route path connect link edge"
     },
     {
       "q": "support structured JSON content-types (+json)",
@@ -737,7 +898,13 @@
       "q_ko_llm_2": "support structured JSON content types with +json suffix (e.g. application/vnd.api+json) in content-type detection and JSON parsing",
       "q_ko_llm_2_src": "+json 같은 구조화된 JSON content-type 지원",
       "q_ko_llm_3": "support structured syntax suffix +json content-type (e.g. application/vnd.api+json) when parsing JSON body",
-      "q_ko_llm_3_src": "+json 같은 구조화된 JSON content-type 지원"
+      "q_ko_llm_3_src": "+json 같은 구조화된 JSON content-type 지원",
+      "q_ko_nllb": "구조화된 JSON 컨텐츠 타입을 지원합니다 (+ json)",
+      "q_ko_nllb_src": "support structured JSON content-types (+json)",
+      "q_ko_nllb_dict_terms": [
+        "type"
+      ],
+      "q_ko_nllb_dict": "구조화된 JSON 컨텐츠 타입을 지원합니다 (+ json) type"
     },
     {
       "q": "avoid truncation on embedded IPv4 addresses in expandIPv6",
@@ -767,7 +934,17 @@
       "q_ko_llm_2": "expandIPv6 truncates IPv6 addresses containing embedded IPv4 (IPv4-mapped address) during expansion",
       "q_ko_llm_2_src": "expandIPv6에서 IPv4가 들어간 주소가 잘리는 문제",
       "q_ko_llm_3": "expandIPv6 truncates IPv6 addresses with embedded IPv4 (IPv4-mapped) notation",
-      "q_ko_llm_3_src": "expandIPv6에서 IPv4가 들어간 주소가 잘리는 문제"
+      "q_ko_llm_3_src": "expandIPv6에서 IPv4가 들어간 주소가 잘리는 문제",
+      "q_ko_nllb": "확장IPv6에서 임베디드 IPv4 주소를 줄이는 것을 피합니다.",
+      "q_ko_nllb_src": "avoid truncation on embedded IPv4 addresses in expandIPv6",
+      "q_ko_nllb_dict_terms": [
+        "extension",
+        "address",
+        "url",
+        "reduce",
+        "shrink"
+      ],
+      "q_ko_nllb_dict": "확장IPv6에서 임베디드 IPv4 주소를 줄이는 것을 피합니다. extension address url reduce shrink"
     },
     {
       "q": "exempt OPTIONS request from CSRF validation",
@@ -804,7 +981,16 @@
       "q_ko_llm_2": "Skip CSRF check for OPTIONS requests in csrf middleware",
       "q_ko_llm_2_src": "OPTIONS 요청은 CSRF 검증에서 빼줘",
       "q_ko_llm_3": "Skip CSRF origin check for OPTIONS requests in csrf middleware",
-      "q_ko_llm_3_src": "OPTIONS 요청은 CSRF 검증에서 빼줘"
+      "q_ko_llm_3_src": "OPTIONS 요청은 CSRF 검증에서 빼줘",
+      "q_ko_nllb": "CSRF 검증에서 면제된 OPTIONS 요청",
+      "q_ko_nllb_src": "exempt OPTIONS request from CSRF validation",
+      "q_ko_nllb_dict_terms": [
+        "validate",
+        "verify",
+        "validation",
+        "request"
+      ],
+      "q_ko_nllb_dict": "CSRF 검증에서 면제된 OPTIONS 요청 validate verify validation request"
     },
     {
       "q": "prevent prefix overmatch on wildcard routes",
@@ -832,7 +1018,11 @@
       "q_ko_llm_2": "wildcard route prefix matching too broadly in router path matching",
       "q_ko_llm_2_src": "와일드카드 라우트에서 prefix가 너무 넓게 매칭되는 문제",
       "q_ko_llm_3": "Fix wildcard route matching prefix too broadly in router",
-      "q_ko_llm_3_src": "와일드카드 라우트에서 prefix가 너무 넓게 매칭되는 문제"
+      "q_ko_llm_3_src": "와일드카드 라우트에서 prefix가 너무 넓게 매칭되는 문제",
+      "q_ko_nllb": "와일드카드 라이트에서 프리픽스 오버마치를 방지",
+      "q_ko_nllb_src": "prevent prefix overmatch on wildcard routes",
+      "q_ko_nllb_dict_terms": [],
+      "q_ko_nllb_dict": "와일드카드 라이트에서 프리픽스 오버마치를 방지"
     },
     {
       "q": "match suffix wildcard routes",
@@ -860,7 +1050,14 @@
       "q_ko_llm_2": "router suffix wildcard route matching (e.g. `*.ext` pattern) not matching",
       "q_ko_llm_2_src": "suffix 와일드카드 라우트가 매칭되게 하려면 어디 건드리면 돼?",
       "q_ko_llm_3": "make suffix wildcard route match in router (e.g. `*.ext` / `/path/*suffix` pattern matching) Hmm, rule 3: don't add guesses. Keep it simpler. Fix router so suffix wildcard routes match",
-      "q_ko_llm_3_src": "suffix 와일드카드 라우트가 매칭되게 하려면 어디 건드리면 돼?"
+      "q_ko_llm_3_src": "suffix 와일드카드 라우트가 매칭되게 하려면 어디 건드리면 돼?",
+      "q_ko_nllb": "짝짓기 후자 와일드카드 경로",
+      "q_ko_nllb_src": "match suffix wildcard routes",
+      "q_ko_nllb_dict_terms": [
+        "route",
+        "path"
+      ],
+      "q_ko_nllb_dict": "짝짓기 후자 와일드카드 경로 route path"
     },
     {
       "q": "append Origin to Vary header on OPTIONS preflight",
@@ -893,7 +1090,14 @@
       "q_ko_llm_2": "Add Origin to the Vary header in CORS middleware responses to OPTIONS preflight requests",
       "q_ko_llm_2_src": "OPTIONS preflight에서 Vary 헤더에 Origin 추가해줘",
       "q_ko_llm_3": "Add Origin to the Vary header on CORS OPTIONS preflight responses",
-      "q_ko_llm_3_src": "OPTIONS preflight에서 Vary 헤더에 Origin 추가해줘"
+      "q_ko_llm_3_src": "OPTIONS preflight에서 Vary 헤더에 Origin 추가해줘",
+      "q_ko_nllb": "OPTIONS 사전 비행에 있는 Vary header에 Origin을 추가합니다.",
+      "q_ko_nllb_src": "append Origin to Vary header on OPTIONS preflight",
+      "q_ko_nllb_dict_terms": [
+        "add",
+        "create"
+      ],
+      "q_ko_nllb_dict": "OPTIONS 사전 비행에 있는 Vary header에 Origin을 추가합니다. add create"
     },
     {
       "q": "avoid skipping headers when filtering 304 response headers",
@@ -925,7 +1129,14 @@
       "q_ko_llm_2": "fix 304 Not Modified response header filtering skipping some headers",
       "q_ko_llm_2_src": "304 응답 헤더 거를 때 일부 헤더를 건너뛰는 문제",
       "q_ko_llm_3": "fix 304 Not Modified response header filtering skipping some headers",
-      "q_ko_llm_3_src": "304 응답 헤더 거를 때 일부 헤더를 건너뛰는 문제"
+      "q_ko_llm_3_src": "304 응답 헤더 거를 때 일부 헤더를 건너뛰는 문제",
+      "q_ko_nllb": "304 응답 헤더를 필터링할 때 헤더를 건너뛰는 것을 피하십시오.",
+      "q_ko_nllb_src": "avoid skipping headers when filtering 304 response headers",
+      "q_ko_nllb_dict_terms": [
+        "response",
+        "filter"
+      ],
+      "q_ko_nllb_dict": "304 응답 헤더를 필터링할 때 헤더를 건너뛰는 것을 피하십시오. response filter"
     },
     {
       "q": "copy pending stream bytes",
@@ -960,7 +1171,14 @@
       "q_ko_llm_2": "copy pending stream bytes when stream is in pending state",
       "q_ko_llm_2_src": "pending 상태인 스트림 바이트 복사해줘",
       "q_ko_llm_3": "copy pending stream bytes",
-      "q_ko_llm_3_src": "pending 상태인 스트림 바이트 복사해줘"
+      "q_ko_llm_3_src": "pending 상태인 스트림 바이트 복사해줘",
+      "q_ko_nllb": "복사 중인 스트림 바이트",
+      "q_ko_nllb_src": "copy pending stream bytes",
+      "q_ko_nllb_dict_terms": [
+        "copy",
+        "clone"
+      ],
+      "q_ko_nllb_dict": "복사 중인 스트림 바이트 copy clone"
     },
     {
       "q": "prevent URL corruption when replaceUrlParam contains $ replacement tokens",
@@ -997,7 +1215,13 @@
       "q_ko_llm_2": "replaceUrlParam: escape `$` replacement patterns in param values so String.replace does not corrupt the URL",
       "q_ko_llm_2_src": "replaceUrlParam에 $ 치환 토큰이 있으면 URL이 깨지는 문제",
       "q_ko_llm_3": "replaceUrlParam breaks URL when param value contains `$` replacement patterns in String.replace",
-      "q_ko_llm_3_src": "replaceUrlParam에 $ 치환 토큰이 있으면 URL이 깨지는 문제"
+      "q_ko_llm_3_src": "replaceUrlParam에 $ 치환 토큰이 있으면 URL이 깨지는 문제",
+      "q_ko_nllb": "URL를 교체할 때 URL 손상 방지UrlParam에는 $ 교체 토큰이 포함되어 있습니다",
+      "q_ko_nllb_src": "prevent URL corruption when replaceUrlParam contains $ replacement tokens",
+      "q_ko_nllb_dict_terms": [
+        "token"
+      ],
+      "q_ko_nllb_dict": "URL를 교체할 때 URL 손상 방지UrlParam에는 $ 교체 토큰이 포함되어 있습니다 token"
     },
     {
       "q": "pre-join static array header options during initialization",
@@ -1031,10 +1255,19 @@
       "q_ko_llm_2": "Precompute joined header values for static array options at initialization instead of joining on every request",
       "q_ko_llm_2_src": "정적 배열 헤더 옵션은 초기화할 때 미리 join해둬",
       "q_ko_llm_3": "Precompute joined header values for static array options at middleware initialization instead of per request",
-      "q_ko_llm_3_src": "정적 배열 헤더 옵션은 초기화할 때 미리 join해둬"
+      "q_ko_llm_3_src": "정적 배열 헤더 옵션은 초기화할 때 미리 join해둬",
+      "q_ko_nllb": "초기화 중에 STATIC ARY 헤더 옵션",
+      "q_ko_nllb_src": "pre-join static array header options during initialization",
+      "q_ko_nllb_dict_terms": [
+        "init",
+        "initialize",
+        "reset"
+      ],
+      "q_ko_nllb_dict": "초기화 중에 STATIC ARY 헤더 옵션 init initialize reset"
     }
   ],
   "llm_rewrite_norepo": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the Korean question (no repository name); prompt 3 (no-repository variant) in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-norepo.json",
   "llm_rewrite_2": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-2.json",
-  "llm_rewrite_3": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-3.json"
+  "llm_rewrite_3": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-3.json",
+  "nllb_ko_model": "facebook/nllb-200-distilled-600M"
 }
