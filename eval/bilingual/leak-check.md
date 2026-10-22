@@ -87,3 +87,14 @@ A@3 without the suspect rewrites (BM25 + Dense (RRF) and Lantern + Dense)
 | all | 261 | 68.2 | 56.3 | 70.9 | 67.0 | 61.3 | 70.5 |
 | without rewrites that add an identifier or gold file name | 200 | 65.0 | 57.5 | 68.0 | 66.5 | 61.0 | 67.5 |
 | without rewrites identical to the subject | 252 | 69.4 | 56.7 | 72.2 | 67.9 | 61.5 | 71.4 |
+
+## Runs of the rewrite and the no-repository control
+
+Suspect = adds a code identifier or names a gold file that is not in the Korean question. Before/after = commits before or after the model's training cutoff (2026-07-01).
+
+| Run | n | words (mean) | adds identifier | names gold file | suspect | suspect before / after | verbatim subject | hybrid A@3 | hybrid A@3 without suspect (EN on same) |
+|---|---|---|---|---|---|---|---|---|---|
+| run 1 | 261 | 10.0 | 44 | 24 | 61 | 32/145 vs 29/116 (p = 0.66) | 9 | 70.9 | 68.0 (65.0) |
+| run 2 | 261 | 10.5 | 41 | 22 | 56 | 31/145 vs 25/116 (p = 1.00) | 8 | 71.6 | 68.8 (65.9) |
+| run 3 | 261 | 10.3 | 45 | 25 | 59 | 31/145 vs 28/116 (p = 0.66) | 5 | 71.3 | 67.3 (62.9) |
+| no repo | 261 | 9.1 | 9 | 2 | 11 | 8/145 vs 3/116 (p = 0.36) | 11 | 67.4 | 67.2 (68.0) |

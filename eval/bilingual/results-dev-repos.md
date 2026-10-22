@@ -6,7 +6,7 @@ Each method gets the same files (the engine's file rules, checked by `check_file
 
 Methods: Keyword = grep for the question's words, best-matching files first, whole files or ±12-line snippets; BM25 over whole files or 40-line chunks (k1 = 1.2, b = 0.75); Dense = multilingual-e5-small over the same chunks; BM25 + Dense = reciprocal rank fusion (k = 60) of chunk BM25 and the top 1,000 dense chunks; Lantern − X = Lantern with one component switched off; Lantern + Dense = Lantern with the same embedding model.
 
-Question forms: EN = the commit subject; EN-para = the subject reworded in English by an LLM (control for rewording); KO = the Korean question (written by an LLM from the subject); KO+dict = KO plus Lantern's dictionary terms (half weight for BM25, as in Lantern; appended for dense); KO+dict appended = the terms appended to the question for every method; KO→MT = KO translated by NLLB-200; KO→LLM = KO rewritten into an English search query by an LLM, one call per question; KO-loan = KO rewritten with many Hangul loanwords by an LLM (stress test, not native questions); KO-native A/B = Korean written by developers (only if collected).
+Question forms: EN = the commit subject; EN-para = the subject reworded in English by an LLM (control for rewording); KO = the Korean question (written by an LLM from the subject); KO+dict = KO plus Lantern's dictionary terms (half weight for BM25, as in Lantern; appended for dense); KO+dict appended = the terms appended to the question for every method; KO→MT = KO translated by NLLB-200; KO→LLM = KO rewritten into an English search query by an LLM, one call per question (runs 2 and 3 repeat it; no repo = without the repository name); KO-loan = KO rewritten with many Hangul loanwords by an LLM (stress test, not native questions); KO-native A/B = Korean written by developers (only if collected).
 
 ## English questions (EN: commit subjects)
 
@@ -179,6 +179,81 @@ Lantern − method (KO→LLM, same questions, 95% interval; Holm correction over
 | BM25 + Dense (RRF) | 12.2 [2.7, 24.3] | -5.4 [-21.6, 8.1] | 0.727 | 1 |
 | **Lantern + Dense (mE5-small)** | -5.4 [-13.5, 0.0] | -2.7 [-13.5, 8.1] | 1 | 1 |
 
+## KO→LLM, second run with the same setting (KO→LLM run 2)
+
+| Method | n | Recall@8k | R@10f | A@1 | A@3 | A@5 | MRR | Files |
+|---|---|---|---|---|---|---|---|---|
+| Keyword (whole files) | 37 | 33.8 | 33.8 | 40.5 | 43.2 | 43.2 | 0.419 | 1.4 |
+| Keyword (snippets) | 37 | 60.8 | 60.8 | 40.5 | 62.2 | 67.6 | 0.514 | 4.9 |
+| BM25 (file) | 37 | 54.1 | 54.1 | 51.4 | 64.9 | 64.9 | 0.572 | 2.5 |
+| BM25 (chunk) | 37 | 71.6 | 67.6 | 45.9 | 62.2 | 70.3 | 0.561 | 11.8 |
+| Dense (chunk, mE5-small) | 37 | 81.1 | 73.0 | 48.6 | 64.9 | 70.3 | 0.586 | 12.8 |
+| BM25 + Dense (RRF) | 37 | 74.3 | 67.6 | 48.6 | 70.3 | 70.3 | 0.582 | 11.8 |
+| **Lantern** | 37 | 78.4 | 68.9 | 40.5 | 54.1 | 64.9 | 0.509 | 15.1 |
+| **Lantern + Dense (mE5-small)** | 37 | 86.5 | 75.7 | 48.6 | 67.6 | 75.7 | 0.612 | 20.7 |
+
+Lantern − method (KO→LLM run 2, same questions, 95% interval; Holm correction over the rows of this table)
+
+| Method | Recall@8k diff. | A@3 diff. | A@3 McNemar p | Holm p |
+|---|---|---|---|---|
+| Keyword (whole files) | 44.6 [28.4, 59.5] | 10.8 [-2.7, 27.0] | 0.289 | 1 |
+| Keyword (snippets) | 17.6 [5.4, 29.7] | -8.1 [-24.3, 8.1] | 0.508 | 1 |
+| BM25 (file) | 24.3 [13.5, 35.1] | -10.8 [-21.6, -2.7] | 0.125 | 0.75 |
+| BM25 (chunk) | 6.8 [-4.1, 18.9] | -8.1 [-21.6, 5.4] | 0.453 | 1 |
+| Dense (chunk, mE5-small) | -2.7 [-14.9, 9.5] | -10.8 [-27.0, 5.4] | 0.344 | 1 |
+| BM25 + Dense (RRF) | 4.1 [-8.1, 16.2] | -16.2 [-29.7, -2.7] | 0.0703 | 0.492 |
+| **Lantern + Dense (mE5-small)** | -8.1 [-18.9, 0.0] | -13.5 [-27.0, 0.0] | 0.125 | 0.75 |
+
+## KO→LLM, third run with the same setting (KO→LLM run 3)
+
+| Method | n | Recall@8k | R@10f | A@1 | A@3 | A@5 | MRR | Files |
+|---|---|---|---|---|---|---|---|---|
+| Keyword (whole files) | 37 | 35.1 | 35.1 | 43.2 | 45.9 | 45.9 | 0.446 | 1.4 |
+| Keyword (snippets) | 37 | 51.4 | 51.4 | 43.2 | 56.8 | 59.5 | 0.498 | 4.5 |
+| BM25 (file) | 37 | 47.3 | 47.3 | 40.5 | 56.8 | 59.5 | 0.493 | 2.4 |
+| BM25 (chunk) | 37 | 68.9 | 64.9 | 48.6 | 67.6 | 67.6 | 0.579 | 11.1 |
+| Dense (chunk, mE5-small) | 37 | 77.0 | 68.9 | 45.9 | 64.9 | 70.3 | 0.558 | 12.3 |
+| BM25 + Dense (RRF) | 37 | 68.9 | 64.9 | 54.1 | 67.6 | 67.6 | 0.605 | 11.0 |
+| **Lantern** | 37 | 78.4 | 67.6 | 45.9 | 54.1 | 62.2 | 0.535 | 16.4 |
+| **Lantern + Dense (mE5-small)** | 37 | 87.8 | 70.3 | 54.1 | 64.9 | 67.6 | 0.614 | 21.7 |
+
+Lantern − method (KO→LLM run 3, same questions, 95% interval; Holm correction over the rows of this table)
+
+| Method | Recall@8k diff. | A@3 diff. | A@3 McNemar p | Holm p |
+|---|---|---|---|---|
+| Keyword (whole files) | 43.2 [27.0, 58.1] | 8.1 [-8.1, 24.3] | 0.508 | 1 |
+| Keyword (snippets) | 27.0 [12.2, 41.9] | -2.7 [-18.9, 13.5] | 1 | 1 |
+| BM25 (file) | 31.1 [18.9, 44.6] | -2.7 [-13.5, 8.1] | 1 | 1 |
+| BM25 (chunk) | 9.5 [1.4, 18.9] | -13.5 [-24.3, -2.7] | 0.0625 | 0.438 |
+| Dense (chunk, mE5-small) | 1.4 [-12.2, 14.9] | -10.8 [-24.3, 2.7] | 0.289 | 1 |
+| BM25 + Dense (RRF) | 9.5 [0.0, 20.3] | -13.5 [-24.3, -2.7] | 0.0625 | 0.438 |
+| **Lantern + Dense (mE5-small)** | -9.5 [-18.9, -1.4] | -10.8 [-21.6, -2.7] | 0.125 | 0.625 |
+
+## KO→LLM without the repository name (KO→LLM no repo: control for the model's knowledge of the repository)
+
+| Method | n | Recall@8k | R@10f | A@1 | A@3 | A@5 | MRR | Files |
+|---|---|---|---|---|---|---|---|---|
+| Keyword (whole files) | 37 | 31.1 | 31.1 | 37.8 | 40.5 | 40.5 | 0.387 | 1.5 |
+| Keyword (snippets) | 37 | 54.1 | 54.1 | 37.8 | 62.2 | 62.2 | 0.486 | 4.8 |
+| BM25 (file) | 37 | 47.3 | 47.3 | 43.2 | 54.1 | 59.5 | 0.499 | 2.4 |
+| BM25 (chunk) | 37 | 68.9 | 66.2 | 48.6 | 56.8 | 67.6 | 0.558 | 12.1 |
+| Dense (chunk, mE5-small) | 37 | 68.9 | 66.2 | 43.2 | 62.2 | 67.6 | 0.536 | 11.9 |
+| BM25 + Dense (RRF) | 37 | 68.9 | 67.6 | 45.9 | 59.5 | 67.6 | 0.542 | 11.1 |
+| **Lantern** | 37 | 82.4 | 62.2 | 40.5 | 48.6 | 59.5 | 0.489 | 16.9 |
+| **Lantern + Dense (mE5-small)** | 37 | 85.1 | 74.3 | 45.9 | 64.9 | 67.6 | 0.573 | 22.1 |
+
+Lantern − method (KO→LLM no repo, same questions, 95% interval; Holm correction over the rows of this table)
+
+| Method | Recall@8k diff. | A@3 diff. | A@3 McNemar p | Holm p |
+|---|---|---|---|---|
+| Keyword (whole files) | 51.4 [36.5, 66.2] | 8.1 [-5.4, 21.6] | 0.453 | 1 |
+| Keyword (snippets) | 28.4 [16.2, 41.9] | -13.5 [-29.7, 2.7] | 0.18 | 1 |
+| BM25 (file) | 35.1 [21.6, 48.6] | -5.4 [-18.9, 8.1] | 0.688 | 1 |
+| BM25 (chunk) | 13.5 [4.1, 24.3] | -8.1 [-18.9, 2.7] | 0.375 | 1 |
+| Dense (chunk, mE5-small) | 13.5 [4.1, 24.3] | -13.5 [-29.7, 2.7] | 0.18 | 1 |
+| BM25 + Dense (RRF) | 13.5 [4.1, 24.3] | -10.8 [-24.3, 2.7] | 0.289 | 1 |
+| **Lantern + Dense (mE5-small)** | -2.7 [-8.1, 0.0] | -16.2 [-29.7, -5.4] | 0.0312 | 0.219 |
+
 ## Korean rewritten with many Hangul loanwords by an LLM (KO-loan: stress test, not native questions)
 
 | Method | n | Recall@8k | R@10f | A@1 | A@3 | A@5 | MRR | Files |
@@ -265,6 +340,12 @@ Lantern − method (KO-loan, same questions, 95% interval; Holm correction over 
 | **Lantern + Dense (mE5-small)** [KO-loan] | BM25 + Dense (RRF) [KO-loan] | 37 | 10.8 | [-2.7, 27.0] | [-16.7, 25.0] | 0.289 | +0.070 | [-0.042, +0.184] | [-0.028, +0.139] |
 | **Lantern + Dense (mE5-small)** [KO-loan] | **Lantern + Dense (mE5-small)** [KO] | 37 | 0.0 | [-8.1, 8.1] | [-7.7, 8.3] | 1 | -0.038 | [-0.115, +0.028] | [-0.124, +0.025] |
 | BM25 + Dense (RRF) [KO→LLM] | BM25 + Dense (RRF) [KO→MT] | 37 | 8.1 | [0.0, 18.9] | [0.0, 15.4] | 0.25 | +0.011 | [-0.059, +0.079] | [-0.059, +0.096] |
+| BM25 + Dense (RRF) [KO→LLM] | BM25 + Dense (RRF) [KO→LLM no repo] | 37 | 5.4 | [0.0, 13.5] | [0.0, 8.3] | 0.5 | -0.001 | [-0.062, +0.054] | [-0.043, +0.071] |
+| **Lantern + Dense (mE5-small)** [KO→LLM] | **Lantern + Dense (mE5-small)** [KO→LLM no repo] | 37 | -2.7 | [-8.1, 0.0] | [-8.3, 0.0] | 1 | +0.054 | [+0.010, +0.109] | [+0.005, +0.128] |
+| BM25 + Dense (RRF) [KO→LLM no repo] | BM25 + Dense (RRF) [EN] | 37 | -5.4 | [-16.2, 5.4] | [-16.7, 0.0] | 0.625 | -0.037 | [-0.104, +0.024] | [-0.066, -0.003] |
+| BM25 + Dense (RRF) [KO→LLM no repo] | BM25 + Dense (RRF) [KO] | 37 | 5.4 | [-5.4, 16.2] | [-8.3, 23.1] | 0.625 | +0.078 | [-0.010, +0.174] | [-0.052, +0.272] |
+| **Lantern** [KO] | BM25 + Dense (RRF) [KO→LLM no repo] | 37 | -13.5 | [-29.7, 2.7] | [-23.1, -8.3] | 0.18 | -0.158 | [-0.290, -0.030] | [-0.282, -0.090] |
+| **Lantern + Dense (mE5-small)** [KO] | BM25 + Dense (RRF) [KO→LLM no repo] | 37 | 0.0 | [-16.2, 16.2] | [-8.3, 8.3] | 1 | -0.016 | [-0.129, +0.094] | [-0.060, +0.048] |
 | drop of **Lantern** (KO − EN) | drop of BM25 + Dense (RRF) | 37 | -10.8 | [-27.0, 2.7] | [-16.7, -7.7] |  | +0.008 | [-0.111, +0.129] | [-0.103, +0.187] |
 | drop of Lantern − Korean term expansion (KO − EN) | drop of BM25 + Dense (RRF) | 37 | -16.2 | [-35.1, 0.0] | [-25.0, -7.7] |  | -0.060 | [-0.175, +0.045] | [-0.174, +0.070] |
 | drop of **Lantern + Dense (mE5-small)** (KO − EN) | drop of BM25 + Dense (RRF) | 37 | 0.0 | [-13.5, 13.5] | [-25.0, 23.1] |  | +0.062 | [-0.064, +0.188] | [-0.136, +0.300] |
@@ -315,6 +396,37 @@ Lantern A@3 ≥ BM25 + Dense (RRF): 1 of 10 repositories
 | Korean question has no English word or number | 5 | 80.0 | 60.0 | 0.0 | 40.0 | 20.0 | 20.0 | 20.0 | 0.0 | 40.0 | 80.0 |
 
 English word or number: a token of Latin letters or digits (the tokenizer of baselines.py).
+
+## LLM rewrite runs and the no-repository control
+
+KO→LLM is sampled once per question per run. Runs 2 and 3 repeat run 1 with the same prompt and inputs; the no-repository control gives the model only the Korean question.
+
+| Method (A@3) | EN | run 1 | run 2 | run 3 | mean | range | no repo |
+|---|---|---|---|---|---|---|---|
+| BM25 (chunk) | 59.5 | 62.2 | 62.2 | 67.6 | 64.0 | 62.2–67.6 | 56.8 |
+| Dense (chunk, mE5-small) | 54.1 | 62.2 | 64.9 | 64.9 | 64.0 | 62.2–64.9 | 62.2 |
+| BM25 + Dense (RRF) | 64.9 | 64.9 | 70.3 | 67.6 | 67.6 | 64.9–70.3 | 59.5 |
+| **Lantern** | 67.6 | 59.5 | 54.1 | 54.1 | 55.9 | 54.1–59.5 | 48.6 |
+| **Lantern + Dense (mE5-small)** | 70.3 | 62.2 | 67.6 | 64.9 | 64.9 | 62.2–67.6 | 64.9 |
+
+| Method (MRR) | EN | run 1 | run 2 | run 3 | mean | range | no repo |
+|---|---|---|---|---|---|---|---|
+| BM25 (chunk) | 0.565 | 0.542 | 0.561 | 0.579 | 0.561 | 0.542–0.579 | 0.558 |
+| Dense (chunk, mE5-small) | 0.519 | 0.549 | 0.586 | 0.558 | 0.564 | 0.549–0.586 | 0.536 |
+| BM25 + Dense (RRF) | 0.579 | 0.541 | 0.582 | 0.605 | 0.576 | 0.541–0.605 | 0.542 |
+| **Lantern** | 0.490 | 0.523 | 0.509 | 0.535 | 0.522 | 0.509–0.535 | 0.489 |
+| **Lantern + Dense (mE5-small)** | 0.578 | 0.627 | 0.612 | 0.614 | 0.618 | 0.612–0.627 | 0.573 |
+
+A@3 by commit date: before or after the rewriting model's training cutoff (2026-07-01)
+
+| Method | commits | n | EN | KO | KO→LLM | KO→LLM run 2 | KO→LLM run 3 | KO→LLM no repo |
+|---|---|---|---|---|---|---|---|---|
+| BM25 + Dense (RRF) | before | 25 | 68.0 | 56.0 | 72.0 | 76.0 | 68.0 | 68.0 |
+| BM25 + Dense (RRF) | after | 12 | 58.3 | 50.0 | 50.0 | 58.3 | 66.7 | 41.7 |
+| **Lantern** | before | 25 | 72.0 | 52.0 | 64.0 | 60.0 | 56.0 | 56.0 |
+| **Lantern** | after | 12 | 58.3 | 33.3 | 50.0 | 41.7 | 50.0 | 33.3 |
+| **Lantern + Dense (mE5-small)** | before | 25 | 72.0 | 72.0 | 68.0 | 76.0 | 68.0 | 68.0 |
+| **Lantern + Dense (mE5-small)** | after | 12 | 66.7 | 33.3 | 50.0 | 50.0 | 58.3 | 58.3 |
 
 ## Dictionary weight sensitivity (BM25, Korean + dictionary terms)
 
