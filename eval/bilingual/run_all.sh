@@ -32,6 +32,11 @@ NATIVE=$(python -c "import glob,json;print(any(q.get('q_ko_native') for f in glo
 [ "$NATIVE" = True ] && KO=$KO,ko-native
 NATIVE_B=$(python -c "import glob,json;print(any(q.get('q_ko_native_b') for f in glob.glob('eval/bilingual/*.json') for q in json.load(open(f,encoding='utf-8'))['questions']))")
 [ "$NATIVE_B" = True ] && KO=$KO,ko-native-b
+# 같은 설정으로 다시 부른 재작성(q_ko_llm_2, q_ko_llm_3)과 저장소 이름을 뺀 통제(q_ko_llm_norepo, rewrite.py --no-repo)가 있으면 그것도 잰다
+for extra in q_ko_llm_2:ko-llm2 q_ko_llm_3:ko-llm3 q_ko_llm_norepo:ko-llm-norepo; do
+  HAS=$(python -c "import glob,json,sys;print(any(q.get(sys.argv[1]) for f in glob.glob('eval/bilingual/*.json') for q in json.load(open(f,encoding='utf-8'))['questions']))" "${extra%%:*}")
+  [ "$HAS" = True ] && KO=$KO,${extra##*:}
+done
 
 log "파일 규칙 점검: 엔진·비교 대상·키워드 검색이 같은 파일을 보는지 (저장소마다 커밋 4곳)"
 python eval/bilingual/check_files.py --dir "$DIR" --lantern "$LANTERN"

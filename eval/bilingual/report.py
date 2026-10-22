@@ -51,6 +51,7 @@ LABEL = {
 }
 # 질문 형태의 짧은 이름 (표 안)과 절 제목
 LANGS = {"en": "EN", "en-para": "EN-para", "ko": "KO", "ko-dict": "KO+dict appended", "ko-dictw": "KO+dict", "ko-mt": "KO→MT", "ko-llm": "KO→LLM",
+         "ko-llm2": "KO→LLM run 2", "ko-llm3": "KO→LLM run 3", "ko-llm-norepo": "KO→LLM no repo",
          "ko-loan": "KO-loan", "ko-native": "KO-native A", "ko-native-b": "KO-native B"}
 LANG_TITLE = {
     "en": "English questions (EN: commit subjects)",
@@ -60,6 +61,9 @@ LANG_TITLE = {
     "ko-dictw": "Korean + Lantern's dictionary terms (KO+dict as in Table I: half weight for BM25 as in Lantern, appended for dense)",
     "ko-mt": "Korean translated into English by NLLB-200 (KO→MT)",
     "ko-llm": "Korean rewritten into an English search query by an LLM, one call per question (KO→LLM)",
+    "ko-llm2": "KO→LLM, second run with the same setting (KO→LLM run 2)",
+    "ko-llm3": "KO→LLM, third run with the same setting (KO→LLM run 3)",
+    "ko-llm-norepo": "KO→LLM without the repository name (KO→LLM no repo: control for the model's knowledge of the repository)",
     "ko-loan": "Korean rewritten with many Hangul loanwords by an LLM (KO-loan: stress test, not native questions)",
     "ko-native": "Korean written by developer A (KO-native A)",
     "ko-native-b": "Korean written by developer B (KO-native B)",
@@ -288,7 +292,16 @@ KEY = [
     ("ko-loan", "lantern-sem", "ko-loan", "hybrid"),
     ("ko-loan", "lantern-sem", "ko", "lantern-sem"),
     ("ko-llm", "hybrid", "ko-mt", "hybrid"),
+    # 재작성에 저장소 이름을 주지 않은 통제: 저장소 지식의 몫
+    ("ko-llm", "hybrid", "ko-llm-norepo", "hybrid"),
+    ("ko-llm", "lantern-sem", "ko-llm-norepo", "lantern-sem"),
+    ("ko-llm-norepo", "hybrid", "en", "hybrid"),
+    ("ko-llm-norepo", "hybrid", "ko", "hybrid"),
+    ("ko", "lantern", "ko-llm-norepo", "hybrid"),
+    ("ko", "lantern-sem", "ko-llm-norepo", "hybrid"),
 ]
+REWRITE_RUNS = ["ko-llm", "ko-llm2", "ko-llm3"]
+CUTOFF = "2026-07-01"  # 재작성 모델(Claude Opus 5.5)의 학습 데이터 시점 다음 날
 # 영어 → 한국어 하락의 차이: (A의 하락) − (B의 하락)
 DROPS = [("lantern", "hybrid"), ("lantern-no-dict", "hybrid"), ("lantern-sem", "hybrid"), ("lantern", "hybrid-bgem3")]
 
@@ -401,6 +414,46 @@ def subgroups(questions, res, keep, order):
     return out + ["", "English word or number: a token of Latin letters or digits (the tokenizer of baselines.py).", ""]
 
 
+def rewrite_runs(questions, res, keep):
+    """LLM 재작성의 실행별 결과(같은 설정 세 번)와 저장소 이름을 뺀 통제, 그리고 재작성 모델의 학습 시점 전후로 나눠 본 결과"""
+    runs = [l for l in REWRITE_RUNS if any(k[0] == l for k in res)]
+    if len(runs) < 2 and not any(k[0] == "ko-llm-norepo" for k in res):
+        return []
+    methods = [m for m in ("bm25-chunk", "dense", "hybrid", "lantern", "lantern-sem") if any((l, m) in res for l in runs)]
+
+    def cell(lang, m, metric, cs=None):
+        rows = [v[metric] for c, v in res.get((lang, m), {}).items() if keep(c) and (cs is None or c in cs)]
+        if not rows:
+            return None
+        return mean([float(x) for x in rows]) * (100 if metric != "mrr" else 1)
+
+    f = lambda x, metric: "--" if x is None else (f"{x:.1f}" if metric != "mrr" else f"{x:.3f}")  # noqa: E731
+    out = ["## LLM rewrite runs and the no-repository control", "",
+           "KO→LLM is sampled once per question per run. Runs 2 and 3 repeat run 1 with the same prompt and inputs; "
+           "the no-repository control gives the model only the Korean question.", ""]
+    for metric, label in (("acc3", "A@3"), ("mrr", "MRR")):
+        out += [f"| Method ({label}) | EN | " + " | ".join(f"run {i + 1}" for i in range(len(runs))) + " | mean | range | no repo |",
+                "|---|---|" + "---|" * len(runs) + "---|---|---|"]
+        for m in methods:
+            vals = [cell(l, m, metric) for l in runs]
+            ok = [v for v in vals if v is not None]
+            rng = f"{f(min(ok), metric)}–{f(max(ok), metric)}" if ok else "--"
+            avg = f(mean(ok), metric) if ok else "--"
+            out.append(f"| {LABEL[m]} | {f(cell('en', m, metric), metric)} | " + " | ".join(f(v, metric) for v in vals)
+                       + f" | {avg} | {rng} | {f(cell('ko-llm-norepo', m, metric), metric)} |")
+        out.append("")
+    # 학습 시점 전후: 시점 뒤 커밋은 모델이 볼 수 없었다
+    before = {c for c, q in questions.items() if keep(c) and (q.get("date") or "") < CUTOFF}
+    after = {c for c, q in questions.items() if keep(c) and (q.get("date") or "") >= CUTOFF}
+    forms = [l for l in ("en", "ko", *runs, "ko-llm-norepo") if any(k[0] == l for k in res)]
+    out += [f"A@3 by commit date: before or after the rewriting model's training cutoff ({CUTOFF})", "",
+            "| Method | commits | n | " + " | ".join(LANGS[l] for l in forms) + " |", "|---|---|---|" + "---|" * len(forms)]
+    for m in ("hybrid", "lantern", "lantern-sem"):
+        for label, cs in (("before", before), ("after", after)):
+            out.append(f"| {LABEL[m]} | {label} | {len(cs)} | " + " | ".join(f(cell(l, m, 'acc3', cs), 'acc3') for l in forms) + " |")
+    return out + [""]
+
+
 def sensitivity(res, keep):
     """BM25에 사전 낱말을 얼마의 가중치로 더할지 (0 = 사전 없음, 1.0 = 그냥 덧붙임)"""
     steps = [("0", "ko"), ("0.25", "ko-dictw25"), ("0.5", "ko-dictw"), ("0.75", "ko-dictw75"), ("1.0", "ko-dict")]
@@ -474,7 +527,8 @@ INTRO = [
     "Question forms: EN = the commit subject; EN-para = the subject reworded in English by an LLM (control for rewording); "
     "KO = the Korean question (written by an LLM from the subject); KO+dict = KO plus Lantern's dictionary terms (half weight for BM25, as in Lantern; "
     "appended for dense); KO+dict appended = the terms appended to the question for every method; KO→MT = KO translated by NLLB-200; "
-    "KO→LLM = KO rewritten into an English search query by an LLM, one call per question; KO-loan = KO rewritten with many Hangul loanwords "
+    "KO→LLM = KO rewritten into an English search query by an LLM, one call per question (runs 2 and 3 repeat it; no repo = without the "
+    "repository name); KO-loan = KO rewritten with many Hangul loanwords "
     "by an LLM (stress test, not native questions); KO-native A/B = Korean written by developers (only if collected).",
     "",
 ]
@@ -562,6 +616,7 @@ def main():
     out += per_repo(questions, res, keep, order)
     out += subgroups(questions, res, keep, order)
     out += native(questions, res, keep, order)
+    out += rewrite_runs(questions, res, keep)
     out += sensitivity(res, keep)
     text = "\n".join(out)
     print(text)
