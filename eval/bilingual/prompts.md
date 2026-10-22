@@ -2,6 +2,20 @@
 
 Every LLM step was run once with Claude Opus 5.5 (`claude-opus-5-5`), on 2026-10-18 to 2026-10-21. Steps 1, 2, 4 and 5 ran as Claude Code subagents, each over all questions in one pass. Step 3, the rewrite that the KO→LLM baseline evaluates, is one separate call per question ([rewrite.py](rewrite.py)), so each rewrite sees only its own question. The texts below are verbatim, except that local file paths are replaced by `<input file>` and `<output file>`. The agents had no access to the repositories, the gold files, Lantern or its dictionary unless stated.
 
+## How each step was run
+
+The tool calls in each subagent's log show what it read. Every agent read only its own input file, wrote its output file and checked the output; none opened a repository, the benchmark files, Lantern's code or the web.
+
+| Step | Fields in the input file | What the agent did |
+|---|---|---|
+| 1. Korean drafts | id, repo, en | read the input, wrote the drafts, checked the ids and the mix of question forms |
+| 2. Review | id, repo, en, draft | read the input, wrote and ran a small script that applies its 4 edits, checked the output |
+| 3. KO→LLM, batched (up to `icpc2027-eval-v4`) | id, repo, ko | read the input, wrote the rewrites, checked the ids |
+| 4. English rewording | id, repo, en | read the input, wrote the rewordings, checked the ids |
+| 5. Loanword stress test | id, repo, ko | read the input, wrote the rewrites, checked the ids and the unchanged items |
+
+So the batched KO→LLM rewrites could not see the English subjects either. They reproduced 47 of the 261 unseen subjects verbatim, against 9 for the per-question calls, because one pass over all questions produced short, literal back-translations (6.6 words on average, against 10.3 per question); they also added no code identifiers. The loanword variant was likewise made from the Korean questions alone.
+
 ## 1. Korean drafts (`q_ko_draft`)
 
 ```text
@@ -58,6 +72,18 @@ Rules:
 1. Write a short English query (one line) that a coding agent would use to search this repository for the code to read or change: say what the code does or what should change, in the words developers use in English code and commit messages.
 2. Keep every code identifier, option, flag, header, function and type name from the Korean exactly as written.
 3. Do not add information that is not in the Korean question (no guessed file names, function names or causes). Work only from the Korean text and the repository name.
+4. Reply with the query only; no explanations.
+```
+
+Runs 2 and 3 (`q_ko_llm_2`, `q_ko_llm_3`, `rewrite.py --field`) repeat these calls unchanged to show how much a single sample varies. The no-repository control (`q_ko_llm_norepo`, `rewrite.py --no-repo`) sends only `Question: <Korean question>` with this system prompt, which differs only where the repository is mentioned:
+
+```text
+You are the query-rewriting step of a coding agent. A developer asked a question in Korean about a code base; before searching the code, you rewrite it as an English code-search query.
+
+Rules:
+1. Write a short English query (one line) that a coding agent would use to search the code base for the code to read or change: say what the code does or what should change, in the words developers use in English code and commit messages.
+2. Keep every code identifier, option, flag, header, function and type name from the Korean exactly as written.
+3. Do not add information that is not in the Korean question (no guessed file names, function names or causes). Work only from the Korean text.
 4. Reply with the query only; no explanations.
 ```
 
