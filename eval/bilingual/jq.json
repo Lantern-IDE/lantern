@@ -29,7 +29,13 @@
       "q_ko_loan": "strftime/1, strflocaltime/1이 빈 결과를 허용 안 하는 이슈",
       "q_para": "strftime/1 and strflocaltime/1 don't allow an empty result",
       "q_ko_llm_src": "strftime/1, strflocaltime/1이 빈 결과를 허용 안 하는 문제",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "strftime/1 and strflocaltime/1 fail on empty result string, allow empty output",
+      "q_ko_llm_norepo_src": "strftime/1, strflocaltime/1이 빈 결과를 허용 안 하는 문제",
+      "q_ko_llm_2": "strftime/1 and strflocaltime/1 fail on empty output string; allow empty result from strftime",
+      "q_ko_llm_2_src": "strftime/1, strflocaltime/1이 빈 결과를 허용 안 하는 문제",
+      "q_ko_llm_3": "strftime/1 and strflocaltime/1 fail on empty result string; allow empty output from strftime",
+      "q_ko_llm_3_src": "strftime/1, strflocaltime/1이 빈 결과를 허용 안 하는 문제"
     },
     {
       "q": "Skip to the next RS after a parse error in --seq mode",
@@ -58,7 +64,13 @@
         "parse",
         "parser",
         "error"
-      ]
+      ],
+      "q_ko_llm_norepo": "--seq mode: on parse error, skip input until next RS (record separator) and resume parsing",
+      "q_ko_llm_norepo_src": "--seq 모드에서 파싱 에러 나면 다음 RS까지 건너뛰게 해줘",
+      "q_ko_llm_2": "--seq mode: on parse error, skip input until the next RS (record separator) and resume parsing",
+      "q_ko_llm_2_src": "--seq 모드에서 파싱 에러 나면 다음 RS까지 건너뛰게 해줘",
+      "q_ko_llm_3": "--seq mode: on JSON parse error, skip input until next RS (record separator) character and resume parsing",
+      "q_ko_llm_3_src": "--seq 모드에서 파싱 에러 나면 다음 RS까지 건너뛰게 해줘"
     },
     {
       "q": "Improve performance of string output",
@@ -84,7 +96,13 @@
       "q_ko_loan": "스트링 아웃풋 퍼포먼스 올리려면 어디를 봐야 해?",
       "q_para": "how can string output be made faster?",
       "q_ko_llm_src": "문자열 출력 성능 올리려면 어디를 봐야 해?",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "string output performance, where strings are written/printed and how to optimize it",
+      "q_ko_llm_norepo_src": "문자열 출력 성능 올리려면 어디를 봐야 해?",
+      "q_ko_llm_2": "string output serialization performance: where strings are escaped and written when dumping JSON",
+      "q_ko_llm_2_src": "문자열 출력 성능 올리려면 어디를 봐야 해?",
+      "q_ko_llm_3": "string output performance: JSON string serialization and escaping when dumping/printing strings",
+      "q_ko_llm_3_src": "문자열 출력 성능 올리려면 어디를 봐야 해?"
     },
     {
       "q": "Fix assertion failure on too many parameters in a nested function",
@@ -109,7 +127,13 @@
       "q_ko_loan": "네스티드 함수에 파라미터가 너무 많으면 어설션 페일하는 버그",
       "q_para": "assertion failure when a nested function has too many parameters",
       "q_ko_llm_src": "중첩 함수에 파라미터가 너무 많으면 assertion 실패하는 버그",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "assertion failure when nested function has too many parameters",
+      "q_ko_llm_norepo_src": "중첩 함수에 파라미터가 너무 많으면 assertion 실패하는 버그",
+      "q_ko_llm_2": "Assertion fails when a nested function definition has too many parameters",
+      "q_ko_llm_2_src": "중첩 함수에 파라미터가 너무 많으면 assertion 실패하는 버그",
+      "q_ko_llm_3": "assertion failure when nested function has too many parameters",
+      "q_ko_llm_3_src": "중첩 함수에 파라미터가 너무 많으면 assertion 실패하는 버그"
     },
     {
       "q": "Exit with the given status for negative `halt_error` codes",
@@ -141,7 +165,13 @@
       "q_ko_loan_dict_terms": [
         "value",
         "fix"
-      ]
+      ],
+      "q_ko_llm_norepo": "halt_error negative exit code passed through as process exit status unchanged",
+      "q_ko_llm_norepo_src": "`halt_error`에 음수 코드를 주면 그 값 그대로 종료 상태로 나가게 하려면 어디 고쳐야 해?",
+      "q_ko_llm_2": "halt_error negative exit code: pass value through as process exit status unchanged",
+      "q_ko_llm_2_src": "`halt_error`에 음수 코드를 주면 그 값 그대로 종료 상태로 나가게 하려면 어디 고쳐야 해?",
+      "q_ko_llm_3": "halt_error negative exit code: use the value as-is for the process exit status instead of changing it",
+      "q_ko_llm_3_src": "`halt_error`에 음수 코드를 주면 그 값 그대로 종료 상태로 나가게 하려면 어디 고쳐야 해?"
     },
     {
       "q": "Fix undefined behavior on out-of-range array index in has() and del()",
@@ -170,7 +200,13 @@
       "q_ko_llm_src": "has()랑 del()에서 범위 밖 배열 인덱스로 생기는 undefined behavior 고쳐줘",
       "q_ko_loan_dict_terms": [
         "index"
-      ]
+      ],
+      "q_ko_llm_norepo": "Fix undefined behavior from out-of-bounds array index in has() and del()",
+      "q_ko_llm_norepo_src": "has()랑 del()에서 범위 밖 배열 인덱스로 생기는 undefined behavior 고쳐줘",
+      "q_ko_llm_2": "Fix undefined behavior from out-of-range array index in has() and del()",
+      "q_ko_llm_2_src": "has()랑 del()에서 범위 밖 배열 인덱스로 생기는 undefined behavior 고쳐줘",
+      "q_ko_llm_3": "fix undefined behavior with out-of-range array index in has() and del()",
+      "q_ko_llm_3_src": "has()랑 del()에서 범위 밖 배열 인덱스로 생기는 undefined behavior 고쳐줘"
     },
     {
       "q": "Strip UTF-8 BOM at the start of each input file",
@@ -196,7 +232,13 @@
       "q_ko_loan": "인풋 파일마다 맨 앞의 UTF-8 BOM 스트립하는 건 어디서 해?",
       "q_para": "strip the UTF-8 BOM from the beginning of every input file",
       "q_ko_llm_src": "입력 파일마다 맨 앞의 UTF-8 BOM 떼는 건 어디서 해?",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Strip leading UTF-8 BOM from each input file when reading input",
+      "q_ko_llm_norepo_src": "입력 파일마다 맨 앞의 UTF-8 BOM 떼는 건 어디서 해?",
+      "q_ko_llm_2": "where leading UTF-8 BOM is stripped from the start of each input file when reading input",
+      "q_ko_llm_2_src": "입력 파일마다 맨 앞의 UTF-8 BOM 떼는 건 어디서 해?",
+      "q_ko_llm_3": "strip leading UTF-8 BOM from each input file when reading input",
+      "q_ko_llm_3_src": "입력 파일마다 맨 앞의 UTF-8 BOM 떼는 건 어디서 해?"
     },
     {
       "q": "Prefer getentropy() over arc4random() to seed the string hash",
@@ -225,7 +267,13 @@
       "q_ko_loan_dict_terms": [
         "4random",
         "hash"
-      ]
+      ],
+      "q_ko_llm_norepo": "prefer getentropy() over arc4random() for string hash seed initialization",
+      "q_ko_llm_norepo_src": "문자열 해시 시드에 arc4random()보다 getentropy()를 우선 쓰게 해줘",
+      "q_ko_llm_2": "Prefer getentropy() over arc4random() for the string hash seed generation",
+      "q_ko_llm_2_src": "문자열 해시 시드에 arc4random()보다 getentropy()를 우선 쓰게 해줘",
+      "q_ko_llm_3": "Prefer getentropy() over arc4random() when seeding the string hash seed.",
+      "q_ko_llm_3_src": "문자열 해시 시드에 arc4random()보다 getentropy()를 우선 쓰게 해줘"
     },
     {
       "q": "Fix reduce to preserve its input across init backtracking",
@@ -251,7 +299,13 @@
       "q_ko_loan": "init 백트래킹할 때 reduce 인풋이 유지 안 되는 버그",
       "q_para": "reduce doesn't preserve its input when init backtracks",
       "q_ko_llm_src": "init 백트래킹할 때 reduce 입력이 유지 안 되는 버그",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "fix reduce input not preserved when backtracking during init",
+      "q_ko_llm_norepo_src": "init 백트래킹할 때 reduce 입력이 유지 안 되는 버그",
+      "q_ko_llm_2": "reduce input not preserved when init expression backtracks",
+      "q_ko_llm_2_src": "init 백트래킹할 때 reduce 입력이 유지 안 되는 버그",
+      "q_ko_llm_3": "fix reduce not preserving its input when the init expression backtracks",
+      "q_ko_llm_3_src": "init 백트래킹할 때 reduce 입력이 유지 안 되는 버그"
     },
     {
       "q": "Implement `range/3` in C for consistent error handling",
@@ -280,7 +334,13 @@
       "q_ko_llm_src": "에러 처리 일관되게 하려고 `range/3`를 C로 구현",
       "q_ko_loan_dict_terms": [
         "error"
-      ]
+      ],
+      "q_ko_llm_norepo": "implement `range/3` in C for consistent error handling",
+      "q_ko_llm_norepo_src": "에러 처리 일관되게 하려고 `range/3`를 C로 구현",
+      "q_ko_llm_2": "Implement `range/3` in C for consistent error handling",
+      "q_ko_llm_2_src": "에러 처리 일관되게 하려고 `range/3`를 C로 구현",
+      "q_ko_llm_3": "Implement `range/3` in C instead of jq-defined builtin for consistent error handling",
+      "q_ko_llm_3_src": "에러 처리 일관되게 하려고 `range/3`를 C로 구현"
     },
     {
       "q": "Use WriteConsoleW() in priv_fwrite() too",
@@ -302,7 +362,13 @@
       "q_ko_loan": "priv_fwrite()에서도 WriteConsoleW() 쓰게 해줘",
       "q_para": "can priv_fwrite() use WriteConsoleW() as well?",
       "q_ko_llm_src": "priv_fwrite()에서도 WriteConsoleW() 쓰게 해줘",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Use WriteConsoleW() in priv_fwrite() for console output",
+      "q_ko_llm_norepo_src": "priv_fwrite()에서도 WriteConsoleW() 쓰게 해줘",
+      "q_ko_llm_2": "Use WriteConsoleW() in priv_fwrite() for Windows console output",
+      "q_ko_llm_2_src": "priv_fwrite()에서도 WriteConsoleW() 쓰게 해줘",
+      "q_ko_llm_3": "Use WriteConsoleW() in priv_fwrite() for Windows console output",
+      "q_ko_llm_3_src": "priv_fwrite()에서도 WriteConsoleW() 쓰게 해줘"
     },
     {
       "q": "Fix gmtime and localtime on negative timestamps with fractional seconds",
@@ -326,7 +392,13 @@
       "q_ko_loan": "소수점 초가 있는 음수 타임스탬프를 gmtime, localtime이 제대로 핸들링하게 하려면 어디 봐야 해?",
       "q_para": "gmtime and localtime are wrong for negative timestamps with fractional seconds",
       "q_ko_llm_src": "소수점 초가 있는 음수 타임스탬프를 gmtime, localtime이 제대로 처리하게 하려면 어디 봐야 해?",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "gmtime localtime handle negative timestamp with fractional seconds",
+      "q_ko_llm_norepo_src": "소수점 초가 있는 음수 타임스탬프를 gmtime, localtime이 제대로 처리하게 하려면 어디 봐야 해?",
+      "q_ko_llm_2": "gmtime localtime handle negative timestamps with fractional seconds",
+      "q_ko_llm_2_src": "소수점 초가 있는 음수 타임스탬프를 gmtime, localtime이 제대로 처리하게 하려면 어디 봐야 해?",
+      "q_ko_llm_3": "gmtime localtime handle negative timestamps with fractional seconds",
+      "q_ko_llm_3_src": "소수점 초가 있는 음수 타임스탬프를 gmtime, localtime이 제대로 처리하게 하려면 어디 봐야 해?"
     },
     {
       "q": "Reject raw NUL bytes in the parser instead of silently truncating tokens",
@@ -356,7 +428,13 @@
       "q_ko_loan_dict_terms": [
         "parser",
         "token"
-      ]
+      ],
+      "q_ko_llm_norepo": "parser reject raw NUL byte in input instead of silently truncating token",
+      "q_ko_llm_norepo_src": "파서에서 raw NUL 바이트 나오면 토큰 조용히 자르지 말고 거부해줘",
+      "q_ko_llm_2": "parser: reject raw NUL bytes in input instead of silently truncating token",
+      "q_ko_llm_2_src": "파서에서 raw NUL 바이트 나오면 토큰 조용히 자르지 말고 거부해줘",
+      "q_ko_llm_3": "jq parser reject raw NUL byte in input instead of silently truncating token",
+      "q_ko_llm_3_src": "파서에서 raw NUL 바이트 나오면 토큰 조용히 자르지 말고 거부해줘"
     },
     {
       "q": "Cast char to unsigned char before passing to isspace",
@@ -377,7 +455,13 @@
       "q_ko_loan": "isspace에 패스하기 전에 char를 unsigned char로 캐스팅",
       "q_para": "convert char to unsigned char before handing it to isspace",
       "q_ko_llm_src": "isspace에 넘기기 전에 char를 unsigned char로 캐스팅",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "cast char to unsigned char before passing to isspace",
+      "q_ko_llm_norepo_src": "isspace에 넘기기 전에 char를 unsigned char로 캐스팅",
+      "q_ko_llm_2": "cast char to unsigned char before passing to isspace",
+      "q_ko_llm_2_src": "isspace에 넘기기 전에 char를 unsigned char로 캐스팅",
+      "q_ko_llm_3": "Cast char to unsigned char before passing it to isspace",
+      "q_ko_llm_3_src": "isspace에 넘기기 전에 char를 unsigned char로 캐스팅"
     },
     {
       "q": "Tighten string length bounds and propagate invalid jv in implode",
@@ -404,7 +488,13 @@
       "q_ko_loan": "implode에서 스트링 렝스 레인지 더 스트릭트하게 체크하고 invalid jv는 프로파게이트하게 해줘",
       "q_para": "in implode, tighten the string length bounds and pass invalid jv along",
       "q_ko_llm_src": "implode에서 문자열 길이 범위 더 엄격하게 보고 invalid jv는 전파하게 해줘",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "implode: stricter string length range check and propagate invalid jv",
+      "q_ko_llm_norepo_src": "implode에서 문자열 길이 범위 더 엄격하게 보고 invalid jv는 전파하게 해줘",
+      "q_ko_llm_2": "implode: stricter validation of codepoint range and propagate invalid jv errors",
+      "q_ko_llm_2_src": "implode에서 문자열 길이 범위 더 엄격하게 보고 invalid jv는 전파하게 해줘",
+      "q_ko_llm_3": "Make implode check string length range more strictly and propagate invalid jv errors",
+      "q_ko_llm_3_src": "implode에서 문자열 길이 범위 더 엄격하게 보고 invalid jv는 전파하게 해줘"
     },
     {
       "q": "Fix heap-buffer-overflow in raw file loading",
@@ -425,7 +515,13 @@
       "q_ko_loan": "로우 파일 로딩 중 heap-buffer-overflow 나는 버그",
       "q_para": "heap-buffer-overflow when loading raw files",
       "q_ko_llm_src": "raw 파일 로딩 중 heap-buffer-overflow 나는 버그",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "heap-buffer-overflow when loading raw file",
+      "q_ko_llm_norepo_src": "raw 파일 로딩 중 heap-buffer-overflow 나는 버그",
+      "q_ko_llm_2": "heap-buffer-overflow when loading raw file",
+      "q_ko_llm_2_src": "raw 파일 로딩 중 heap-buffer-overflow 나는 버그",
+      "q_ko_llm_3": "fix heap-buffer-overflow when loading raw file",
+      "q_ko_llm_3_src": "raw 파일 로딩 중 heap-buffer-overflow 나는 버그"
     },
     {
       "q": "Fix undefined pointer arithmetic in UTF-8 helpers",
@@ -450,7 +546,13 @@
       "q_ko_llm_src": "UTF-8 헬퍼에서 정의되지 않은 포인터 연산은 어디서 고쳐야 해?",
       "q_ko_loan_dict_terms": [
         "fix"
-      ]
+      ],
+      "q_ko_llm_norepo": "fix undefined behavior pointer arithmetic in UTF-8 helper functions",
+      "q_ko_llm_norepo_src": "UTF-8 헬퍼에서 정의되지 않은 포인터 연산은 어디서 고쳐야 해?",
+      "q_ko_llm_2": "Fix undefined pointer arithmetic in UTF-8 helper functions",
+      "q_ko_llm_2_src": "UTF-8 헬퍼에서 정의되지 않은 포인터 연산은 어디서 고쳐야 해?",
+      "q_ko_llm_3": "fix undefined pointer arithmetic in UTF-8 helper functions",
+      "q_ko_llm_3_src": "UTF-8 헬퍼에서 정의되지 않은 포인터 연산은 어디서 고쳐야 해?"
     },
     {
       "q": "Guard deep structural equality and comparison recursion",
@@ -478,7 +580,13 @@
       "q_ko_llm_src": "깊은 구조의 동등성·비교 재귀 방어",
       "q_ko_loan_dict_terms": [
         "guard"
-      ]
+      ],
+      "q_ko_llm_norepo": "Guard against infinite recursion in deep equality and comparison of deeply nested or circular structures",
+      "q_ko_llm_norepo_src": "깊은 구조의 동등성·비교 재귀 방어",
+      "q_ko_llm_2": "guard against deep recursion (stack overflow) in equality and comparison of deeply nested values",
+      "q_ko_llm_2_src": "깊은 구조의 동등성·비교 재귀 방어",
+      "q_ko_llm_3": "guard against deep recursion (stack overflow) in equality and comparison of deeply nested JSON values",
+      "q_ko_llm_3_src": "깊은 구조의 동등성·비교 재귀 방어"
     },
     {
       "q": "Detect circular module imports to prevent stack overflow",
@@ -507,7 +615,13 @@
         "block",
         "prevent",
         "guard"
-      ]
+      ],
+      "q_ko_llm_norepo": "detect circular module imports to prevent stack overflow during module resolution",
+      "q_ko_llm_norepo_src": "모듈 순환 import 감지해서 스택 오버플로 막아줘",
+      "q_ko_llm_2": "detect circular module imports in jq module loading to prevent stack overflow",
+      "q_ko_llm_2_src": "모듈 순환 import 감지해서 스택 오버플로 막아줘",
+      "q_ko_llm_3": "Detect circular module imports in jq module loading to prevent stack overflow",
+      "q_ko_llm_3_src": "모듈 순환 import 감지해서 스택 오버플로 막아줘"
     },
     {
       "q": "Reject numeric literals longer than DEC_MAX_DIGITS (999999999)",
@@ -532,7 +646,13 @@
       "q_ko_loan": "DEC_MAX_DIGITS(999999999)보다 긴 넘버 리터럴은 리젝하게 해줘",
       "q_para": "reject numeric literals that are longer than DEC_MAX_DIGITS (999999999)",
       "q_ko_llm_src": "DEC_MAX_DIGITS(999999999)보다 긴 숫자 리터럴은 거부하게 해줘",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Reject numeric literals longer than DEC_MAX_DIGITS (999999999) digits.",
+      "q_ko_llm_norepo_src": "DEC_MAX_DIGITS(999999999)보다 긴 숫자 리터럴은 거부하게 해줘",
+      "q_ko_llm_2": "reject number literals longer than DEC_MAX_DIGITS (999999999) digits when parsing",
+      "q_ko_llm_2_src": "DEC_MAX_DIGITS(999999999)보다 긴 숫자 리터럴은 거부하게 해줘",
+      "q_ko_llm_3": "reject number literals longer than DEC_MAX_DIGITS (999999999) digits when parsing",
+      "q_ko_llm_3_src": "DEC_MAX_DIGITS(999999999)보다 긴 숫자 리터럴은 거부하게 해줘"
     },
     {
       "q": "Limit recursive object merge depth to prevent stack overflow",
@@ -553,7 +673,13 @@
       "q_ko_loan": "리커시브 오브젝트 머지 뎁스 리밋 걸어서 스택 오버플로 막으려면 어디 봐야 해?",
       "q_para": "how do I cap recursive object merge depth to avoid a stack overflow?",
       "q_ko_llm_src": "재귀 객체 병합 깊이 제한해서 스택 오버플로 막으려면 어디 봐야 해?",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "limit recursion depth in recursive deep object merge to prevent stack overflow",
+      "q_ko_llm_norepo_src": "재귀 객체 병합 깊이 제한해서 스택 오버플로 막으려면 어디 봐야 해?",
+      "q_ko_llm_2": "limit recursion depth in recursive object merge to prevent stack overflow",
+      "q_ko_llm_2_src": "재귀 객체 병합 깊이 제한해서 스택 오버플로 막으려면 어디 봐야 해?",
+      "q_ko_llm_3": "limit recursion depth in recursive object merge (`*` deep merge) to prevent stack overflow",
+      "q_ko_llm_3_src": "재귀 객체 병합 깊이 제한해서 스택 오버플로 막으려면 어디 봐야 해?"
     },
     {
       "q": "Fix signed-int overflow in `stack_reallocate`",
@@ -574,7 +700,13 @@
       "q_ko_loan": "`stack_reallocate`의 signed int 오버플로",
       "q_para": "signed-int overflow in `stack_reallocate`",
       "q_ko_llm_src": "`stack_reallocate`의 signed int 오버플로",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "signed int overflow in `stack_reallocate` when computing new stack size",
+      "q_ko_llm_norepo_src": "`stack_reallocate`의 signed int 오버플로",
+      "q_ko_llm_2": "signed int overflow in `stack_reallocate` stack size calculation",
+      "q_ko_llm_2_src": "`stack_reallocate`의 signed int 오버플로",
+      "q_ko_llm_3": "signed int overflow in `stack_reallocate` when growing stack size",
+      "q_ko_llm_3_src": "`stack_reallocate`의 signed int 오버플로"
     },
     {
       "q": "Limit the containment check depth",
@@ -600,7 +732,13 @@
       "q_ko_loan": "포함 관계 체크 뎁스 리밋은 어디서 걸어?",
       "q_para": "put a depth limit on the containment check",
       "q_ko_llm_src": "포함 관계 검사 깊이 제한은 어디서 걸어?",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "where is the recursion depth limit for containment checks enforced",
+      "q_ko_llm_norepo_src": "포함 관계 검사 깊이 제한은 어디서 걸어?",
+      "q_ko_llm_2": "Where is the recursion depth limit for containment checks (contains/inside, jv_contains) enforced?",
+      "q_ko_llm_2_src": "포함 관계 검사 깊이 제한은 어디서 걸어?",
+      "q_ko_llm_3": "where is the recursion depth limit enforced for containment check (contains)",
+      "q_ko_llm_3_src": "포함 관계 검사 깊이 제한은 어디서 걸어?"
     },
     {
       "q": "Limit path depth to prevent stack overflow",
@@ -621,7 +759,13 @@
       "q_ko_loan": "스택 오버플로 안 나게 path 뎁스 리밋 걸어줘",
       "q_para": "how can path depth be limited to prevent a stack overflow?",
       "q_ko_llm_src": "스택 오버플로 안 나게 path 깊이 제한해줘",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Limit path depth to prevent stack overflow from deep recursion",
+      "q_ko_llm_norepo_src": "스택 오버플로 안 나게 path 깊이 제한해줘",
+      "q_ko_llm_2": "Add a maximum depth limit to paths to prevent stack overflow from deep recursion",
+      "q_ko_llm_2_src": "스택 오버플로 안 나게 path 깊이 제한해줘",
+      "q_ko_llm_3": "Add a maximum path depth limit to prevent stack overflow",
+      "q_ko_llm_3_src": "스택 오버플로 안 나게 path 깊이 제한해줘"
     },
     {
       "q": "Fix NUL truncation in the JSON parser",
@@ -648,7 +792,13 @@
       "q_ko_loan_dict_terms": [
         "parser",
         "fix"
-      ]
+      ],
+      "q_ko_llm_norepo": "JSON parser truncates strings at NUL byte, fix null character handling",
+      "q_ko_llm_norepo_src": "JSON 파서에서 NUL 때문에 잘리는 거 어디서 고쳐?",
+      "q_ko_llm_2": "JSON parser truncates input at NUL byte, fix handling of embedded NUL characters",
+      "q_ko_llm_2_src": "JSON 파서에서 NUL 때문에 잘리는 거 어디서 고쳐?",
+      "q_ko_llm_3": "Fix JSON parser truncating input strings at embedded NUL bytes",
+      "q_ko_llm_3_src": "JSON 파서에서 NUL 때문에 잘리는 거 어디서 고쳐?"
     },
     {
       "q": "Fix use-after-free in args2obj() array argument path",
@@ -680,7 +830,13 @@
       "q_ko_llm_src": "args2obj() 배열 인자 경로의 use-after-free",
       "q_ko_loan_dict_terms": [
         "2obj"
-      ]
+      ],
+      "q_ko_llm_norepo": "use-after-free in args2obj() array argument path",
+      "q_ko_llm_norepo_src": "args2obj() 배열 인자 경로의 use-after-free",
+      "q_ko_llm_2": "fix use-after-free in args2obj() when handling array arguments",
+      "q_ko_llm_2_src": "args2obj() 배열 인자 경로의 use-after-free",
+      "q_ko_llm_3": "args2obj() use-after-free in array argument path",
+      "q_ko_llm_3_src": "args2obj() 배열 인자 경로의 use-after-free"
     },
     {
       "q": "Fix crash when importing a module with errors twice",
@@ -705,7 +861,13 @@
       "q_ko_llm_src": "에러 있는 모듈을 두 번 import할 때 크래시 나는 곳 어디야?",
       "q_ko_loan_dict_terms": [
         "error"
-      ]
+      ],
+      "q_ko_llm_norepo": "crash when importing a module with errors a second time (re-import of failed module)",
+      "q_ko_llm_norepo_src": "에러 있는 모듈을 두 번 import할 때 크래시 나는 곳 어디야?",
+      "q_ko_llm_2": "crash when importing a module with errors twice (module loading error handling)",
+      "q_ko_llm_2_src": "에러 있는 모듈을 두 번 import할 때 크래시 나는 곳 어디야?",
+      "q_ko_llm_3": "crash when importing a module with errors twice (module loading / import resolution)",
+      "q_ko_llm_3_src": "에러 있는 모듈을 두 번 import할 때 크래시 나는 곳 어디야?"
     },
     {
       "q": "Limit number of function parameters and definitions to prevent SEGV",
@@ -726,7 +888,13 @@
       "q_ko_loan": "SEGV 안 나게 함수 파라미터 수랑 정의 수 리밋 걸어줘",
       "q_para": "cap the number of function parameters and definitions to avoid SEGV",
       "q_ko_llm_src": "SEGV 안 나게 함수 파라미터 수랑 정의 수 제한해줘",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Limit the number of function parameters and definitions to prevent a SEGV crash",
+      "q_ko_llm_norepo_src": "SEGV 안 나게 함수 파라미터 수랑 정의 수 제한해줘",
+      "q_ko_llm_2": "limit number of function parameters and number of definitions to prevent SEGV (segfault)",
+      "q_ko_llm_2_src": "SEGV 안 나게 함수 파라미터 수랑 정의 수 제한해줘",
+      "q_ko_llm_3": "limit number of function parameters and number of definitions to prevent SEGV",
+      "q_ko_llm_3_src": "SEGV 안 나게 함수 파라미터 수랑 정의 수 제한해줘"
     },
     {
       "q": "Fix slurping raw input not to corrupt multi-byte characters (fix #3389)",
@@ -760,7 +928,13 @@
         "broken",
         "encoding",
         "render"
-      ]
+      ],
+      "q_ko_llm_norepo": "Fix multibyte UTF-8 characters getting corrupted when slurping raw input (--raw-input --slurp) (#3389)",
+      "q_ko_llm_norepo_src": "raw 입력 slurp할 때 멀티바이트 문자 깨지는 문제 (#3389)",
+      "q_ko_llm_2": "Fix multibyte UTF-8 characters getting corrupted when slurping raw input with --raw-input --slurp (#3389)",
+      "q_ko_llm_2_src": "raw 입력 slurp할 때 멀티바이트 문자 깨지는 문제 (#3389)",
+      "q_ko_llm_3": "Fix multibyte UTF-8 characters getting corrupted when slurping raw input with `--raw-input --slurp` (#3389)",
+      "q_ko_llm_3_src": "raw 입력 slurp할 때 멀티바이트 문자 깨지는 문제 (#3389)"
     },
     {
       "q": "Increase the maximum printing depth from 256 to 10000 (fixes #3413)",
@@ -789,7 +963,13 @@
         "increase",
         "extend",
         "grow"
-      ]
+      ],
+      "q_ko_llm_norepo": "Increase maximum output depth from 256 to 10000 (#3413)",
+      "q_ko_llm_norepo_src": "최대 출력 깊이 256에서 10000으로 늘려줘 (#3413)",
+      "q_ko_llm_2": "increase max print depth limit from 256 to 10000 (#3413)",
+      "q_ko_llm_2_src": "최대 출력 깊이 256에서 10000으로 늘려줘 (#3413)",
+      "q_ko_llm_3": "increase maximum print depth from 256 to 10000 (#3413)",
+      "q_ko_llm_3_src": "최대 출력 깊이 256에서 10000으로 늘려줘 (#3413)"
     },
     {
       "q": "Use jv_mem_alloc to allocate dtoa_context in tsd_dtoa_context_get",
@@ -813,7 +993,13 @@
       "q_ko_loan": "tsd_dtoa_context_get에서 dtoa_context 얼로케이션을 jv_mem_alloc으로 하려면 어디 봐야 해?",
       "q_para": "can tsd_dtoa_context_get allocate dtoa_context with jv_mem_alloc?",
       "q_ko_llm_src": "tsd_dtoa_context_get에서 dtoa_context 할당을 jv_mem_alloc으로 하려면 어디 봐야 해?",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "tsd_dtoa_context_get allocate dtoa_context with jv_mem_alloc",
+      "q_ko_llm_norepo_src": "tsd_dtoa_context_get에서 dtoa_context 할당을 jv_mem_alloc으로 하려면 어디 봐야 해?",
+      "q_ko_llm_2": "Use jv_mem_alloc instead of malloc to allocate the dtoa_context in tsd_dtoa_context_get",
+      "q_ko_llm_2_src": "tsd_dtoa_context_get에서 dtoa_context 할당을 jv_mem_alloc으로 하려면 어디 봐야 해?",
+      "q_ko_llm_3": "tsd_dtoa_context_get allocate dtoa_context with jv_mem_alloc instead of malloc",
+      "q_ko_llm_3_src": "tsd_dtoa_context_get에서 dtoa_context 할당을 jv_mem_alloc으로 하려면 어디 봐야 해?"
     },
     {
       "q": "Fix syntax error assertion failure (fix #3348)",
@@ -840,7 +1026,16 @@
       "q_ko_llm_src": "문법 에러에서 assertion 실패하는 버그 (#3348)",
       "q_ko_loan_dict_terms": [
         "error"
-      ]
+      ],
+      "q_ko_llm_norepo": "fix assertion failure on syntax error (#3348)",
+      "q_ko_llm_norepo_src": "문법 에러에서 assertion 실패하는 버그 (#3348)",
+      "q_ko_llm_2": "fix assertion failure on syntax error in parser (#3348)",
+      "q_ko_llm_2_src": "문법 에러에서 assertion 실패하는 버그 (#3348)",
+      "q_ko_llm_3": "assertion failure on syntax error in parser (#3348)",
+      "q_ko_llm_3_src": "문법 에러에서 assertion 실패하는 버그 (#3348)"
     }
-  ]
+  ],
+  "llm_rewrite_norepo": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the Korean question (no repository name); prompt 3 (no-repository variant) in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-norepo.json",
+  "llm_rewrite_2": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-2.json",
+  "llm_rewrite_3": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-3.json"
 }
