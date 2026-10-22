@@ -29,7 +29,13 @@
       "q_ko_loan": "MethodView에서 query 서포트되게 해줘",
       "q_para": "how do I support query in methodview?",
       "q_ko_llm_src": "MethodView에서 query 지원되게 해줘",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Add support for the `query` HTTP method in MethodView",
+      "q_ko_llm_norepo_src": "MethodView에서 query 지원되게 해줘",
+      "q_ko_llm_2": "Add support for `query` method in MethodView",
+      "q_ko_llm_2_src": "MethodView에서 query 지원되게 해줘",
+      "q_ko_llm_3": "Add support for the HTTP QUERY method in MethodView method dispatch",
+      "q_ko_llm_3_src": "MethodView에서 query 지원되게 해줘"
     },
     {
       "q": "add app.query route decorator",
@@ -56,7 +62,13 @@
       "q_ko_loan_dict_terms": [
         "add",
         "create"
-      ]
+      ],
+      "q_ko_llm_norepo": "Add an `app.query` route decorator for registering QUERY method routes",
+      "q_ko_llm_norepo_src": "app.query 라우트 데코레이터 추가",
+      "q_ko_llm_2": "add app.query route decorator shortcut for QUERY HTTP method",
+      "q_ko_llm_2_src": "app.query 라우트 데코레이터 추가",
+      "q_ko_llm_3": "add app.query route decorator shortcut for QUERY HTTP method",
+      "q_ko_llm_3_src": "app.query 라우트 데코레이터 추가"
     },
     {
       "q": "Fix IPv6 server name parsing",
@@ -88,7 +100,13 @@
         "parse",
         "parser",
         "fix"
-      ]
+      ],
+      "q_ko_llm_norepo": "Fix IPv6 server name parsing bug",
+      "q_ko_llm_norepo_src": "IPv6 서버 이름 파싱 잘못되는 거 어디서 고쳐?",
+      "q_ko_llm_2": "Fix incorrect parsing of IPv6 server name (host and port split) in SERVER_NAME",
+      "q_ko_llm_2_src": "IPv6 서버 이름 파싱 잘못되는 거 어디서 고쳐?",
+      "q_ko_llm_3": "fix incorrect parsing of IPv6 server name (host and port split)",
+      "q_ko_llm_3_src": "IPv6 서버 이름 파싱 잘못되는 거 어디서 고쳐?"
     },
     {
       "q": "Fix IPv6 session transactions",
@@ -122,7 +140,13 @@
         "broken",
         "encoding",
         "render"
-      ]
+      ],
+      "q_ko_llm_norepo": "fix session transaction failure with IPv6 addresses",
+      "q_ko_llm_norepo_src": "IPv6에서 세션 트랜잭션 깨지는 거 고쳐줘",
+      "q_ko_llm_2": "fix session transaction broken with IPv6 host address",
+      "q_ko_llm_2_src": "IPv6에서 세션 트랜잭션 깨지는 거 고쳐줘",
+      "q_ko_llm_3": "Fix session_transaction breaking with IPv6 addresses in test client",
+      "q_ko_llm_3_src": "IPv6에서 세션 트랜잭션 깨지는 거 고쳐줘"
     },
     {
       "q": "Any for  CertParamType type",
@@ -143,7 +167,13 @@
       "q_ko_loan": "CertParamType 타입에 Any 쓰기",
       "q_para": "use Any as the type for CertParamType",
       "q_ko_llm_src": "CertParamType 타입에 Any 쓰기",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Use Any in the CertParamType type definition",
+      "q_ko_llm_norepo_src": "CertParamType 타입에 Any 쓰기",
+      "q_ko_llm_2": "Use Any type annotations in CertParamType",
+      "q_ko_llm_2_src": "CertParamType 타입에 Any 쓰기",
+      "q_ko_llm_3": "Use Any type annotations in CertParamType",
+      "q_ko_llm_3_src": "CertParamType 타입에 Any 쓰기"
     },
     {
       "q": "separate copy per call",
@@ -176,7 +206,13 @@
         "build",
         "make",
         "create"
-      ]
+      ],
+      "q_ko_llm_norepo": "create a separate copy on each call instead of sharing the same instance",
+      "q_ko_llm_norepo_src": "호출마다 별도 복사본 만들기",
+      "q_ko_llm_2": "create a separate copy on each call",
+      "q_ko_llm_2_src": "호출마다 별도 복사본 만들기",
+      "q_ko_llm_3": "create a separate copy per call instead of sharing a mutable object",
+      "q_ko_llm_3_src": "호출마다 별도 복사본 만들기"
     },
     {
       "q": "document that headers must be set before streaming",
@@ -201,7 +237,13 @@
       "q_ko_loan": "스트리밍 전에 헤더를 세팅해야 한다고 독스에 적어줘",
       "q_para": "can the docs mention that headers have to be set before streaming starts?",
       "q_ko_llm_src": "스트리밍 전에 헤더를 설정해야 한다고 문서에 적어줘",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Document that headers must be set before streaming the response",
+      "q_ko_llm_norepo_src": "스트리밍 전에 헤더를 설정해야 한다고 문서에 적어줘",
+      "q_ko_llm_2": "Document that response headers must be set before streaming starts (streamed response, stream_with_context)",
+      "q_ko_llm_2_src": "스트리밍 전에 헤더를 설정해야 한다고 문서에 적어줘",
+      "q_ko_llm_3": "docs: note that response headers must be set before streaming begins in streaming responses",
+      "q_ko_llm_3_src": "스트리밍 전에 헤더를 설정해야 한다고 문서에 적어줘"
     },
     {
       "q": "add back opening session on context push",
@@ -232,7 +274,13 @@
         "insert",
         "add",
         "put"
-      ]
+      ],
+      "q_ko_llm_norepo": "restore opening session when pushing context",
+      "q_ko_llm_norepo_src": "컨텍스트 push할 때 세션 여는 거 다시 넣어줘",
+      "q_ko_llm_2": "restore opening the session when pushing the request context",
+      "q_ko_llm_2_src": "컨텍스트 push할 때 세션 여는 거 다시 넣어줘",
+      "q_ko_llm_3": "restore opening the session when pushing the request context",
+      "q_ko_llm_3_src": "컨텍스트 push할 때 세션 여는 거 다시 넣어줘"
     },
     {
       "q": "redirect defaults to 303",
@@ -264,7 +312,13 @@
         "change",
         "update",
         "replace"
-      ]
+      ],
+      "q_ko_llm_norepo": "Change default redirect status code to 303 in the redirect function",
+      "q_ko_llm_norepo_src": "redirect 기본 상태 코드를 303으로 바꾸려면 어디 봐야 해?",
+      "q_ko_llm_2": "redirect default status code change to 303",
+      "q_ko_llm_2_src": "redirect 기본 상태 코드를 303으로 바꾸려면 어디 봐야 해?",
+      "q_ko_llm_3": "change default status code of redirect to 303",
+      "q_ko_llm_3_src": "redirect 기본 상태 코드를 303으로 바꾸려면 어디 봐야 해?"
     },
     {
       "q": "pass context through dispatch methods",
@@ -291,7 +345,13 @@
       "q_ko_llm_src": "dispatch 메서드들로 컨텍스트 넘겨주려면 어디를 고쳐야 해?",
       "q_ko_loan_dict_terms": [
         "fix"
-      ]
+      ],
+      "q_ko_llm_norepo": "pass context to dispatch methods",
+      "q_ko_llm_norepo_src": "dispatch 메서드들로 컨텍스트 넘겨주려면 어디를 고쳐야 해?",
+      "q_ko_llm_2": "pass context to dispatch methods (dispatch_request, full_dispatch_request) in Flask app",
+      "q_ko_llm_2_src": "dispatch 메서드들로 컨텍스트 넘겨주려면 어디를 고쳐야 해?",
+      "q_ko_llm_3": "Where to change code so view dispatch methods receive the request context as an argument",
+      "q_ko_llm_3_src": "dispatch 메서드들로 컨텍스트 넘겨주려면 어디를 고쳐야 해?"
     },
     {
       "q": "use template_filter without parens",
@@ -313,7 +373,13 @@
       "q_ko_loan": "template_filter를 괄호 없이 쓸 수 있게 하려면 어디 건드리면 돼?",
       "q_para": "allow template_filter to be used without parentheses",
       "q_ko_llm_src": "template_filter를 괄호 없이 쓸 수 있게 하려면 어디 건드리면 돼?",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "allow template_filter decorator to be used without parentheses",
+      "q_ko_llm_norepo_src": "template_filter를 괄호 없이 쓸 수 있게 하려면 어디 건드리면 돼?",
+      "q_ko_llm_2": "allow template_filter decorator to be used without parentheses (bare @app.template_filter)",
+      "q_ko_llm_2_src": "template_filter를 괄호 없이 쓸 수 있게 하려면 어디 건드리면 돼?",
+      "q_ko_llm_3": "allow template_filter decorator to be used without parentheses",
+      "q_ko_llm_3_src": "template_filter를 괄호 없이 쓸 수 있게 하려면 어디 건드리면 돼?"
     },
     {
       "q": "refactor stream_with_context for async views",
@@ -334,7 +400,13 @@
       "q_ko_loan": "어싱크 뷰에 맞게 stream_with_context 리팩터링",
       "q_para": "rework stream_with_context for async views",
       "q_ko_llm_src": "async 뷰에 맞게 stream_with_context 리팩터링",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Refactor stream_with_context to support async views",
+      "q_ko_llm_norepo_src": "async 뷰에 맞게 stream_with_context 리팩터링",
+      "q_ko_llm_2": "refactor stream_with_context to support async views",
+      "q_ko_llm_2_src": "async 뷰에 맞게 stream_with_context 리팩터링",
+      "q_ko_llm_3": "refactor stream_with_context to support async views",
+      "q_ko_llm_3_src": "async 뷰에 맞게 stream_with_context 리팩터링"
     },
     {
       "q": "relax type hint for bytes io",
@@ -359,7 +431,13 @@
       "q_ko_llm_src": "bytes IO 타입 힌트 좀 느슨하게 풀어줘",
       "q_ko_loan_dict_terms": [
         "type"
-      ]
+      ],
+      "q_ko_llm_norepo": "loosen type hints for bytes IO parameters",
+      "q_ko_llm_norepo_src": "bytes IO 타입 힌트 좀 느슨하게 풀어줘",
+      "q_ko_llm_2": "relax type hint for bytes IO (BytesIO / IO[bytes]) to accept a looser type",
+      "q_ko_llm_2_src": "bytes IO 타입 힌트 좀 느슨하게 풀어줘",
+      "q_ko_llm_3": "Relax type hints for bytes IO (loosen typing.IO[bytes] annotations)",
+      "q_ko_llm_3_src": "bytes IO 타입 힌트 좀 느슨하게 풀어줘"
     },
     {
       "q": "push preserved contexts in correct order",
@@ -380,7 +458,13 @@
       "q_ko_loan": "프리저브된 컨텍스트 푸시 오더가 잘못된 이슈",
       "q_para": "preserved contexts get pushed in the wrong order",
       "q_ko_llm_src": "보존된 컨텍스트 push 순서가 잘못된 문제",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Fix wrong push order of preserved context",
+      "q_ko_llm_norepo_src": "보존된 컨텍스트 push 순서가 잘못된 문제",
+      "q_ko_llm_2": "fix incorrect push order of preserved contexts",
+      "q_ko_llm_2_src": "보존된 컨텍스트 push 순서가 잘못된 문제",
+      "q_ko_llm_3": "fix wrong push order of preserved context",
+      "q_ko_llm_3_src": "보존된 컨텍스트 push 순서가 잘못된 문제"
     },
     {
       "q": "secret key rotation: fix key list ordering",
@@ -407,7 +491,13 @@
       "q_ko_llm_src": "시크릿 키 로테이션에서 키 목록 순서 고쳐줘",
       "q_ko_loan_dict_terms": [
         "key"
-      ]
+      ],
+      "q_ko_llm_norepo": "Fix the key list ordering in secret key rotation",
+      "q_ko_llm_norepo_src": "시크릿 키 로테이션에서 키 목록 순서 고쳐줘",
+      "q_ko_llm_2": "Fix the key list order used for secret key rotation (SECRET_KEY_FALLBACKS) when signing sessions",
+      "q_ko_llm_2_src": "시크릿 키 로테이션에서 키 목록 순서 고쳐줘",
+      "q_ko_llm_3": "Fix order of keys list in secret key rotation (SECRET_KEY fallbacks)",
+      "q_ko_llm_3_src": "시크릿 키 로테이션에서 키 목록 순서 고쳐줘"
     },
     {
       "q": "Accept `AsyncIterable` for responses",
@@ -432,7 +522,13 @@
       "q_ko_loan": "리스폰스로 `AsyncIterable`도 받으려면 어디서 핸들링해야 해?",
       "q_para": "can responses be an `AsyncIterable`?",
       "q_ko_llm_src": "응답으로 `AsyncIterable`도 받으려면 어디서 처리해야 해?",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "where response body is handled to also accept `AsyncIterable` as a response",
+      "q_ko_llm_norepo_src": "응답으로 `AsyncIterable`도 받으려면 어디서 처리해야 해?",
+      "q_ko_llm_2": "Support returning `AsyncIterable` as a response body from a view (make_response, response type handling)",
+      "q_ko_llm_2_src": "응답으로 `AsyncIterable`도 받으려면 어디서 처리해야 해?",
+      "q_ko_llm_3": "Support `AsyncIterable` as a response return value in view response conversion (make_response)",
+      "q_ko_llm_3_src": "응답으로 `AsyncIterable`도 받으려면 어디서 처리해야 해?"
     },
     {
       "q": "better type checking during deprecation",
@@ -457,7 +553,13 @@
       "q_ko_llm_src": "deprecation 중 타입 체크 개선",
       "q_ko_loan_dict_terms": [
         "type"
-      ]
+      ],
+      "q_ko_llm_norepo": "improve type checking during deprecation",
+      "q_ko_llm_norepo_src": "deprecation 중 타입 체크 개선",
+      "q_ko_llm_2": "Improve type checking in deprecation warnings",
+      "q_ko_llm_2_src": "deprecation 중 타입 체크 개선",
+      "q_ko_llm_3": "improve type checking during deprecation",
+      "q_ko_llm_3_src": "deprecation 중 타입 체크 개선"
     },
     {
       "q": "Handle help arg by itself the same as no args",
@@ -483,7 +585,13 @@
       "q_ko_loan": "help 아규먼트만 단독으로 오면 아규먼트 없을 때랑 똑같이 핸들링하려면 어디를 봐야 해?",
       "q_para": "treat a lone help arg the same way as no args",
       "q_ko_llm_src": "help 인자만 단독으로 오면 인자 없을 때랑 똑같이 처리하려면 어디를 봐야 해?",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "treat lone help argument the same as no arguments in command-line argument parsing",
+      "q_ko_llm_norepo_src": "help 인자만 단독으로 오면 인자 없을 때랑 똑같이 처리하려면 어디를 봐야 해?",
+      "q_ko_llm_2": "Handle CLI invocation with only `--help` argument the same as no arguments (show help) in Flask CLI group",
+      "q_ko_llm_2_src": "help 인자만 단독으로 오면 인자 없을 때랑 똑같이 처리하려면 어디를 봐야 해?",
+      "q_ko_llm_3": "treat lone help argument same as no arguments in CLI command parsing",
+      "q_ko_llm_3_src": "help 인자만 단독으로 오면 인자 없을 때랑 똑같이 처리하려면 어디를 봐야 해?"
     },
     {
       "q": "remove previously deprecated code",
@@ -516,7 +624,13 @@
         "delete",
         "remove",
         "clear"
-      ]
+      ],
+      "q_ko_llm_norepo": "Remove previously deprecated code (code marked as @deprecated / Deprecated)",
+      "q_ko_llm_norepo_src": "예전에 deprecated 처리했던 코드 지워줘",
+      "q_ko_llm_2": "remove previously deprecated code and deprecation warnings",
+      "q_ko_llm_2_src": "예전에 deprecated 처리했던 코드 지워줘",
+      "q_ko_llm_3": "remove previously deprecated code and deprecation warnings",
+      "q_ko_llm_3_src": "예전에 deprecated 처리했던 코드 지워줘"
     },
     {
       "q": "use generic bases for session",
@@ -541,7 +655,13 @@
       "q_ko_llm_src": "세션에 제네릭 베이스 클래스 쓰기",
       "q_ko_loan_dict_terms": [
         "session"
-      ]
+      ],
+      "q_ko_llm_norepo": "use generic base class for session",
+      "q_ko_llm_norepo_src": "세션에 제네릭 베이스 클래스 쓰기",
+      "q_ko_llm_2": "use generic base class for session type",
+      "q_ko_llm_2_src": "세션에 제네릭 베이스 클래스 쓰기",
+      "q_ko_llm_3": "use generic base class for session (SessionMixin / session interface typing)",
+      "q_ko_llm_3_src": "세션에 제네릭 베이스 클래스 쓰기"
     },
     {
       "q": "configure and check trusted_hosts",
@@ -568,7 +688,13 @@
       "q_ko_loan": "trusted_hosts 세팅하고 체크하는 건 어디서 해?",
       "q_para": "where do I configure trusted_hosts, and where does it get checked?",
       "q_ko_llm_src": "trusted_hosts 설정하고 검사하는 건 어디서 해?",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Where trusted_hosts is configured and validated (host check)",
+      "q_ko_llm_norepo_src": "trusted_hosts 설정하고 검사하는 건 어디서 해?",
+      "q_ko_llm_2": "where trusted_hosts is configured and validated against the request host",
+      "q_ko_llm_2_src": "trusted_hosts 설정하고 검사하는 건 어디서 해?",
+      "q_ko_llm_3": "where trusted_hosts is configured and checked (host validation)",
+      "q_ko_llm_3_src": "trusted_hosts 설정하고 검사하는 건 어디서 해?"
     },
     {
       "q": "add encoding parameter to open_resource",
@@ -596,7 +722,13 @@
       "q_ko_loan_dict_terms": [
         "add",
         "create"
-      ]
+      ],
+      "q_ko_llm_norepo": "add encoding parameter to open_resource",
+      "q_ko_llm_norepo_src": "open_resource에 encoding 파라미터 추가해줘",
+      "q_ko_llm_2": "add encoding parameter to open_resource for opening resource files in text mode",
+      "q_ko_llm_2_src": "open_resource에 encoding 파라미터 추가해줘",
+      "q_ko_llm_3": "Add `encoding` parameter to `open_resource` for opening resource files in text mode",
+      "q_ko_llm_3_src": "open_resource에 encoding 파라미터 추가해줘"
     },
     {
       "q": "Provide a configuration option to control automatic option responses",
@@ -622,7 +754,13 @@
       "q_ko_loan": "자동 OPTIONS 리스폰스를 컨피그 옵션으로 컨트롤할 수 있게 해줘",
       "q_para": "add a config option that controls automatic option responses",
       "q_ko_llm_src": "자동 OPTIONS 응답을 설정 옵션으로 제어할 수 있게 해줘",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "Add a config option to enable or disable automatic OPTIONS responses",
+      "q_ko_llm_norepo_src": "자동 OPTIONS 응답을 설정 옵션으로 제어할 수 있게 해줘",
+      "q_ko_llm_2": "make automatic OPTIONS response configurable via a config option",
+      "q_ko_llm_2_src": "자동 OPTIONS 응답을 설정 옵션으로 제어할 수 있게 해줘",
+      "q_ko_llm_3": "Add a config option to enable or disable automatic OPTIONS responses.",
+      "q_ko_llm_3_src": "자동 OPTIONS 응답을 설정 옵션으로 제어할 수 있게 해줘"
     },
     {
       "q": "Added python type annotation and return type.",
@@ -652,7 +790,13 @@
         "type",
         "add",
         "create"
-      ]
+      ],
+      "q_ko_llm_norepo": "add Python type annotations and return type hints to functions",
+      "q_ko_llm_norepo_src": "파이썬 타입 어노테이션이랑 반환 타입 추가",
+      "q_ko_llm_2": "Add Python type annotations and return type hints to functions",
+      "q_ko_llm_2_src": "파이썬 타입 어노테이션이랑 반환 타입 추가",
+      "q_ko_llm_3": "Add Python type annotations and return types to function signatures",
+      "q_ko_llm_3_src": "파이썬 타입 어노테이션이랑 반환 타입 추가"
     },
     {
       "q": "Support async template context processors",
@@ -680,7 +824,13 @@
       "q_ko_loan_dict_terms": [
         "template",
         "fix"
-      ]
+      ],
+      "q_ko_llm_norepo": "make template context processors support async functions",
+      "q_ko_llm_norepo_src": "템플릿 context processor를 async로도 쓰려면 어디를 고쳐야 해?",
+      "q_ko_llm_2": "Support async functions in template context processors (context_processor, update_template_context)",
+      "q_ko_llm_2_src": "템플릿 context processor를 async로도 쓰려면 어디를 고쳐야 해?",
+      "q_ko_llm_3": "support async template context processors in update_template_context",
+      "q_ko_llm_3_src": "템플릿 context processor를 async로도 쓰려면 어디를 고쳐야 해?"
     },
     {
       "q": "Provide an extendable merge blueprint funcs method",
@@ -710,7 +860,13 @@
         "build",
         "make",
         "create"
-      ]
+      ],
+      "q_ko_llm_norepo": "make blueprint function merge method extensible",
+      "q_ko_llm_norepo_src": "블루프린트 함수 병합하는 메서드를 확장 가능하게 만들어줘",
+      "q_ko_llm_2": "make blueprint method that merges registered functions into app overridable/extensible",
+      "q_ko_llm_2_src": "블루프린트 함수 병합하는 메서드를 확장 가능하게 만들어줘",
+      "q_ko_llm_3": "make Blueprint method that merges blueprint functions overridable/extensible for subclasses",
+      "q_ko_llm_3_src": "블루프린트 함수 병합하는 메서드를 확장 가능하게 만들어줘"
     },
     {
       "q": "fix use of importlib.util.find_spec",
@@ -732,7 +888,13 @@
       "q_ko_loan": "importlib.util.find_spec 잘못 쓰는 이슈",
       "q_para": "importlib.util.find_spec is used incorrectly",
       "q_ko_llm_src": "importlib.util.find_spec 잘못 쓰는 문제",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "incorrect usage of importlib.util.find_spec",
+      "q_ko_llm_norepo_src": "importlib.util.find_spec 잘못 쓰는 문제",
+      "q_ko_llm_2": "Fix incorrect use of importlib.util.find_spec",
+      "q_ko_llm_2_src": "importlib.util.find_spec 잘못 쓰는 문제",
+      "q_ko_llm_3": "fix incorrect use of importlib.util.find_spec",
+      "q_ko_llm_3_src": "importlib.util.find_spec 잘못 쓰는 문제"
     },
     {
       "q": "use importlib instead of pkgutil",
@@ -762,7 +924,13 @@
         "change",
         "update",
         "replace"
-      ]
+      ],
+      "q_ko_llm_norepo": "replace pkgutil usage with importlib",
+      "q_ko_llm_norepo_src": "pkgutil 대신 importlib 쓰게 바꿔줘",
+      "q_ko_llm_2": "replace pkgutil usage with importlib",
+      "q_ko_llm_2_src": "pkgutil 대신 importlib 쓰게 바꿔줘",
+      "q_ko_llm_3": "replace pkgutil usage with importlib",
+      "q_ko_llm_3_src": "pkgutil 대신 importlib 쓰게 바꿔줘"
     },
     {
       "q": "Allow Response subclasses to set default_mimetype as None",
@@ -783,7 +951,13 @@
       "q_ko_loan": "Response 서브클래스에서 default_mimetype을 None으로 못 두는 이슈",
       "q_para": "Response subclasses can't set default_mimetype to None",
       "q_ko_llm_src": "Response 하위 클래스에서 default_mimetype을 None으로 못 두는 문제",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "allow Response subclass to set default_mimetype to None",
+      "q_ko_llm_norepo_src": "Response 하위 클래스에서 default_mimetype을 None으로 못 두는 문제",
+      "q_ko_llm_2": "allow default_mimetype to be None in Response subclass",
+      "q_ko_llm_2_src": "Response 하위 클래스에서 default_mimetype을 None으로 못 두는 문제",
+      "q_ko_llm_3": "Allow default_mimetype = None in Response subclass (type annotation / mimetype handling)",
+      "q_ko_llm_3_src": "Response 하위 클래스에서 default_mimetype을 None으로 못 두는 문제"
     },
     {
       "q": "no cookie domain by default",
@@ -811,7 +985,13 @@
       "q_ko_llm_src": "기본으로는 쿠키 domain 설정 안 하기",
       "q_ko_loan_dict_terms": [
         "cookie"
-      ]
+      ],
+      "q_ko_llm_norepo": "Do not set cookie domain by default",
+      "q_ko_llm_norepo_src": "기본으로는 쿠키 domain 설정 안 하기",
+      "q_ko_llm_2": "Don't set the cookie domain by default (`SESSION_COOKIE_DOMAIN`)",
+      "q_ko_llm_2_src": "기본으로는 쿠키 domain 설정 안 하기",
+      "q_ko_llm_3": "Don't set the cookie domain by default (`SESSION_COOKIE_DOMAIN`)",
+      "q_ko_llm_3_src": "기본으로는 쿠키 domain 설정 안 하기"
     },
     {
       "q": "replace werkzeug.urls with urllib.parse",
@@ -833,7 +1013,13 @@
       "q_ko_loan": "werkzeug.urls를 urllib.parse로 리플레이스",
       "q_para": "swap werkzeug.urls out for urllib.parse",
       "q_ko_llm_src": "werkzeug.urls를 urllib.parse로 교체",
-      "q_ko_loan_dict_terms": []
+      "q_ko_loan_dict_terms": [],
+      "q_ko_llm_norepo": "replace werkzeug.urls imports and usages with urllib.parse",
+      "q_ko_llm_norepo_src": "werkzeug.urls를 urllib.parse로 교체",
+      "q_ko_llm_2": "Replace werkzeug.urls usage with urllib.parse",
+      "q_ko_llm_2_src": "werkzeug.urls를 urllib.parse로 교체",
+      "q_ko_llm_3": "Replace werkzeug.urls imports and usages with urllib.parse",
+      "q_ko_llm_3_src": "werkzeug.urls를 urllib.parse로 교체"
     },
     {
       "q": "setup method on registered blueprint is error",
@@ -858,7 +1044,16 @@
       "q_ko_llm_src": "이미 등록된 블루프린트에서 setup 메서드 쓰면 에러 내는 건 어디서 해?",
       "q_ko_loan_dict_terms": [
         "error"
-      ]
+      ],
+      "q_ko_llm_norepo": "Where the error is raised when a setup method is called on a blueprint that is already registered",
+      "q_ko_llm_norepo_src": "이미 등록된 블루프린트에서 setup 메서드 쓰면 에러 내는 건 어디서 해?",
+      "q_ko_llm_2": "where blueprint raises error when setup method is called after the blueprint has already been registered",
+      "q_ko_llm_2_src": "이미 등록된 블루프린트에서 setup 메서드 쓰면 에러 내는 건 어디서 해?",
+      "q_ko_llm_3": "where blueprint raises error when setup method is called after blueprint is already registered",
+      "q_ko_llm_3_src": "이미 등록된 블루프린트에서 setup 메서드 쓰면 에러 내는 건 어디서 해?"
     }
-  ]
+  ],
+  "llm_rewrite_norepo": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the Korean question (no repository name); prompt 3 (no-repository variant) in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-norepo.json",
+  "llm_rewrite_2": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-2.json",
+  "llm_rewrite_3": "claude-opus-5-5, one Claude Code call per question (claude -p, no tools) given only the repository name and the Korean question; prompt 3 in eval/bilingual/prompts.md, calls in eval/bilingual/measurements/rewrite-3.json"
 }
