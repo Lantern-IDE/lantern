@@ -1,7 +1,7 @@
 # 오류 분석: 영어로는 맞히고 한국어로는 놓친 문항
 
 개발 중에 보지 않은 261문항에서, Lantern(모델 없음)이 영어로는 정답 파일을 앞 3개 안에 넣고 한국어로는 넣지 못한 26문항입니다. 반대로 한국어로만 맞힌 문항은 14개입니다 (순변화 −12문항 = 처음 3개 −4.6점).
-문항 목록은 `python eval/bilingual/errors.py --dir <클론 폴더>`로 다시 뽑을 수 있고, 원인은 스크립트가 아니라 질문·사전 확장·순위를 하나씩 읽고 붙였습니다(Claude Code가 함) (평가한 엔진: 태그 `icpc2027-eval`부터 `icpc2027-eval-v5`까지 같음). [English](error-analysis.md).
+문항 목록은 `python eval/bilingual/errors.py --dir <클론 폴더>`로 다시 뽑을 수 있고, 원인은 스크립트가 아니라 질문·사전 확장·순위를 하나씩 읽고 붙였습니다(Claude Code가 함) (평가한 엔진: 태그 `icpc2027-eval`부터 `icpc2027-eval-v6`까지 같음). [English](error-analysis.md).
 
 | 원인 | 문항 |
 |---|---|

@@ -3,7 +3,7 @@
 [한국어](error-analysis.ko.md)
 
 On the 261 questions not used during development, Lantern without a model puts a gold file in the top 3 for 26 questions in English but not in Korean, and for 14 questions only in Korean (net −12 questions = −4.6 A@3 points).
-The list comes from `python eval/bilingual/errors.py --dir <clones>` (also written by `run_all.sh` to `results/bilingual/error-candidates.md`). The causes were assigned by reading each question, its dictionary expansion and the ranking, not by a script; Claude Code did this (see the paper's acknowledgment). The engine is the same from tag `icpc2027-eval` to `icpc2027-eval-v5`.
+The list comes from `python eval/bilingual/errors.py --dir <clones>` (also written by `run_all.sh` to `results/bilingual/error-candidates.md`). The causes were assigned by reading each question, its dictionary expansion and the ranking, not by a script; Claude Code did this (see the paper's acknowledgment). The engine is the same from tag `icpc2027-eval` to `icpc2027-eval-v6`.
 
 | Cause | Questions |
 |---|---|
