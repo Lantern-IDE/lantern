@@ -7,6 +7,7 @@
 영어 식별자에서 나온 것을 뺀 영어 낱말이다. 빈 폴더를 대상으로 돌려 인덱싱 없이 얻는다.
 q_ko_dict_terms에 넓힌 낱말을 남기고, 사전이 하나라도 걸린 질문 비율(사전 적중률)을 알려 준다.
 외래어 스트레스 테스트(q_ko_loan)에도 같은 방법으로 q_ko_loan_dict_terms를 남긴다 (Lantern은 이 형태를 그대로 받으므로 적중률 보고용).
+NLLB가 영어 제목을 옮긴 한국어(q_ko_nllb)에는 q_ko_nllb_dict_terms와 q_ko_nllb_dict를 남긴다 (비교 대상에 같은 사전을 주는 ko-nllb-dictw용).
 """
 
 import argparse
@@ -44,15 +45,14 @@ def main():
         with open(f, encoding="utf-8") as fh:
             s = json.load(fh)
         for q in s["questions"]:
-            for field in ("q_ko", "q_ko_loan"):
+            for field in ("q_ko", "q_ko_loan", "q_ko_nllb"):
                 if not q.get(field):
                     continue
                 extra = dict_terms(q[field])
-                if field == "q_ko":
-                    q["q_ko_dict_terms"] = extra
-                    q["q_ko_dict"] = (q["q_ko"] + " " + " ".join(extra)).strip()
-                else:
-                    q["q_ko_loan_dict_terms"] = extra
+                q[f"{field}_dict_terms"] = extra
+                if field != "q_ko_loan":
+                    # 사전 낱말을 덧붙인 질문 (임베딩에 줄 때). q_ko_dict, q_ko_nllb_dict
+                    q[f"{field}_dict"] = (q[field] + " " + " ".join(extra)).strip()
                 for part in ("all", "unseen"):
                     if part == "unseen" and q["commit"] in seen:
                         continue

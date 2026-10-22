@@ -23,6 +23,8 @@ log() { echo "[$(date +%H:%M:%S)] $*"; }
 
 log "한국어 질문 번역 (저장된 NLLB 번역을 씀. q_ko_mt_src를 지우면 다시 옮김), 사전으로 넓힌 한국어 질문"
 python eval/bilingual/translate.py
+# 동결 뒤 추가한 통제: 영어 제목을 NLLB가 한국어로 옮긴 KO-NLLB (nllb-ko-plan.md, 저장된 번역을 씀)
+python eval/bilingual/translate.py --to-korean
 python eval/bilingual/expand.py --lantern "$LANTERN"
 # LLM이 만든 형태(q_ko_draft·q_ko, q_ko_llm, q_para, q_ko_loan)는 JSON에 저장된 것을 쓴다 (지시문은 prompts.md).
 # q_ko_llm을 다시 만들려면 rewrite.py (질문마다 모델을 한 번씩 부르므로 계정 사용량을 씀)
@@ -32,8 +34,9 @@ NATIVE=$(python -c "import glob,json;print(any(q.get('q_ko_native') for f in glo
 [ "$NATIVE" = True ] && KO=$KO,ko-native
 NATIVE_B=$(python -c "import glob,json;print(any(q.get('q_ko_native_b') for f in glob.glob('eval/bilingual/*.json') for q in json.load(open(f,encoding='utf-8'))['questions']))")
 [ "$NATIVE_B" = True ] && KO=$KO,ko-native-b
-# 같은 설정으로 다시 부른 재작성(q_ko_llm_2, q_ko_llm_3)과 저장소 이름을 뺀 통제(q_ko_llm_norepo, rewrite.py --no-repo)가 있으면 그것도 잰다
-for extra in q_ko_llm_2:ko-llm2 q_ko_llm_3:ko-llm3 q_ko_llm_norepo:ko-llm-norepo; do
+# 같은 설정으로 다시 부른 재작성(q_ko_llm_2, q_ko_llm_3)과 저장소 이름을 뺀 통제(q_ko_llm_norepo, rewrite.py --no-repo)가 있으면 그것도 잰다.
+# KO-NLLB(q_ko_nllb)는 동결 뒤 추가라 맨 끝에 둔다: 기존 형태를 먼저 재야 기존 결과가 그대로다(#139)
+for extra in q_ko_llm_2:ko-llm2 q_ko_llm_3:ko-llm3 q_ko_llm_norepo:ko-llm-norepo q_ko_nllb:ko-nllb; do
   HAS=$(python -c "import glob,json,sys;print(any(q.get(sys.argv[1]) for f in glob.glob('eval/bilingual/*.json') for q in json.load(open(f,encoding='utf-8'))['questions']))" "${extra%%:*}")
   [ "$HAS" = True ] && KO=$KO,${extra##*:}
 done
@@ -55,11 +58,19 @@ for step in dict name graph cochange copies; do
   mkdir -p "$RES/lantern-no-$step"
   find "$RES" -maxdepth 1 -name 'retrieval-*' -newer "$MARK" -exec mv {} "$RES/lantern-no-$step/" \;
 done
+# KO-NLLB에서는 사전의 몫만 (기존 단계 뒤에 붙여 기존 결과는 그대로)
+if [[ ",$KO," == *",ko-nllb,"* ]]; then
+  MARK=$(mktemp)
+  LANTERN_ABLATE=dict node eval/bench/run.mjs --dir "$DIR" --set eval/bilingual --langs ko-nllb --lantern "$LANTERN" > /dev/null
+  find "$RES" -maxdepth 1 -name 'retrieval-*' -newer "$MARK" -exec mv {} "$RES/lantern-no-dict/" \;
+fi
 cp "$RES/결과-lantern.md" eval/bilingual/결과.md
 
 log "BM25·임베딩·RRF (multilingual-e5-small)"
-# ko-dictw: 사전이 넓힌 낱말을 Lantern처럼 따로, 절반 가중치로 BM25에 결합
-for lang in en en-para ${KO//,/ } ko-dictw; do
+# ko-dictw: 사전이 넓힌 낱말을 Lantern처럼 따로, 절반 가중치로 BM25에 결합 (KO-NLLB가 있으면 ko-nllb-dictw도)
+DICTW=ko-dictw
+[[ ",$KO," == *",ko-nllb,"* ]] && DICTW="$DICTW ko-nllb-dictw"
+for lang in en en-para ${KO//,/ } $DICTW; do
   python eval/bilingual/baselines.py --dir "$DIR" --lang $lang --methods bm25-file,bm25-chunk,dense,hybrid
 done
 # 사전 가중치 민감도 (0.5가 기본, 1.0은 그냥 덧붙인 ko-dict와 같음)
