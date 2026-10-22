@@ -41,6 +41,7 @@
 | `q_ko_native`, `q_ko_native_by` | 선택: 사람이 처음부터 쓴 한국어 질문 ([native_sheet.py](native_sheet.py)) |
 | `q_para` | `q`를 LLM이 영어로 바꿔 말한 것 (말 바꿈 통제, 아래) |
 | `q_ko_loan`, `q_ko_loan_dict_terms` | `q_ko`를 LLM이 외래어를 많이 쓰게 바꾼 것 (스트레스 테스트, 아래)과 거기에 사전이 넓힌 영어 낱말 |
+| `q_ko_nllb`, `q_ko_nllb_src`, `q_ko_nllb_dict_terms`, `q_ko_nllb_dict` | `q`를 NLLB-200 600M이 한국어로 옮긴 것 (Claude가 쓰지 않은 한국어, 동결 뒤 더한 통제, 아래), 그 원문, `q_ko`와 같은 방식의 사전 낱말 |
 | `golden` | 정답 파일 (저장소 기준 경로) |
 | `commit`, `parent`, `date` | 커밋, 그 부모(찾는 시점), 커밋 날짜 |
 
@@ -83,6 +84,7 @@ python eval/bilingual/ko_sheet.py import 검토표.xlsx   # 검토표 → 각 JS
   - **반복과 통제.** 재작성은 한 번씩 뽑은 것이라, 같은 설정으로 두 번 더 불렀고(`q_ko_llm_2`, `q_ko_llm_3`), 저장소 이름 없이 한국어 질문만 주는 통제도 만들었습니다(`q_ko_llm_norepo`, `rewrite.py --no-repo`). 세 번에서 혼합은 처음 3개 70.9 / 71.6 / 71.3, 모델 없는 Lantern은 60.5 / 63.6 / 61.7, Lantern + 임베딩은 70.5 / 71.3 / 68.6(영어 67.0, 저장소 이름 없이 65.5)이고, 실행마다 56~61개가 의심 문항입니다. 저장소 이름이 없으면 의심 문항이 11개로 줄고 혼합은 67.4(영어 68.2, 한국어 56.3)입니다: 언어 격차는 재작성만으로 거의 메워지고, 저장소 이름이 모델의 저장소 지식으로 3.4~4.2점을 더합니다. 이 지식은 커밋이 아니라 저장소에 대한 것입니다: 의심 문항은 모델 학습 시점 뒤 커밋에서도 비율이 같고(1회차 29/116 대 32/145), 시점 뒤 116문항에서도 혼합이 재작성으로 71.6~75.9(영어 71.6)입니다. 실행별 표는 보고서의 "LLM rewrite runs"와 [leak-check.md](leak-check.md)에 있습니다
 - **영어 바꿔 말하기** (`q_para`, `en-para`): 말을 바꾼 것만의 효과를 보는 통제입니다. 같은 모델이 영어 커밋 제목을 한국어 초안과 같은 기준(자연스럽게, 요청·질문·이슈 제목을 섞어, 식별자 그대로, 정보 추가 없음)으로 영어 그대로 다시 썼습니다. `en` → `en-para` 하락이 말 바꿈의 몫이고, `ko`까지 남은 하락이 언어의 몫입니다
 - **외래어를 많이 쓴 한국어** (`q_ko_loan`, `ko-loan`): 사람이 쓴 질문이 아니라 스트레스 테스트입니다. 같은 모델이 한국어 질문을 외래어를 많이 쓰는 말투로 바꿨습니다(요청 → 리퀘스트, 기본값 → 디폴트, progress → 프로그레스). 식별자와 뜻은 그대로이고, 320개 중 51개는 바꿀 것이 없었습니다. 개발 중에 보지 않은 261문항에서 사전이 걸리는 문항이 147개(56%, 원래 191개)로 줄고 영어 낱말이 없는 문항이 56개(원래 27개)로 늡니다. 이때 BM25(조각)·혼합·Lantern이 처음 3개에서 8.0·7.3·6.1점 더 떨어지고, Lantern(49.8)은 여전히 혼합(49.0)과 비깁니다
+- **다른 모델이 쓴 한국어** (`q_ko_nllb`, `ko-nllb`, 동결 뒤 추가, 번역 전에 계획을 커밋: [nllb-ko-plan.md](nllb-ko-plan.md)): 한국어 질문·사전·재작성을 모두 한 LLM이 만들었으니, 사전이 통하는 게 같은 어휘 때문일 수 있다는 지적에 대한 통제입니다. NLLB-200(Meta)이 영어 커밋 제목을 한국어로 옮겼고(`translate.py --to-korean`, KO→MT와 같은 고정 모델, 빔 4), 나온 그대로 저장했습니다. 직역이라 영어 용어를 우리말로 옮기거나 식별자를 빠뜨리기도 해서(parameter → 매개 변수, escaped path → 탈출 경로) 모든 방법이 `ko`보다 더 떨어집니다. 개발 중에 보지 않은 261문항에서 사전은 190개에 걸리고(`ko`는 191개) 결과의 모양은 같습니다: Lantern과 혼합이 비기고(처음 3개 44.1 대 46.7, −2.7 [−8.8, 3.4]), 영어에서의 하락은 MRR에서 Lantern이 덜하며(+0.075 [0.019, 0.132], 처음 3개 +5.0 [−2.7, 12.3]), 사전이 Lantern에 8.8점([5.0, 12.6]), BM25(조각)에 7.7점([4.2, 11.1])을 더해 BM25가 Lantern과 비깁니다(Lantern +1.5 [−3.8, 6.9]). 사전을 빼면 Lantern의 MRR 하락 이점이 사라집니다(+0.000). `ko-nllb-dictw`는 `ko-dictw`처럼 비교 대상에 사전 낱말을 절반 가중으로 줍니다
 - **한국어 + 사전, 절반 가중** (`ko-dictw`, 비교 대상만): 같은 사전 낱말을 Lantern처럼 따로, 절반 가중치로 셉니다 (질문 낱말의 BM25 점수 + 넓힌 낱말의 BM25 점수 × 0.5). 흔한 동사가 질문의 식별자를 누르지 않게 하려는 것입니다. 임베딩 쪽은 `ko-dict`와 같은 글을 받습니다. 민감도(`--dict-weight`, 개발 중에 보지 않은 261문항): BM25(조각) 처음 3개가 사전 없이 51.3, 가중치 0.25 / 0.5 / 0.75 / 1.0(1.0은 그냥 덧붙인 `ko-dict`)에서 55.2 / 57.1 / 57.1 / 55.9라, 정확한 가중치보다 사전이 있느냐가 중요합니다
 - **개발자가 쓴 질문** (`q_ko_native`, `q_ko_native_b`): [native_sheet.py](native_sheet.py)가 개발 중에 한 번도 보지 않은 7개 저장소에서 저장소마다 6개(42개)를 골라, 작성표와 함께 커밋이 바꾼 코드를 파일 이름을 가리고 보여 주는 HTML을 만듭니다. 영어 커밋 제목은 보여 주지 않습니다(보여 주면 번역하게 됨). 개발자가 번역 도구 없이 "이 변경을 에이전트에게 맡긴다면 어떻게 말할지"를 쓰고, 두 번째 개발자가 같은 문항을 따로 쓸 수 있습니다(B). 작성자는 부호로만 적고, 쓴 질문을 공개하는 데 동의를 받습니다. 분석은 [native-plan.md](native-plan.md)에 미리 정해 두었고, `import`는 계획대로 정답 파일 이름이 들어간 질문을 뺍니다
 
@@ -102,7 +104,7 @@ git clone https://github.com/microsoft/vscode <vscode> && git -C <vscode> checko
 VSCODE=<vscode> bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [.venv-aider/bin/python]
 ```
 
-모든 방법이 같은 파일을 보는지 확인하고(`check_files.py`), 한국어 질문을 사전으로 넓힌 뒤, 질문 형태마다 Lantern·구성 요소별 기여·BM25·임베딩·RRF·Aider RepoMap·Lantern+임베딩을 재고, 규모와 비용을 잽니다. 보고서(`results-unseen.md` 주 결과, `results-fresh-repos.md`, `results-dev-repos.md`, `results-all.md`, `results-test.md`), 누출 점검(`leak-check.md`), 시간 측정 원자료(`measurements/`), 논문 표 두 개(`<클론 폴더>/results/bilingual/tables/`)를 씁니다. 모델 API 호출이 없어 무료입니다. LLM이 만든 형태(`q_ko_draft`, `q_ko`, `q_ko_llm`, `q_para`, `q_ko_loan`)와 NLLB 번역(`q_ko_mt`)은 JSON에 저장된 것을 씁니다. `rewrite.py`는 실제 모델 호출로 `q_ko_llm`을 다시 만들고(정가 기준 약 $4), `q_ko_mt_src`를 지우면 `translate.py`가 다시 옮깁니다. CPU에서 처음 임베딩을 만드느라 몇 시간 걸립니다(벡터는 조각 글로 캐시).
+모든 방법이 같은 파일을 보는지 확인하고(`check_files.py`), 한국어 질문을 사전으로 넓힌 뒤, 질문 형태마다 Lantern·구성 요소별 기여·BM25·임베딩·RRF·Aider RepoMap·Lantern+임베딩을 재고, 규모와 비용을 잽니다. 보고서(`results-unseen.md` 주 결과, `results-fresh-repos.md`, `results-dev-repos.md`, `results-all.md`, `results-test.md`), 누출 점검(`leak-check.md`), 시간 측정 원자료(`measurements/`), 논문 표 두 개(`<클론 폴더>/results/bilingual/tables/`)를 씁니다. 모델 API 호출이 없어 무료입니다. LLM이 만든 형태(`q_ko_draft`, `q_ko`, `q_ko_llm`, `q_para`, `q_ko_loan`)와 NLLB 번역(`q_ko_mt`, `q_ko_nllb`)은 JSON에 저장된 것을 씁니다. `rewrite.py`는 실제 모델 호출로 `q_ko_llm`을 다시 만들고(정가 기준 약 $4), `q_ko_mt_src`를 지우면 `translate.py`가 다시 옮깁니다. CPU에서 처음 임베딩을 만드느라 몇 시간 걸립니다(벡터는 조각 글로 캐시).
 
 측정은 Windows 11(Intel Core i5-11400)에서 했고, Windows용 Git은 기본으로 파일을 CRLF 줄바꿈으로 꺼냅니다(`core.autocrlf=true`). 모든 방법이 같은 바이트를 읽으므로 토큰 추정에 CR도 들어갑니다. 다른 운영체제에서 LF로 꺼내면 추정이 조금 작아져, 담기는 맥락과 일부 결과의 끝자리가 달라질 수 있습니다. Lantern은 점수가 같으면 심볼 id로 순서를 정하는데, 이 id가 파일을 색인한 순서에 따라 달라지므로([#139](https://github.com/Lantern-IDE/lantern/issues/139)) `run_all.sh`는 빈 인덱스에서 시작합니다.
 
@@ -112,10 +114,10 @@ VSCODE=<vscode> bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [.ve
 | [../bench/run.mjs](../bench/run.mjs) `--set eval/bilingual` | 키워드 검색 2가지와 Lantern |
 | [check_files.py](check_files.py) | 비교 대상·RepoMap·키워드 검색이 Lantern이 색인하는 파일과 똑같은 파일을 보는지 확인 (`.gitignore`, 숨긴 경로, `vendor/` 등 건너뛰는 폴더, 1 MiB, 바이너리·압축 파일). 저장소마다 기준 커밋과 문항 커밋 3곳에서 |
 | [baselines.py](baselines.py) | BM25(파일·40줄 조각), 다국어 임베딩(multilingual-e5-small. 다른 모델은 `--embed-model BAAI/bge-m3 --tag bgem3`처럼 따로, 4코어로 19시간쯤 걸려 `run_all.sh`에서는 뺌), BM25+임베딩 RRF. 낱말: 식별자는 Lantern처럼 통째로 + 낱말로 쪼갬, 한글은 붙어 있는 덩어리 그대로 (한국어 주석·문자열에만 맞음) |
-| [expand.py](expand.py) | 한국어 질문 + Lantern 사전이 넓힌 영어 낱말(`q_ko_dict`), 사전 적중률 (외래어 형태도) |
+| [expand.py](expand.py) | 한국어 질문 + Lantern 사전이 넓힌 영어 낱말(`q_ko_dict`), 사전 적중률 (외래어·KO-NLLB 형태도) |
 | [rewrite.py](rewrite.py) | KO→LLM 재작성: Claude Code로 질문마다 실제 모델을 한 번씩 부름 (계정 사용량을 씀). 호출마다 결과·시간·토큰·비용을 [measurements/rewrite.json](measurements/rewrite.json)에 남김 |
 | [prompts.md](prompts.md) | LLM 단계마다 쓴 지시문 원문: 한국어 초안, 검토, LLM 재작성, 영어 바꿔 말하기 통제, 외래어 스트레스 테스트 |
-| [ko_rating.py](ko_rating.py) | 저자가 LLM 한국어 질문 30개(무작위)를 고치지 않고 자연스러움·뜻만 평가하는 표. 기준은 [ko-rating-plan.md](ko-rating-plan.md)에 미리 정함 |
+| [ko_rating.py](ko_rating.py) | 한국어 모국어 개발자 두 명(A: 저자, B: 결과를 모르는 사람)이 LLM 한국어 질문 60개(무작위)를 고치지 않고 자연스러움·뜻만 평가하는 표와 일치도(`agree`: Cohen 카파, 자연스러움은 2차 가중). 기준은 [ko-rating-plan.md](ko-rating-plan.md)에 미리 정함 |
 | [native_sheet.py](native_sheet.py) | 사람이 처음부터 쓰는 한국어 질문 표 (`q_ko_native`) |
 | [leak.py](leak.py) | LLM 재작성 누출 점검, [leak-check.md](leak-check.md)에 씀: 새 식별자, 정답 파일 이름, 영어 원문과의 겹침, 모델 학습 시점 전후의 원문 복원 비율(Fisher 정확 검정), 의심 문항을 뺀 처음 3개 |
 | [hybrid_cost.py](hybrid_cost.py) | 같은 CPU에서 BM25+임베딩 혼합의 비용: 모든 조각을 처음부터 임베딩하는 시간, 질문당 시간 ([measurements/hybrid_cost.json](measurements/hybrid_cost.json)) |
@@ -124,7 +126,7 @@ VSCODE=<vscode> bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [.ve
 | [errors.py](errors.py) | Lantern이 영어로만 맞힌 문항. 원인은 [error-analysis.ko.md](error-analysis.ko.md)에서 하나씩 읽고 나눔 (26개 중 16개가 사전에 없는 낱말, 그중 11개가 외래어) |
 | [repomap_baseline.py](repomap_baseline.py) | Aider RepoMap (aider-chat 0.86.2, 질문 낱말을 언급된 식별자로) |
 | [embed_server.py](embed_server.py) | Lantern 의미 검색을 같은 임베딩 모델로 재는 로컬 `/embeddings` 서버 |
-| [translate.py](translate.py) | 한국어 질문 → 영어 기계 번역 (번역한 뒤 검색 비교) |
+| [translate.py](translate.py) | 한국어 질문 → 영어 기계 번역 (번역한 뒤 검색 비교, `q_ko_mt`), KO-NLLB 통제용 영어 → 한국어 (`--to-korean`, `q_ko_nllb`) |
 | [scale.py](scale.py) | 인덱싱 시간·메모리·인덱스 크기·질문당 조립 시간. 반복마다 잰 값은 [measurements/scale.json](measurements/scale.json)에, `--from`으로 다시 재지 않고 표만 만듦 |
 | [report.py](report.py) | Recall@8k, R@10f, A@1/3/5, MRR, 부트스트랩 95% 구간 (문항 단위, 핵심 비교는 저장소 단위도), McNemar와 Holm 보정, 저장소별·문항 묶음별 표, 논문용 LaTeX 표(`--tex`). 보고서는 영어로 씀 |
 
@@ -138,14 +140,15 @@ VSCODE=<vscode> bash eval/bilingual/run_all.sh <저장소를 받을 폴더> [.ve
 | 개발에 안 쓴 저장소, 개발에 쓴 저장소 | `report.py --subset fresh-repos`, `--subset dev-repos` | `results-fresh-repos.md`, `results-dev-repos.md` |
 | 표 II와 Lantern 비용 | `scale.py --json … --tex …` | `measurements/scale.json`, `tables/scale.tex` |
 | 혼합 검색·NLLB·LLM 재작성 비용 | `hybrid_cost.py`, `nllb_cost.py`, `rewrite.py` | `measurements/hybrid_cost.json`, `measurements/nllb.json`, `measurements/rewrite.json` |
-| 사전 적중률 (한국어, 외래어 형태) | `expand.py` | 화면 출력 |
+| 사전 적중률 (한국어, 외래어 형태, KO-NLLB) | `expand.py`, `report.py` | 화면 출력, 보고서의 "Dictionary hit rate" |
+| 다른 모델이 쓴 한국어 (KO-NLLB, 동결 뒤 추가) | `translate.py --to-korean`, `report.py --subset unseen` | `results-unseen.md`의 KO-NLLB 절과 핵심 비교, 계획은 `nllb-ko-plan.md` |
 | 재작성 누출 점검, NLLB가 망가뜨린 식별자 | `leak.py` | `leak-check.md` |
 | 재작성 반복, 저장소 이름 뺀 통제, 모델 학습 시점 전후 | `report.py --subset unseen`, `leak.py` | `results-unseen.md`의 "LLM rewrite runs", `leak-check.md` |
 | 오류 분석 | `errors.py` | `error-analysis.md` (읽고 분류) |
 
 ### 논문용 동결
 
-ICPC 2027 논문의 데이터와 코드는 태그 `icpc2027-eval-v6`에서 동결합니다. 개발자가 쓴 질문처럼 나중에 더하는 것은 따로 보고하고 이 태그와 비교합니다.
+ICPC 2027 논문의 주 결과는 데이터와 코드를 태그 `icpc2027-eval-v6`에서 동결했습니다. 태그 `icpc2027-eval-v7`은 동결 뒤 논문의 마지막 심사가 요구한 것만, 하나씩 미리 계획해 더했습니다: KO-NLLB 통제(번역 전에 계획 커밋), 표 I의 EN-para 열, 짧아진 표 II 캡션, 평가자 2인 평가표. v7에서 v6의 결과는 하나도 바뀌지 않습니다(보고서는 절이 더해졌을 뿐이고 표 I은 열 하나가 늘었을 뿐). 개발자가 쓴 질문이나 평가처럼 나중에 더하는 것도 따로 보고하고 이 태그들과 비교합니다.
 
 ## 개발 중에 한 번도 보지 않은 저장소
 
