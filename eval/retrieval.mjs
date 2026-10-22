@@ -37,9 +37,9 @@ if (!fs.existsSync(PROJECT) || (!GOLDEN && !LIST_FILES)) {
 }
 const LANG = opt("lang", "en");
 const golden = LIST_FILES ? { questions: [] } : JSON.parse(fs.readFileSync(path.resolve(GOLDEN), "utf8"));
-const FIELD = { en: "q", "en-para": "q_para", ko: "q_ko", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-dict": "q_ko_dict", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native", "ko-native-b": "q_ko_native_b" }[LANG];
+const FIELD = { en: "q", "en-para": "q_para", ko: "q_ko", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-dict": "q_ko_dict", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native", "ko-native-b": "q_ko_native_b", "ko-llm2": "q_ko_llm_2", "ko-llm3": "q_ko_llm_3", "ko-llm-norepo": "q_ko_llm_norepo" }[LANG];
 if (!FIELD) {
-  console.error(`--lang은 en, en-para, ko, ko-mt, ko-llm, ko-dict, ko-loan, ko-native, ko-native-b 중 하나: ${LANG}`);
+  console.error(`--lang은 en, en-para, ko, ko-mt, ko-llm, ko-llm2, ko-llm3, ko-llm-norepo, ko-dict, ko-loan, ko-native, ko-native-b 중 하나: ${LANG}`);
   process.exit(2);
 }
 const questions = golden.questions
@@ -233,7 +233,7 @@ fs.writeFileSync(path.join(OUT, `retrieval-${stamp}.json`), JSON.stringify({ pro
 const md = [
   `# 맥락 적중률 (${stamp})`,
   "",
-  `프로젝트 \`${path.basename(PROJECT)}\` · 코드 파일 ${files.length}개 · 질문 ${rows.length}개${{ en: "", "en-para": " (영어 바꿔 말하기)", ko: " (한국어)", "ko-mt": " (한국어 → 기계 번역)", "ko-llm": " (한국어 → LLM 재작성)", "ko-dict": " (한국어 + 사전)", "ko-loan": " (외래어를 많이 쓴 한국어)", "ko-native": " (사람이 쓴 한국어)", "ko-native-b": " (사람이 쓴 한국어, 두 번째 작성자)" }[LANG]} · 예산 ${BUDGET} 토큰 · 모델 호출 없음`,
+  `프로젝트 \`${path.basename(PROJECT)}\` · 코드 파일 ${files.length}개 · 질문 ${rows.length}개${{ en: "", "en-para": " (영어 바꿔 말하기)", ko: " (한국어)", "ko-mt": " (한국어 → 기계 번역)", "ko-llm": " (한국어 → LLM 재작성)", "ko-dict": " (한국어 + 사전)", "ko-loan": " (외래어를 많이 쓴 한국어)", "ko-native": " (사람이 쓴 한국어)", "ko-native-b": " (사람이 쓴 한국어, 두 번째 작성자)", "ko-llm2": " (한국어 → LLM 재작성 2)", "ko-llm3": " (한국어 → LLM 재작성 3)", "ko-llm-norepo": " (한국어 → LLM 재작성, 저장소 이름 없이)" }[LANG]} · 예산 ${BUDGET} 토큰 · 모델 호출 없음`,
   "",
   "정답 파일: 질문에 답하려면 꼭 봐야 하는 파일. 같은 예산에서 각 방식이 정답 파일을 몇 개 가져오는지 잰다.",
   "- 키워드 검색: 질문의 단어로 grep → 많이 맞은 파일부터 통째로 읽기",

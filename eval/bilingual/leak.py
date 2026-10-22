@@ -6,6 +6,7 @@
 - 정답 파일 이름: 정답 파일 이름(확장자 뺌)이 한국어 질문에는 없고 재작성에만 나온 문항
 - 원문과의 거리: 영어 원문(커밋 제목)과 낱말이 얼마나 겹치는지 (Jaccard), 기계 번역(q_ko_mt)과 비교
 - 기억 점검: 원문과 똑같은 재작성의 비율을 모델 학습 데이터 시점 전후 커밋으로 나눠 Fisher 정확 검정
+- 실행별 요약: 같은 설정으로 다시 부른 재작성(q_ko_llm_2, q_ko_llm_3)과 저장소 이름을 뺀 통제(q_ko_llm_norepo)도 같은 기준으로
 --dir를 주면 누출 의심 문항이나 원문과 똑같은 재작성을 뺀 나머지에서 BM25+임베딩 RRF와 Lantern+임베딩의 A@3도 다시 계산한다.
 """
 
@@ -19,9 +20,9 @@ import re
 from baselines import HERE, terms
 
 IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+|[A-Za-z0-9]*[a-z][A-Z][A-Za-z0-9]*|[A-Za-z0-9]+_[A-Za-z0-9_]+|[A-Za-z_][A-Za-z0-9_]*\(\)")
-
-
 NOT_IDENT = {"e.g", "i.e"}  # 점이 붙은 이름 모양이지만 식별자가 아닌 것
+# 재작성 필드와 그 질문 형태 이름 (baselines.py·run.mjs의 --lang)
+RUNS = [("q_ko_llm", "ko-llm", "run 1"), ("q_ko_llm_2", "ko-llm2", "run 2"), ("q_ko_llm_3", "ko-llm3", "run 3"), ("q_ko_llm_norepo", "ko-llm-norepo", "no repo")]
 
 
 def idents(text):
@@ -45,6 +46,25 @@ def fisher(a, n1, b, n2):
     return min(1.0, sum(prob(x) for x in range(max(0, k - n2), min(k, n1) + 1) if prob(x) <= p0 * (1 + 1e-9)))
 
 
+def collect(set_dir, seen, field):
+    rows = []
+    for f in sorted(glob.glob(os.path.join(set_dir, "*.json"))):
+        with open(f, encoding="utf-8") as fh:
+            s = json.load(fh)
+        for q in s["questions"]:
+            if q["commit"] in seen or not q.get(field):
+                continue
+            ko, llm = q["q_ko"], q[field]
+            ko_l = ko.lower()
+            new_ids = sorted(i for i in idents(llm) if i not in ko_l)
+            gold_leak = sorted(stem(g) for g in q["golden"] if re.search(rf"\b{re.escape(stem(g))}\b", llm.lower()) and stem(g) not in ko_l)
+            rows.append({"project": s["project"], "commit": q["commit"], "ko": ko, "llm": llm, "new_ids": new_ids, "gold_leak": gold_leak,
+                         "ko_ids": sorted(idents(ko)), "mt": q.get("q_ko_mt"), "words": len(llm.split()),
+                         "date": q.get("date") or "", "j_llm": jaccard(llm, q["q"]), "j_mt": jaccard(q.get("q_ko_mt"), q["q"]),
+                         "same": llm.strip().lower().rstrip(".") == q["q"].strip().lower().rstrip(".")})
+    return rows
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default=None)
@@ -58,20 +78,7 @@ def main():
         for f in glob.glob(os.path.join(HERE, "..", "bench", "*.json")):
             with open(f, encoding="utf-8") as fh:
                 seen |= {q["commit"] for q in json.load(fh)["questions"]}
-    rows = []
-    for f in sorted(glob.glob(os.path.join(a.set, "*.json"))):
-        with open(f, encoding="utf-8") as fh:
-            s = json.load(fh)
-        for q in s["questions"]:
-            if q["commit"] in seen or not q.get("q_ko_llm"):
-                continue
-            ko, llm = q["q_ko"], q["q_ko_llm"]
-            ko_l = ko.lower()
-            new_ids = sorted(i for i in idents(llm) if i not in ko_l)
-            gold_leak = sorted(stem(g) for g in q["golden"] if re.search(rf"\b{re.escape(stem(g))}\b", llm.lower()) and stem(g) not in ko_l)
-            rows.append({"project": s["project"], "commit": q["commit"], "ko": ko, "llm": llm, "new_ids": new_ids, "gold_leak": gold_leak,
-                         "ko_ids": sorted(idents(ko)), "mt": q.get("q_ko_mt"),
-                         "date": q.get("date") or "", "j_llm": jaccard(llm, q["q"]), "j_mt": jaccard(q.get("q_ko_mt"), q["q"]), "same": llm.strip().lower().rstrip(".") == q["q"].strip().lower().rstrip(".")})
+    rows = collect(a.set, seen, "q_ko_llm")
     n = len(rows)
     ids = [r for r in rows if r["new_ids"]]
     gold = [r for r in rows if r["gold_leak"]]
@@ -99,32 +106,33 @@ def main():
             out.append(f"    - commits {label} the model's training cutoff ({a.cutoff}): {k}/{len(part)} ({k / len(part) * 100:.1f}%)")
     if before and after:
         out.append(f"    - Fisher's exact test, two-sided: p = {fisher(sum(r['same'] for r in before), len(before), sum(r['same'] for r in after), len(after)):.2f}")
-    if a.dir:
-        rdir = os.path.join(a.dir, "results", os.path.basename(os.path.normpath(a.set)))
 
-        def baseline(lang):
-            res = {}
-            for f in glob.glob(os.path.join(rdir, "baselines", f"*-{lang}.json")):
-                with open(f, encoding="utf-8") as fh:
-                    b = json.load(fh)
-                if b["lang"] != lang:
-                    continue
-                for row in b["rows"]:
-                    res[row["commit"]] = any(g in row["methods"]["hybrid"]["files"][:3] for g in row["golden"])
-            return res
+    rdir = os.path.join(a.dir, "results", os.path.basename(os.path.normpath(a.set))) if a.dir else None
 
-        def lantern(sub, lang):
-            res = {}
-            suffix = "" if lang == "en" else f"-{lang}"
-            for proj in sorted({r["project"] for r in rows}):
-                fs = sorted(glob.glob(os.path.join(rdir, sub, f"retrieval-{proj}{suffix}-2*.json")))
-                if fs:
-                    with open(fs[-1], encoding="utf-8") as fh:
-                        for row in json.load(fh)["rows"]:
-                            res[row["commit"]] = any(g in row["lantern"]["files"][:3] for g in row["golden"])
-            return res
+    def baseline(lang):
+        res = {}
+        for f in glob.glob(os.path.join(rdir, "baselines", f"*-{lang}.json")):
+            with open(f, encoding="utf-8") as fh:
+                b = json.load(fh)
+            if b["lang"] != lang:
+                continue
+            for row in b["rows"]:
+                res[row["commit"]] = any(g in row["methods"]["hybrid"]["files"][:3] for g in row["golden"])
+        return res
 
-        acc = lambda res, cs: f"{sum(res[c] for c in cs) / len(cs) * 100:.1f}" if cs and all(c in res for c in cs) else "--"  # noqa: E731
+    def lantern(sub, lang):
+        res = {}
+        suffix = "" if lang == "en" else f"-{lang}"
+        for proj in sorted({r["project"] for r in rows}):
+            fs = sorted(glob.glob(os.path.join(rdir, sub, f"retrieval-{proj}{suffix}-2*.json")))
+            if fs:
+                with open(fs[-1], encoding="utf-8") as fh:
+                    for row in json.load(fh)["rows"]:
+                        res[row["commit"]] = any(g in row["lantern"]["files"][:3] for g in row["golden"])
+        return res
+
+    acc = lambda res, cs: f"{sum(res[c] for c in cs) / len(cs) * 100:.1f}" if cs and all(c in res for c in cs) else "--"  # noqa: E731
+    if rdir:
         forms = {"hybrid": {lang: baseline(lang) for lang in ("en", "ko", "ko-llm")}, "lantern-sem": {lang: lantern("lantern-sem", lang) for lang in ("en", "ko", "ko-llm")}}
         allc = [r["commit"] for r in rows]
         suspect = {r["commit"] for r in ids + gold}
@@ -134,6 +142,28 @@ def main():
                 "| Questions | n | hybrid EN | hybrid KO | hybrid KO→LLM | Lantern + Dense EN | Lantern + Dense KO | Lantern + Dense KO→LLM |", "|---|---|---|---|---|---|---|---|"]
         for label, cs in (("all", allc), ("without rewrites that add an identifier or gold file name", clean), ("without rewrites identical to the subject", rest)):
             out.append(f"| {label} | {len(cs)} | " + " | ".join(acc(forms[m][lang], cs) for m in ("hybrid", "lantern-sem") for lang in ("en", "ko", "ko-llm")) + " |")
+
+    # 실행별 요약: 같은 설정으로 다시 부른 재작성과 저장소 이름을 뺀 통제
+    summary = [(label, lang, collect(a.set, seen, field)) for field, lang, label in RUNS]
+    summary = [x for x in summary if x[2]]
+    if len(summary) > 1:
+        out += ["", "## Runs of the rewrite and the no-repository control", "",
+                f"Suspect = adds a code identifier or names a gold file that is not in the Korean question. Before/after = commits before or after the model's training cutoff ({a.cutoff}).", "",
+                "| Run | n | words (mean) | adds identifier | names gold file | suspect | suspect before / after | verbatim subject | hybrid A@3 | hybrid A@3 without suspect (EN on same) |",
+                "|---|---|---|---|---|---|---|---|---|---|"]
+        en = baseline("en") if rdir else {}
+        for label, lang, rs in summary:
+            sus = {r["commit"] for r in rs if r["new_ids"] or r["gold_leak"]}
+            b = [r for r in rs if r["date"] < a.cutoff]
+            af = [r for r in rs if r["date"] >= a.cutoff]
+            sb = sum(r["commit"] in sus for r in b)
+            sa = sum(r["commit"] in sus for r in af)
+            cs = [r["commit"] for r in rs]
+            clean = [c for c in cs if c not in sus]
+            hyb = baseline(lang) if rdir else {}
+            out.append(f"| {label} | {len(rs)} | {sum(r['words'] for r in rs) / len(rs):.1f} | {sum(bool(r['new_ids']) for r in rs)} | {sum(bool(r['gold_leak']) for r in rs)} | "
+                       f"{len(sus)} | {sb}/{len(b)} vs {sa}/{len(af)} (p = {fisher(sb, len(b), sa, len(af)):.2f}) | {sum(r['same'] for r in rs)} | "
+                       f"{acc(hyb, cs) if rdir else '--'} | {acc(hyb, clean) if rdir else '--'} ({acc(en, clean) if rdir else '--'}) |")
     text = "\n".join(out)
     print(text)
     if a.md:

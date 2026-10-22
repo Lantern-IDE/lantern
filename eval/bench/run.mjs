@@ -22,6 +22,8 @@ const BUDGET = opt("budget", "8000");
 const SET = path.resolve(opt("set", HERE));
 const LANGS = opt("langs", "en,ko").split(",");
 const LANTERN = opt("lantern", "");
+// --summarize: 다시 재지 않고 결과 폴더에 있는 가장 최근 결과로 결과.md만 다시 쓴다 (질문 형태를 나눠 잰 뒤 한 표로 모을 때)
+const SUMMARIZE = argv.includes("--summarize");
 // 기본 세트(eval/bench)가 아니면 세트 이름의 하위 폴더에 (결과가 섞이지 않게)
 const RESULTS = SET === HERE ? path.join(DIR, "results") : path.join(DIR, "results", path.basename(SET));
 fs.mkdirSync(RESULTS, { recursive: true });
@@ -31,26 +33,29 @@ const table = [];
 for (const f of sets) {
   const set = JSON.parse(fs.readFileSync(path.join(SET, f), "utf8"));
   const repo = path.join(DIR, set.project);
-  if (!fs.existsSync(path.join(repo, ".git"))) {
+  if (!SUMMARIZE && !fs.existsSync(path.join(repo, ".git"))) {
     console.log(`${set.url} 받는 중…`);
     execFileSync("git", ["-c", "core.longpaths=true", "clone", "-q", "--filter=blob:none", "--no-checkout", set.url, repo], { stdio: "inherit" });
     execFileSync("git", ["-C", repo, "config", "core.longpaths", "true"]);
   }
-  execFileSync("git", ["-C", repo, "checkout", "-q", "-f", "--detach", set.ref], { stdio: "inherit" });
-  const field = { en: "q", "en-para": "q_para", ko: "q_ko", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-dict": "q_ko_dict", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native", "ko-native-b": "q_ko_native_b" };
+  if (!SUMMARIZE) execFileSync("git", ["-C", repo, "checkout", "-q", "-f", "--detach", set.ref], { stdio: "inherit" });
+  const field = { en: "q", "en-para": "q_para", ko: "q_ko", "ko-mt": "q_ko_mt", "ko-llm": "q_ko_llm", "ko-dict": "q_ko_dict", "ko-loan": "q_ko_loan", "ko-native": "q_ko_native", "ko-native-b": "q_ko_native_b", "ko-llm2": "q_ko_llm_2", "ko-llm3": "q_ko_llm_3", "ko-llm-norepo": "q_ko_llm_norepo" };
   for (const lang of LANGS.filter((l) => set.questions.some((q) => q[field[l]]))) {
-    console.log(`\n== ${set.project} (${lang})`);
-    const extra = LANTERN ? ["--lantern", LANTERN] : [];
-    execFileSync("node", [path.join(HERE, "..", "retrieval.mjs"), "--project", repo, "--golden", path.join(SET, f), "--budget", BUDGET, "--out", RESULTS, "--lang", lang, ...extra], { stdio: "inherit" });
+    if (!SUMMARIZE) {
+      console.log(`\n== ${set.project} (${lang})`);
+      const extra = LANTERN ? ["--lantern", LANTERN] : [];
+      execFileSync("node", [path.join(HERE, "..", "retrieval.mjs"), "--project", repo, "--golden", path.join(SET, f), "--budget", BUDGET, "--out", RESULTS, "--lang", lang, ...extra], { stdio: "inherit" });
+    }
     // retrieval-<프로젝트>[-ko]-<시각>.json (영어 쪽이 한국어 파일을 집지 않게 시각 앞까지 정확히 맞춘다)
     const name = new RegExp(`^retrieval-${set.project.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}${lang === "en" ? "" : `-${lang}`}-\\d{4}-.*\\.json$`);
     const latest = fs.readdirSync(RESULTS).filter((x) => name.test(x)).sort().pop();
+    if (!latest) continue; // --summarize: 아직 재지 않은 형태
     const r = JSON.parse(fs.readFileSync(path.join(RESULTS, latest), "utf8"));
     table.push({ project: set.project, url: set.url, ref: set.ref, lang, n: r.rows.length, s: r.summary });
   }
 }
 
-const LANG_LABEL = { en: "영어", "en-para": "영어 바꿔 말하기", ko: "한국어", "ko-mt": "한국어→번역", "ko-llm": "한국어→LLM 재작성", "ko-dict": "한국어+사전", "ko-loan": "외래어 한국어", "ko-native": "사람이 쓴 한국어", "ko-native-b": "사람이 쓴 한국어(B)" };
+const LANG_LABEL = { en: "영어", "en-para": "영어 바꿔 말하기", ko: "한국어", "ko-mt": "한국어→번역", "ko-llm": "한국어→LLM 재작성", "ko-dict": "한국어+사전", "ko-loan": "외래어 한국어", "ko-native": "사람이 쓴 한국어", "ko-native-b": "사람이 쓴 한국어(B)", "ko-llm2": "한국어→LLM 재작성 2", "ko-llm3": "한국어→LLM 재작성 3", "ko-llm-norepo": "한국어→LLM (저장소 이름 없이)" };
 const pct = (x) => `${Math.round(x * 100)}%`;
 const avg = (rows, f) => rows.reduce((n, r) => n + f(r), 0) / rows.length;
 const line = (label, rows) =>
