@@ -146,7 +146,7 @@ All methods get the same 8,000-token budget and the same files (the engine's fil
 
 ### Frozen for the paper
 
-Data and code for the main results are frozen at tag `icpc2027-eval-v6` for the ICPC 2027 paper. Tag `icpc2027-eval-v7` adds, after the freeze, only what the paper's last review asked for, each planned before it was run: the KO-NLLB control (plan committed before any translation), the EN-para column in Table I, a shorter caption for Table II, and the two-rater sheet. No v6 result changes in v7: the reports differ only by added sections, and Table I only by the new column. Anything added later, such as developer-written questions or ratings, will be reported separately and compared against these tags.
+Data and code for the main results are frozen at tag `icpc2027-eval-v6` for the ICPC 2027 paper. Tag `icpc2027-eval-v7` adds, after the freeze, only what the paper's last review asked for, each planned before it was run: the KO-NLLB control (plan committed before any translation), the EN-para column in Table I, a shorter caption for Table II, and the two-rater sheet. No v6 result changes in v7: the reports differ only by added sections, and Table I only by the new column. Tag `icpc2027-eval-v8` only adds the KO-NLLB column to the paper's Table I (the `--tex` output of `report.py`, as a second review suggested) and rewords its caption; data and reports are those of v7. Anything added later, such as developer-written questions or ratings, will be reported separately and compared against these tags.
 
 ## Repositories never used during development
 
