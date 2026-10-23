@@ -88,7 +88,8 @@ TEX_LABEL = {
 }
 SUBSET_TEX = {"all": "all questions", "unseen": "questions not used during development", "fresh-repos": "repositories not used during development", "dev-repos": "unseen questions from the development repositories", "test": "test split", "dev": "dev split", "2026": "2026 commits"}
 # 논문 표의 사전 열은 Lantern과 같은 결합(절반 가중, ko-dictw). 그냥 덧붙인 ko-dict는 보고서(md)에만
-TEX_LANG = {"en": "EN", "en-para": "EN-para", "ko": "KO", "ko-dictw": "KO+dict", "ko-mt": "KO$\\to$MT", "ko-llm": "KO$\\to$LLM"}
+# KO-NLLB(동결 뒤 추가한 통제)는 결론의 근거라 2차 심사 권고대로 논문 표에도 둔다
+TEX_LANG = {"en": "EN", "en-para": "EN-para", "ko": "KO", "ko-dictw": "KO+dict", "ko-mt": "KO$\\to$MT", "ko-llm": "KO$\\to$LLM", "ko-nllb": "KO-NLLB"}
 
 
 def tex_table(res, keep, order, subset):
@@ -110,9 +111,9 @@ def tex_table(res, keep, order, subset):
         "\\centering",
         # IEEEtran 표 캡션은 작은 대문자라 대소문자를 가리는 이름은 \textup으로 감싼다
         f"\\caption{{File-level retrieval within an 8k-token budget: top-3 accuracy (A@3, \\%) and MRR ({SUBSET_TEX[subset]}, $n={n}$). "
-        "Columns: the question each method gets: English, English reworded by the LLM that wrote the Korean (\\textup{EN-para}), Korean, Korean plus Lantern's dictionary terms "
-        "(\\textup{KO+dict}: half weight for BM25, appended for dense; compare with Lantern's KO), translated by NLLB or rewritten by an LLM. "
-        "Indented rows remove one Lantern component; --: not run.}",
+        "Columns are the question forms: English, English reworded by the LLM that wrote the Korean (\\textup{EN-para}), Korean, Korean plus Lantern's dictionary terms "
+        "(\\textup{KO+dict}: half weight for BM25, appended for dense; compare with Lantern's KO), Korean translated by NLLB or rewritten by an LLM, "
+        "and the English translated into Korean by NLLB instead (\\textup{KO-NLLB}, post hoc). Indented rows remove one Lantern component; --: not run.}",
         "\\label{tab:results}",
         "\\setlength{\\tabcolsep}{3pt}",
         "\\begin{tabular}{l" + "rr" * len(langs) + "}",
