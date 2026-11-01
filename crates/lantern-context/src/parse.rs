@@ -58,7 +58,7 @@ impl Parser {
     }
 
     pub fn parse(&mut self, lang: Lang, src: &[u8]) -> Result<Parsed> {
-        let cfg = self.configs.get(lang);
+        let cfg = self.configs.get(lang)?;
         let lines = LineIndex::new(src);
         let mut defs: Vec<RawDef> = Vec::new();
         let mut raw_refs: Vec<(String, String, usize)> = Vec::new();
