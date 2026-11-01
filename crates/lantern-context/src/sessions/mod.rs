@@ -135,7 +135,9 @@ fn apply_replace(text: &str, r: &Replace) -> Option<String> {
         return text.is_empty().then(|| r.new.clone());
     }
     let run = |t: &str, old: &str, new: &str| {
-        if !t.contains(old) {
+        let times = if r.all { t.matches(old).count() } else { usize::from(t.contains(old)) };
+        // 전체 치환을 되풀이하면 작은 로그로도 본문이 배로 불어난다. 로그 한 줄에 담기지 못할 크기는 만들지 않는다
+        if times == 0 || (t.len() - times * old.len()).saturating_add(times.saturating_mul(new.len())) > MAX_LINE {
             None
         } else if r.all {
             Some(t.replace(old, new))
@@ -157,6 +159,10 @@ fn apply_hunks(text: &str, hunks: &[Hunk]) -> Option<String> {
     let mut out: Vec<&str> = Vec::with_capacity(lines.len());
     let mut at = 0;
     for h in hunks {
+        // 모르는 앞 글자는 형식이 바뀐 것이다. 어느 줄에 붙는지 몰라 적용하지 않고 본문을 모르는 편집으로 둔다
+        if h.lines.iter().any(|l| !matches!(l.as_bytes().first(), None | Some(b' ' | b'-' | b'+' | b'\\'))) {
+            return None;
+        }
         let old: Vec<&str> = h
             .lines
             .iter()
@@ -485,7 +491,9 @@ impl Scope {
         self.roots.iter().find_map(|root| {
             let want: Vec<&str> = root.split('/').collect();
             let matched = segs.len() >= want.len() && want.iter().zip(&segs).all(|(a, b)| same_segment(a, b));
-            matched.then(|| segs[want.len()..].join("/"))
+            // Windows에서 `C:`가 낀 경로는 `root.join`이 통째로 바꿔 저장소 밖을 가리킨다
+            let escapes = cfg!(windows) && matched && segs[want.len()..].iter().any(|s| s.contains(':'));
+            (matched && !escapes).then(|| segs[want.len()..].join("/"))
         })
     }
 
@@ -1077,6 +1085,25 @@ mod tests {
     }
 
     #[test]
+    fn hunks_with_unknown_prefixes_are_refused_not_a_panic() {
+        for (text, lines) in [("", &["zzz"][..]), ("a\nb", &[" a", "-b", "+c", "EOF"][..]), ("a\n", &["EOF"][..]), ("a\n", &[" a", "한글"][..])] {
+            let patch = Patch { hunks: vec![hunk(Some(1), lines)], ..Patch::default() };
+            assert!(apply_patch(text, &patch).is_none(), "{lines:?}");
+        }
+    }
+
+    #[test]
+    fn replace_refuses_results_over_the_line_limit() {
+        let text = "x".repeat(1024);
+        let big = "y".repeat(16 * 1024);
+        assert!(apply_patch(&text, &replace("x", &big, true)).is_none());
+        // 줄어드는 치환은 크기와 상관없다
+        assert_eq!(apply_patch(&text, &replace("x", "", true)).unwrap(), "");
+        // 한 번만 바꾸면 안 불어난다
+        assert_eq!(apply_patch(&text, &replace("x", &big, false)).unwrap().len(), 1023 + big.len());
+    }
+
+    #[test]
     fn scope_compares_segments_with_slashes_normalized() {
         let scope = Scope::new([PathBuf::from("/work/repo")]);
         assert_eq!(scope.relative(Path::new("/work/repo/src/a.rs")).as_deref(), Some("src/a.rs"));
@@ -1104,6 +1131,16 @@ mod tests {
         }
         assert!(scope.relative(Path::new(r"C:\Users\Me\Repo2\a.rs")).is_none());
         assert_eq!(path_key(Path::new(r"C:\A\b.rs")), path_key(Path::new("c:/a/B.RS")));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn scope_refuses_paths_that_a_join_would_send_outside() {
+        let scope = Scope::new([PathBuf::from(r"C:\Users\Me\Repo")]);
+        for p in ["C:/Users/Me/Repo/C:/x.py", "C:/Users/Me/Repo/src/D:/x.py", "C:/Users/Me/Repo/a.py:stream"] {
+            assert!(scope.relative(Path::new(p)).is_none(), "{p}");
+            assert!(!scope.contains(Path::new(p)), "{p}");
+        }
     }
 
     #[test]

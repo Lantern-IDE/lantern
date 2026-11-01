@@ -138,11 +138,12 @@ pub(super) fn parse_file(path: &Path, c: &mut Collector<'_>) {
             Line::Text(b) => on_line(b, &mut pending, c),
         }
     }
-    // 결과가 없는 편집은 적용됐는지 모른다. 건드렸다고는 치되 본문은 믿지 않는다
+    // 결과가 없는 편집은 적용됐는지 모른다. 건드렸다고는 치되 본문은 믿지 않는다.
+    // `None`이면 앞 편집의 본문이 끝 상태로 남으니, 내용을 모르는 변경으로 남겨 git에서 보게 한다
     for p in pending.values() {
         if let Some(i) = p.event {
             if c.out.events[i].op == Op::Edit {
-                c.out.events[i].edit = None;
+                c.out.events[i].edit = Some(EditDetail::default());
             }
         }
     }
@@ -638,8 +639,63 @@ mod tests {
     #[test]
     fn edit_without_result_keeps_no_text() {
         let s = run(&[tool_use(1, "Write", json!({"file_path": "/work/repo/a.rs", "content": "fn a() {}"}))]);
-        assert_eq!((s.events[0].ok, s.events[0].edit.is_none()), (None, true));
+        let d = s.events[0].edit.as_ref().unwrap();
+        assert_eq!((s.events[0].ok, d.before.is_none(), d.after.is_none(), d.patch.is_none()), (None, true, true, true));
         assert_eq!(s.touched_paths().len(), 1);
+        assert!(s.file_changes()[0].opaque);
+    }
+
+    #[test]
+    fn lost_result_does_not_leave_the_earlier_text_as_the_end() {
+        let s = run(&[
+            tool_use(1, "Write", json!({"file_path": "/work/repo/a.rs", "content": "fn second() {}\n"})),
+            tool_result(1, false, Some(json!({"type": "update", "filePath": "/work/repo/a.rs", "content": "fn second() {}\n", "originalFile": "fn first() {}\n"}))),
+            // 결과 줄이 잘렸다
+            tool_use(2, "Write", json!({"file_path": "/work/repo/a.rs", "content": "fn third() {}\n"})),
+        ]);
+        let changes = s.file_changes();
+        let fc = &changes[0];
+        assert_eq!((fc.before, fc.after, fc.opaque, fc.edits), (Some("fn first() {}\n"), None, true, 2));
+        assert_eq!(fc.resolve(None), None, "끝 상태는 git에서 봐야 한다");
+
+        // 그 뒤에 온전한 편집이 있으면 다시 안다
+        let s = run(&[
+            tool_use(1, "Write", json!({"file_path": "/work/repo/a.rs", "content": "lost\n"})),
+            tool_use(2, "Write", json!({"file_path": "/work/repo/a.rs", "content": "known\n"})),
+            tool_result(2, false, Some(json!({"type": "update", "filePath": "/work/repo/a.rs", "content": "known\n", "originalFile": "lost\n"}))),
+        ]);
+        let changes = s.file_changes();
+        assert_eq!((changes[0].after, changes[0].opaque), (Some("known\n"), false));
+    }
+
+    #[test]
+    fn hunk_with_an_unknown_prefix_is_counted_not_fatal() {
+        for (original, lines) in [("", vec!["zzz"]), ("a\nb", vec![" a", "-b", "+c", "EOF"])] {
+            let s = run(&[
+                tool_use(1, "Edit", json!({"file_path": "/work/repo/a.rs", "old_string": "gone", "new_string": "z"})),
+                tool_result(1, false, Some(json!({"originalFile": original, "oldString": "gone", "newString": "z", "structuredPatch": [{"oldStart": 1, "lines": lines}]}))),
+            ]);
+            assert_eq!(s.events[0].edit.as_ref().unwrap().after, None);
+            assert_eq!(s.after_failed, 1);
+        }
+    }
+
+    #[test]
+    fn doubling_replace_all_stops_at_the_line_limit() {
+        let path = "/work/repo/a.rs";
+        let mut lines = vec![
+            tool_use(1, "Write", json!({"file_path": path, "content": "x"})),
+            tool_result(1, false, Some(json!({"type": "update", "filePath": path, "content": "x", "originalFile": ""}))),
+        ];
+        // 한 번에 배가 되는 치환 28번. 끝까지 하면 268MB다. 이 시험이 망가져도 PC가 버티게 글자 하나에서 시작한다
+        for n in 2..30 {
+            lines.push(tool_use(n, "Edit", json!({"file_path": path, "old_string": "x", "new_string": "xx", "replace_all": true})));
+            lines.push(tool_result(n, false, Some(json!({"filePath": path, "oldString": "x", "newString": "xx", "originalFile": null, "replaceAll": true}))));
+        }
+        let s = run(&lines);
+        let longest = s.events.iter().filter_map(|e| e.edit.as_ref()?.after.as_ref()).map(String::len).max().unwrap_or(0);
+        assert!(longest <= MAX_LINE, "{longest}");
+        assert!(s.after_failed > 0);
     }
 
     #[test]
