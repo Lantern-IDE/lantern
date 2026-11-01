@@ -86,11 +86,7 @@ impl Engine {
     /// 인덱스를 지우고 새로 만든다.
     pub fn open_fresh(root: &Path) -> Result<Self> {
         let db = index_path(&std::path::absolute(root)?)?;
-        for suffix in ["", "-wal", "-shm"] {
-            let mut p = db.clone().into_os_string();
-            p.push(suffix);
-            let _ = std::fs::remove_file(p);
-        }
+        let _ = store::remove_db(&db);
         Self::open(root)
     }
 

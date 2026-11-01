@@ -79,6 +79,9 @@ CREATE TABLE IF NOT EXISTS vectors(
 
 const TABLES: &[&str] = &["meta", "files", "symbols", "refs", "symbols_fts", "cochange"];
 
+/// 이름만 담는 인덱스의 표시
+const NAMES_ONLY_KEY: &str = "names_only";
+
 const SYMBOL_COLS: &str = "s.id, s.file_id, f.path, f.lang, s.name, s.kind, s.start_line, s.end_line, \
      s.start_byte, s.end_byte, s.signature, s.doc";
 
@@ -150,6 +153,31 @@ pub struct Stats {
 
 pub struct Store {
     conn: Connection,
+    /// 심볼 이름과 위치, 참조만 저장한다. 시그니처, 설명, 본문은 비워 코드와 비밀 값이 파일에 남지 않는다
+    names_only: bool,
+}
+
+/// 인덱스 파일과 그 곁 파일을 지운다. 하나라도 지웠으면 true
+pub fn remove_db(path: &Path) -> std::io::Result<bool> {
+    let (mut removed, mut failed) = (false, None);
+    for suffix in ["", "-wal", "-shm"] {
+        let mut p = path.as_os_str().to_owned();
+        p.push(suffix);
+        match std::fs::remove_file(&p) {
+            Ok(()) => removed = true,
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => failed = Some(e),
+        }
+    }
+    failed.map_or(Ok(removed), Err)
+}
+
+/// 다른 프로세스가 쓰고 있어서 난 오류인가
+pub fn is_busy(e: &anyhow::Error) -> bool {
+    matches!(
+        e.downcast_ref::<rusqlite::Error>(),
+        Some(rusqlite::Error::SqliteFailure(f, _)) if matches!(f.code, rusqlite::ErrorCode::DatabaseBusy | rusqlite::ErrorCode::DatabaseLocked)
+    )
 }
 
 impl Store {
@@ -159,6 +187,29 @@ impl Store {
 
     pub fn open_in_memory() -> Result<Self> {
         Self::init(Connection::open_in_memory()?)
+    }
+
+    /// 이름만 담는 인덱스를 연다. 사용자가 고르지 않은 곳(데이터 폴더)에 둘 때 쓴다.
+    /// 표시 없이 내용이 있는 파일은 본문이 들어 있을 수 있어 통째로 지우고 새로 만든다
+    pub fn open_names_only(path: &Path) -> Result<Self> {
+        let mut store = Self::open(path)?;
+        if store.meta(NAMES_ONLY_KEY)?.is_none() {
+            let filled: i64 = store.conn.query_row("SELECT COUNT(*) FROM files", [], |r| r.get(0))?;
+            if filled > 0 {
+                drop(store);
+                remove_db(path)?;
+                store = Self::open(path)?;
+            }
+            store.set_meta(NAMES_ONLY_KEY, "1")?;
+        }
+        store.names_only = true;
+        Ok(store)
+    }
+
+    /// 다른 프로세스가 쓰는 동안 기다리는 시간
+    pub fn set_busy_wait(&self, wait: std::time::Duration) -> Result<()> {
+        self.conn.busy_timeout(wait)?;
+        Ok(())
     }
 
     fn init(conn: Connection) -> Result<Self> {
@@ -183,11 +234,12 @@ impl Store {
         }
         // 의미 검색 벡터는 다시 인덱싱해도 남긴다 (내용 해시 기준이라 그대로 쓸 수 있고, 다시 만들기 비싸다)
         conn.execute_batch(SEMANTIC_SCHEMA)?;
-        Ok(Self { conn })
+        Ok(Self { conn, names_only: false })
     }
 
+    /// 쓰기 트랜잭션을 시작한다. 그냥 `BEGIN`은 읽은 뒤 쓸 때 다른 쓰는 쪽을 기다리지 않고 바로 실패하니 먼저 잠근다
     pub fn begin(&self) -> Result<()> {
-        self.conn.execute_batch("BEGIN")?;
+        self.conn.execute_batch("BEGIN IMMEDIATE")?;
         Ok(())
     }
 
@@ -298,6 +350,7 @@ impl Store {
         )?;
         let mut ids = Vec::with_capacity(parsed.symbols.len());
         for s in &parsed.symbols {
+            let (signature, doc, terms, body) = if self.names_only { ("", None, "", "") } else { (s.signature.as_str(), s.doc.as_deref(), s.terms.as_str(), s.body.as_str()) };
             ins_sym.execute(params![
                 file_id,
                 s.name,
@@ -306,13 +359,13 @@ impl Store {
                 s.end_line,
                 s.start_byte as i64,
                 s.end_byte as i64,
-                s.signature,
-                s.doc
+                signature,
+                doc
             ])?;
             let id = self.conn.last_insert_rowid();
             ids.push(id);
             let name_col = format!("{} {}", s.name, tokenize::split_identifier(&s.name).join(" "));
-            ins_fts.execute(params![id, name_col, path, s.terms, s.body])?;
+            ins_fts.execute(params![id, name_col, path, terms, body])?;
         }
 
         let mut ins_ref = self.conn.prepare_cached(
