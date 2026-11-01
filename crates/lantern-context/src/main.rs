@@ -130,12 +130,9 @@ enum Cmd {
         /// 세션 분석을 이 시간에서 멈추고 몇 개를 봤는지 알린다
         #[arg(long, default_value_t = 120)]
         max_seconds: u64,
-        /// 첫 질문으로 맥락을 다시 조립해 본다 (기본, 시간이 남을 때만)
-        #[arg(long, conflicts_with = "no_replay")]
-        replay: bool,
-        /// 첫 질문 재현을 하지 않는다
+        /// 첫 질문으로 맥락을 다시 조립해 JSON에 넣는다. 무작위 3파일보다 낫지 않아 글 보고서에는 나오지 않는다
         #[arg(long)]
-        no_replay: bool,
+        replay: bool,
     },
     /// 세션 로그 점검용. 개수와 경로만 내고 메시지·명령·코드는 내지 않는다
     #[command(hide = true)]
@@ -323,7 +320,7 @@ fn main() -> Result<()> {
         }
         Cmd::Check { base, json, all, details, strict, stop_hook: _, stats } => check_command(&cli.root, base.as_deref(), json, all, details, strict, stats)?,
         Cmd::Hook { action } => hook_command(&cli.root, action)?,
-        Cmd::Autopsy { days, max_sessions, agent, deep, all, json, lang, details, max_seconds, replay: _, no_replay } => {
+        Cmd::Autopsy { days, max_sessions, agent, deep, all, json, lang, details, max_seconds, replay } => {
             let opts = autopsy::AutopsyOpts {
                 days: (!all).then_some(days),
                 max_sessions: (!all).then_some(max_sessions),
@@ -332,7 +329,7 @@ fn main() -> Result<()> {
                     SessionAgent::Codex => sessions::Agent::Codex,
                 }),
                 deep,
-                replay: !no_replay,
+                replay,
                 max_seconds,
             };
             let report = autopsy::run(&cli.root, &sessions::Homes::detect(), &opts)?;

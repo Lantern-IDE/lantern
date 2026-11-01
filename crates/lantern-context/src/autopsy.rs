@@ -48,7 +48,7 @@ const STALE_TEMP: Duration = Duration::from_secs(86_400);
 /// 가격표를 확인한 날
 pub const PRICE_TABLE_DATE: &str = "2026-11-02";
 pub const PRICE_NOTE: &str = "List price estimate per 1M tokens, not your bill. Subscriptions and long-prompt tiers differ. Unknown models are not priced.";
-pub const REPLAY_NOTE: &str = "Replay of the session's first prompt against Lantern's context at the base commit, not an agent run.";
+pub const REPLAY_NOTE: &str = "Replay of the session's first prompt against Lantern's context at the base commit, not an agent run. Left out of the text report: when measured, it did not beat a random pick of 3 files.";
 
 struct Price {
     model: &'static str,
@@ -118,7 +118,7 @@ pub struct AutopsyOpts {
 
 impl Default for AutopsyOpts {
     fn default() -> Self {
-        Self { days: Some(30), max_sessions: Some(40), agent: None, deep: false, replay: true, max_seconds: 120 }
+        Self { days: Some(30), max_sessions: Some(40), agent: None, deep: false, replay: false, max_seconds: 120 }
     }
 }
 
@@ -832,16 +832,31 @@ impl Ctx<'_> {
         }
     }
 
-    /// 반영 뒤 기한 안에 그 참조나 감싼 심볼이 바뀌었는가: 놓친 게 사실이었다는 증거다
+    /// 그 시점에 이 이름을 부르는 줄들. 공백은 지우고 줄 번호는 보지 않아 위아래로 밀린 것은 같게 나온다
+    fn ref_lines(&mut self, state: &State, path: &str, name: &str) -> Option<Vec<String>> {
+        let body = self.read_at(state, path)?;
+        let parsed = self.parsed_at(state, path)?;
+        let lines: Vec<&[u8]> = body.split(|&b| b == b'\n').collect();
+        let mut out: Vec<String> = parsed
+            .refs
+            .iter()
+            .filter(|r| r.name == name)
+            .filter_map(|r| lines.get((r.line as usize).checked_sub(1)?))
+            .map(|l| String::from_utf8_lossy(l).split_whitespace().collect())
+            .collect();
+        out.sort_unstable();
+        Some(out)
+    }
+
+    /// 반영 뒤 기한 안에 그 참조 줄이 바뀌었는가. 고쳤다는 증거는 참조 줄의 변화뿐이다:
+    /// 감싼 함수의 다른 곳이 바뀐 것이나 파일을 지운 것은 이 참조를 고친 것이 아니다
     fn later_fixed(&mut self, f: &Finding, state: &State) -> bool {
         let State::Commit { pos, .. } = state else { return false };
         let Some(later) = self.history.later(&key(&f.path), *pos) else { return false };
-        let Some(now) = self.read_at(&later, &f.path) else { return true };
-        if f.kind == FindingKind::Dangling && self.refs_at(&later, &f.path, &f.symbol, false).is_none() {
-            return true;
+        match (self.ref_lines(state, &f.path, &f.symbol), self.ref_lines(&later, &f.path, &f.symbol)) {
+            (Some(then), Some(now)) => then != now,
+            _ => false,
         }
-        let Some(then) = self.read_at(state, &f.path) else { return false };
-        self.caller_changed(f, &then, &now)
     }
 
     /// 이력으로 확인한다. 이것이 발견을 믿을 만하게 만든다
@@ -1642,35 +1657,40 @@ impl AutopsyReport {
         self.push_warnings(&mut out, ko);
         out.push('\n');
 
+        // 기준을 못 넘긴 종류는 --details에서만 줄을 보여 준다
         let m = &self.missed;
-        let _ = if ko {
-            writeln!(
+        let shown: Vec<&AutopsyFinding> = self.findings.iter().filter(|f| details || !f.finding.details_only).collect();
+        let hidden = self.findings.len() - shown.len();
+        let _ = match (ko, details, shown.is_empty()) {
+            (true, false, true) => writeln!(out, "놓쳤을 수 있는 호출 위치: 찾지 못함. 이름 기반이라 없다는 증거는 아닙니다."),
+            (false, false, true) => writeln!(out, "Missed call sites: none found. Name based, so this is not proof."),
+            (true, false, false) => writeln!(out, "놓쳤을 수 있는 호출 위치: 사라진 이름(Dangling) {}곳 (그중 {}곳은 14일 안에 그 줄이 바뀜)", m.dangling, m.dangling_later_fixed),
+            (false, false, false) => writeln!(out, "Missed call sites: {} removed names still referenced (Dangling), {} of them changed on that line within 14 days", m.dangling, m.dangling_later_fixed),
+            (true, true, _) => writeln!(
                 out,
-                "놓쳤을 수 있는 호출 위치 {}곳: 사라진 이름(Dangling) {} (그중 {}곳 14일 안에 바뀜), 옛 호출(Stale caller) {} (그중 {}곳 14일 안에 바뀜)",
-                m.dangling + m.stale_caller,
-                m.dangling,
-                m.dangling_later_fixed,
-                m.stale_caller,
-                m.stale_caller_later_fixed
-            )
-        } else {
-            writeln!(
+                "놓쳤을 수 있는 호출 위치: 사라진 이름(Dangling) {} (그중 {}곳은 14일 안에 그 줄이 바뀜), 옛 호출(Stale caller) {} (그중 {}곳은 14일 안에 그 줄이 바뀜). 옛 호출은 정밀도 기준을 넘지 못했습니다.",
+                m.dangling, m.dangling_later_fixed, m.stale_caller, m.stale_caller_later_fixed
+            ),
+            (false, true, _) => writeln!(
                 out,
-                "Missed call sites: {}. Dangling {} ({} changed within 14 days), Stale caller {} ({} changed within 14 days)",
-                m.dangling + m.stale_caller,
-                m.dangling,
-                m.dangling_later_fixed,
-                m.stale_caller,
-                m.stale_caller_later_fixed
-            )
+                "Missed call sites: Dangling {} ({} changed on that line within 14 days), Stale caller {} ({} changed on that line within 14 days). Stale caller is below its precision bar.",
+                m.dangling, m.dangling_later_fixed, m.stale_caller, m.stale_caller_later_fixed
+            ),
         };
-        let shown = if details { self.findings.len() } else { TOP_FINDINGS.min(self.findings.len()) };
-        for f in &self.findings[..shown] {
+        let top = if details { shown.len() } else { TOP_FINDINGS.min(shown.len()) };
+        for f in &shown[..top] {
             let _ = writeln!(out, "{}", finding_line(f, ko, details));
         }
-        if self.findings.len() > shown {
-            let more = self.findings.len() - shown;
+        if shown.len() > top {
+            let more = shown.len() - top;
             let _ = writeln!(out, "{}", if ko { format!("  그 밖에 {more}곳은 --details 로 볼 수 있습니다") } else { format!("  {more} more with --details") });
+        }
+        if hidden > 0 {
+            let _ = writeln!(
+                out,
+                "{}",
+                if ko { format!("  시그니처 경고 {hidden}건은 정밀도 기준을 넘지 못해 숨겼습니다. --details 로 볼 수 있습니다") } else { format!("  {hidden} signature warnings are below the precision bar, hidden. --details shows them") }
+            );
         }
         let dropped = m.not_landed + m.already_resolved + m.unverified;
         if dropped > 0 {
@@ -1684,43 +1704,37 @@ impl AutopsyReport {
 
         let t = &self.tests;
         if t.periods_with_related_tests > 0 {
+            // 테스트 명령은 모양으로 알아보니 놓칠 수 있다. 그래서 상한이다
             let _ = if ko {
-                writeln!(out, "테스트: 관련 테스트가 있는 작업 구간 {}개 중 {}개는 마지막 편집 뒤 테스트 명령이 없음", t.periods_with_related_tests, t.tests_not_run)
+                writeln!(out, "테스트: 관련 테스트가 있는 작업 구간 {}개 중 최대 {}개는 마지막 편집 뒤 테스트 명령이 보이지 않음 (명령 모양으로 판별, 상한)", t.periods_with_related_tests, t.tests_not_run)
             } else {
-                writeln!(out, "Tests: {} of {} work periods with related tests ran no test command after the last edit", t.tests_not_run, t.periods_with_related_tests)
+                writeln!(out, "Tests: at most {} of {} work periods with related tests ran no test command after the last edit (commands matched by pattern, an upper bound)", t.tests_not_run, t.periods_with_related_tests)
             };
         }
+        // 도구 호출은 이 저장소만, 토큰은 세션 전체다. 한 세션이 다른 저장소를 먼저 만졌으면 호출 0번에 토큰이 많을 수 있다
         let c = &self.search_cost;
         if let Some(calls) = c.median_tool_calls {
             let tok = c.median_tokens.map_or_else(|| "-".to_string(), compact);
             let read = c.median_cache_read.map_or_else(|| "-".to_string(), compact);
             let _ = if ko {
-                writeln!(out, "첫 편집까지 (세션 {}개 중앙값): 도구 호출 {calls}번, 토큰 {tok}, 캐시 읽기 {read}", c.sessions)
+                writeln!(out, "이 저장소 첫 편집까지 (세션 {}개 중앙값): 여기서 도구 호출 {calls}번. 세션 전체로는 토큰 {tok}, 캐시 읽기 {read}", c.sessions)
             } else {
-                writeln!(out, "Before the first edit (median of {} sessions): {calls} tool calls, {tok} tokens, {read} cache read", c.sessions)
-            };
-        }
-        let r = &self.replay;
-        if r.ran > 0 {
-            let _ = if ko {
-                writeln!(out, "첫 질문 재현(에이전트 실행 아님): 세션 {}개 중 {}개에서 Lantern 첫 맥락 앞 3개 파일에 편집한 파일이 있음", r.ran, r.edited_file_in_first_3)
-            } else {
-                writeln!(out, "First-prompt replay, not an agent run: an edited file was in Lantern's first 3 files in {} of {} sessions", r.edited_file_in_first_3, r.ran)
+                writeln!(out, "Before the first edit here (median of {} sessions): {calls} tool calls here. Whole session so far: {tok} tokens, {read} cache read", c.sessions)
             };
         }
         out.push('\n');
 
         let k = &self.tokens;
         let _ = if ko {
-            writeln!(out, "토큰 (세션 {}개 전체): 입력 {}, 출력 {}, 캐시 읽기 {}, 캐시 쓰기 {}", k.sessions, compact(k.input), compact(k.output), compact(k.cache_read), compact(k.cache_write))
+            writeln!(out, "토큰 (세션 {}개 전체, 다른 저장소 포함): 입력 {}, 출력 {}, 캐시 읽기 {}, 캐시 쓰기 {}", k.sessions, compact(k.input), compact(k.output), compact(k.cache_read), compact(k.cache_write))
         } else {
-            writeln!(out, "Tokens ({} whole sessions): input {}, output {}, cache read {}, cache write {}", k.sessions, compact(k.input), compact(k.output), compact(k.cache_read), compact(k.cache_write))
+            writeln!(out, "Tokens ({} whole sessions, other repositories included): input {}, output {}, cache read {}, cache write {}", k.sessions, compact(k.input), compact(k.output), compact(k.cache_read), compact(k.cache_write))
         };
         let g = &self.cost;
         let mut cost = if ko {
-            format!("추정 비용: 약 {} (정가표 {} 기준 추정, 실제 청구액 아님)", dollars(g.estimated_usd), g.table_date)
+            format!("그 세션 전체의 추정 비용: 약 {} (정가표 {} 기준 추정, 실제 청구액 아님)", dollars(g.estimated_usd), g.table_date)
         } else {
-            format!("Estimated cost: about {} (list price table {}, an estimate, not your bill)", dollars(g.estimated_usd), g.table_date)
+            format!("Estimated cost of those whole sessions: about {} (list price table {}, an estimate, not your bill)", dollars(g.estimated_usd), g.table_date)
         };
         if g.unknown_models > 0 {
             let _ = if ko {
@@ -1736,12 +1750,12 @@ impl AutopsyReport {
         }
         if ko {
             out.push_str("방법: 편집 전후 심볼을 비교해 옛 이름을 코드 그래프에서 찾고 git 이력으로 확인합니다. 모델과 네트워크를 쓰지 않습니다.\n");
-            out.push_str("못 보는 것: 셸로 읽은 파일, 동적 디스패치, 의존성 주입, 이름 충돌.\n");
-            out.push_str("더 보기: --details, --json. 다음 단계: lantern hook install claude\n");
+            out.push_str("못 보는 것: 셸로 읽은 파일, 동적 디스패치, 의존성 주입, 이름 충돌, 정의 파일이나 타입 이름을 부르지 않는 호출.\n");
+            out.push_str("더 보기: --details, --json. 앞으로 개수를 모으려면: lantern hook install claude (에이전트를 멈추지는 않습니다)\n");
         } else {
             out.push_str("Method: symbols before and after each edit, old names looked up in the code graph, checked against git history. No model, no network.\n");
-            out.push_str("Not covered: shell reads, dynamic dispatch, dependency injection, name collisions.\n");
-            out.push_str("More: --details, --json. Next step: lantern hook install claude\n");
+            out.push_str("Not covered: shell reads, dynamic dispatch, dependency injection, name collisions, callers that never name the changed file or type.\n");
+            out.push_str("More: --details, --json. To collect counts from now on: lantern hook install claude (it does not stop the agent)\n");
         }
         out
     }
@@ -1775,12 +1789,6 @@ impl AutopsyReport {
             writeln!(out, "건너뛴 세션: 상한 초과 {}, 시간 상한 {}, 그때 커밋 없음 {}, 본문 없음 {}, 오류 {}", x.over_max_sessions, x.time_cap, x.no_base, x.no_text, x.errors)
         } else {
             writeln!(out, "Skipped sessions: over max {}, time cap {}, no base commit {}, no text {}, errors {}", x.over_max_sessions, x.time_cap, x.no_base, x.no_text, x.errors)
-        };
-        let r = &self.replay;
-        let _ = if ko {
-            writeln!(out, "재현 건너뜀: 작업 요청이 아닌 첫 질문 {}, 기준 커밋에 편집 파일 없음 {}, 시간 {}, 실패 {}", r.skipped_prompt, r.skipped_no_file, r.skipped_time, r.failed)
-        } else {
-            writeln!(out, "Replay skipped: prompt not a task {}, no edited file at base {}, time {}, failed {}", r.skipped_prompt, r.skipped_no_file, r.skipped_time, r.failed)
         };
         for m in &self.cost.by_model {
             let usd = m.usd.map_or_else(|| if ko { "모르는 모델".to_string() } else { "unknown model".to_string() }, dollars);
@@ -1958,8 +1966,8 @@ mod tests {
         r.sessions.models = vec!["claude-opus-5-5".into(), "gpt-5.5".into(), "other".into()];
         r.sessions.period_from = Some("2026-10-01".into());
         r.sessions.period_to = Some("2026-10-30".into());
-        r.findings = (0..9).map(|i| finding(i, if i < 4 { FindingKind::Dangling } else { FindingKind::StaleCaller })).collect();
-        r.missed = MissedCounts { dangling: 4, dangling_later_fixed: 1, stale_caller: 5, stale_caller_later_fixed: 0, raw: 20, not_landed: 3, already_resolved: 7, unverified: 1 };
+        r.findings = (0..12).map(|i| finding(i, if i < 7 { FindingKind::Dangling } else { FindingKind::StaleCaller })).collect();
+        r.missed = MissedCounts { dangling: 7, dangling_later_fixed: 1, stale_caller: 5, stale_caller_later_fixed: 0, raw: 23, not_landed: 3, already_resolved: 7, unverified: 1 };
         r.tests = TestCounts { periods_with_related_tests: 9, tests_not_run: 3 };
         r.search_cost = SearchCost { sessions: 12, median_tool_calls: Some(14), median_tokens: Some(5200), median_cache_read: Some(90_000) };
         r.replay = ReplayCounts { enabled: true, ran: 8, edited_file_in_first_3: 5, note: REPLAY_NOTE, ..Default::default() };
@@ -1978,17 +1986,33 @@ mod tests {
             assert!(!text.contains("src/user_5.rs"), "상위 5개만 보인다:\n{text}");
             assert!(text.contains("lantern hook install claude"), "{text}");
             assert!(text.contains("$12.50") && text.contains(PRICE_TABLE_DATE), "{text}");
+            // 옛 호출은 기준을 못 넘겨 줄이 보이지 않고, 재현 수치는 믿을 수 없어 나오지 않는다
+            assert!(!text.contains("src/user_7.rs") && !text.contains("sym_11"), "{text}");
+            assert!(!text.contains("first 3") && !text.contains("앞 3개"), "{text}");
         }
         let en = r.to_text(ReportLang::En, false);
-        assert!(en.contains("Analyzed 12 of 40 sessions (30 of 88 work periods)") && en.contains("not an agent run") && en.contains("Unknown model: 2"), "{en}");
+        assert!(en.contains("Analyzed 12 of 40 sessions (30 of 88 work periods)") && en.contains("Unknown model: 2"), "{en}");
         assert!(en.contains("time cap") && en.contains("format may have changed"), "{en}");
+        assert!(en.contains("5 signature warnings are below the precision bar") && en.contains("7 removed names still referenced") && en.contains("2 more with --details"), "{en}");
+        assert!(en.contains("at most 3 of 9 work periods") && en.contains("whole sessions") && en.contains("does not stop the agent"), "{en}");
         let ko = r.to_text(ReportLang::Ko, false);
-        assert!(ko.contains("세션 40개 중 12개 분석 (작업 구간 88개 중 30개)") && ko.contains("에이전트 실행 아님") && ko.contains("모르는 모델 2개"), "{ko}");
-        assert!(ko.contains("시간 상한"), "{ko}");
+        assert!(ko.contains("세션 40개 중 12개 분석 (작업 구간 88개 중 30개)") && ko.contains("모르는 모델 2개"), "{ko}");
+        assert!(ko.contains("시간 상한") && ko.contains("시그니처 경고 5건") && ko.contains("최대 3개"), "{ko}");
 
-        // 전부 보기에는 모두 나온다
+        // 전부 보기에는 옛 호출까지 모두 나온다. 재현 수치는 여기에도 없다
         let all = r.to_text(ReportLang::En, true);
-        assert!(all.contains("src/user_8.rs") && all.contains("Skipped sessions"), "{all}");
+        assert!(all.contains("src/user_11.rs") && all.contains("Skipped sessions") && all.contains("below its precision bar"), "{all}");
+        assert!(!all.contains("hidden") && !all.contains("first 3") && !all.to_lowercase().contains("replay"), "{all}");
+    }
+
+    #[test]
+    fn nothing_found_says_so_and_that_it_is_not_proof() {
+        let mut r = busy_report();
+        r.findings.clear();
+        r.missed = MissedCounts::default();
+        let en = r.to_text(ReportLang::En, false);
+        assert!(en.contains("Missed call sites: none found") && en.contains("not proof") && !en.contains("hidden"), "{en}");
+        assert!(r.to_text(ReportLang::Ko, false).contains("찾지 못함"));
     }
 
     #[test]
@@ -1998,7 +2022,7 @@ mod tests {
         r.search_cost = SearchCost::default();
         r.replay = ReplayCounts::default();
         let text = r.to_text(ReportLang::En, false);
-        assert!(!text.contains("Tests:") && !text.contains("Before the first edit") && !text.contains("replay"), "{text}");
+        assert!(!text.contains("Tests:") && !text.contains("Before the first edit") && !text.to_lowercase().contains("replay"), "{text}");
     }
 
     #[test]
