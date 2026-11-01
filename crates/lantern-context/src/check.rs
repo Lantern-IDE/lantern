@@ -1018,15 +1018,15 @@ impl CheckReport {
             let _ = writeln!(out, "{level:<6}  {}:{}{caller}{more}\n        {}", f.path, f.line, f.why);
         }
         if self.total_findings > self.findings.len() {
-            let _ = writeln!(out, "\nShowing {} of {}.", self.findings.len(), self.total_findings);
+            let _ = writeln!(out, "\nShowing {} of {}. --all shows the rest.", self.findings.len(), self.total_findings);
         }
         let _ = writeln!(out, "\n{METHOD}\n{NOT_COVERED}");
         out
     }
 }
 
-/// `lantern check`: 작업 트리를 `base`와 비교한다
-pub fn run_check(dir: &Path, data: &Path, base: &str) -> Result<CheckReport> {
+/// `lantern check`: 작업 트리를 `base`와 비교한다. `show_all`이면 [`MAX_FINDINGS`]로 자르지 않는다
+pub fn run_check(dir: &Path, data: &Path, base: &str, show_all: bool) -> Result<CheckReport> {
     let root = repo_root(dir)?;
     let commit = resolve_commit(&root, base)?;
     let files = changed_files(&root, &commit)?;
@@ -1040,7 +1040,9 @@ pub fn run_check(dir: &Path, data: &Path, base: &str) -> Result<CheckReport> {
     };
     let count = |pick: fn(&SymbolChange) -> bool| changes.iter().flat_map(|f| &f.changes).filter(|c| pick(c)).count();
     let total_findings = all.len();
-    all.truncate(MAX_FINDINGS);
+    if !show_all {
+        all.truncate(MAX_FINDINGS);
+    }
     Ok(CheckReport {
         base: base.to_string(),
         commit,
