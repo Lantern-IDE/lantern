@@ -6,6 +6,7 @@
 pub mod assemble;
 pub mod autopsy;
 pub mod check;
+pub mod comment_only;
 pub mod git;
 pub mod graph;
 pub mod hook;

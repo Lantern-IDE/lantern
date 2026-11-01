@@ -25,7 +25,13 @@ export interface Impact {
   supported: boolean;
   /** 프레임워크가 부른다는 표시 (@GetMapping 등). 호출자·테스트에 안 잡힌다 */
   framework: string[];
-  risk: "low" | "medium" | "high"; graph: Graph;
+  /** 테스트 코드까지 센 옛 위험도 (CLI 출력용). 화면에는 code_risk를 보인다 */
+  risk: "low" | "medium" | "high";
+  /** 테스트 코드를 뺀 호출자·파일·위험도. 테스트는 tests로 따로 보인다 */
+  code_callers: number; code_callers2: number; code_files: number; code_risk: "low" | "medium" | "high";
+  /** diff를 보면 주석·공백만 바뀜 (승인 카드에서 diff를 넘겼을 때만) */
+  comment_only: boolean;
+  graph: Graph;
 }
 export interface MemoryNote { id: string; topic: string; file: string; line: number; text: string; links: string[] }
 
@@ -615,9 +621,9 @@ function renderLegend() {
     fp.classList.remove("hidden");
   } else if (mode === "impact" && impact) {
     fp.replaceChildren(
-      h("span", { class: `risk risk-${impact.risk}` }, `${t("위험도")} ${t(RISK[impact.risk])}`),
-      h("span", {}, h("b", {}, String(impact.callers)), t("직접 호출")),
-      h("span", {}, h("b", {}, String(impact.callers2)), t("간접 호출")),
+      impact.comment_only ? h("span", { class: "risk risk-none" }, t("코드 변경 없음")) : h("span", { class: `risk risk-${impact.code_risk}` }, `${t("위험도")} ${t(RISK[impact.code_risk])}`),
+      h("span", {}, h("b", {}, String(impact.code_callers)), t("직접 호출")),
+      h("span", {}, h("b", {}, String(impact.code_callers2)), t("간접 호출")),
       h("span", {}, h("b", {}, String(impact.tests.length)), t("테스트")));
     fp.classList.remove("hidden");
   } else fp.classList.add("hidden");

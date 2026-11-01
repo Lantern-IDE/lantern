@@ -545,8 +545,16 @@ pub struct Impact {
     /// 바뀌는 심볼에 붙은, 프레임워크가 부른다는 표시 (`@GetMapping`, `[HttpGet]`, `#[tauri::command]`).
     /// 이런 코드는 프레임워크·라우팅·DI가 부르기 때문에 이름으로 찾은 호출자와 테스트에 나타나지 않는다.
     pub framework: Vec<String>,
-    /// low | medium | high
+    /// low | medium | high. 테스트 코드 호출자까지 센 값 (CLI 출력의 옛 기준 그대로)
     pub risk: String,
+    /// 테스트 코드를 뺀 직접·간접 호출자 수와 파일 수. 테스트는 `tests`로 따로 보인다
+    pub code_callers: usize,
+    pub code_callers2: usize,
+    pub code_files: usize,
+    /// low | medium | high. 테스트를 뺀 위험도: 테스트가 많다고 위험해지지 않는다. 앱은 이것을 보인다
+    pub code_risk: String,
+    /// diff를 보면 주석·공백만 바뀜. `impact`는 diff를 모르므로 false이고, 앱의 `graph_impact`가 채운다
+    pub comment_only: bool,
     pub graph: Graph,
 }
 
@@ -596,6 +604,21 @@ pub fn framework_marks(signature: &str) -> Vec<String> {
         s = rest.trim_start();
     }
     out
+}
+
+fn risk_level(callers: usize, callers2: usize, modules: usize, cochanged: usize, untested: bool, framework: bool) -> &'static str {
+    if callers >= 10 || modules >= 2 || (callers + callers2) >= 25 {
+        "high"
+    } else if callers >= 3
+        || cochanged >= 3
+        || (callers > 0 && untested)
+        // 밖에서 불리는 코드(엔드포인트, 이벤트 처리)는 호출자가 안 보여도 낮다고 하지 않는다
+        || framework
+    {
+        "medium"
+    } else {
+        "low"
+    }
 }
 
 /// `path`의 `ranges`(1부터, 양끝 포함) 줄을 바꿀 때 닿는 범위
@@ -683,23 +706,23 @@ pub fn impact(store: &Store, path: &str, ranges: &[(u32, u32)]) -> Result<Impact
         }
     }
     let callers = d1.len();
-    let risk = if callers >= 10 || modules.len() >= 2 || (callers + d2.len()) >= 25 {
-        "high"
-    } else if callers >= 3
-        || cochanged.len() >= 3
-        || (callers > 0 && tests.is_empty())
-        // 밖에서 불리는 코드(엔드포인트, 이벤트 처리)는 호출자가 안 보여도 낮다고 하지 않는다
-        || !framework.is_empty()
-    {
-        "medium"
-    } else {
-        "low"
-    };
+    let risk = risk_level(callers, d2.len(), modules.len(), cochanged.len(), tests.is_empty(), !framework.is_empty());
+    let code = |list: &[SymbolRow]| list.iter().filter(|s| !is_test_path(&s.path)).count();
+    let (code_callers, code_callers2) = (code(&d1), code(&d2));
+    let code_paths = || affected.iter().filter(|p| !is_test_path(p));
+    let code_modules: BTreeSet<String> = code_paths().map(|p| group_of(p)).filter(|g| *g != group_of(path)).collect();
+    let code_cochanged = cochanged.iter().filter(|(p, _)| !is_test_path(p)).count();
+    let code_risk = risk_level(code_callers, code_callers2, code_modules.len(), code_cochanged, tests.is_empty(), !framework.is_empty());
     Ok(Impact {
         path: path.into(),
         touched: touched.iter().map(|s| s.name.clone()).collect(),
         callers,
         callers2: d2.len(),
+        code_callers,
+        code_callers2,
+        code_files: code_paths().count(),
+        code_risk: code_risk.into(),
+        comment_only: false,
         files: affected.len(),
         modules: modules.len(),
         cochanged,
@@ -1015,6 +1038,38 @@ mod tests {
         assert!(i.graph.nodes.iter().any(|n| n.label == "handleLogin" && n.depth == Some(2)));
         let none = impact(&e.store, "src/auth/session.ts", &[(4, 4)]).unwrap();
         assert!(none.touched.is_empty() && none.callers == 0 && none.risk == "low");
+    }
+
+    #[test]
+    fn tests_do_not_raise_the_code_risk() {
+        // 호출자 하나와 테스트 12개짜리 함수: 테스트가 많다고 위험한 코드가 아니다
+        let dir = tempfile::tempdir().unwrap();
+        let r = dir.path();
+        std::fs::create_dir_all(r.join("src/core")).unwrap();
+        std::fs::create_dir_all(r.join("src/web")).unwrap();
+        std::fs::create_dir_all(r.join("tests/a")).unwrap();
+        std::fs::create_dir_all(r.join("e2e/tests")).unwrap();
+        std::fs::write(r.join("src/core/next.ts"), "export function runNext(v: string) {\n  return v;\n}\n").unwrap();
+        std::fs::write(r.join("src/web/app.ts"), "export function handle(v: string) {\n  return runNext(v);\n}\n").unwrap();
+        for i in 0..6 {
+            std::fs::write(r.join(format!("tests/a/n{i}.test.ts")), format!("export function testNext{i}() {{\n  return runNext('x');\n}}\n")).unwrap();
+            std::fs::write(r.join(format!("e2e/tests/n{i}.test.ts")), format!("export function e2eNext{i}() {{\n  return runNext('y');\n}}\n")).unwrap();
+        }
+        let mut e = Engine::open(r).unwrap();
+        e.refresh().unwrap();
+
+        let i = impact(&e.store, "src/core/next.ts", &[(2, 2)]).unwrap();
+        assert_eq!((i.callers, i.risk.as_str()), (13, "high"), "옛 값은 그대로: CLI 출력을 읽는 쪽을 위해");
+        assert_eq!((i.code_callers, i.code_callers2, i.code_files), (1, 0, 1));
+        assert_eq!(i.tests.len(), 12, "테스트는 따로 보인다");
+        assert_eq!(i.code_risk, "low");
+
+        // 테스트가 없으면 호출자가 적어도 '보통'
+        std::fs::write(r.join("src/core/other.ts"), "export function untestedOne(v: string) {\n  return v;\n}\n").unwrap();
+        std::fs::write(r.join("src/web/use.ts"), "export function useIt(v: string) {\n  return untestedOne(v);\n}\n").unwrap();
+        e.refresh().unwrap();
+        let u = impact(&e.store, "src/core/other.ts", &[(2, 2)]).unwrap();
+        assert_eq!((u.code_callers, u.code_risk.as_str(), u.risk.as_str()), (1, "medium", "medium"));
     }
 
     #[test]

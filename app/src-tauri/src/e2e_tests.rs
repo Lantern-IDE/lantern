@@ -381,3 +381,18 @@ async fn tools_edit_with_approval_and_rejection() {
     assert_eq!(created.len(), 1);
     assert!(created[0].1.is_none(), "새로 만든 파일은 원본 없음");
 }
+
+#[test]
+fn comment_check_reads_the_diffs_shown_on_approval_cards() {
+    // 승인 카드에 보이는 diff 그대로 (줄 끝 문자 포함)
+    let check = |old: &str, new: &str| lantern_context::comment_only::only_comments("a.go", old, &crate::tools::unified_diff("a.go", old, new));
+    let lf = "package a\n\nfunc f() {\n\tfor i := 0; i < 3; i++ {\n\t\tg()\n\t}\n}\n";
+    assert!(check(lf, &lf.replace("i++ {", "i++ { // 세 번")));
+    assert!(!check(lf, &lf.replace("i < 3", "i < 4")));
+    let crlf = lf.replace('\n', "\r\n");
+    assert!(check(&crlf, &crlf.replace("i++ {", "i++ { // 세 번")));
+    assert!(!check(&crlf, &crlf.replace("i < 3", "i < 4")));
+    // 끝 줄바꿈이 없는 파일
+    let bare = "package a\n\nfunc f() {}";
+    assert!(check(bare, &format!("{bare} // 끝")));
+}
