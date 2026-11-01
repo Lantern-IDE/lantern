@@ -1,9 +1,9 @@
 {
  "meta": {
   "date": "2026-11-02",
-  "lantern": "639b2e1",
+  "lantern": "be18cda",
   "platform": "win32, node v24.16.0",
-  "max_seconds": 180,
+  "max_seconds": 600,
   "keep_index": false
  },
  "repos": [
@@ -12,8 +12,8 @@
    "commits": 8,
    "done": 8,
    "capped": false,
-   "setup_ms": 1189,
-   "wall_ms": 25962,
+   "setup_ms": 1596,
+   "wall_ms": 173246,
    "blobs_needed": 16,
    "blobs_fetched": 4
   },
@@ -22,8 +22,8 @@
    "commits": 4,
    "done": 4,
    "capped": false,
-   "setup_ms": 1239,
-   "wall_ms": 23286,
+   "setup_ms": 1875,
+   "wall_ms": 93841,
    "blobs_needed": 10,
    "blobs_fetched": 5
   },
@@ -32,8 +32,8 @@
    "commits": 3,
    "done": 3,
    "capped": false,
-   "setup_ms": 1247,
-   "wall_ms": 19620,
+   "setup_ms": 1501,
+   "wall_ms": 20738,
    "blobs_needed": 7,
    "blobs_fetched": 5
   },
@@ -42,8 +42,8 @@
    "commits": 11,
    "done": 11,
    "capped": false,
-   "setup_ms": 1239,
-   "wall_ms": 27184,
+   "setup_ms": 1305,
+   "wall_ms": 28769,
    "blobs_needed": 23,
    "blobs_fetched": 13
   },
@@ -52,8 +52,8 @@
    "commits": 7,
    "done": 7,
    "capped": false,
-   "setup_ms": 1310,
-   "wall_ms": 25483,
+   "setup_ms": 1087,
+   "wall_ms": 20904,
    "blobs_needed": 14,
    "blobs_fetched": 2
   },
@@ -62,8 +62,8 @@
    "commits": 5,
    "done": 5,
    "capped": false,
-   "setup_ms": 1979,
-   "wall_ms": 21938,
+   "setup_ms": 1296,
+   "wall_ms": 34128,
    "blobs_needed": 10,
    "blobs_fetched": 2
   },
@@ -72,8 +72,8 @@
    "commits": 13,
    "done": 13,
    "capped": false,
-   "setup_ms": 1595,
-   "wall_ms": 32622,
+   "setup_ms": 1552,
+   "wall_ms": 31327,
    "blobs_needed": 26,
    "blobs_fetched": 3
   },
@@ -82,8 +82,8 @@
    "commits": 9,
    "done": 9,
    "capped": false,
-   "setup_ms": 1274,
-   "wall_ms": 32910,
+   "setup_ms": 1585,
+   "wall_ms": 28602,
    "blobs_needed": 21,
    "blobs_fetched": 1
   },
@@ -92,8 +92,8 @@
    "commits": 8,
    "done": 8,
    "capped": false,
-   "setup_ms": 1938,
-   "wall_ms": 123802,
+   "setup_ms": 541,
+   "wall_ms": 64648,
    "blobs_needed": 17,
    "blobs_fetched": 0
   },
@@ -102,8 +102,8 @@
    "commits": 3,
    "done": 3,
    "capped": false,
-   "setup_ms": 681,
-   "wall_ms": 28146,
+   "setup_ms": 577,
+   "wall_ms": 115785,
    "blobs_needed": 8,
    "blobs_fetched": 0
   }
@@ -126,8 +126,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 441,
-   "impact_ms": 2601,
+   "check_ms": 1650,
+   "impact_ms": 4480,
    "builds_index": true,
    "nets": {
     "check": {
@@ -203,8 +203,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 400,
-   "impact_ms": 153,
+   "check_ms": 1234,
+   "impact_ms": 783,
    "builds_index": false,
    "nets": {
     "check": {
@@ -286,8 +286,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 486,
-   "impact_ms": 1296,
+   "check_ms": 964,
+   "impact_ms": 5005,
    "builds_index": true,
    "nets": {
     "check": {
@@ -359,8 +359,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 552,
-   "impact_ms": 151,
+   "check_ms": 3231,
+   "impact_ms": 220,
    "builds_index": false,
    "nets": {
     "check": {
@@ -432,8 +432,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 550,
-   "impact_ms": 1042,
+   "check_ms": 6408,
+   "impact_ms": 44159,
    "builds_index": true,
    "nets": {
     "check": {
@@ -505,8 +505,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 413,
-   "impact_ms": 145,
+   "check_ms": 2329,
+   "impact_ms": 5383,
    "builds_index": false,
    "nets": {
     "check": {
@@ -578,8 +578,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 486,
-   "impact_ms": 1800,
+   "check_ms": 1836,
+   "impact_ms": 35381,
    "builds_index": true,
    "nets": {
     "check": {
@@ -655,8 +655,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 453,
-   "impact_ms": 154,
+   "check_ms": 1578,
+   "impact_ms": 2584,
    "builds_index": false,
    "nets": {
     "check": {
@@ -738,8 +738,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 529,
-   "impact_ms": 979,
+   "check_ms": 632,
+   "impact_ms": 1683,
    "builds_index": true,
    "nets": {
     "check": {
@@ -811,8 +811,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 352,
-   "impact_ms": 197,
+   "check_ms": 570,
+   "impact_ms": 345,
    "builds_index": false,
    "nets": {
     "check": {
@@ -892,8 +892,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 446,
-   "impact_ms": 1132,
+   "check_ms": 643,
+   "impact_ms": 2145,
    "builds_index": true,
    "nets": {
     "check": {
@@ -973,8 +973,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 553,
-   "impact_ms": 107,
+   "check_ms": 857,
+   "impact_ms": 144,
    "builds_index": false,
    "nets": {
     "check": {
@@ -1048,8 +1048,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 562,
-   "impact_ms": 1662,
+   "check_ms": 1041,
+   "impact_ms": 1926,
    "builds_index": true,
    "nets": {
     "check": {
@@ -1133,8 +1133,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 573,
-   "impact_ms": 384,
+   "check_ms": 1406,
+   "impact_ms": 220,
    "builds_index": false,
    "nets": {
     "check": {
@@ -1218,8 +1218,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 427,
-   "impact_ms": 966,
+   "check_ms": 1014,
+   "impact_ms": 1777,
    "builds_index": true,
    "nets": {
     "check": {
@@ -1303,8 +1303,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 451,
-   "impact_ms": 115,
+   "check_ms": 776,
+   "impact_ms": 177,
    "builds_index": false,
    "nets": {
     "check": {
@@ -1389,8 +1389,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 471,
-   "impact_ms": 2008,
+   "check_ms": 30897,
+   "impact_ms": 37925,
    "builds_index": true,
    "nets": {
     "check": {
@@ -1477,8 +1477,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 504,
-   "impact_ms": 127,
+   "check_ms": 678,
+   "impact_ms": 1060,
    "builds_index": false,
    "nets": {
     "check": {
@@ -1569,8 +1569,8 @@
     "body": 11
    },
    "findings": [],
-   "check_ms": 491,
-   "impact_ms": 125,
+   "check_ms": 1096,
+   "impact_ms": 2086,
    "builds_index": false,
    "nets": {
     "check": {
@@ -1658,8 +1658,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 1112,
-   "impact_ms": 2186,
+   "check_ms": 494,
+   "impact_ms": 1290,
    "builds_index": true,
    "nets": {
     "check": {
@@ -1741,8 +1741,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 671,
-   "impact_ms": 233,
+   "check_ms": 525,
+   "impact_ms": 167,
    "builds_index": false,
    "nets": {
     "check": {
@@ -1824,8 +1824,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 487,
-   "impact_ms": 2359,
+   "check_ms": 739,
+   "impact_ms": 1878,
    "builds_index": true,
    "nets": {
     "check": {
@@ -1907,8 +1907,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 1779,
-   "impact_ms": 233,
+   "check_ms": 1060,
+   "impact_ms": 199,
    "builds_index": false,
    "nets": {
     "check": {
@@ -1991,8 +1991,8 @@
     "body": 3
    },
    "findings": [],
-   "check_ms": 734,
-   "impact_ms": 1484,
+   "check_ms": 835,
+   "impact_ms": 3302,
    "builds_index": true,
    "nets": {
     "check": {
@@ -2077,8 +2077,8 @@
     "body": 3
    },
    "findings": [],
-   "check_ms": 670,
-   "impact_ms": 155,
+   "check_ms": 811,
+   "impact_ms": 246,
    "builds_index": false,
    "nets": {
     "check": {
@@ -2169,8 +2169,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 766,
-   "impact_ms": 160,
+   "check_ms": 773,
+   "impact_ms": 192,
    "builds_index": false,
    "nets": {
     "check": {
@@ -2261,8 +2261,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 401,
-   "impact_ms": 5298,
+   "check_ms": 569,
+   "impact_ms": 5793,
    "builds_index": true,
    "nets": {
     "check": {
@@ -2343,8 +2343,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 453,
-   "impact_ms": 167,
+   "check_ms": 448,
+   "impact_ms": 184,
    "builds_index": false,
    "nets": {
     "check": {
@@ -2425,8 +2425,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 743,
-   "impact_ms": 106,
+   "check_ms": 441,
+   "impact_ms": 176,
    "builds_index": false,
    "nets": {
     "check": {
@@ -2506,8 +2506,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 582,
-   "impact_ms": 3377,
+   "check_ms": 466,
+   "impact_ms": 3032,
    "builds_index": true,
    "nets": {
     "check": {
@@ -2579,8 +2579,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 405,
-   "impact_ms": 129,
+   "check_ms": 391,
+   "impact_ms": 154,
    "builds_index": false,
    "nets": {
     "check": {
@@ -2652,8 +2652,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 518,
-   "impact_ms": 2825,
+   "check_ms": 682,
+   "impact_ms": 3203,
    "builds_index": true,
    "nets": {
     "check": {
@@ -2733,8 +2733,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 411,
-   "impact_ms": 123,
+   "check_ms": 515,
+   "impact_ms": 162,
    "builds_index": false,
    "nets": {
     "check": {
@@ -2806,8 +2806,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 426,
-   "impact_ms": 684,
+   "check_ms": 501,
+   "impact_ms": 765,
    "builds_index": true,
    "nets": {
     "check": {
@@ -2891,8 +2891,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 579,
-   "impact_ms": 120,
+   "check_ms": 621,
+   "impact_ms": 125,
    "builds_index": false,
    "nets": {
     "check": {
@@ -3013,8 +3013,8 @@
      "in_test": true
     }
    ],
-   "check_ms": 516,
-   "impact_ms": 803,
+   "check_ms": 664,
+   "impact_ms": 830,
    "builds_index": true,
    "nets": {
     "check": {
@@ -3137,8 +3137,8 @@
      "in_test": true
     }
    ],
-   "check_ms": 799,
-   "impact_ms": 154,
+   "check_ms": 542,
+   "impact_ms": 155,
    "builds_index": false,
    "nets": {
     "check": {
@@ -3256,8 +3256,8 @@
      "in_test": true
     }
    ],
-   "check_ms": 537,
-   "impact_ms": 495,
+   "check_ms": 527,
+   "impact_ms": 641,
    "builds_index": true,
    "nets": {
     "check": {
@@ -3356,8 +3356,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 425,
-   "impact_ms": 129,
+   "check_ms": 534,
+   "impact_ms": 139,
    "builds_index": false,
    "nets": {
     "check": {
@@ -3446,8 +3446,8 @@
     "body": 5
    },
    "findings": [],
-   "check_ms": 483,
-   "impact_ms": 90,
+   "check_ms": 593,
+   "impact_ms": 138,
    "builds_index": false,
    "nets": {
     "check": {
@@ -3556,8 +3556,8 @@
      "in_test": true
     }
    ],
-   "check_ms": 496,
-   "impact_ms": 517,
+   "check_ms": 693,
+   "impact_ms": 1146,
    "builds_index": true,
    "nets": {
     "check": {
@@ -3660,8 +3660,8 @@
      "in_test": true
     }
    ],
-   "check_ms": 550,
-   "impact_ms": 94,
+   "check_ms": 898,
+   "impact_ms": 127,
    "builds_index": false,
    "nets": {
     "check": {
@@ -3745,8 +3745,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 526,
-   "impact_ms": 861,
+   "check_ms": 549,
+   "impact_ms": 827,
    "builds_index": true,
    "nets": {
     "check": {
@@ -3826,8 +3826,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 313,
-   "impact_ms": 139,
+   "check_ms": 389,
+   "impact_ms": 123,
    "builds_index": false,
    "nets": {
     "check": {
@@ -3911,8 +3911,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 442,
-   "impact_ms": 527,
+   "check_ms": 441,
+   "impact_ms": 582,
    "builds_index": true,
    "nets": {
     "check": {
@@ -3994,8 +3994,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 541,
-   "impact_ms": 126,
+   "check_ms": 457,
+   "impact_ms": 122,
    "builds_index": false,
    "nets": {
     "check": {
@@ -4079,8 +4079,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 636,
-   "impact_ms": 732,
+   "check_ms": 453,
+   "impact_ms": 661,
    "builds_index": true,
    "nets": {
     "check": {
@@ -4160,8 +4160,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 423,
-   "impact_ms": 115,
+   "check_ms": 396,
+   "impact_ms": 108,
    "builds_index": false,
    "nets": {
     "check": {
@@ -4241,8 +4241,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 397,
-   "impact_ms": 629,
+   "check_ms": 437,
+   "impact_ms": 606,
    "builds_index": true,
    "nets": {
     "check": {
@@ -4326,8 +4326,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 468,
-   "impact_ms": 119,
+   "check_ms": 526,
+   "impact_ms": 140,
    "builds_index": false,
    "nets": {
     "check": {
@@ -4407,8 +4407,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 350,
-   "impact_ms": 544,
+   "check_ms": 450,
+   "impact_ms": 535,
    "builds_index": true,
    "nets": {
     "check": {
@@ -4492,8 +4492,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 357,
-   "impact_ms": 96,
+   "check_ms": 427,
+   "impact_ms": 113,
    "builds_index": false,
    "nets": {
     "check": {
@@ -4573,8 +4573,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 431,
-   "impact_ms": 1181,
+   "check_ms": 462,
+   "impact_ms": 663,
    "builds_index": true,
    "nets": {
     "check": {
@@ -4656,8 +4656,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 400,
-   "impact_ms": 121,
+   "check_ms": 627,
+   "impact_ms": 113,
    "builds_index": false,
    "nets": {
     "check": {
@@ -4737,8 +4737,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 648,
-   "impact_ms": 821,
+   "check_ms": 556,
+   "impact_ms": 858,
    "builds_index": true,
    "nets": {
     "check": {
@@ -4822,8 +4822,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 594,
-   "impact_ms": 118,
+   "check_ms": 433,
+   "impact_ms": 157,
    "builds_index": false,
    "nets": {
     "check": {
@@ -4907,8 +4907,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 943,
-   "impact_ms": 2414,
+   "check_ms": 496,
+   "impact_ms": 997,
    "builds_index": true,
    "nets": {
     "check": {
@@ -4988,8 +4988,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 582,
-   "impact_ms": 648,
+   "check_ms": 438,
+   "impact_ms": 145,
    "builds_index": false,
    "nets": {
     "check": {
@@ -5069,8 +5069,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 2118,
-   "impact_ms": 1778,
+   "check_ms": 390,
+   "impact_ms": 893,
    "builds_index": true,
    "nets": {
     "check": {
@@ -5142,8 +5142,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 375,
-   "impact_ms": 390,
+   "check_ms": 395,
+   "impact_ms": 107,
    "builds_index": false,
    "nets": {
     "check": {
@@ -5504,8 +5504,8 @@
      "in_test": true
     }
    ],
-   "check_ms": 956,
-   "impact_ms": 802,
+   "check_ms": 467,
+   "impact_ms": 664,
    "builds_index": true,
    "nets": {
     "check": {
@@ -5585,8 +5585,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 341,
-   "impact_ms": 129,
+   "check_ms": 660,
+   "impact_ms": 104,
    "builds_index": false,
    "nets": {
     "check": {
@@ -5660,8 +5660,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 402,
-   "impact_ms": 641,
+   "check_ms": 780,
+   "impact_ms": 1711,
    "builds_index": true,
    "nets": {
     "check": {
@@ -5733,8 +5733,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 318,
-   "impact_ms": 113,
+   "check_ms": 788,
+   "impact_ms": 1120,
    "builds_index": false,
    "nets": {
     "check": {
@@ -5806,8 +5806,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 685,
-   "impact_ms": 919,
+   "check_ms": 575,
+   "impact_ms": 1034,
    "builds_index": true,
    "nets": {
     "check": {
@@ -5879,8 +5879,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 624,
-   "impact_ms": 171,
+   "check_ms": 434,
+   "impact_ms": 271,
    "builds_index": false,
    "nets": {
     "check": {
@@ -5952,8 +5952,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 532,
-   "impact_ms": 771,
+   "check_ms": 371,
+   "impact_ms": 708,
    "builds_index": true,
    "nets": {
     "check": {
@@ -6035,8 +6035,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 546,
-   "impact_ms": 182,
+   "check_ms": 398,
+   "impact_ms": 93,
    "builds_index": false,
    "nets": {
     "check": {
@@ -6129,8 +6129,8 @@
      "in_test": false
     }
    ],
-   "check_ms": 458,
-   "impact_ms": 840,
+   "check_ms": 371,
+   "impact_ms": 651,
    "builds_index": true,
    "nets": {
     "check": {
@@ -6216,8 +6216,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 743,
-   "impact_ms": 126,
+   "check_ms": 423,
+   "impact_ms": 118,
    "builds_index": false,
    "nets": {
     "check": {
@@ -6289,8 +6289,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 893,
-   "impact_ms": 3766,
+   "check_ms": 651,
+   "impact_ms": 2689,
    "builds_index": true,
    "nets": {
     "check": {
@@ -6374,8 +6374,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 582,
-   "impact_ms": 341,
+   "check_ms": 590,
+   "impact_ms": 151,
    "builds_index": false,
    "nets": {
     "check": {
@@ -6455,8 +6455,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 555,
-   "impact_ms": 1842,
+   "check_ms": 668,
+   "impact_ms": 2420,
    "builds_index": true,
    "nets": {
     "check": {
@@ -6528,8 +6528,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 533,
-   "impact_ms": 144,
+   "check_ms": 2252,
+   "impact_ms": 198,
    "builds_index": false,
    "nets": {
     "check": {
@@ -6601,8 +6601,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 602,
-   "impact_ms": 1850,
+   "check_ms": 743,
+   "impact_ms": 4646,
    "builds_index": true,
    "nets": {
     "check": {
@@ -6682,8 +6682,8 @@
     "body": 4
    },
    "findings": [],
-   "check_ms": 487,
-   "impact_ms": 112,
+   "check_ms": 3549,
+   "impact_ms": 196,
    "builds_index": false,
    "nets": {
     "check": {
@@ -6755,8 +6755,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 411,
-   "impact_ms": 1555,
+   "check_ms": 586,
+   "impact_ms": 2681,
    "builds_index": true,
    "nets": {
     "check": {
@@ -6828,8 +6828,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 440,
-   "impact_ms": 171,
+   "check_ms": 719,
+   "impact_ms": 308,
    "builds_index": false,
    "nets": {
     "check": {
@@ -6901,8 +6901,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 555,
-   "impact_ms": 1918,
+   "check_ms": 1436,
+   "impact_ms": 2440,
    "builds_index": true,
    "nets": {
     "check": {
@@ -6982,8 +6982,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 369,
-   "impact_ms": 158,
+   "check_ms": 876,
+   "impact_ms": 193,
    "builds_index": false,
    "nets": {
     "check": {
@@ -7055,7 +7055,7 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 437,
+   "check_ms": 398,
    "impact_ms": 650,
    "builds_index": true,
    "nets": {
@@ -7132,8 +7132,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 457,
-   "impact_ms": 108,
+   "check_ms": 388,
+   "impact_ms": 76,
    "builds_index": false,
    "nets": {
     "check": {
@@ -7209,8 +7209,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 531,
-   "impact_ms": 615,
+   "check_ms": 374,
+   "impact_ms": 438,
    "builds_index": true,
    "nets": {
     "check": {
@@ -7290,8 +7290,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 405,
-   "impact_ms": 177,
+   "check_ms": 442,
+   "impact_ms": 72,
    "builds_index": false,
    "nets": {
     "check": {
@@ -7371,8 +7371,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 522,
-   "impact_ms": 409,
+   "check_ms": 764,
+   "impact_ms": 569,
    "builds_index": true,
    "nets": {
     "check": {
@@ -7444,8 +7444,8 @@
     "body": 3
    },
    "findings": [],
-   "check_ms": 507,
-   "impact_ms": 95,
+   "check_ms": 927,
+   "impact_ms": 107,
    "builds_index": false,
    "nets": {
     "check": {
@@ -7517,8 +7517,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 1231,
-   "impact_ms": 536,
+   "check_ms": 497,
+   "impact_ms": 1082,
    "builds_index": true,
    "nets": {
     "check": {
@@ -7602,8 +7602,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 960,
-   "impact_ms": 123,
+   "check_ms": 481,
+   "impact_ms": 136,
    "builds_index": false,
    "nets": {
     "check": {
@@ -7700,8 +7700,8 @@
      "in_test": false
     }
    ],
-   "check_ms": 654,
-   "impact_ms": 624,
+   "check_ms": 634,
+   "impact_ms": 821,
    "builds_index": true,
    "nets": {
     "check": {
@@ -7791,8 +7791,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 523,
-   "impact_ms": 102,
+   "check_ms": 442,
+   "impact_ms": 147,
    "builds_index": false,
    "nets": {
     "check": {
@@ -7874,8 +7874,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 517,
-   "impact_ms": 648,
+   "check_ms": 456,
+   "impact_ms": 552,
    "builds_index": true,
    "nets": {
     "check": {
@@ -7957,8 +7957,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 551,
-   "impact_ms": 121,
+   "check_ms": 427,
+   "impact_ms": 119,
    "builds_index": false,
    "nets": {
     "check": {
@@ -8038,8 +8038,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 482,
-   "impact_ms": 582,
+   "check_ms": 409,
+   "impact_ms": 579,
    "builds_index": true,
    "nets": {
     "check": {
@@ -8123,8 +8123,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 523,
-   "impact_ms": 140,
+   "check_ms": 361,
+   "impact_ms": 94,
    "builds_index": false,
    "nets": {
     "check": {
@@ -8200,8 +8200,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 404,
-   "impact_ms": 598,
+   "check_ms": 444,
+   "impact_ms": 592,
    "builds_index": true,
    "nets": {
     "check": {
@@ -8281,8 +8281,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 454,
-   "impact_ms": 104,
+   "check_ms": 371,
+   "impact_ms": 123,
    "builds_index": false,
    "nets": {
     "check": {
@@ -8362,8 +8362,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 462,
-   "impact_ms": 535,
+   "check_ms": 383,
+   "impact_ms": 424,
    "builds_index": true,
    "nets": {
     "check": {
@@ -8439,8 +8439,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 551,
-   "impact_ms": 135,
+   "check_ms": 678,
+   "impact_ms": 82,
    "builds_index": false,
    "nets": {
     "check": {
@@ -8529,8 +8529,8 @@
      "in_test": false
     }
    ],
-   "check_ms": 527,
-   "impact_ms": 778,
+   "check_ms": 576,
+   "impact_ms": 865,
    "builds_index": true,
    "nets": {
     "check": {
@@ -8616,8 +8616,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 400,
-   "impact_ms": 119,
+   "check_ms": 629,
+   "impact_ms": 149,
    "builds_index": false,
    "nets": {
     "check": {
@@ -8689,8 +8689,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 544,
-   "impact_ms": 549,
+   "check_ms": 411,
+   "impact_ms": 461,
    "builds_index": true,
    "nets": {
     "check": {
@@ -8770,8 +8770,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 406,
-   "impact_ms": 86,
+   "check_ms": 337,
+   "impact_ms": 70,
    "builds_index": false,
    "nets": {
     "check": {
@@ -8851,8 +8851,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 424,
-   "impact_ms": 587,
+   "check_ms": 373,
+   "impact_ms": 408,
    "builds_index": true,
    "nets": {
     "check": {
@@ -8932,8 +8932,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 526,
-   "impact_ms": 94,
+   "check_ms": 387,
+   "impact_ms": 72,
    "builds_index": false,
    "nets": {
     "check": {
@@ -9013,8 +9013,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 476,
-   "impact_ms": 550,
+   "check_ms": 490,
+   "impact_ms": 419,
    "builds_index": true,
    "nets": {
     "check": {
@@ -9094,8 +9094,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 480,
-   "impact_ms": 89,
+   "check_ms": 482,
+   "impact_ms": 108,
    "builds_index": false,
    "nets": {
     "check": {
@@ -9176,8 +9176,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 643,
-   "impact_ms": 1123,
+   "check_ms": 348,
+   "impact_ms": 1026,
    "builds_index": true,
    "nets": {
     "check": {
@@ -9250,8 +9250,8 @@
     "body": 4
    },
    "findings": [],
-   "check_ms": 573,
-   "impact_ms": 147,
+   "check_ms": 865,
+   "impact_ms": 83,
    "builds_index": false,
    "nets": {
     "check": {
@@ -9336,8 +9336,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 522,
-   "impact_ms": 144,
+   "check_ms": 1155,
+   "impact_ms": 77,
    "builds_index": false,
    "nets": {
     "check": {
@@ -9410,8 +9410,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 567,
-   "impact_ms": 839,
+   "check_ms": 439,
+   "impact_ms": 958,
    "builds_index": true,
    "nets": {
     "check": {
@@ -9498,8 +9498,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 610,
-   "impact_ms": 120,
+   "check_ms": 362,
+   "impact_ms": 138,
    "builds_index": false,
    "nets": {
     "check": {
@@ -9583,8 +9583,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 566,
-   "impact_ms": 118,
+   "check_ms": 452,
+   "impact_ms": 92,
    "builds_index": false,
    "nets": {
     "check": {
@@ -9668,8 +9668,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 492,
-   "impact_ms": 887,
+   "check_ms": 398,
+   "impact_ms": 721,
    "builds_index": true,
    "nets": {
     "check": {
@@ -9751,8 +9751,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 431,
-   "impact_ms": 160,
+   "check_ms": 330,
+   "impact_ms": 115,
    "builds_index": false,
    "nets": {
     "check": {
@@ -9836,8 +9836,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 505,
-   "impact_ms": 858,
+   "check_ms": 460,
+   "impact_ms": 722,
    "builds_index": true,
    "nets": {
     "check": {
@@ -9909,8 +9909,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 590,
-   "impact_ms": 114,
+   "check_ms": 409,
+   "impact_ms": 112,
    "builds_index": false,
    "nets": {
     "check": {
@@ -9982,8 +9982,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 837,
-   "impact_ms": 1334,
+   "check_ms": 559,
+   "impact_ms": 642,
    "builds_index": true,
    "nets": {
     "check": {
@@ -10063,8 +10063,8 @@
     "body": 3
    },
    "findings": [],
-   "check_ms": 720,
-   "impact_ms": 248,
+   "check_ms": 391,
+   "impact_ms": 139,
    "builds_index": false,
    "nets": {
     "check": {
@@ -10149,8 +10149,8 @@
     "body": 6
    },
    "findings": [],
-   "check_ms": 529,
-   "impact_ms": 1072,
+   "check_ms": 722,
+   "impact_ms": 1045,
    "builds_index": true,
    "nets": {
     "check": {
@@ -10233,8 +10233,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 716,
-   "impact_ms": 179,
+   "check_ms": 706,
+   "impact_ms": 161,
    "builds_index": false,
    "nets": {
     "check": {
@@ -10325,8 +10325,8 @@
     "body": 6
    },
    "findings": [],
-   "check_ms": 549,
-   "impact_ms": 103,
+   "check_ms": 566,
+   "impact_ms": 137,
    "builds_index": false,
    "nets": {
     "check": {
@@ -10414,8 +10414,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 640,
-   "impact_ms": 876,
+   "check_ms": 386,
+   "impact_ms": 804,
    "builds_index": true,
    "nets": {
     "check": {
@@ -10495,8 +10495,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 455,
-   "impact_ms": 117,
+   "check_ms": 350,
+   "impact_ms": 83,
    "builds_index": false,
    "nets": {
     "check": {
@@ -10568,8 +10568,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 457,
-   "impact_ms": 810,
+   "check_ms": 584,
+   "impact_ms": 950,
    "builds_index": true,
    "nets": {
     "check": {
@@ -10649,8 +10649,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 623,
-   "impact_ms": 161,
+   "check_ms": 1689,
+   "impact_ms": 187,
    "builds_index": false,
    "nets": {
     "check": {
@@ -10734,8 +10734,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 586,
-   "impact_ms": 1000,
+   "check_ms": 509,
+   "impact_ms": 1227,
    "builds_index": true,
    "nets": {
     "check": {
@@ -10807,8 +10807,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 3197,
-   "impact_ms": 96,
+   "check_ms": 370,
+   "impact_ms": 126,
    "builds_index": false,
    "nets": {
     "check": {
@@ -10880,8 +10880,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 1100,
-   "impact_ms": 10665,
+   "check_ms": 1033,
+   "impact_ms": 7159,
    "builds_index": true,
    "nets": {
     "check": {
@@ -10953,8 +10953,8 @@
     "body": 0
    },
    "findings": [],
-   "check_ms": 1340,
-   "impact_ms": 273,
+   "check_ms": 869,
+   "impact_ms": 169,
    "builds_index": false,
    "nets": {
     "check": {
@@ -11026,8 +11026,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 2531,
-   "impact_ms": 17980,
+   "check_ms": 539,
+   "impact_ms": 2247,
    "builds_index": true,
    "nets": {
     "check": {
@@ -11099,8 +11099,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 760,
-   "impact_ms": 569,
+   "check_ms": 554,
+   "impact_ms": 188,
    "builds_index": false,
    "nets": {
     "check": {
@@ -11189,8 +11189,8 @@
      "in_test": false
     }
    ],
-   "check_ms": 2306,
-   "impact_ms": 6177,
+   "check_ms": 654,
+   "impact_ms": 3418,
    "builds_index": true,
    "nets": {
     "check": {
@@ -11278,8 +11278,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 1861,
-   "impact_ms": 2266,
+   "check_ms": 574,
+   "impact_ms": 165,
    "builds_index": false,
    "nets": {
     "check": {
@@ -11351,8 +11351,8 @@
     "body": 2
    },
    "findings": [],
-   "check_ms": 1455,
-   "impact_ms": 9911,
+   "check_ms": 1341,
+   "impact_ms": 4514,
    "builds_index": true,
    "nets": {
     "check": {
@@ -11436,8 +11436,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 1369,
-   "impact_ms": 385,
+   "check_ms": 648,
+   "impact_ms": 241,
    "builds_index": false,
    "nets": {
     "check": {
@@ -11517,8 +11517,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 1280,
-   "impact_ms": 8362,
+   "check_ms": 699,
+   "impact_ms": 2718,
    "builds_index": true,
    "nets": {
     "check": {
@@ -11602,8 +11602,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 1192,
-   "impact_ms": 329,
+   "check_ms": 673,
+   "impact_ms": 229,
    "builds_index": false,
    "nets": {
     "check": {
@@ -11679,8 +11679,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 1380,
-   "impact_ms": 6429,
+   "check_ms": 952,
+   "impact_ms": 2922,
    "builds_index": true,
    "nets": {
     "check": {
@@ -11760,8 +11760,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 1210,
-   "impact_ms": 298,
+   "check_ms": 1249,
+   "impact_ms": 315,
    "builds_index": false,
    "nets": {
     "check": {
@@ -11847,37 +11847,21 @@
      "line": 301,
      "refs_in_file": 1,
      "in_test": false
-    },
-    {
-     "kind": "stale_caller",
-     "symbol": "complete",
-     "path": "okhttp/src/jvmTest/kotlin/okhttp3/SocketChannelTest.kt",
-     "line": 205,
-     "refs_in_file": 1,
-     "in_test": true
-    },
-    {
-     "kind": "stale_caller",
-     "symbol": "complete",
-     "path": "regression-test/src/androidTest/java/okhttp/regression/compare/AndroidHttpEngineTest.kt",
-     "line": 165,
-     "refs_in_file": 1,
-     "in_test": true
     }
    ],
-   "check_ms": 1289,
-   "impact_ms": 2801,
+   "check_ms": 1179,
+   "impact_ms": 5650,
    "builds_index": true,
    "nets": {
     "check": {
-     "n": 3,
+     "n": 1,
      "gold": [
       "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/connection/RealConnection.kt"
      ],
      "commit_other": 0
     },
     "check_shown": {
-     "n": 3,
+     "n": 1,
      "gold": [
       "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/connection/RealConnection.kt"
      ],
@@ -11889,7 +11873,7 @@
      "commit_other": 0
     },
     "stale_caller": {
-     "n": 3,
+     "n": 1,
      "gold": [
       "okhttp/src/commonJvmAndroid/kotlin/okhttp3/internal/connection/RealConnection.kt"
      ],
@@ -11966,8 +11950,8 @@
      "in_test": false
     }
    ],
-   "check_ms": 1144,
-   "impact_ms": 203,
+   "check_ms": 1199,
+   "impact_ms": 812,
    "builds_index": false,
    "nets": {
     "check": {
@@ -12060,8 +12044,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 851,
-   "impact_ms": 274,
+   "check_ms": 1128,
+   "impact_ms": 867,
    "builds_index": false,
    "nets": {
     "check": {
@@ -12148,8 +12132,8 @@
     "body": 7
    },
    "findings": [],
-   "check_ms": 897,
-   "impact_ms": 3585,
+   "check_ms": 2088,
+   "impact_ms": 3892,
    "builds_index": true,
    "nets": {
     "check": {
@@ -12229,8 +12213,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 817,
-   "impact_ms": 219,
+   "check_ms": 791,
+   "impact_ms": 510,
    "builds_index": false,
    "nets": {
     "check": {
@@ -12315,8 +12299,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 834,
-   "impact_ms": 8091,
+   "check_ms": 1954,
+   "impact_ms": 13682,
    "builds_index": true,
    "nets": {
     "check": {
@@ -12405,8 +12389,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 791,
-   "impact_ms": 365,
+   "check_ms": 19354,
+   "impact_ms": 554,
    "builds_index": false,
    "nets": {
     "check": {
@@ -12497,8 +12481,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 564,
-   "impact_ms": 318,
+   "check_ms": 4430,
+   "impact_ms": 443,
    "builds_index": false,
    "nets": {
     "check": {
@@ -12582,8 +12566,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 690,
-   "impact_ms": 2589,
+   "check_ms": 2774,
+   "impact_ms": 15192,
    "builds_index": true,
    "nets": {
     "check": {
@@ -12655,8 +12639,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 1099,
-   "impact_ms": 341,
+   "check_ms": 8302,
+   "impact_ms": 680,
    "builds_index": false,
    "nets": {
     "check": {
@@ -12729,8 +12713,8 @@
     "body": 6
    },
    "findings": [],
-   "check_ms": 621,
-   "impact_ms": 2674,
+   "check_ms": 1046,
+   "impact_ms": 12401,
    "builds_index": true,
    "nets": {
     "check": {
@@ -12821,8 +12805,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 648,
-   "impact_ms": 266,
+   "check_ms": 867,
+   "impact_ms": 646,
    "builds_index": false,
    "nets": {
     "check": {
@@ -12907,8 +12891,8 @@
     "body": 1
    },
    "findings": [],
-   "check_ms": 718,
-   "impact_ms": 268,
+   "check_ms": 1155,
+   "impact_ms": 462,
    "builds_index": false,
    "nets": {
     "check": {
