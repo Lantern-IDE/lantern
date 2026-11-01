@@ -35,12 +35,12 @@ For each commit in `eval/bilingual/*.json` with 2 or more gold files (the code f
 - **Application**: one gold file applied alone. A commit with *k* gold files gives *k* applications and *k*(*k*−1) pairs.
 - **Hit**: a warning, or a file in the naive radius, whose path is one of the commit's *other* gold files. Reported per commit (at least one of its applications hits), per application and per pair. A commit-level hit is the fairest of the three: if file A changes a signature and file B calls it, applying A can hit but applying B alone has nothing to warn about, so application and pair rates cannot reach 100%.
 - **Warnings per commit**: summed over the commit's applications, split by kind (Dangling, Stale caller). One warning is one (changed symbol, referring file).
-- **Outside gold**: flagged files that are not gold. A warning there is not necessarily wrong (the file may really need a change that the commit left for later, or a test may have changed), so this is an **upper bound on noise**, not a false-positive rate. results.md also counts those the commit did change anyway, tests for example: 4 of the 19 for `lantern check`.
+- **Outside gold**: flagged files that are not gold. A warning there is not necessarily wrong (the file may really need a change that the commit left for later, or a test may have changed), so this is an **upper bound on noise**, not a false-positive rate. results.md also counts those the commit did change anyway, tests for example: 4 of the 17 for `lantern check`.
 - **Run time**: wall time of the `lantern check` process, index refresh included, with the index already at the parent state and one file changed. Measured on a Windows 11 PC (Intel Core i5-11400) at below-normal priority.
 
 ## Results
 
-Lantern `be18cda`, 2026-11-02. 71 commits, 152 applications, 182 pairs. All tables are in [results.md](results.md).
+Lantern `be18cda`, 2026-11-02. 71 commits, 152 applications, 182 pairs. All tables are in [results.md](results.md). The rules for dropped overloads and Go receiver names changed after this run and it was not repeated, so Stale caller counts may differ.
 
 | Method | Commits with a hit | Applications with a hit | Pairs found | Files flagged per commit (mean / median) | Flagged files outside gold (upper bound on noise) |
 |---|---|---|---|---|---|
