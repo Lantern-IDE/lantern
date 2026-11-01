@@ -280,7 +280,7 @@ fn end_to_end_finds_one_dangling_one_stale_and_one_not_landed() {
     assert_eq!(v["findings"].as_array().unwrap().len(), 2, "{v:#}");
 
     // 바뀐 심볼에 이어진 테스트가 있는데 마지막 편집 뒤 돌리지 않았다
-    assert_eq!(v["tests"]["sessions_with_related_tests"], 1, "{v:#}");
+    assert_eq!(v["tests"]["periods_with_related_tests"], 1, "{v:#}");
     assert_eq!(v["tests"]["tests_not_run"], 1, "{v:#}");
 
     // 첫 편집 앞에 읽기 하나
@@ -301,7 +301,7 @@ fn end_to_end_finds_one_dangling_one_stale_and_one_not_landed() {
     assert_eq!(c["table_date"], "2026-11-02");
     let expected = 5.0 * (100.0 * 4.0 + 10.0 * 20.0 + 1000.0 * 0.2 + 50.0 * 5.0) / 1_000_000.0;
     assert!((c["estimated_usd"].as_f64().unwrap() - expected).abs() < 1e-9, "{c:#}");
-    let row = &v["per_session"][0];
+    let row = &v["per_period"][0];
     assert_eq!(row["files_changed"], 2, "{row:#}");
     assert_eq!(row["files_from_git"], 0, "{row:#}");
 }
@@ -412,12 +412,12 @@ fn test_command_after_the_last_edit_counts_and_earlier_one_does_not() {
     log.edit("src/lib.rs", "    a + 1\n", "    a + 2\n");
     s.write_session("session-early", &log);
     let v = s.json(&[]);
-    assert_eq!((v["tests"]["sessions_with_related_tests"].as_u64(), v["tests"]["tests_not_run"].as_u64()), (Some(1), Some(1)), "{v:#}");
+    assert_eq!((v["tests"]["periods_with_related_tests"].as_u64(), v["tests"]["tests_not_run"].as_u64()), (Some(1), Some(1)), "{v:#}");
 
     log.bash("cargo test -p something", json!({"stdout": ""}));
     s.write_session("session-early", &log);
     let v = s.json(&[]);
-    assert_eq!((v["tests"]["sessions_with_related_tests"].as_u64(), v["tests"]["tests_not_run"].as_u64()), (Some(1), Some(0)), "{v:#}");
+    assert_eq!((v["tests"]["periods_with_related_tests"].as_u64(), v["tests"]["tests_not_run"].as_u64()), (Some(1), Some(0)), "{v:#}");
     // 본문만 바뀌었으니 놓친 호출자로 보고하지 않는다
     assert_eq!(v["missed"]["raw"], 0, "{v:#}");
 }
@@ -433,7 +433,7 @@ fn shell_edit_takes_the_end_state_from_the_landing_commit() {
     s.write_session("session-shell", &log);
     s.land_lib();
     let v = s.json(&[]);
-    assert_eq!(v["per_session"][0]["files_from_git"], 1, "{v:#}");
+    assert_eq!(v["per_period"][0]["files_from_git"], 1, "{v:#}");
     assert_eq!(finding(&v, "old_helper")["path"], "src/dangling_user.rs");
     assert_eq!(v["missed"]["not_landed"], 0, "{v:#}");
 }
@@ -451,26 +451,65 @@ fn session_older_than_the_first_commit_starts_from_the_first_commit() {
     s.write_session("session-old", &log);
     let v = s.json(&[]);
     assert_eq!((v["sessions"]["analyzed"].as_u64(), v["sessions"]["skipped"]["no_base"].as_u64()), (Some(1), Some(0)), "{v:#}");
-    assert_eq!(v["per_session"][0]["base_after_first_edit"], true, "{v:#}");
+    assert_eq!(v["per_period"][0]["base_after_first_edit"], true, "{v:#}");
     assert_eq!(finding(&v, "old_helper")["path"], "src/dangling_user.rs");
 }
 
 #[test]
-fn session_editing_for_weeks_is_flagged_as_coarse() {
+fn long_session_is_split_and_a_miss_fixed_in_a_later_period_still_shows() {
+    let s = Sandbox::new();
+    s.base_repo();
+    // 첫 구간: 이름을 바꾸고 호출자를 놓친 채 커밋
+    let mut log = Log::new(&s, "2026-01-10");
+    log.prompt(PROMPT);
+    log.edit("src/lib.rs", "pub fn old_helper(a: i32)", "pub fn fresh_helper(a: i32)");
+    let renamed = LIB_BEFORE.replace("pub fn old_helper", "pub fn fresh_helper");
+    s.write("src/lib.rs", &renamed);
+    s.commit_at(LANDING_DATE, &["src/lib.rs"]);
+    // 이틀 뒤 같은 세션: 놓친 호출자를 고치고 시그니처를 바꾼다
+    log.day = "2026-01-12".to_string();
+    let (old_sig, new_sig) = ("pub fn resize_it(w: u32) -> u32 {\n    w + 1", "pub fn resize_it(w: u32, h: u32) -> u32 {\n    w + h");
+    log.edit("src/dangling_user.rs", "old_helper", "fresh_helper");
+    log.edit("src/lib.rs", old_sig, new_sig);
+    s.write_session("session-long", &log);
+    s.write("src/dangling_user.rs", &DANGLING_USER.replace("old_helper", "fresh_helper"));
+    s.write("src/lib.rs", &renamed.replace(old_sig, new_sig));
+    s.commit_at("2026-01-12T11:00:00Z", &["src/dangling_user.rs", "src/lib.rs"]);
+
+    let v = s.json(&[]);
+    let c = &v["sessions"];
+    assert_eq!((c["analyzed"].as_u64(), c["periods_total"].as_u64(), c["periods_analyzed"].as_u64()), (Some(1), Some(2), Some(2)), "{v:#}");
+    // 처음과 끝만 비교했다면 호출자를 손댄 것으로 쳐서 보이지 않았을 곳이다
+    let dangling = finding(&v, "old_helper");
+    assert_eq!(dangling["path"], "src/dangling_user.rs");
+    assert_eq!(dangling["later_fixed"], true, "{v:#}");
+    let stale = finding(&v, "resize_it");
+    assert_eq!(stale["path"], "src/stale_user.rs");
+    assert_eq!(stale["later_fixed"], false);
+    assert_eq!(v["findings"].as_array().unwrap().len(), 2, "{v:#}");
+    // 여러 구간에 걸쳐 고친 파일은 git에서, 한 구간만 고친 파일은 기록에서 본다
+    let rows = v["per_period"].as_array().unwrap();
+    assert_eq!((rows[0]["files_from_git"].as_u64(), rows[1]["files_from_git"].as_u64()), (Some(1), Some(1)), "{v:#}");
+    assert_eq!((rows[0]["files_changed"].as_u64(), rows[1]["files_changed"].as_u64()), (Some(1), Some(2)), "{v:#}");
+    let text = String::from_utf8_lossy(&s.lantern(&["--lang", "en"]).stdout).into_owned();
+    assert!(text.contains("Analyzed 1 of 1 sessions (2 of 2 work periods)"), "{text}");
+}
+
+#[test]
+fn edit_with_a_much_later_commit_is_not_read_from_the_worktree() {
+    // 셸로 고친 파일이 기한 안에 커밋되지 않았고 한참 뒤의 커밋이 그 파일을 바꿨다. 작업 트리를 끝으로 보면 남의 변경이 세션 탓이 된다
     let s = Sandbox::new();
     s.base_repo();
     let mut log = Log::new(&s, "2026-01-10");
     log.prompt(PROMPT);
-    log.edit("src/lib.rs", "pub fn old_helper(a: i32)", "pub fn fresh_helper(a: i32)");
-    log.day = "2026-02-01".to_string();
-    log.edit("src/lib.rs", "    a + 1\n", "    a + 2\n");
-    s.write_session("session-long", &log);
+    let root = log.root.clone();
+    log.bash("python rewrite.py", json!({"stdout": "", "bashEditDiff": {"files": [], "changedFiles": [format!("{root}/src/lib.rs")]}}));
+    s.write_session("session-shell", &log);
+    s.write("src/lib.rs", LIB_AFTER);
+    s.commit_at("2026-03-01T00:00:00Z", &["src/lib.rs"]);
     let v = s.json(&[]);
-    assert_eq!(v["sessions"]["long_sessions"], 1, "{v:#}");
-    assert_eq!(v["per_session"][0]["edit_span_days"], 22, "{v:#}");
-    assert_eq!(v["per_session"][0]["base_after_first_edit"], false, "{v:#}");
-    let text = String::from_utf8_lossy(&s.lantern(&["--lang", "en"]).stdout).into_owned();
-    assert!(text.contains("1 sessions edited for over 14 days"), "{text}");
+    assert_eq!(v["missed"]["raw"], 0, "{v:#}");
+    assert_eq!(v["sessions"]["skipped"]["no_text"], 1, "{v:#}");
 }
 
 #[test]
@@ -517,7 +556,7 @@ fn text_reports_fit_a_screen_in_both_languages() {
     assert!(en.lines().count() <= 24, "{en}");
     assert!(en.contains("Analyzed 1 of 1 sessions") && en.contains("src/dangling_user.rs:4") && en.contains("old_helper"), "{en}");
     assert!(en.contains("name based") && en.contains("lantern hook install claude") && en.contains("--details"), "{en}");
-    assert!(en.contains("1 of 1 sessions with related tests") && en.contains("not an agent run") && en.contains("Unknown model: 1"), "{en}");
+    assert!(en.contains("1 of 1 work periods with related tests") && en.contains("not an agent run") && en.contains("Unknown model: 1"), "{en}");
 
     let ko = String::from_utf8_lossy(&s.lantern(&["--lang", "ko"]).stdout).into_owned();
     assert!(ko.lines().count() <= 24, "{ko}");
@@ -596,7 +635,7 @@ fn codex_session_uses_the_base_blob_and_does_not_claim_unread() {
     let stale = finding(&v, "resize_it");
     assert_eq!(stale["kind"], "stale_caller");
     assert!(!stale["why"].as_str().unwrap().contains("read"), "{stale:#}");
-    assert_eq!(v["per_session"][0]["reads_known"], false);
+    assert_eq!(v["per_period"][0]["reads_known"], false);
     assert_eq!(v["tokens"]["input"], 200);
     assert_eq!(v["tokens"]["cache_read"], 100);
     let expected = (200.0 * 5.0 + 20.0 * 30.0 + 100.0 * 0.5) / 1_000_000.0;
