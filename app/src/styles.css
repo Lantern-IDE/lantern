@@ -447,8 +447,9 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .approval .atitle { flex: 1; min-width: 0; font-weight: 600; overflow-wrap: anywhere; }
 /* 파일 이름은 한 덩어리로, 폴더는 흐리게 `/` 뒤에서만 줄바꿈 (이름이 칸보다 길 때만 글자 단위) */
 .approval .adir { margin-left: 6px; font-weight: 400; color: var(--muted); }
-/* 카드가 대화 창보다 길어도 결정 버튼은 늘 보인다. 안내문은 자리가 모자라면 다음 줄로 */
-.approval .actions { position: sticky; bottom: 0; z-index: 1; display: flex; flex-wrap: wrap; gap: 6px 8px; padding: 8px 10px; border-top: 1px solid var(--border); align-items: center; background: var(--elevated); }
+/* 카드가 대화 창보다 길어도 결정 버튼은 늘 보인다. 안내문은 자리가 모자라면 다음 줄로.
+   sticky는 #messages의 아래 여백(20px) 안쪽을 기준으로 붙으므로 그만큼 내려야 창 끝에 닿고 위 줄을 덮지 않는다 */
+.approval .actions { position: sticky; bottom: -20px; z-index: 1; display: flex; flex-wrap: wrap; gap: 6px 8px; padding: 8px 10px; border-top: 1px solid var(--border); align-items: center; background: var(--elevated); }
 .approval .actions .hint { font-size: 11.5px; color: var(--muted); }
 .approval.resolved { border-color: var(--border); }
 .approval.resolved .ahead { background: none; }
