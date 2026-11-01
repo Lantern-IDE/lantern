@@ -12,7 +12,7 @@ node eval/check/run.mjs --dir <folder with the clones> [--max-seconds 180] [--re
 node eval/check/run.mjs --summarize   # rewrites results.md from results.json without measuring
 ```
 
-`--dir` is the folder `node eval/bench/run.mjs --set eval/bilingual --dir <folder>` clones into. `--lantern` defaults to `release/lantern` under `CARGO_TARGET_DIR` or `target`. Requires Node.js 24 (`node:sqlite`) and git. Output: [results.md](results.md) (tables) and [results.json](results.json) (one row per application, with every warning). The published run was started at below-normal priority.
+`--dir` is the folder `node eval/bench/run.mjs --set eval/bilingual --dir <folder>` clones into. `--lantern` defaults to `release/lantern` under `CARGO_TARGET_DIR` or `target`. Requires Node.js 24 (`node:sqlite`) and git. Output: [results.md](results.md) (tables) and [results.json](results.json) (one row per application, with every warning). The published run was started at below-normal priority, with `--max-seconds 600` because other jobs were running on the PC.
 
 ## Method
 
@@ -24,11 +24,11 @@ For each commit in `eval/bilingual/*.json` with 2 or more gold files (the code f
    - *Every symbol*: the same index read directly, for every symbol in the file including classes and other containers: all references in the same language family, and all co-change pairs. Names defined more than 3 times are skipped here too. No other cap.
 
    Co-change comes from the last 500 commits up to the parent, so the commit itself cannot leak in. Neither radius looks at what the commit changed.
-3. **One file at a time.** Only that file's bytes from the commit are written over the parent's, and `lantern check --base <parent> --json --all` runs. Then the file is restored and the next one is applied. `--all` keeps warnings past the 20 that are shown by default, so kinds can be counted exactly.
+3. **One file at a time.** Only that file's bytes from the commit are written over the parent's, and `lantern check --base <parent> --json --all` runs. Then the file is restored and the next one is applied. `--all` keeps warnings past the 20 that are shown by default, so kinds can be counted exactly. The JSON holds every warning; the text report hides Stale caller unless `--details` is given, because that kind did not reach its precision bar.
 
 **Network.** `lantern` uses none. The clones from `eval/bench/run.mjs` are blob-less, so they hold every parent's files but not always the commit's version of a gold file (35 of 152 were missing). The script fetches exactly those blobs from the public remote into the temporary clone, before measuring. While measuring, `GIT_NO_LAZY_FETCH=1` keeps git off the network.
 
-**Cap.** At most 180 s per repository (`--max-seconds`), so at most about 30 minutes in total, checked between commits. Commits past the cap are reported as not measured.
+**Cap.** At most 180 s per repository by default (`--max-seconds`), checked between commits. Commits past the cap are reported as not measured. In the published run no repository reached its cap.
 
 ## What counts
 
@@ -40,42 +40,48 @@ For each commit in `eval/bilingual/*.json` with 2 or more gold files (the code f
 
 ## Results
 
-Lantern `639b2e1`, 2026-11-02. 71 commits, 152 applications, 182 pairs. All tables are in [results.md](results.md).
+Lantern `be18cda`, 2026-11-02. 71 commits, 152 applications, 182 pairs. All tables are in [results.md](results.md).
 
 | Method | Commits with a hit | Applications with a hit | Pairs found | Files flagged per commit (mean / median) | Flagged files outside gold (upper bound on noise) |
 |---|---|---|---|---|---|
-| `lantern check` | 6 / 71 (8.5%) | 7 / 152 (4.6%) | 8 / 182 (4.4%) | 0.38 / 0 | 19 / 27 (70.4%) |
+| `lantern check` | 6 / 71 (8.5%) | 7 / 152 (4.6%) | 8 / 182 (4.4%) | 0.35 / 0 | 17 / 25 (68.0%) |
 | check, Dangling only | 4 / 71 (5.6%) | 4 / 152 (2.6%) | 4 / 182 (2.2%) | 0.07 / 0 | 1 / 5 (20.0%) |
-| check, Stale caller only | 3 / 71 (4.2%) | 4 / 152 (2.6%) | 5 / 182 (2.7%) | 0.32 / 0 | 18 / 23 (78.3%) |
+| check, Stale caller only | 3 / 71 (4.2%) | 4 / 152 (2.6%) | 5 / 182 (2.7%) | 0.30 / 0 | 16 / 21 (76.2%) |
 | Impact radius | 57 / 71 (80.3%) | 107 / 152 (70.4%) | 130 / 182 (71.4%) | 41.96 / 38 | 2849 / 2979 (95.6%) |
 | Every symbol, every reference, every co-change pair | 58 / 71 (81.7%) | 113 / 152 (74.3%) | 138 / 182 (75.8%) | 64.52 / 55 | 4443 / 4581 (97.0%) |
 
 | `lantern check` warnings | |
 |---|---|
-| Total | 65: 5 Dangling, 60 Stale caller |
-| Per commit, mean / median / max | 0.92 / 0 / 35 |
+| Total | 63: 5 Dangling, 58 Stale caller |
+| Per commit, mean / median / max | 0.89 / 0 / 35 |
 | Dangling per commit, mean / median / max | 0.07 / 0 / 2 |
-| Stale caller per commit, mean / median / max | 0.85 / 0 / 35 |
+| Stale caller per commit, mean / median / max | 0.82 / 0 / 35 |
 | Commits with at least one warning | 9 / 71 |
-| In test files | 50 / 65 |
+| In test files | 48 / 63 |
 | Commits with a removed symbol or a changed signature in some gold file | 21 / 71 |
 | Commits with a hit, among those | 6 / 21 |
 
 How to read this:
 
 - `lantern check` is quiet and misses most of these commits. In 50 of 71 commits no gold file removes a symbol or changes a signature, so there is nothing for it to report by design. Among the other 21, 6 hit.
-- One commit gives 35 of the 65 warnings, all in test files (gin `41d8591eb1`, `context.go`).
+- One commit gives 35 of the 63 warnings, all in test files (gin `41d8591eb1`, `context.go`).
 - The wide nets reach about 80% of the commits but flag 42 to 65 files per commit, more than 95% of them outside gold. A commit's other files are usually near it in the graph; the graph alone does not say which ones need a change.
 - Dangling flagged 5 files and 4 are gold. That is too few to call a precision.
 - One hit read by hand: applying only `fs.go` of gin `8791c96960` gives a HIGH warning at `routergroup.go:221` for `onlyFilesFS`, and the commit changes exactly that line to `OnlyFilesFS`.
 
-Run time: `lantern check` median 545 ms, 90th percentile 1144 ms, max 3197 ms; 151 of 152 within 3 s. The whole run took 361.0 s, of which setup 13.7 s; the longest repository was okhttp at 123.8 s; no repository reached the 180 s cap. Other background jobs were running on the PC, so these times are noisy: an earlier run of the same benchmark, with the same warnings, gave a median of 556.5 ms and a max of 10466 ms, and took 56.7 s on okhttp.
+Run time: `lantern check` median 580 ms, 90th percentile 1578 ms, max 30897 ms; 145 of 152 within 3 s. The whole run took 612.0 s, of which setup 12.9 s; the longest repository was axios at 173.2 s. Builds and other jobs were running on the PC, so these times are noisy and the maximum is mostly that load: the run before tuning, on a quieter PC, gave a median of 545 ms, a 90th percentile of 1144 ms, a max of 3197 ms and 151 of 152 within 3 s.
 
-Index check: `--keep-index` reuses one index across a repository's commits. Compared with the empty-index run above, all warnings and both "every symbol" and co-change numbers are identical on all 152 applications. Only the impact radius changes, in 26 applications, most likely because `graph impact` gets callers from an unordered query with a limit. Commits hit stay at 57 for the impact radius and go from 48 to 47 for direct callers alone.
+Index check, measured before tuning at `639b2e1`: `--keep-index` reuses one index across a repository's commits. Compared with the empty-index run, all warnings and both "every symbol" and co-change numbers are identical on all 152 applications. Only the impact radius changes, in 26 applications, most likely because `graph impact` gets callers from an unordered query with a limit. Commits hit stay at 57 for the impact radius and go from 48 to 47 for direct callers alone.
+
+## What tuning changed
+
+Rules came from reading warnings on real sessions (see [docs/에이전트_부검.md](../../docs/에이전트_부검.md)): methods and functions must be linked by the caller naming the file or type, an import, or the package; `private` definitions and framework entry points are out; Java boxing, TypeScript parameter widening and Kotlin inserted defaults count as compatible.
+
+Before, at `639b2e1`: 65 warnings (5 Dangling, 60 Stale caller), 27 flagged files. After: 63 warnings, 25 flagged files. **All 8 pairs that hit stay.** The 2 warnings that left are in test files outside gold and call a different `complete` (`promise.complete(...)`, `completableFuture.complete(...)`). This benchmark was not fully held out: the first version of the link rule also dropped 3 real calls written `flask.redirect(...)` after `import flask`, so package-qualified calls were added and the benchmark measured again.
 
 ## Limits
 
-- **No judgement of the warnings.** A hit is a path match, not proof that the warning is about the same symbol, and a warning outside gold is not proof of noise. Whether warnings are right is measured separately by reading them on real sessions.
+- **No judgement of the warnings.** A hit is a path match, not proof that the warning is about the same symbol, and a warning outside gold is not proof of noise. Whether warnings are right was measured separately by reading a sample on the author's own sessions: 0 of 30 Stale caller warnings were real, before the tuning above, and no Dangling warning survived the history check. That is one person's sessions, so it says little about these repositories.
 - **Small sample.** 6 commits hit out of 71, and 5 Dangling warnings in total. Small changes in the commit list would move these percentages.
 - **Small commits only.** The benchmark skips commits that add, delete or rename files or touch more than 3 code files. Large refactors, where missed callers would be expected, are not here.
 - **Not an agent.** Applying one file of a finished human commit imitates an agent that stopped early. The other files of a commit may be linked by behaviour rather than by a name or a signature, which check does not look at by design, and a person's commit may keep a call site valid in ways a partial edit does not.
