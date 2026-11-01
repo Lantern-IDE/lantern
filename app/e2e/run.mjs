@@ -21,5 +21,6 @@ import "./scenarios/05-review-security.mjs";
 import "./scenarios/06-editor-lifecycle.mjs";
 import "./scenarios/07-approval-trust.mjs";
 import "./scenarios/08-default-screen.mjs";
+import "./scenarios/09-refresh-while-busy.mjs";
 
 await runAll(() => mockServer.close());
