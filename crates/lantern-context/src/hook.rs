@@ -106,13 +106,25 @@ fn forget_old_states(dir: &Path) {
     }
 }
 
-/// 같은 폴더의 임시 파일에 쓰고 바꿔 치운다. 도중에 죽어도 원본이 잘리지 않는다
+/// 같은 폴더의 임시 파일에 쓰고 바꿔 치운다. 도중에 죽어도 원본이 잘리지 않는다.
+/// 링크면 링크를 파일로 바꾸지 않고 가리키는 파일을 쓰고(dotfile 관리 도구가 이렇게 둔다), 원본의 권한을 그대로 둔다
 fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
-    let mut tmp = path.as_os_str().to_owned();
+    let is_link = std::fs::symlink_metadata(path).is_ok_and(|m| m.file_type().is_symlink());
+    let target = if is_link { std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf()) } else { path.to_path_buf() };
+    let mut tmp = target.as_os_str().to_owned();
     tmp.push(format!(".{}.tmp", std::process::id()));
     let tmp = PathBuf::from(tmp);
-    std::fs::write(&tmp, bytes)?;
-    if let Err(e) = std::fs::rename(&tmp, path) {
+    let written = (|| -> std::io::Result<()> {
+        let mut file = std::fs::File::create(&tmp)?;
+        // 본문을 쓰기 전에 권한부터 맞춰 잠깐이라도 더 넓게 열리지 않게 한다
+        if let Ok(meta) = std::fs::metadata(&target) {
+            std::fs::set_permissions(&tmp, meta.permissions())?;
+        }
+        file.write_all(bytes)?;
+        drop(file);
+        std::fs::rename(&tmp, &target)
+    })();
+    if let Err(e) = written {
         let _ = std::fs::remove_file(&tmp);
         return Err(e.into());
     }
@@ -480,15 +492,36 @@ pub fn stop_hook_command(exe: &Path) -> String {
     format!("\"{}\" {HOOK_MARK}", exe.to_string_lossy().replace('\\', "/"))
 }
 
-fn is_our_command(cmd: &str) -> bool {
-    cmd.contains(HOOK_MARK) && cmd.to_lowercase().contains("lantern")
+/// 우리가 넣은 명령인가. 지금 넣을 명령과 똑같거나, 실행 파일 이름에 lantern이 든 `<실행 파일> check --stop-hook` 그대로일 때만이다.
+/// 사용자가 덧붙인 명령(`... --base main; notify-send done`)은 그 사람 것이라 바꾸지도 지우지도 않는다
+fn is_our_command(cmd: &str, current: &str) -> bool {
+    if cmd == current {
+        return true;
+    }
+    let Some(exe) = cmd.strip_suffix(HOOK_MARK).and_then(|c| c.strip_suffix(' ')) else { return false };
+    let exe = match exe.strip_prefix('"') {
+        Some(quoted) => quoted.strip_suffix('"').filter(|p| !p.contains('"')),
+        None => (!exe.contains(char::is_whitespace)).then_some(exe),
+    };
+    exe.and_then(|p| Path::new(p).file_stem()).is_some_and(|stem| stem.to_string_lossy().to_lowercase().contains("lantern"))
+}
+
+/// 우리 것으로 보이지 않아 건드리지 않은 비슷한 명령을 알리는 줄
+fn left_alone(stop: &[Value], current: &str, path: &Path) -> Vec<String> {
+    stop.iter()
+        .filter_map(|g| g.get("hooks")?.as_array())
+        .flatten()
+        .filter_map(|h| h.get("command")?.as_str())
+        .filter(|c| c.contains(HOOK_MARK) && !is_our_command(c, current))
+        .map(|c| format!("Left alone in {}: {c} (not the exact command Lantern installs)", path.display()))
+        .collect()
 }
 
 /// 프로젝트 설정 파일이 git에 잡힐 수 있으면 알려 줄 말. 기계마다 다른 경로가 커밋되면 곤란하다
 pub fn commit_warning(root: &Path, settings: &Path) -> Option<String> {
     git(root, &["rev-parse", "--git-dir"]).ok()?;
     let rel = settings.strip_prefix(root).ok()?.to_string_lossy().replace('\\', "/");
-    if git(root, &["check-ignore", "-q", "--", &rel]).is_ok() {
+    if git(root, &["-c", "core.fsmonitor=false", "check-ignore", "-q", "--", &rel]).is_ok() {
         return None;
     }
     Some(format!("Note: {rel} is not ignored by git. It holds a path from this machine, so keep it out of commits."))
@@ -511,13 +544,20 @@ fn load_settings(path: &Path) -> Result<Option<Map<String, Value>>> {
     }
 }
 
-/// 원본을 지우지 않게 비어 있는 이름을 찾아 복사한다
-fn backup_settings(path: &Path) -> Result<PathBuf> {
+/// 데이터 폴더에서 설정 백업을 두는 곳
+pub fn backup_dir(data: &Path) -> PathBuf {
+    data.join("settings-backups")
+}
+
+/// 원본을 지우지 않게 비어 있는 이름을 찾아 복사한다. 백업에는 설정의 토큰까지 들어 있고, 설정 곁에 두면
+/// `.gitignore`의 `settings.local.json`에 걸리지 않아 `git add -A`로 커밋될 수 있어 저장소 밖에 둔다
+fn backup_settings(path: &Path, dir: &Path) -> Result<PathBuf> {
+    std::fs::create_dir_all(dir).with_context(|| format!("{} 만들기", dir.display()))?;
+    let file = path.file_name().map_or_else(|| "settings".into(), |n| n.to_string_lossy());
+    let stem = format!("{}-{file}", short_hash(&path_key(path)));
     for n in 0..1000 {
         let suffix = if n == 0 { ".lantern-backup".to_string() } else { format!(".lantern-backup.{n}") };
-        let mut name = path.as_os_str().to_owned();
-        name.push(&suffix);
-        let backup = PathBuf::from(name);
+        let backup = dir.join(format!("{stem}{suffix}"));
         if !backup.exists() {
             std::fs::copy(path, &backup).with_context(|| format!("{} 백업", path.display()))?;
             return Ok(backup);
@@ -535,8 +575,8 @@ fn save_settings(path: &Path, settings: &Map<String, Value>) -> Result<()> {
     write_atomic(path, text.as_bytes()).with_context(|| format!("{} 쓰기", path.display()))
 }
 
-/// 설정에 Stop 훅을 넣는다. 다른 키는 그대로 두고, 쓰기 전에 백업한다. 무엇을 바꿨는지 사람이 읽을 줄들을 돌려준다
-pub fn install_claude(path: &Path, command: &str) -> Result<Vec<String>> {
+/// 설정에 Stop 훅을 넣는다. 다른 키는 그대로 두고, 쓰기 전에 `backups`에 백업한다. 무엇을 바꿨는지 사람이 읽을 줄들을 돌려준다
+pub fn install_claude(path: &Path, command: &str, backups: &Path) -> Result<Vec<String>> {
     let existing = load_settings(path)?;
     let existed = existing.is_some();
     let mut settings = existing.unwrap_or_default();
@@ -549,7 +589,7 @@ pub fn install_claude(path: &Path, command: &str) -> Result<Vec<String>> {
     let mut present = false;
     for hook in stop.iter_mut().filter_map(|g| g.get_mut("hooks")).filter_map(Value::as_array_mut).flatten() {
         let Some(cmd) = hook.get("command").and_then(Value::as_str).map(str::to_string) else { continue };
-        if !is_our_command(&cmd) {
+        if !is_our_command(&cmd, command) {
             continue;
         }
         present = true;
@@ -558,8 +598,11 @@ pub fn install_claude(path: &Path, command: &str) -> Result<Vec<String>> {
             replaced = Some(cmd);
         }
     }
+    let others = left_alone(stop, command, path);
     if present && replaced.is_none() {
-        return Ok(vec![format!("Already installed in {}. Nothing changed.", path.display())]);
+        let mut lines = vec![format!("Already installed in {}. Nothing changed.", path.display())];
+        lines.extend(others);
+        return Ok(lines);
     }
     if !present {
         stop.push(json!({ "hooks": [{ "type": "command", "command": command, "timeout": HOOK_TIMEOUT_SECS }] }));
@@ -567,7 +610,7 @@ pub fn install_claude(path: &Path, command: &str) -> Result<Vec<String>> {
 
     let mut lines = Vec::new();
     if existed {
-        lines.push(format!("Backup: {}", backup_settings(path)?.display()));
+        lines.push(format!("Backup: {}", backup_settings(path, backups)?.display()));
     } else {
         lines.push(format!("Created {}", path.display()));
     }
@@ -576,20 +619,23 @@ pub fn install_claude(path: &Path, command: &str) -> Result<Vec<String>> {
         Some(old) => lines.push(format!("Changed hooks.Stop in {}: {old} -> {command}", path.display())),
         None => lines.push(format!("Added to hooks.Stop in {}: {command}", path.display())),
     }
+    lines.extend(others);
     Ok(lines)
 }
 
-/// 설정에서 우리 Stop 훅만 뺀다. 비게 된 그룹과 키만 치운다
-pub fn uninstall_claude(path: &Path) -> Result<Vec<String>> {
+/// 설정에서 우리 Stop 훅만 뺀다. 비게 된 그룹과 키만 치운다. `command`는 지금 실행 파일로 넣을 명령이다
+pub fn uninstall_claude(path: &Path, command: &str, backups: &Path) -> Result<Vec<String>> {
     let nothing = || vec![format!("Not installed in {}. Nothing changed.", path.display())];
     let Some(mut settings) = load_settings(path)? else { return Ok(nothing()) };
     let mut removed = Vec::new();
+    let mut others = Vec::new();
     if let Some(hooks) = settings.get_mut("hooks").and_then(Value::as_object_mut) {
         if let Some(stop) = hooks.get_mut("Stop").and_then(Value::as_array_mut) {
+            others = left_alone(stop, command, path);
             for group in stop.iter_mut() {
                 let Some(list) = group.get_mut("hooks").and_then(Value::as_array_mut) else { continue };
                 list.retain(|h| match h.get("command").and_then(Value::as_str) {
-                    Some(cmd) if is_our_command(cmd) => {
+                    Some(cmd) if is_our_command(cmd, command) => {
                         removed.push(cmd.to_string());
                         false
                     }
@@ -608,12 +654,15 @@ pub fn uninstall_claude(path: &Path) -> Result<Vec<String>> {
         }
     }
     if removed.is_empty() {
-        return Ok(nothing());
+        let mut lines = nothing();
+        lines.extend(others);
+        return Ok(lines);
     }
-    let backup = backup_settings(path)?;
+    let backup = backup_settings(path, backups)?;
     save_settings(path, &settings)?;
     let mut lines = vec![format!("Backup: {}", backup.display())];
     lines.extend(removed.iter().map(|cmd| format!("Removed from hooks.Stop in {}: {cmd}", path.display())));
+    lines.extend(others);
     Ok(lines)
 }
 
@@ -642,13 +691,17 @@ mod tests {
 }
 "#;
         std::fs::write(&path, original).unwrap();
-        let lines = install_claude(&path, CMD).unwrap();
+        let backups = dir.path().join("backups");
+        let lines = install_claude(&path, CMD, &backups).unwrap();
         assert!(lines.iter().any(|l| l.contains("Added") && l.contains(CMD)), "{lines:?}");
         assert!(lines.iter().any(|l| l.starts_with("Backup:")), "{lines:?}");
 
-        // 백업은 원본 그대로
-        let backup = dir.path().join("settings.json.lantern-backup");
+        // 백업은 원본 그대로이고 설정 곁이 아니라 정해 준 폴더에 있다
+        let backup = lines.iter().find_map(|l| l.strip_prefix("Backup: ")).map(PathBuf::from).unwrap();
+        assert!(backup.starts_with(&backups), "{}", backup.display());
+        assert!(backup.file_name().unwrap().to_string_lossy().ends_with("settings.json.lantern-backup"), "{}", backup.display());
         assert_eq!(std::fs::read_to_string(&backup).unwrap(), original);
+        assert_eq!(std::fs::read_dir(dir.path()).unwrap().count(), 2, "설정과 백업 폴더만");
 
         let v = read_json(&path);
         assert_eq!(v["zeta"], 1);
@@ -671,18 +724,19 @@ mod tests {
     fn install_twice_changes_nothing_and_new_path_replaces() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("nested").join("settings.local.json");
-        let lines = install_claude(&path, CMD).unwrap();
+        let backups = dir.path().join("backups");
+        let lines = install_claude(&path, CMD, &backups).unwrap();
         assert!(lines[0].starts_with("Created"), "{lines:?}");
         let first = std::fs::read(&path).unwrap();
 
-        let lines = install_claude(&path, CMD).unwrap();
+        let lines = install_claude(&path, CMD, &backups).unwrap();
         assert!(lines[0].starts_with("Already installed"), "{lines:?}");
         assert_eq!(std::fs::read(&path).unwrap(), first);
-        assert!(!dir.path().join("nested").join("settings.local.json.lantern-backup").exists());
+        assert!(!backups.exists());
 
         // 실행 파일이 옮겨 갔으면 줄을 늘리지 않고 고친다
         let moved = "\"D:/new/lantern.exe\" check --stop-hook";
-        let lines = install_claude(&path, moved).unwrap();
+        let lines = install_claude(&path, moved, &backups).unwrap();
         assert!(lines.iter().any(|l| l.contains("Changed")), "{lines:?}");
         let v = read_json(&path);
         assert_eq!(v["hooks"]["Stop"].as_array().unwrap().len(), 1);
@@ -693,12 +747,13 @@ mod tests {
     fn broken_or_odd_settings_are_left_alone() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("settings.json");
+        let backups = dir.path().join("backups");
         for text in ["{ not json", "[1, 2]", r#"{"hooks": 1}"#, r#"{"hooks": {"Stop": {}}}"#] {
             std::fs::write(&path, text).unwrap();
-            assert!(install_claude(&path, CMD).is_err(), "{text}");
+            assert!(install_claude(&path, CMD, &backups).is_err(), "{text}");
             assert_eq!(std::fs::read_to_string(&path).unwrap(), text);
         }
-        assert!(!dir.path().join("settings.json.lantern-backup").exists());
+        assert!(!backups.exists());
     }
 
     #[test]
@@ -710,7 +765,8 @@ mod tests {
             r#"{"keep": true, "hooks": {"Stop": [{"hooks": [{"type": "command", "command": "say done"}, {"type": "command", "command": "\"C:/x/lantern.exe\" check --stop-hook"}]}, {"hooks": [{"type": "command", "command": "lantern check --stop-hook"}]}], "SessionStart": [{"hooks": []}]}}"#,
         )
         .unwrap();
-        let lines = uninstall_claude(&path).unwrap();
+        let backups = dir.path().join("backups");
+        let lines = uninstall_claude(&path, CMD, &backups).unwrap();
         assert_eq!(lines.iter().filter(|l| l.starts_with("Removed")).count(), 2, "{lines:?}");
         assert!(lines[0].starts_with("Backup:"));
         let v = read_json(&path);
@@ -722,18 +778,91 @@ mod tests {
 
         // 두 번째는 할 일이 없다
         let before = std::fs::read(&path).unwrap();
-        assert!(uninstall_claude(&path).unwrap()[0].starts_with("Not installed"));
+        assert!(uninstall_claude(&path, CMD, &backups).unwrap()[0].starts_with("Not installed"));
         assert_eq!(std::fs::read(&path).unwrap(), before);
+    }
+
+    fn stop_commands(path: &Path) -> Vec<String> {
+        let v = read_json(path);
+        let groups = v["hooks"]["Stop"].as_array().cloned().unwrap_or_default();
+        groups.iter().flat_map(|g| g["hooks"].as_array().cloned().unwrap_or_default()).filter_map(|h| h["command"].as_str().map(str::to_string)).collect()
+    }
+
+    #[test]
+    fn commands_the_user_wrote_are_left_alone() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let backups = dir.path().join("backups");
+        for mine in ["lantern check --stop-hook --base main; notify-send done", "lantern check --stop-hook && say done", "echo lantern check --stop-hook", "\"C:/my lantern/tool.exe\" check --stop-hook"] {
+            std::fs::write(&path, json!({ "hooks": { "Stop": [{ "hooks": [{ "type": "command", "command": mine }] }] } }).to_string()).unwrap();
+            let lines = install_claude(&path, CMD, &backups).unwrap();
+            assert_eq!(stop_commands(&path), [mine, CMD], "{lines:?}");
+            assert!(lines.iter().any(|l| l.starts_with("Left alone") && l.contains(mine)), "{lines:?}");
+
+            let lines = uninstall_claude(&path, CMD, &backups).unwrap();
+            assert_eq!(stop_commands(&path), [mine], "{lines:?}");
+            assert!(lines.iter().any(|l| l.starts_with("Left alone")), "{lines:?}");
+
+            let lines = uninstall_claude(&path, CMD, &backups).unwrap();
+            assert!(lines[0].starts_with("Not installed") && lines[1].starts_with("Left alone"), "{lines:?}");
+        }
+    }
+
+    #[test]
+    fn a_renamed_binary_still_finds_its_own_hook() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        let backups = dir.path().join("backups");
+        let renamed = "\"C:/tools/ctx.exe\" check --stop-hook";
+        install_claude(&path, renamed, &backups).unwrap();
+        let lines = install_claude(&path, renamed, &backups).unwrap();
+        assert!(lines[0].starts_with("Already installed"), "{lines:?}");
+        assert_eq!(stop_commands(&path), [renamed]);
+        let lines = uninstall_claude(&path, renamed, &backups).unwrap();
+        assert!(lines.iter().any(|l| l.starts_with("Removed")), "{lines:?}");
+        assert!(stop_commands(&path).is_empty());
+    }
+
+    #[test]
+    fn writing_through_a_link_keeps_the_link() {
+        let dir = tempfile::tempdir().unwrap();
+        let real = dir.path().join("real.json");
+        let link = dir.path().join("settings.json");
+        std::fs::write(&real, "{\"keep\": 1}\n").unwrap();
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(&real, &link).unwrap();
+        #[cfg(windows)]
+        if std::os::windows::fs::symlink_file(&real, &link).is_err() {
+            // 권한이 없는 Windows 계정에서는 링크를 만들 수 없다
+            return;
+        }
+        install_claude(&link, CMD, &dir.path().join("backups")).unwrap();
+        assert!(std::fs::symlink_metadata(&link).unwrap().file_type().is_symlink());
+        assert_eq!(read_json(&real)["keep"], 1);
+        assert_eq!(stop_commands(&real), [CMD]);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn writing_keeps_the_mode_of_the_file() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        std::fs::write(&path, "{}\n").unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        install_claude(&path, CMD, &dir.path().join("backups")).unwrap();
+        assert_eq!(std::fs::metadata(&path).unwrap().permissions().mode() & 0o777, 0o600);
     }
 
     #[test]
     fn uninstall_cleans_empty_keys_and_handles_missing_file() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("settings.json");
-        assert!(uninstall_claude(&path).unwrap()[0].starts_with("Not installed"));
+        let backups = dir.path().join("backups");
+        assert!(uninstall_claude(&path, CMD, &backups).unwrap()[0].starts_with("Not installed"));
         assert!(!path.exists());
-        install_claude(&path, CMD).unwrap();
-        uninstall_claude(&path).unwrap();
+        install_claude(&path, CMD, &backups).unwrap();
+        uninstall_claude(&path, CMD, &backups).unwrap();
         assert_eq!(read_json(&path), json!({}));
     }
 
@@ -741,9 +870,13 @@ mod tests {
     fn command_uses_forward_slashes_and_is_recognized() {
         let cmd = stop_hook_command(Path::new(r"C:\Program Files\lantern\lantern.exe"));
         assert_eq!(cmd, "\"C:/Program Files/lantern/lantern.exe\" check --stop-hook");
-        assert!(is_our_command(&cmd));
-        assert!(!is_our_command("other check --stop-hook"));
-        assert!(!is_our_command("lantern check"));
+        let current = "\"C:/elsewhere/ctx.exe\" check --stop-hook";
+        for ours in [cmd.as_str(), current, "lantern check --stop-hook", "lantern.exe check --stop-hook", "\"D:/x/lantern-0.2.exe\" check --stop-hook"] {
+            assert!(is_our_command(ours, current), "{ours}");
+        }
+        for other in ["other check --stop-hook", "lantern check", "\"C:/lantern/other.exe\" check --stop-hook", "lantern check --stop-hook --base main", "lantern check --stop-hook; say done", "my lantern check --stop-hook"] {
+            assert!(!is_our_command(other, current), "{other}");
+        }
     }
 
     #[test]
