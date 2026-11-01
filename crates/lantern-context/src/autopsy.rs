@@ -1669,9 +1669,9 @@ impl AutopsyReport {
         let hidden = self.findings.len() - shown.len();
         let _ = match (ko, details, shown.is_empty()) {
             (true, false, true) => writeln!(out, "놓쳤을 수 있는 호출 위치: 찾지 못함. 이름 기반이라 없다는 증거는 아닙니다."),
-            (false, false, true) => writeln!(out, "Missed call sites: none found. Name based, so this is not proof."),
+            (false, false, true) => writeln!(out, "Possibly missed call sites: none found. Name based, so this is not proof."),
             (true, false, false) => writeln!(out, "놓쳤을 수 있는 호출 위치: 사라진 이름(Dangling) {}곳 (그중 {}곳은 14일 안에 그 줄이 바뀜)", m.dangling, m.dangling_later_fixed),
-            (false, false, false) => writeln!(out, "Missed call sites: {} removed names still referenced (Dangling), {} of them changed on that line within 14 days", m.dangling, m.dangling_later_fixed),
+            (false, false, false) => writeln!(out, "Possibly missed call sites: {} removed names still referenced (Dangling), {} of them changed on that line within 14 days", m.dangling, m.dangling_later_fixed),
             (true, true, _) => writeln!(
                 out,
                 "놓쳤을 수 있는 호출 위치: 사라진 이름(Dangling) {} (그중 {}곳은 14일 안에 그 줄이 바뀜), 옛 호출(Stale caller) {} (그중 {}곳은 14일 안에 그 줄이 바뀜). 옛 호출은 정밀도 기준을 넘지 못했습니다.",
@@ -1679,7 +1679,7 @@ impl AutopsyReport {
             ),
             (false, true, _) => writeln!(
                 out,
-                "Missed call sites: Dangling {} ({} changed on that line within 14 days), Stale caller {} ({} changed on that line within 14 days). Stale caller is below its precision bar.",
+                "Possibly missed call sites: Dangling {} ({} changed on that line within 14 days), Stale caller {} ({} changed on that line within 14 days). Stale caller is below its precision bar.",
                 m.dangling, m.dangling_later_fixed, m.stale_caller, m.stale_caller_later_fixed
             ),
         };
@@ -2017,7 +2017,7 @@ mod tests {
         r.findings.clear();
         r.missed = MissedCounts::default();
         let en = r.to_text(ReportLang::En, false);
-        assert!(en.contains("Missed call sites: none found") && en.contains("not proof") && !en.contains("hidden"), "{en}");
+        assert!(en.contains("Possibly missed call sites: none found") && en.contains("not proof") && !en.contains("hidden"), "{en}");
         assert!(r.to_text(ReportLang::Ko, false).contains("찾지 못함"));
     }
 
