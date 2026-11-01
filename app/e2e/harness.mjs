@@ -78,8 +78,8 @@ export let ws = null;
 export let msgId = 0;
 export const pending = new Map();
 
-/** 앱을 띄운다. dir: 열 폴더 (기본은 시나리오용 프로젝트) */
-export async function launch(dir = DIRS.proj) {
+/** 앱을 띄운다. dir: 열 폴더 (기본은 시나리오용 프로젝트). waitProject가 false면 지도가 그려지기를 기다리지 않는다 */
+export async function launch(dir = DIRS.proj, { waitProject = true } = {}) {
   cdpPort = 9400 + Math.floor(Math.random() * 500);
   app = spawn(EXE, [dir], {
     env: {
@@ -155,7 +155,7 @@ export async function launch(dir = DIRS.proj) {
     await waitFor(() => document.documentElement.lang === "ko", 20000, "한국어 화면");
   }
   // 프로젝트를 열고 지도를 그릴 때까지
-  await waitFor((name) => document.querySelector("#cc-label")?.textContent === name && !!document.querySelector("#map-view:not(.hidden)") && !!document.querySelector("#map-crumb .cur"), 30000, "프로젝트 열림", path.basename(dir));
+  if (waitProject) await waitFor((name) => document.querySelector("#cc-label")?.textContent === name && !!document.querySelector("#map-view:not(.hidden)") && !!document.querySelector("#map-crumb .cur"), 30000, "프로젝트 열림", path.basename(dir));
 }
 
 /** 앱이 뜨지 않았을 때 원인을 볼 수 있게 앱 로그와 충돌 보고서의 끝부분 */
