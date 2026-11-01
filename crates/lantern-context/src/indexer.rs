@@ -11,7 +11,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::{Instant, UNIX_EPOCH};
 
-const MAX_FILE_BYTES: u64 = 1024 * 1024;
+pub(crate) const MAX_FILE_BYTES: u64 = 1024 * 1024;
 
 /// .gitignore가 없어도 항상 건너뛰는 폴더
 const SKIP_DIRS: &[&str] = &[
@@ -67,7 +67,7 @@ pub fn walk(root: &Path) -> Vec<SourceFile> {
 }
 
 /// 바이너리이거나 번들·압축된 파일은 인덱싱하지 않는다.
-fn is_unindexable(bytes: &[u8]) -> bool {
+pub(crate) fn is_unindexable(bytes: &[u8]) -> bool {
     if bytes[..bytes.len().min(8192)].contains(&0) {
         return true;
     }

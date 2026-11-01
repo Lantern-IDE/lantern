@@ -38,6 +38,8 @@ pub struct NewRef {
 pub struct Parsed {
     pub symbols: Vec<NewSymbol>,
     pub refs: Vec<NewRef>,
+    /// 문법 오류가 있었다. 고치는 중인 파일은 심볼이 사라진 것처럼 보일 수 있다
+    pub has_error: bool,
 }
 
 pub struct Parser {
@@ -63,7 +65,7 @@ impl Parser {
         let mut defs: Vec<RawDef> = Vec::new();
         let mut raw_refs: Vec<(String, String, usize)> = Vec::new();
 
-        let (tags, _) = self.ctx.generate_tags(cfg, src, None)?;
+        let (tags, has_error) = self.ctx.generate_tags(cfg, src, None)?;
         for tag in tags {
             let Ok(tag) = tag else { continue };
             let name = String::from_utf8_lossy(&src[tag.name_range.clone()]).trim().to_string();
@@ -133,7 +135,7 @@ impl Parser {
             })
             .collect();
 
-        Ok(Parsed { symbols, refs })
+        Ok(Parsed { symbols, refs, has_error })
     }
 }
 

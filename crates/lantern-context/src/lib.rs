@@ -4,6 +4,7 @@
 //! 설계: `docs/Phase0_맥락엔진_설계.md`
 
 pub mod assemble;
+pub mod check;
 pub mod git;
 pub mod graph;
 pub mod indexer;
@@ -46,8 +47,7 @@ pub fn index_path(root: &Path) -> Result<PathBuf> {
     if let Some(dir) = std::env::var_os("LANTERN_INDEX_DIR").filter(|d| !d.is_empty()) {
         let dir = PathBuf::from(dir);
         std::fs::create_dir_all(&dir)?;
-        let key = blake3::hash(root.to_string_lossy().as_bytes()).to_hex();
-        return Ok(dir.join(format!("{}.db", &key[..16])));
+        return Ok(keyed_index(&dir, root));
     }
     let dir = root.join(PROJECT_DIR);
     std::fs::create_dir_all(&dir)?;
@@ -56,6 +56,12 @@ pub fn index_path(root: &Path) -> Result<PathBuf> {
         std::fs::write(&gitignore, "index.db*\n")?;
     }
     Ok(dir.join("index.db"))
+}
+
+/// 프로젝트 폴더 밖에 둘 때의 인덱스 파일: `<dir>/<루트 경로 해시>.db`
+pub fn keyed_index(dir: &Path, root: &Path) -> PathBuf {
+    let key = blake3::hash(root.to_string_lossy().as_bytes()).to_hex();
+    dir.join(format!("{}.db", &key[..16]))
 }
 
 pub struct Engine {
