@@ -22,12 +22,17 @@ pub fn no_window(cmd: &mut Command) -> &mut Command {
     cmd
 }
 
+/// 일부만 받은 클론에서 빠진 객체를 받으러 네트워크에 나가지 않게 한다 (`core.sshCommand` 실행과 `.git` 쓰기도 막는다).
+/// 이 설정을 모르는 오래된 git에서는 효과가 없다
+pub(crate) const NO_LAZY_FETCH: &str = "GIT_NO_LAZY_FETCH";
+
 pub(crate) fn git(root: &Path, args: &[&str]) -> Result<String> {
     let out = no_window(&mut Command::new("git"))
         .arg("-C")
         .arg(root)
         .args(["-c", "core.quotepath=off"])
         .args(args)
+        .env(NO_LAZY_FETCH, "1")
         .output()?;
     if !out.status.success() {
         bail!("git {}: {}", args.join(" "), String::from_utf8_lossy(&out.stderr).trim());
