@@ -440,6 +440,18 @@ fn go_params(parts: &[&str]) -> Vec<Param> {
     out
 }
 
+/// Go 메서드의 받는 쪽 이름은 호출에 상관없다: `func (u *User) ` → `func (*User) `. 타입은 남긴다
+fn go_without_receiver_name(head: &str) -> String {
+    let (Some(open), Some(close)) = (head.find('('), head.rfind(')')) else { return head.to_string() };
+    if close < open {
+        return head.to_string();
+    }
+    match head[open + 1..close].trim().split_once(char::is_whitespace) {
+        Some((name, ty)) if name.chars().all(is_word) => format!("{}({}){}", &head[..open], ty.trim(), &head[close + 1..]),
+        _ => head.to_string(),
+    }
+}
+
 fn param(lang: Lang, raw: &str) -> Param {
     let raw = strip_marks(lang, raw);
     let (decl, default) = split_default(lang, &raw);
@@ -474,7 +486,8 @@ fn call_shape(lang: Lang, kind: &str, name: &str, header: &str) -> Option<CallSh
     let after = at + name.len();
     let open = open_paren(b, after, is_callable(kind))?;
     let close = balanced_end(lang, b, open)?;
-    let head = format!("{} {}", &header[..at], &header[after..open]);
+    let before_name = if lang == Lang::Go { go_without_receiver_name(&header[..at]) } else { header[..at].to_string() };
+    let head = format!("{before_name} {}", &header[after..open]);
     let head = squeeze(&visibility_re().replace_all(&head, " "));
     let mut ret = squeeze(&header[close..]);
     // 생성자 초기화 목록은 호출하는 쪽과 상관없다
@@ -568,16 +581,27 @@ fn kotlin_inserted_defaults(old: &[Param], new: &[Param]) -> bool {
     rest.peek().is_none()
 }
 
-/// 원래 호출이 그대로 되는 변화인가: 끝에 선택 매개변수가 붙거나 기존 매개변수에 기본값이 생기거나 타입이 넓어진 정도
+/// 원래 인자가 그대로 들어가는가: 끝에 선택 매개변수가 붙거나 기존 매개변수에 기본값이 생기거나 타입이 넓어진 정도
+fn params_fit(lang: Lang, old: &CallShape, new: &CallShape) -> bool {
+    let appended = new.params.len() >= old.params.len()
+        && old.params.iter().zip(&new.params).all(|(o, n)| param_compatible(lang, o, n))
+        && new.params[old.params.len()..].iter().all(Param::optional);
+    appended || (lang == Lang::Kotlin && kotlin_inserted_defaults(&old.params, &new.params))
+}
+
+/// 원래 호출이 그대로 되는 변화인가
 fn compatible(lang: Lang, old: &CallShape, new: &CallShape) -> bool {
     // Python 반환 힌트는 새로 달아도 호출에 상관없다
     let ret_same = old.ret == new.ret || (lang == Lang::Python && old.ret.is_empty());
     let same_head = old.head == new.head
         || (lang == Lang::Java && old.head.split(' ').map(java_unboxed).eq(new.head.split(' ').map(java_unboxed)));
-    let appended = new.params.len() >= old.params.len()
-        && old.params.iter().zip(&new.params).all(|(o, n)| param_compatible(lang, o, n))
-        && new.params[old.params.len()..].iter().all(Param::optional);
-    same_head && ret_same && (appended || (lang == Lang::Kotlin && kotlin_inserted_defaults(&old.params, &new.params)))
+    same_head && ret_same && params_fit(lang, old, new)
+}
+
+/// 사라진 오버로드를 부르던 호출을 남은 정의가 받는가. 인자만 본다: C 계열의 선언과 정의는 머리가 달라도 같은 함수다.
+/// Go는 받는 쪽 타입이 머리에 있고, 그것이 다르면 다른 타입의 메서드다
+fn overload_fits(lang: Lang, old: &CallShape, new: &CallShape) -> bool {
+    params_fit(lang, old, new) && (lang != Lang::Go || old.head == new.head)
 }
 
 /// 글자 두 개씩 묶어 비교한 유사도 (0~1)
@@ -726,6 +750,28 @@ fn diff_symbols(lang: Lang, before: &[u8], old_syms: &[NewSymbol], after: &[u8],
                 signature: o.sym.signature.clone(),
                 line: o.sym.start_line,
                 renamed_to: find_rename(o, &new, &old_names, &mut claimed),
+            });
+        }
+    }
+    // 같은 이름이 남아도 사라진 오버로드를 부르던 호출은 깨질 수 있다. 남은 것 중 그 호출을 그대로 받는 것이 있으면 괜찮다
+    let mut overloads = HashSet::new();
+    for o in old.iter().filter(|o| !o.paired) {
+        let name = o.sym.name.as_str();
+        let Some(left) = by_name.get(name) else { continue };
+        let still_fits = left.iter().any(|&j| match (&o.shape.call, &new[j].shape.call) {
+            (Some(a), Some(b)) => overload_fits(lang, a, b),
+            (None, None) => true,
+            // 함수인데 괄호를 못 찾았으면 모른다
+            _ => is_callable(&new[j].sym.kind),
+        });
+        if !still_fits && overloads.insert((name, o.sym.kind.as_str())) {
+            let n = &new[left[0]];
+            signature.push(SymbolChange::Signature {
+                name: o.sym.name.clone(),
+                kind: o.sym.kind.clone(),
+                old: o.sym.signature.clone(),
+                new: n.sym.signature.clone(),
+                line: n.sym.start_line,
             });
         }
     }
