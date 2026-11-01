@@ -418,17 +418,21 @@ fn hook_command(root: &Path, action: HookAction) -> Result<()> {
     let user = target.user && !target.project;
     let dir = check::repo_root(root).unwrap_or_else(|_| root.to_path_buf());
     let path = hook::claude_settings_path(&dir, user, &sessions::Homes::detect());
-    let lines = if install {
-        let exe = std::env::current_exe().context("실행 파일 경로")?;
-        hook::install_claude(&path, &hook::stop_hook_command(&exe))?
-    } else {
-        hook::uninstall_claude(&path)?
-    };
+    let data = hook::data_dir().context("데이터 폴더를 찾지 못했습니다")?;
+    let backups = hook::backup_dir(&data);
+    let exe = std::env::current_exe().context("실행 파일 경로")?;
+    let command = hook::stop_hook_command(&exe);
+    let mut lines = if install { hook::install_claude(&path, &command, &backups)? } else { hook::uninstall_claude(&path, &command, &backups)? };
+    if !install {
+        // 사용자 설정의 훅은 모든 저장소에서 돌았으니 인덱스도 전부 지운다
+        lines.extend(check::forget_index((!user).then_some(dir.as_path()), &data));
+    }
     for line in lines {
         println!("{line}");
     }
     if install {
-        println!("The hook only records counts for now (lantern check --stats). It does not stop the agent: no finding kind has met its precision bar.");
+        println!("The hook does not stop the agent: no finding kind has met its precision bar. It logs counts (lantern check --stats).");
+        println!("Unless this repository has its own index, it also keeps symbol names and file paths, no code, under {}. lantern hook uninstall claude deletes them.", data.join("index").display());
     }
     if install && !user {
         if let Some(note) = hook::commit_warning(&dir, &path) {
