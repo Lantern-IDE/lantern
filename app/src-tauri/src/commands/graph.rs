@@ -45,6 +45,12 @@ pub(crate) async fn graph_enclosing(state: State<'_, AppState>, locations: Vec<(
     with_engine(&state, move |e, _| locations.iter().map(|(p, l)| lantern_context::graph::enclosing(&e.store, p, *l)).collect()).await
 }
 
+/// 지도 카드의 수: 보이는 그래프가 아니라 프로젝트 전체에서 센다
+#[tauri::command]
+pub(crate) async fn graph_node_stats(state: State<'_, AppState>, id: String, label: String) -> CmdResult<Option<lantern_context::graph::NodeStats>> {
+    with_engine(&state, move |e, _| lantern_context::graph::node_stats(&e.store, &id, &label)).await
+}
+
 #[tauri::command]
 pub(crate) async fn graph_find(state: State<'_, AppState>, query: String) -> CmdResult<Vec<lantern_context::graph::Node>> {
     with_engine(&state, move |e, _| lantern_context::graph::find(&e.store, &query, 12)).await

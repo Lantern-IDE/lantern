@@ -232,6 +232,7 @@ fn main() {
             commands::graph::graph_impact,
             commands::graph::graph_memory,
             commands::graph::graph_find,
+            commands::graph::graph_node_stats,
             commands::graph::graph_enclosing,
             commands::agent::inline_complete,
             commands::settings::get_keybindings,

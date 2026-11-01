@@ -582,6 +582,46 @@ impl Store {
         Ok(rows.collect::<rusqlite::Result<_>>()?)
     }
 
+    /// 파일 하나의 참조 수: (이 파일을 참조하는 파일 수, 이 파일이 참조하는 파일 수). 없는 파일이면 `None`.
+    /// [`Self::file_ref_edges`]와 같은 기준이되 전체를 훑지 않는다 (지도에서 노드를 누를 때마다 부른다)
+    pub fn file_ref_counts(&self, path: &str, max_defs: i64) -> Result<Option<(usize, usize)>> {
+        let exists: i64 = self.conn.prepare_cached("SELECT COUNT(*) FROM files WHERE path = ?1")?.query_row([path], |r| r.get(0))?;
+        if exists == 0 {
+            return Ok(None);
+        }
+        let (fam, fam_other) = (crate::lang::family_sql("f.lang"), crate::lang::family_sql("o.lang"));
+        let incoming = format!(
+            "SELECT COUNT(DISTINCT r.file_id) FROM files f
+             JOIN symbols s ON s.file_id = f.id
+             JOIN refs r ON r.name = s.name
+             JOIN files o ON o.id = r.file_id
+             WHERE f.path = ?1 AND r.file_id != f.id AND {fam} = {fam_other}
+               AND (SELECT COUNT(*) FROM symbols x WHERE x.name = s.name) <= ?2"
+        );
+        let outgoing = format!(
+            "SELECT COUNT(DISTINCT s.file_id) FROM files f
+             JOIN refs r ON r.file_id = f.id
+             JOIN symbols s ON s.name = r.name
+             JOIN files o ON o.id = s.file_id
+             WHERE f.path = ?1 AND s.file_id != f.id AND {fam} = {fam_other}
+               AND (SELECT COUNT(*) FROM symbols x WHERE x.name = r.name) <= ?2"
+        );
+        let count = |sql: &str| -> Result<usize> {
+            let n: i64 = self.conn.prepare_cached(sql)?.query_row(params![path, max_defs], |r| r.get(0))?;
+            Ok(n as usize)
+        };
+        Ok(Some((count(&incoming)?, count(&outgoing)?)))
+    }
+
+    /// `path`와 함께 바뀌던 파일 수
+    pub fn cochanged_count(&self, path: &str) -> Result<usize> {
+        let n: i64 = self
+            .conn
+            .prepare_cached("SELECT COUNT(*) FROM cochange WHERE file_a = ?1 OR file_b = ?1")?
+            .query_row([path], |r| r.get(0))?;
+        Ok(n as usize)
+    }
+
     /// 함께 바뀐 파일 쌍 (횟수가 `min` 이상)
     pub fn cochange_pairs(&self, min: u32) -> Result<Vec<(String, String, u32)>> {
         let mut stmt = self.conn.prepare("SELECT file_a, file_b, count FROM cochange WHERE count >= ?1")?;
