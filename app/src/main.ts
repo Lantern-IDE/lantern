@@ -744,8 +744,8 @@ function init() {
     mention.invalidate();
   });
   editor.onActiveChange((p) => {
-    // 파일을 열면 가운데는 편집기로
-    if (p && map.isVisible()) map.hide();
+    // 파일이든 설정·diff 같은 페이지든 탭이 활성화되면 가운데는 편집기로. 지도 뒤에서 열리면 아무 일도 안 일어난 것처럼 보인다
+    if (editor.activeKey() && map.isVisible()) map.hide();
     void tree.reveal(p);
     $("#st-lang").textContent = p ? editor.langName(p) : "";
     $("#st-enc").classList.toggle("hidden", !p);
