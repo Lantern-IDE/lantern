@@ -235,7 +235,8 @@ fn parse_range(s: &str) -> Result<(u32, u32)> {
 
 fn main() -> Result<()> {
     // 탐색기에서 더블클릭하면 인자 없이 실행되어 창이 바로 닫힌다. 안내를 보여주고 기다린다.
-    if std::env::args().len() == 1 {
+    // `args()`는 유니코드가 아닌 인자에서 패닉하니 `args_os()`만 쓴다
+    if std::env::args_os().len() == 1 {
         println!("lantern: Lantern 맥락 엔진 명령줄 도구입니다. IDE 앱이 아닙니다.\n");
         println!("  IDE를 쓰려면 같은 폴더의 lantern-app.exe 를 실행하세요.\n");
         println!("  명령줄 사용 예:");
@@ -246,7 +247,7 @@ fn main() -> Result<()> {
         let _ = std::io::stdin().read_line(&mut String::new());
         return Ok(());
     }
-    let cli = if std::env::args().any(|a| a == "--stop-hook") { parse_for_stop_hook() } else { Cli::parse() };
+    let cli = if std::env::args_os().any(|a| a == "--stop-hook") { parse_for_stop_hook() } else { Cli::parse() };
     match cli.cmd {
         Cmd::Index { full } => {
             let mut engine = if full { Engine::open_fresh(&cli.root)? } else { Engine::open(&cli.root)? };
