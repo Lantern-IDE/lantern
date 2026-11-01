@@ -2,8 +2,9 @@
 //!
 //! Stop 훅은 에이전트를 세울 수 있어서 조심한다. 어떤 오류든 종료 코드 0에 출력 없음으로 끝나고(fail open),
 //! 세션마다 한 번만 막고, 예산 안에 못 끝내면 그냥 지나간다. 기록에는 개수와 해시만 남기고 이름과 경로는 남기지 않는다.
+//! 막는 것은 측정으로 정밀도 기준을 넘긴 종류뿐이다([`BlockPolicy::MEASURED`]). 지금은 그런 종류가 없어 세우지 않는다.
 
-use crate::check::{self, plural, Finding, FindingKind};
+use crate::check::{self, plural, BlockPolicy, Finding, FindingKind};
 use crate::git::git;
 use crate::lang::Lang;
 use crate::parse::Parser;
@@ -210,9 +211,14 @@ fn reason_for(blocking: &[&Finding]) -> String {
     out
 }
 
-/// Stop 훅 본체. 막아야 하면 stdout에 쓸 JSON을 돌려준다.
+/// Stop 훅 본체. 측정으로 기준을 넘긴 종류만 막는다. 지금은 넘긴 종류가 없어 개수만 남기고 막지 않는다.
 /// `base`를 주면 시작 본문을 전부 그 커밋에서 읽는다.
 pub fn stop_hook(input: &str, data: &Path, fallback_root: &Path, base: Option<&str>, progress: &Progress) -> Result<Option<String>> {
+    stop_hook_with(input, data, fallback_root, base, progress, BlockPolicy::MEASURED)
+}
+
+/// 막아야 하면 stdout에 쓸 JSON을 돌려준다. 정책을 넘기는 것은 기준을 넘긴 뒤의 동작을 시험하기 위해서다
+pub fn stop_hook_with(input: &str, data: &Path, fallback_root: &Path, base: Option<&str>, progress: &Progress, policy: BlockPolicy) -> Result<Option<String>> {
     let started = Instant::now();
     let input: StopInput = serde_json::from_str(input).context("훅 입력")?;
     let session = input.session_id.as_deref().filter(|s| !s.is_empty()).context("session_id가 없습니다")?;
@@ -298,7 +304,7 @@ pub fn stop_hook(input: &str, data: &Path, fallback_root: &Path, base: Option<&s
         progress.set(Some(root.clone()));
         let store = check::refreshed_index(&root, data, &mut parser)?;
         progress.set(None);
-        check::left_behind(&store, &changes, &touched, &read, reads_known)?
+        check::left_behind(&store, &check::read_under(&root), &changes, &touched, &read, reads_known)?
     } else {
         Vec::new()
     };
@@ -313,7 +319,7 @@ pub fn stop_hook(input: &str, data: &Path, fallback_root: &Path, base: Option<&s
             line.flagged_new += 1;
         }
     }
-    let blocking: Vec<&Finding> = findings.iter().filter(|f| f.blocks()).collect();
+    let blocking: Vec<&Finding> = findings.iter().filter(|f| policy.blocks(f)).collect();
     line.blocked = !blocking.is_empty();
     state.blocked = line.blocked;
     if line.blocked || line.flagged_new > 0 || line.edited_new > 0 {

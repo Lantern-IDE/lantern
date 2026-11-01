@@ -1033,7 +1033,12 @@ impl Ctx<'_> {
         let t = Instant::now();
         let touched = p.paths(s, self.scope, Op::Edit);
         let read = p.paths(s, self.scope, Op::Read);
-        let mut raw = if check::may_leave_behind(&changes) { collect_findings(&self.store, &changes, &touched, &read, s.reads_known)? } else { Vec::new() };
+        // 인덱스도 클론도 기준 커밋에 있다
+        let mut raw = if check::may_leave_behind(&changes) {
+            collect_findings(&self.store, &check::read_under(&self.sandbox.dir), &changes, &touched, &read, s.reads_known)?
+        } else {
+            Vec::new()
+        };
         row.findings_raw = raw.len() as u32;
         let cut = raw.len().saturating_sub(MAX_VERIFY);
         raw.truncate(MAX_VERIFY);
@@ -1928,6 +1933,7 @@ mod tests {
                 caller: None,
                 refs_in_file: 1,
                 in_test: false,
+                details_only: kind.details_only(),
                 why: String::new(),
             },
             later_fixed: i == 0,
