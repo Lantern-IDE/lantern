@@ -1,6 +1,6 @@
 // 화면과 무관한 순수 로직 (Diff 해석, 맥락 해석, 단축키)
 import { describe, expect, it } from "vitest";
-import { diffTarget } from "../../src/lib/diff";
+import { changedSpans, diffTarget } from "../../src/lib/diff";
 import { parseContext } from "../../src/lib/context";
 import { displayKey, fromEvent } from "../../src/lib/keys";
 import { isTestPath, testPrompt } from "../../src/lib/testPrompt";
@@ -24,6 +24,47 @@ describe("diffTarget: 바뀌는 원래 줄 범위", () => {
   it("새 파일은 영향 반경이 없다", () => {
     const d = ["--- a/new.ts", "+++ b/new.ts", "@@ -0,0 +1,2 @@", "+one", "+two"].join("\n");
     expect(diffTarget(d)).toBeNull();
+  });
+});
+
+describe("changedSpans: 짝지은 -/+ 줄의 달라진 곳", () => {
+  /** 줄마다 칠해지는 글자 */
+  const marked = (...lines: string[]) => {
+    const m = changedSpans(lines);
+    return lines.map((l, i) => (m.has(i) ? l.slice(...m.get(i)!) : null));
+  };
+
+  it("가운데만 다르면 공통 앞뒤를 뺀다", () => {
+    expect(marked("-  return v + '.sig';", "+  return v + '.signed';")).toEqual([null, "ned"]);
+    expect(marked("-  a(1, 2);", "+  a(1, 3);")).toEqual(["2", "3"]);
+  });
+
+  it("줄 끝에 덧붙이면 + 줄만 칠한다", () => {
+    expect(marked("-for x {", "+for x { // note")).toEqual([null, " // note"]);
+  });
+
+  it("공백 말고 같은 데가 없으면 줄 전체가 바뀐 것이라 칠하지 않는다", () => {
+    expect(marked("-  one", "+  two")).toEqual([null, null]);
+    expect(marked("-one\r", "+two\r")).toEqual([null, null]);
+  });
+
+  it("줄 수가 같은 덩어리만 차례로 짝짓는다", () => {
+    expect(marked("-a1", "-b1", "+a2", "+b2")).toEqual(["1", "1", "2", "2"]);
+    expect(marked("-a1", "-b1", "+a2")).toEqual([null, null, null]);
+    expect(marked("-a1", " x", "+a2")).toEqual([null, null, null]);
+  });
+
+  it("머리 줄은 짝이 아니다", () => {
+    expect(marked("--- a/x.ts", "+++ b/x.ts", "@@ -1 +1 @@", "-a1", "+a2")).toEqual([null, null, null, "1", "2"]);
+  });
+
+  it("아주 긴 줄은 건너뛴다", () => {
+    const long = "x".repeat(2001);
+    expect(marked(`-${long}a`, `+${long}b`)).toEqual([null, null]);
+  });
+
+  it("이모지를 가르지 않는다", () => {
+    expect(marked("-ok 😀", "+ok 😁")).toEqual(["😀", "😁"]);
   });
 });
 

@@ -59,7 +59,8 @@ async function lspCallers(i: Impact): Promise<{ callers: number; files: number; 
   return { callers: found.size, files: new Set([...found.values()].map((n) => n.path).filter((p) => p !== i.path)).size, lspOnly };
 }
 
-export function impactRow(diff: string, onTouched: (names: string[]) => void = () => {}): HTMLElement | null {
+/** `onImpact`: 결과를 그린 뒤 (줄이 커졌으니 승인 카드는 다시 맞춘다) */
+export function impactRow(diff: string, onTouched: (names: string[]) => void = () => {}, onImpact: (i: Impact) => void = () => {}): HTMLElement | null {
   const target = diffTarget(diff);
   if (!target) return null;
   const row = h("div", { class: "impact loading" }, codicon("loading", "codicon-modifier-spin"), h("span", {}, "영향 반경 계산 중…"));
@@ -103,6 +104,7 @@ export function impactRow(diff: string, onTouched: (names: string[]) => void = (
       i.ambiguous.length ? h("div", { class: "inote ambiguous" }, `이름이 흔해 호출자를 셀 수 없음: ${i.ambiguous.join(", ")}`) : null,
     ].filter(Boolean) as Node[]));
     if (i.supported) row.classList.add(`risk-${i.risk}`);
+    onImpact(i);
     // 언어 서버로 다시 확인 (켜져 있을 때만). 이름 기준 결과와 다르면 고쳐 보여준다.
     void lspCallers(i).then((r) => {
       if (!r) return;
