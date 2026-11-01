@@ -249,7 +249,7 @@ fn end_to_end_finds_one_dangling_one_stale_and_one_not_landed() {
     s.write("src/stale_user.rs", STALE_USER_FIXED);
     s.commit_at(LATER_DATE, &["src/stale_user.rs"]);
 
-    let v = s.json(&[]);
+    let v = s.json(&["--replay"]);
     assert_eq!(v["sessions"]["with_code_edits"], 1, "{v:#}");
     assert_eq!(v["sessions"]["analyzed"], 1, "{v:#}");
     assert_eq!(v["sessions"]["agents"]["claude"], 1);
@@ -304,6 +304,42 @@ fn end_to_end_finds_one_dangling_one_stale_and_one_not_landed() {
     let row = &v["per_period"][0];
     assert_eq!(row["files_changed"], 2, "{row:#}");
     assert_eq!(row["files_from_git"], 0, "{row:#}");
+}
+
+#[test]
+fn later_fixed_needs_the_reference_line_to_change() {
+    // 감싼 함수의 다른 줄만 바뀌었다
+    let s = Sandbox::new();
+    s.base_repo();
+    s.write_session("session-main", &main_session(&s));
+    s.land_lib();
+    s.write("src/stale_user.rs", "use crate::resize_it;\n\nfn draw_box() -> u32 {\n    let extra = 1;\n    resize_it(3) + extra\n}\n");
+    s.write("src/dangling_user.rs", "use crate::old_helper;\n\n// 다른 곳만 고쳤다\nfn use_old() -> i32 {\n    old_helper(1)\n}\n");
+    s.commit_at(LATER_DATE, &["src/dangling_user.rs"]);
+    let v = s.json(&[]);
+    // 부르는 줄이 그대로면 고친 것이 아니다
+    assert_eq!(finding(&v, "old_helper")["later_fixed"], false, "{v:#}");
+
+    // 파일을 지운 것은 그 참조를 고친 것이 아니다
+    let s = Sandbox::new();
+    s.base_repo();
+    s.write_session("session-main", &main_session(&s));
+    s.land_lib();
+    s.git(&["rm", "-q", "--", "src/dangling_user.rs", "src/stale_user.rs"]);
+    s.commit_at(LATER_DATE, &["src/lib.rs"]);
+    let v = s.json(&[]);
+    assert_eq!(finding(&v, "old_helper")["later_fixed"], false, "{v:#}");
+    assert_eq!(finding(&v, "resize_it")["later_fixed"], false, "{v:#}");
+
+    // 부르는 줄이 바뀌면 고친 것이다
+    let s = Sandbox::new();
+    s.base_repo();
+    s.write_session("session-main", &main_session(&s));
+    s.land_lib();
+    s.write("src/dangling_user.rs", "use crate::fresh_helper;\n\nfn use_old() -> i32 {\n    fresh_helper(1)\n}\n");
+    s.commit_at(LATER_DATE, &["src/dangling_user.rs"]);
+    let v = s.json(&[]);
+    assert_eq!(finding(&v, "old_helper")["later_fixed"], true, "{v:#}");
 }
 
 #[test]
@@ -530,19 +566,19 @@ fn time_cap_reports_k_of_n() {
 }
 
 #[test]
-fn replay_can_be_turned_off_and_short_prompts_are_skipped() {
+fn replay_is_off_by_default_and_short_prompts_are_skipped() {
     let s = Sandbox::new();
     s.base_repo();
     s.write_session("session-main", &main_session(&s));
     s.land_lib();
-    let v = s.json(&["--no-replay"]);
+    let v = s.json(&[]);
     assert_eq!((v["replay"]["enabled"].as_bool(), v["replay"]["ran"].as_u64()), (Some(false), Some(0)), "{v:#}");
 
     let mut log = Log::new(&s, "2026-01-10");
     log.prompt("go");
     log.edit("src/lib.rs", "    a + 1\n", "    a + 2\n");
     s.write_session("session-main", &log);
-    let v = s.json(&[]);
+    let v = s.json(&["--replay"]);
     assert_eq!((v["replay"]["ran"].as_u64(), v["replay"]["skipped_prompt"].as_u64()), (Some(0), Some(1)), "{v:#}");
 }
 
@@ -556,7 +592,9 @@ fn text_reports_fit_a_screen_in_both_languages() {
     assert!(en.lines().count() <= 24, "{en}");
     assert!(en.contains("Analyzed 1 of 1 sessions") && en.contains("src/dangling_user.rs:4") && en.contains("old_helper"), "{en}");
     assert!(en.contains("name based") && en.contains("lantern hook install claude") && en.contains("--details"), "{en}");
-    assert!(en.contains("1 of 1 work periods with related tests") && en.contains("not an agent run") && en.contains("Unknown model: 1"), "{en}");
+    assert!(en.contains("1 of 1 work periods with related tests") && en.contains("Unknown model: 1"), "{en}");
+    // 옛 호출은 기준을 못 넘겨 줄이 보이지 않는다. 재현 수치는 어디에도 없다
+    assert!(en.contains("1 signature warnings are below the precision bar") && !en.contains("src/stale_user.rs") && !en.to_lowercase().contains("replay"), "{en}");
 
     let ko = String::from_utf8_lossy(&s.lantern(&["--lang", "ko"]).stdout).into_owned();
     assert!(ko.lines().count() <= 24, "{ko}");
@@ -564,6 +602,7 @@ fn text_reports_fit_a_screen_in_both_languages() {
 
     let details = String::from_utf8_lossy(&s.lantern(&["--lang", "en", "--details"]).stdout).into_owned();
     assert!(details.contains("session session-") && details.contains("use_old") && details.contains("Skipped sessions"), "{details}");
+    assert!(details.contains("src/stale_user.rs") && !details.to_lowercase().contains("replay"), "{details}");
 }
 
 #[test]
