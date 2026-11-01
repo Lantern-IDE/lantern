@@ -14,6 +14,8 @@ let openHandler: (path: string) => void = () => {};
 let changeHandler: (ev: { kind: "rename" | "delete"; from: string; to?: string }) => void = () => {};
 let activePath: string | null = null;
 let selected: { path: string; isDir: boolean } | null = null;
+// 열린 입력칸마다 취소 함수. 있는 동안은 트리를 다시 그리지 않는다: 행을 갈아 끼우면 입력칸이 사라지고, 그때의 blur가 치다 만 이름을 커밋한다.
+const inputs = new Set<() => void>();
 
 export function onOpen(fn: (path: string) => void) {
   openHandler = fn;
@@ -102,7 +104,7 @@ function menuFor(path: string, isDir: boolean, x: number, y: number) {
   ]);
 }
 
-/** 트리 안에 입력칸을 띄운다. Enter면 onCommit, Esc나 포커스를 잃으면 취소. */
+/** 트리 안에 입력칸을 띄운다. Enter나 포커스를 잃으면 onCommit, Esc면 취소. 닫히면 미뤄 둔 새로 고침을 한다. */
 function inlineInput(host: HTMLElement, depth: number, initial: string, icon: HTMLElement | null, onCommit: (name: string) => Promise<boolean>) {
   const input = h("input", { class: "rename-input", value: initial, spellcheck: "false", "aria-label": "이름" }) as HTMLInputElement;
   const r = h("div", { class: "node", style: `padding-left:${depth * INDENT + 8}px` }, h("span", { class: "twisty" }), icon, input);
@@ -119,9 +121,12 @@ function inlineInput(host: HTMLElement, depth: number, initial: string, icon: HT
         return;
       }
     }
+    inputs.delete(cancel);
     r.replaceWith(host);
     void refresh();
   };
+  const cancel = () => void finish(false);
+  inputs.add(cancel);
   input.addEventListener("keydown", (ev) => {
     ev.stopPropagation();
     if (ev.key === "Enter") void finish(true);
@@ -197,16 +202,18 @@ async function remove(path: string, isDir: boolean) {
   }
 }
 
-/** 루트부터 다시 그린다. 펼친 폴더는 유지한다. */
+/** 루트부터 다시 그린다. 펼친 폴더는 유지한다. 입력칸이 열려 있으면 닫힐 때로 미룬다. */
 export async function refresh() {
+  if (inputs.size) return;
   const tree = $("#tree");
   const scroll = tree.scrollTop;
   try {
     const entries = await api.listDir(".");
+    if (inputs.size) return; // 읽는 사이에 열렸다
     tree.replaceChildren(...entries.map((e) => node(e, 0)));
     tree.scrollTop = scroll;
   } catch (e) {
-    tree.replaceChildren(h("div", { class: "node dim" }, errorText(e)));
+    if (!inputs.size) tree.replaceChildren(h("div", { class: "node dim" }, errorText(e)));
   }
 }
 
@@ -216,6 +223,7 @@ export function collapseAll() {
 }
 
 export function reset() {
+  for (const cancel of [...inputs]) cancel(); // 치던 이름이 다음 프로젝트에 만들어지지 않게
   expanded.clear();
   activePath = null;
   selected = null;
