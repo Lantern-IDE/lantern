@@ -492,7 +492,7 @@ fn finish_tool(app: &AppHandle, turn: &Turn, id: &str, u: &Value) {
     if text.chars().count() > 4000 {
         text = text.chars().take(4000).collect::<String>() + "\n…";
     }
-    agent::emit(app, AgentEvent::ToolResult { session: turn.session.clone(), id: id.into(), name, content: text, is_error: status == "failed" });
+    agent::emit(app, AgentEvent::ToolResult { session: turn.session.clone(), id: id.into(), name, content: text, is_error: status == "failed", skipped: false });
 }
 
 fn globs_match(globs: &[String], rel: &str) -> bool {
@@ -683,7 +683,7 @@ pub async fn run(
     let result = run_inner(&app, &session, &agent_id, text, images, mentions, file, line, &cancel).await;
     app.state::<AppState>().cancels.lock().unwrap().remove(&session);
     match result {
-        Ok((changed, checkpoint)) => agent::emit(&app, AgentEvent::Done { session, changed, checkpoint }),
+        Ok((changed, checkpoint)) => agent::emit(&app, AgentEvent::Done { session, changed, checkpoint, tests: None }),
         Err(e) => {
             crate::applog::error(&format!("외부 에이전트 오류: {e:#}"));
             agent::emit(&app, AgentEvent::Error { session, message: format!("{e:#}") })
@@ -817,7 +817,7 @@ async fn run_inner(
         Err(e) => {
             if !changed.is_empty() {
                 // 바뀐 파일은 되돌릴 수 있게 알리고 오류를 보인다
-                agent::emit(app, AgentEvent::Done { session: session.into(), changed, checkpoint });
+                agent::emit(app, AgentEvent::Done { session: session.into(), changed, checkpoint, tests: None });
             }
             Err(conn.fail(&format!("{}: {e}", spec.name)))
         }

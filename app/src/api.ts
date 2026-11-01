@@ -20,6 +20,9 @@ export interface Usage { input_tokens: number; output_tokens: number; cache_read
 export type Mention = { kind: "file"; path: string } | { kind: "symbol"; name: string; path: string; line: number };
 export interface AuthMethod { id: string; name: string; description?: string | null; type?: string | null }
 
+/** 고친 뒤 테스트 확인이 어떻게 끝났는지. 없으면 확인을 하지 않는 작업이다 (외부 에이전트, 설정에서 끔) */
+export type TestOutcome = "passed" | "failed" | "none_found" | "no_command" | "skipped";
+
 export type AgentEvent = { session: string } & (
   | { kind: "request"; request_id: number; agent: string; model_key: string; model: string; system: string; context: string; context_tokens: number; tools: string[] }
   | { kind: "text"; text: string }
@@ -28,11 +31,11 @@ export type AgentEvent = { session: string } & (
   | { kind: "compacted"; before: number; after: number; dropped: number }
   | { kind: "plan_ready" }
   | { kind: "tool_call"; id: string; name: string; input: Record<string, unknown> }
-  | { kind: "tool_result"; id: string; name: string; content: string; is_error: boolean }
+  | { kind: "tool_result"; id: string; name: string; content: string; is_error: boolean; skipped?: boolean }
   | { kind: "approval"; id: string; approval_kind: "edit" | "command" | "secret" | "mcp" | "fetch"; title: string; detail: string }
   | { kind: "approval_resolved"; id: string; approved: boolean }
   | { kind: "usage"; request_id: number; model: string; usage: Usage; cost_usd: number | null; month_cost_usd: number; month_limit_usd: number }
-  | { kind: "done"; changed: string[]; checkpoint: string | null }
+  | { kind: "done"; changed: string[]; checkpoint: string | null; tests?: TestOutcome }
   | { kind: "error"; message: string }
   | { kind: "auth_required"; agent: string; agent_name: string; methods: AuthMethod[] }
 );
