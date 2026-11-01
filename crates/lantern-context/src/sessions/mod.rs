@@ -579,14 +579,14 @@ fn test_runner_re() -> &'static Regex {
     RE.get_or_init(|| {
         Regex::new(
             r#"(?ix)
-              \bcargo(?:\s+\S+)*?\s+(?:test|nextest|tarpaulin|llvm-cov)(?:\s|$|["'])
-            | \b(?:npm|pnpm|yarn|bun)\s+(?:(?:--filter\s+\S+|workspace\s+\S+|-\S+)\s+)*(?:(?:run|run-script)\s+\S*test\S*|test\b|t\b)
-            | \b(?:go|dotnet|swift|deno|flutter|dart|mix|rails|artisan|forge)\s+test\b
+              \bcargo(?:\.exe)?["']?(?:\s+\S+)*?\s+(?:test|nextest|tarpaulin|llvm-cov)(?:\s|$|["'])
+            | \b(?:npm|pnpm|yarn|bun)(?:\.cmd|\.exe|\.ps1)?["']?\s+(?:(?:--filter|--prefix|--dir|--cwd|-C|-F|workspace)\s+\S+\s+|-\S+\s+)*(?:(?:run|run-script)\s+\S*(?:test|check|verify)\S*|test\b|t\b|check\b|verify\b)
+            | \b(?:go|dotnet|swift|deno|flutter|dart|mix|rails|artisan|forge)(?:\.exe|\.bat|\.cmd)?["']?\s+test\b
             | \b(?:pytest|py\.test|unittest|nose2|tox|nox|vitest|jest|mocha|rspec|phpunit|ctest)\b
-            | \bplaywright\s+test\b
-            | \bcypress\s+run\b
-            | \bnode\s+--test\b
-            | \b(?:mvn|mvnw|gradle|gradlew)(?:\.cmd|\.bat)?(?:\s+\S+)*?\s+(?:test|check|verify)(?:\s|$|["'])
+            | \bplaywright(?:\.cmd)?["']?\s+test\b
+            | \bcypress(?:\.cmd)?["']?\s+run\b
+            | \bnode(?:\.exe)?["']?\s+--test\b
+            | \b(?:mvn|mvnw|gradle|gradlew)(?:\.cmd|\.bat)?["']?(?:\s+\S+)*?\s+(?:\S*:)?(?:(?:[^\s\-]\S*)?test\S*|check|verify|build|install|package)(?:\s|$|["'])
             | \b(?:make|just|rake)\s+(?:-\S+\s+)*\S*test\S*
             | \bzig\s+build\s+test\b
             | \bsbt\s+\S*test\S*
@@ -1138,6 +1138,22 @@ mod tests {
             "make unit-test",
             "./scripts/run-tests.sh",
             "./test.sh",
+            // 빌드가 테스트까지 돌리는 도구, 모듈 작업 이름, Windows 실행 파일
+            "./gradlew build",
+            "./gradlew :core:test",
+            ".\\gradlew.bat :app:testDebugUnitTest --tests Foo",
+            "\"C:\\tools\\gradle\\gradlew.bat\" build",
+            "mvn package",
+            "mvn -pl api install",
+            "pnpm check",
+            "pnpm -C web check",
+            "npm run type-check",
+            "npm.cmd test",
+            "pnpm.cmd --filter web test",
+            "flutter.bat test",
+            "\"C:\\flutter\\bin\\flutter.bat\" test test/a_test.dart",
+            "go.exe test ./...",
+            "cargo.exe test -p a",
         ] {
             assert!(is_test_command(c), "{c}");
         }
@@ -1152,6 +1168,13 @@ mod tests {
             "cat tests/test_a.py",
             "ls tests",
             "npm install",
+            "pnpm build",
+            "npm run dev",
+            "./gradlew assembleDebug",
+            ".\\gradlew.bat :app:compileKotlin",
+            "mvn compile -DskipTests",
+            "flutter analyze",
+            "flutter.bat pub get",
         ] {
             assert!(!is_test_command(c), "{c}");
         }
