@@ -56,6 +56,8 @@ cargo build --release -p lantern-context
 claude mcp add lantern -- <lantern 경로> mcp <프로젝트>
 ```
 
+**변경이 남긴 것 확인.** `lantern check`는 변경 전후의 심볼을 비교해 지운 이름을 코드 그래프에서 찾습니다. 모델, 키, 네트워크를 쓰지 않습니다. 이름 기반이고 대부분 조용합니다. 공개된 여러 파일 커밋 71개 중 6개에서 함께 고친 다른 파일을 가리켰습니다. 작성자 본인의 에이전트 세션에서는 진짜 놓침을 찾지 못해(경고 표본 30건 중 0건, Claude 에이전트가 판정, 한 사람의 세션) 에이전트를 멈추지 않습니다. `lantern autopsy`는 디스크에 있는 지난 Claude Code와 Codex 로그에 같은 검사를 돌립니다. 방법과 한계: [eval/check](eval/check/README.md), [docs/에이전트_부검.md](docs/에이전트_부검.md).
+
 ## 설치
 
 [Releases](https://github.com/Lantern-IDE/lantern/releases)에서 받으세요. 아직 코드 서명이 없습니다.
