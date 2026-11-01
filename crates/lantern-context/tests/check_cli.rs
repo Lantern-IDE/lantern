@@ -1,6 +1,8 @@
 //! `lantern check`와 `lantern hook`을 진짜 git 저장소와 진짜 실행 파일로 돌린다.
 //! 홈, 데이터, 인덱스 폴더는 모두 임시 폴더로 돌려 사용자 폴더를 건드리지 않는다.
 
+use lantern_context::check::BlockPolicy;
+use lantern_context::hook;
 use serde_json::{json, Value};
 use std::io::Write as _;
 use std::path::{Path, PathBuf};
@@ -99,6 +101,14 @@ impl Sandbox {
         let mut child = self.isolate(&mut cmd).spawn().unwrap();
         child.stdin.take().unwrap().write_all(input.as_bytes()).unwrap();
         child.wait_with_output().unwrap()
+    }
+
+    /// 기준을 넘긴 뒤의 동작. 지금은 어떤 종류도 막지 않아 실행 파일로는 볼 수 없으니, Dangling이 기준을 넘겼다고 치고 직접 부른다.
+    /// 막으면 그 JSON, 아니면 `Null`
+    fn stop_hook_past_the_bar(&self, input: &str) -> Value {
+        let policy = BlockPolicy { dangling: true, stale: false };
+        let out = hook::stop_hook_with(input, &self.data, &self.repo, None, &hook::Progress::default(), policy).unwrap();
+        out.map_or(Value::Null, |text| serde_json::from_str(&text).unwrap())
     }
 
     fn transcript_path(&self) -> PathBuf {
@@ -245,14 +255,35 @@ fn check_stale_caller_is_shown_but_does_not_fail_strict() {
     assert_eq!(f["kind"], "stale_caller");
     assert_eq!(f["confidence"], "medium");
     assert_eq!(f["path"], "src/show.rs");
+    assert_eq!(f["details_only"], true);
+    assert_eq!(v["details_only"], 1, "{v}");
     assert_eq!(s.lantern(&["check", "--strict"]).status.code(), Some(0));
+
+    // 글 출력에는 기준을 못 넘긴 경고의 위치가 나오지 않는다
+    let text = stdout(&s.lantern(&["check"]));
+    assert!(text.contains("1 signature warning below the precision bar") && !text.contains("src/show.rs"), "{text}");
+    let text = stdout(&s.lantern(&["check", "--details"]));
+    assert!(text.contains("MEDIUM") && text.contains("src/show.rs:4"), "{text}");
+}
+
+#[test]
+fn check_drops_methods_whose_caller_never_names_the_file() {
+    let s = Sandbox::new();
+    s.write("src/a/Orders.java", "class Orders {\n  public int place(int a) { return a; }\n}\n");
+    s.write("src/b/Shop.java", "class Shop {\n  int go(Orders s) { return s.place(1); }\n}\n");
+    s.write("src/b/Other.java", "class Other {\n  int go(Thing t) { return t.place(1); }\n}\n");
+    s.commit_all();
+    s.write("src/a/Orders.java", "class Orders {\n  public int place(String a) { return 1; }\n}\n");
+    let v = json_of(&s.lantern(&["check", "--json"]));
+    let found: Vec<&str> = v["findings"].as_array().unwrap().iter().map(|f| f["path"].as_str().unwrap()).collect();
+    assert_eq!(found, ["src/b/Shop.java"], "{v}");
 }
 
 #[test]
 fn check_cuts_findings_at_twenty_unless_all() {
     let s = Sandbox::with_caller();
     for i in 0..25 {
-        s.write(&format!("src/caller{i}.rs"), "fn call_it() -> i32 {\n    compute_total(1)\n}\n");
+        s.write(&format!("src/caller{i}.rs"), "use crate::lib::compute_total;\n\nfn call_it() -> i32 {\n    compute_total(1)\n}\n");
     }
     s.commit_all();
     s.write("src/lib.rs", RENAMED);
@@ -307,14 +338,29 @@ fn check_errors_exit_zero_unless_strict() {
 }
 
 #[test]
-fn stop_hook_blocks_once_with_a_short_actionable_reason() {
+fn stop_hook_never_blocks_a_kind_below_its_bar_and_still_counts_it() {
+    let s = Sandbox::with_caller();
+    s.write("src/lib.rs", RENAMED);
+    let t = s.transcript(&["src/lib.rs"], &[]);
+    assert_silent_ok(&s.stop_hook(&s.input("s1", &t, false)), "Dangling");
+    let last = s.log().lines().last().unwrap().to_string();
+    assert!(last.contains(r#""dangling":1"#) && last.contains(r#""blocked":false"#), "{last}");
+
+    let s = Sandbox::with_caller();
+    s.write("src/lib.rs", WIDER);
+    let t = s.transcript(&["src/lib.rs"], &[]);
+    assert_silent_ok(&s.stop_hook(&s.input("s1", &t, false)), "Stale caller");
+    let last = s.log().lines().last().unwrap().to_string();
+    assert!(last.contains(r#""stale":1"#) && last.contains(r#""blocked":false"#), "{last}");
+}
+
+#[test]
+fn past_the_bar_the_hook_blocks_once_with_a_short_actionable_reason() {
     let s = Sandbox::with_caller();
     s.write("src/lib.rs", RENAMED);
     let t = s.transcript(&["src/lib.rs"], &[]);
 
-    let out = s.stop_hook(&s.input("s1", &t, false));
-    assert_eq!(out.status.code(), Some(0));
-    let v = json_of(&out);
+    let v = s.stop_hook_past_the_bar(&s.input("s1", &t, false));
     assert_eq!(v["decision"], "block");
     let reason = v["reason"].as_str().unwrap();
     assert!(reason.contains("compute_total") && reason.contains("src/show.rs:4") && reason.contains("add_all_up"), "{reason}");
@@ -322,11 +368,9 @@ fn stop_hook_blocks_once_with_a_short_actionable_reason() {
     assert!(!reason.contains("a * 2"), "{reason}");
 
     // 같은 세션은 다시 막지 않는다
-    let out = s.stop_hook(&s.input("s1", &t, false));
-    assert_silent_ok(&out, "두 번째");
+    assert_eq!(s.stop_hook_past_the_bar(&s.input("s1", &t, false)), Value::Null, "두 번째");
     // 다른 세션은 막는다
-    let out = s.stop_hook(&s.input("s2", &t, false));
-    assert_eq!(json_of(&out)["decision"], "block");
+    assert_eq!(s.stop_hook_past_the_bar(&s.input("s2", &t, false))["decision"], "block");
 }
 
 #[test]
@@ -337,7 +381,7 @@ fn stop_hook_active_is_honored() {
     assert_silent_ok(&s.stop_hook(&s.input("s1", &t, true)), "활성");
     assert!(s.log().is_empty(), "{}", s.log());
     // 활성 중에 그냥 지나갔어도 나중의 Stop은 막을 수 있다
-    assert_eq!(json_of(&s.stop_hook(&s.input("s1", &t, false)))["decision"], "block");
+    assert_eq!(s.stop_hook_past_the_bar(&s.input("s1", &t, false))["decision"], "block");
 }
 
 #[test]
@@ -361,8 +405,7 @@ fn stop_hook_only_blocks_for_this_sessions_code_edits() {
 fn stop_hook_without_a_transcript_falls_back_to_the_working_tree() {
     let s = Sandbox::with_caller();
     s.write("src/lib.rs", RENAMED);
-    let out = s.stop_hook(&json!({"session_id": "s1", "cwd": s.repo}).to_string());
-    assert_eq!(json_of(&out)["decision"], "block");
+    assert_eq!(s.stop_hook_past_the_bar(&json!({"session_id": "s1", "cwd": s.repo}).to_string())["decision"], "block");
 }
 
 #[test]
@@ -371,8 +414,7 @@ fn stop_hook_with_a_transcript_too_big_to_read_in_time_uses_the_working_tree() {
     s.write("src/lib.rs", RENAMED);
     let t = s.transcript_path();
     std::fs::File::create(&t).unwrap().set_len(65 * 1024 * 1024).unwrap();
-    let out = s.stop_hook(&s.input("s1", &t, false));
-    assert_eq!(json_of(&out)["decision"], "block");
+    assert_eq!(s.stop_hook_past_the_bar(&s.input("s1", &t, false))["decision"], "block");
     // 하위 에이전트 기록까지 합쳐 잰다
     let s = Sandbox::with_caller();
     s.write("src/lib.rs", RENAMED);
@@ -381,7 +423,7 @@ fn stop_hook_with_a_transcript_too_big_to_read_in_time_uses_the_working_tree() {
     let sub = t.with_extension("").join("subagents");
     std::fs::create_dir_all(&sub).unwrap();
     std::fs::File::create(sub.join("agent-1.jsonl")).unwrap().set_len(65 * 1024 * 1024).unwrap();
-    assert_eq!(json_of(&s.stop_hook(&s.input("s2", &t, false)))["decision"], "block");
+    assert_eq!(s.stop_hook_past_the_bar(&s.input("s2", &t, false))["decision"], "block");
 }
 
 #[test]
@@ -416,7 +458,7 @@ fn stop_hook_uses_the_session_start_text_when_the_session_already_committed() {
         .to_string(),
     ];
     std::fs::write(s.transcript_path(), lines.join("\n") + "\n").unwrap();
-    assert_eq!(json_of(&s.stop_hook(&s.input("s1", &s.transcript_path(), false)))["decision"], "block");
+    assert_eq!(s.stop_hook_past_the_bar(&s.input("s1", &s.transcript_path(), false))["decision"], "block");
 }
 
 #[test]
@@ -439,7 +481,7 @@ fn stop_hook_reads_the_commit_before_the_first_edit_when_the_log_has_no_start_te
         .to_string(),
     ];
     std::fs::write(s.transcript_path(), lines.join("\n") + "\n").unwrap();
-    let v = json_of(&s.stop_hook(&s.input("s1", &s.transcript_path(), false)));
+    let v = s.stop_hook_past_the_bar(&s.input("s1", &s.transcript_path(), false));
     assert_eq!(v["decision"], "block", "{v}");
 }
 
@@ -509,11 +551,11 @@ fn stats_count_flagged_and_later_edited_without_names() {
     assert!(stdout(&s.lantern(&["check", "--stats"])).contains("no stop hook runs"));
     s.write("src/lib.rs", RENAMED);
     let t = s.transcript(&["src/lib.rs"], &[]);
-    assert_eq!(json_of(&s.stop_hook(&s.input("s1", &t, false)))["decision"], "block");
+    assert_silent_ok(&s.stop_hook(&s.input("s1", &t, false)), "첫 Stop");
     let v = json_of(&s.lantern(&["check", "--stats", "--json"]));
-    assert_eq!((v["runs"].as_u64(), v["blocked"].as_u64(), v["flagged_files"].as_u64(), v["later_edited"].as_u64()), (Some(1), Some(1), Some(1), Some(0)), "{v}");
+    assert_eq!((v["runs"].as_u64(), v["blocked"].as_u64(), v["flagged_files"].as_u64(), v["later_edited"].as_u64()), (Some(1), Some(0), Some(1), Some(0)), "{v}");
 
-    // 막힌 뒤 호출자를 고치고 다시 Stop
+    // 호출자를 고치고 다시 Stop
     let t = s.transcript(&["src/lib.rs", "src/show.rs"], &[]);
     assert_silent_ok(&s.stop_hook(&s.input("s1", &t, true)), "뒤이은 Stop");
     let v = json_of(&s.lantern(&["check", "--stats", "--json"]));
@@ -591,15 +633,16 @@ fn installed_hook_command_actually_runs() {
     let mut child = s.isolate(&mut cmd).spawn().unwrap();
     child.stdin.take().unwrap().write_all(s.input("s1", &t, false).as_bytes()).unwrap();
     let out = child.wait_with_output().unwrap();
-    assert_eq!(json_of(&out)["decision"], "block", "{}", String::from_utf8_lossy(&out.stderr));
+    assert_silent_ok(&out, "설치한 훅");
+    assert!(s.log().contains(r#""dangling":1"#), "{}", s.log());
 }
 
 #[test]
 fn each_language_family_works_end_to_end() {
     let cases = [
         ("py/lib.py", "def compute_total(a):\n    return a\n", "py/show.py", "from lib import compute_total\n\ndef show_it():\n    return compute_total(1)\n"),
-        ("ts/lib.ts", "export function computeTotal(a: number): number { return a; }\n", "ts/show.ts", "function showIt() {\n  return computeTotal(1);\n}\n"),
-        ("js/lib.js", "function computeTotal(a) { return a; }\n", "js/show.js", "function showIt() {\n  return computeTotal(1);\n}\n"),
+        ("ts/lib.ts", "export function computeTotal(a: number): number { return a; }\n", "ts/show.ts", "import { computeTotal } from './lib';\n\nfunction showIt() {\n  return computeTotal(1);\n}\n"),
+        ("js/lib.js", "function computeTotal(a) { return a; }\n", "js/show.js", "const { computeTotal } = require('./lib');\n\nfunction showIt() {\n  return computeTotal(1);\n}\n"),
         ("java/Lib.java", "class Lib {\n  int computeTotal(int a) { return a; }\n}\n", "java/Show.java", "class Show {\n  int showIt(Lib l) {\n    return l.computeTotal(1);\n  }\n}\n"),
         ("go/lib.go", "package lib\n\nfunc ComputeTotal(a int) int { return a }\n", "go/show.go", "package lib\n\nfunc ShowIt() int {\n\treturn ComputeTotal(1)\n}\n"),
     ];

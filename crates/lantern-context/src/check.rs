@@ -7,7 +7,7 @@
 //! 0개로 나오기 때문이다. 이름 기반이라 결과는 늘 "그럴 수 있다"로만 말한다.
 
 use crate::git::{git, no_window};
-use crate::graph::is_test_path;
+use crate::graph::{framework_marks, is_test_path};
 use crate::indexer::{self, is_unindexable, MAX_FILE_BYTES};
 use crate::lang::Lang;
 use crate::parse::{NewSymbol, Parser};
@@ -16,11 +16,13 @@ use crate::store::Store;
 use anyhow::{bail, Context, Result};
 use regex::Regex;
 use serde::Serialize;
+use std::cell::OnceCell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
 use std::io::{Read, Write as _};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::rc::Rc;
 use std::sync::OnceLock;
 
 /// 이보다 많이 정의된 이름은 누구를 가리키는지 몰라 건너뛴다
@@ -34,14 +36,30 @@ const MIN_BODY_FOR_RENAME: usize = 24;
 const MIN_SIGNATURE_FOR_RENAME: usize = 16;
 const SIMILAR_SIGNATURE: f64 = 0.85;
 
-/// 정밀도 기준은 실제 측정 전에 정해 뒀다 (Dangling 70%, Stale caller 60%).
-/// Stale caller는 기준을 넘긴 것을 확인하기 전까지 막지 않는다.
-pub const BLOCK_DANGLING: bool = true;
-pub const BLOCK_STALE: bool = false;
+/// 어떤 종류가 에이전트를 막을 수 있는가
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BlockPolicy {
+    pub dangling: bool,
+    pub stale: bool,
+}
+
+impl BlockPolicy {
+    /// 정밀도 기준은 측정 전에 정해 뒀다 (Dangling 70%, Stale caller 60%). 코드를 읽어 판정한 표본(2026-11-02)에서
+    /// Dangling은 이력 확인 뒤 남은 발견이 없어 잴 수 없었고 Stale caller는 30건 중 0건이어서 둘 다 넘지 못했다.
+    /// 못 넘긴 종류는 막지 않는다. 기준을 넘겼다는 측정이 생기기 전에는 여기를 바꾸지 않는다.
+    pub const MEASURED: Self = Self { dangling: false, stale: false };
+
+    pub fn blocks(self, f: &Finding) -> bool {
+        match f.kind {
+            FindingKind::Dangling => self.dangling,
+            FindingKind::StaleCaller => self.stale,
+        }
+    }
+}
 
 /// 저장소 밖으로 나가지 않는 설명. 찾는 방법과 못 보는 것
 pub const METHOD: &str = "Name based: compares symbols before and after the edit, then looks up the old name in the code graph. No model and no network.";
-pub const NOT_COVERED: &str = "Not covered: reads through the shell, dynamic dispatch, dependency injection, name collisions.";
+pub const NOT_COVERED: &str = "Not covered: reads through the shell, dynamic dispatch, dependency injection, name collisions, callers that never name the changed file or type.";
 
 /// 흔한 이름. 표준 라이브러리 메서드와 겹쳐 지워져도 참조가 남아 보인다 (소문자로 비교)
 const GENERIC_NAMES: &[&str] = &[
@@ -59,7 +77,7 @@ pub enum SymbolChange {
     /// 이름이 파일에서 사라졌다
     Removed { name: String, kind: String, signature: String, line: u32, renamed_to: Option<String> },
     /// 호출하는 쪽에 보이는 모양이 달라졌다
-    Signature { name: String, old: String, new: String, line: u32 },
+    Signature { name: String, kind: String, old: String, new: String, line: u32 },
     /// 본문만 바뀌었다. 놓친 호출자로 보고하지 않는다
     Body { name: String },
 }
@@ -481,15 +499,85 @@ fn shape_of(lang: Lang, kind: &str, name: &str, raw: &str) -> Shape {
     }
 }
 
-/// 원래 호출이 그대로 되는 변화인가: 끝에 선택 매개변수가 붙거나 기존 매개변수에 기본값이 생긴 정도
+/// Java 오토박싱: 원시 타입과 그 포장 타입은 서로 그대로 넘어간다. 다른 타입으로 넓히는 것(`int` → `Long`)은 아니다
+fn java_unboxed(ty: &str) -> &str {
+    match ty {
+        "Integer" => "int",
+        "Long" => "long",
+        "Double" => "double",
+        "Float" => "float",
+        "Boolean" => "boolean",
+        "Short" => "short",
+        "Byte" => "byte",
+        "Character" => "char",
+        other => other,
+    }
+}
+
+fn union_members(ty: &str) -> Vec<&str> {
+    let mut parts = Vec::new();
+    let mut start = 0;
+    at_top(Lang::TypeScript, ty, |i, c| {
+        if c == b'|' {
+            parts.push(&ty[start..i]);
+            start = i + 1;
+        }
+        None::<()>
+    });
+    parts.push(&ty[start..]);
+    parts.retain(|p| !p.is_empty());
+    parts
+}
+
+/// TypeScript 매개변수를 넓혔는가: 유니온에 멤버가 늘거나 선택으로 바뀌면 원래 값이 그대로 들어간다
+fn ts_widened(old: &str, new: &str) -> bool {
+    let (Some((old_mark, old_ty)), Some((new_mark, new_ty))) = (old.split_once(':'), new.split_once(':')) else { return false };
+    let kept_mark = old_mark == new_mark || (!old_mark.contains('?') && new_mark == format!("{old_mark}?"));
+    let wider = union_members(new_ty);
+    kept_mark && union_members(old_ty).iter().all(|m| wider.contains(m))
+}
+
+/// 한 자리의 타입이 바뀌어도 원래 값이 그대로 들어가는가
+fn widened(lang: Lang, old: &str, new: &str) -> bool {
+    match lang {
+        Lang::Java => java_unboxed(old) == java_unboxed(new),
+        Lang::Kotlin => new.strip_suffix('?') == Some(old),
+        Lang::TypeScript | Lang::Tsx => ts_widened(old, new),
+        _ => false,
+    }
+}
+
+fn param_compatible(lang: Lang, old: &Param, new: &Param) -> bool {
+    (old.shape == new.shape || widened(lang, &old.shape, &new.shape)) && (old.default.is_none() || old.default == new.default)
+}
+
+/// Kotlin: 기본값 있는 매개변수를 중간에 끼워도, 그 뒤가 모두 기본값이면 호출은 이름으로 넘기는 것이 보통이라 그대로 된다.
+/// 뒤에 기본값 없는 매개변수가 있으면 위치로 넘긴 호출이 깨지니 호환으로 치지 않는다
+fn kotlin_inserted_defaults(old: &[Param], new: &[Param]) -> bool {
+    let mut rest = old.iter().peekable();
+    let mut inserted = false;
+    for n in new {
+        match rest.peek() {
+            Some(o) if param_compatible(Lang::Kotlin, o, n) && (!inserted || n.default.is_some()) => {
+                rest.next();
+            }
+            _ if n.default.is_some() => inserted = true,
+            _ => return false,
+        }
+    }
+    rest.peek().is_none()
+}
+
+/// 원래 호출이 그대로 되는 변화인가: 끝에 선택 매개변수가 붙거나 기존 매개변수에 기본값이 생기거나 타입이 넓어진 정도
 fn compatible(lang: Lang, old: &CallShape, new: &CallShape) -> bool {
     // Python 반환 힌트는 새로 달아도 호출에 상관없다
     let ret_same = old.ret == new.ret || (lang == Lang::Python && old.ret.is_empty());
-    old.head == new.head
-        && ret_same
-        && new.params.len() >= old.params.len()
-        && old.params.iter().zip(&new.params).all(|(o, n)| o.shape == n.shape && (o.default.is_none() || o.default == n.default))
-        && new.params[old.params.len()..].iter().all(Param::optional)
+    let same_head = old.head == new.head
+        || (lang == Lang::Java && old.head.split(' ').map(java_unboxed).eq(new.head.split(' ').map(java_unboxed)));
+    let appended = new.params.len() >= old.params.len()
+        && old.params.iter().zip(&new.params).all(|(o, n)| param_compatible(lang, o, n))
+        && new.params[old.params.len()..].iter().all(Param::optional);
+    same_head && ret_same && (appended || (lang == Lang::Kotlin && kotlin_inserted_defaults(&old.params, &new.params)))
 }
 
 /// 글자 두 개씩 묶어 비교한 유사도 (0~1)
@@ -613,6 +701,7 @@ fn diff_symbols(lang: Lang, before: &[u8], old_syms: &[NewSymbol], after: &[u8],
         if differs {
             signature.push(SymbolChange::Signature {
                 name: n.sym.name.clone(),
+                kind: n.sym.kind.clone(),
                 old: o.sym.signature.clone(),
                 new: n.sym.signature.clone(),
                 line: n.sym.start_line,
@@ -665,6 +754,8 @@ pub struct FileChanges {
     pub changes: Vec<SymbolChange>,
     /// 끝 상태에서 이 파일에 정의된 이름
     pub after_defs: HashSet<String>,
+    /// 바뀐 심볼을 감싼 심볼의 이름 (메서드의 클래스). 호출하는 쪽이 이 이름을 안다면 이어진 것이다
+    containers: HashMap<String, Vec<String>>,
 }
 
 impl FileChanges {
@@ -684,7 +775,23 @@ pub fn file_changes(parser: &mut Parser, path: &str, lang: Lang, before: &[u8], 
     } else {
         diff_symbols(lang, before, &old.symbols, after, &new.symbols)
     };
-    Ok(FileChanges { path: path.to_string(), lang, changes, after_defs })
+    let containers = containers_of(&changes, &old.symbols);
+    Ok(FileChanges { path: path.to_string(), lang, changes, after_defs, containers })
+}
+
+fn containers_of(changes: &[SymbolChange], old: &[NewSymbol]) -> HashMap<String, Vec<String>> {
+    let mut out: HashMap<String, Vec<String>> = HashMap::new();
+    for change in changes {
+        let name = match change {
+            SymbolChange::Removed { name, .. } | SymbolChange::Signature { name, .. } => name,
+            SymbolChange::Body { .. } => continue,
+        };
+        for s in old.iter().filter(|s| s.name == *name) {
+            let around = old.iter().filter(|c| c.name != *name && c.start_byte <= s.start_byte && s.end_byte <= c.end_byte);
+            out.entry(name.clone()).or_default().extend(around.map(|c| c.name.clone()));
+        }
+    }
+    out
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -719,22 +826,173 @@ pub struct Finding {
     /// 그 파일 안의 참조 수
     pub refs_in_file: u32,
     pub in_test: bool,
+    /// 기준을 못 넘긴 종류라 `--details`에서만 보인다
+    pub details_only: bool,
     pub why: String,
 }
 
-impl Finding {
-    /// 에이전트를 멈춰 세울 만큼 믿는가
-    pub fn blocks(&self) -> bool {
-        match self.kind {
-            FindingKind::Dangling => BLOCK_DANGLING,
-            FindingKind::StaleCaller => BLOCK_STALE,
-        }
+impl FindingKind {
+    /// Dangling은 기준을 못 넘겨도 보이고, Stale caller는 못 넘기면 `--details`에서만 보인다
+    pub fn details_only(self) -> bool {
+        self == FindingKind::StaleCaller && !BlockPolicy::MEASURED.stale
     }
 }
 
 /// 너무 짧거나 흔한 이름은 이름만으로 잇지 않는다
 pub fn skip_name(name: &str) -> bool {
     name.chars().count() < 3 || GENERIC_NAMES.contains(&name.to_lowercase().as_str())
+}
+
+/// 다른 파일에서 보이지 않는 정의. 그쪽의 같은 이름은 다른 것이다.
+/// `private` 키워드가 그 뜻인 언어만 본다. C++의 접근 지정은 시그니처에 없다
+fn private_to_file(lang: Lang, name: &str, signature: &str) -> bool {
+    if !matches!(lang, Lang::Java | Lang::Kotlin | Lang::CSharp | Lang::TypeScript | Lang::Tsx) {
+        return false;
+    }
+    let bare = strip_marks(lang, signature);
+    let head = find_word(lang, &bare, name).map_or(bare.as_str(), |at| &bare[..at]);
+    find_word(lang, head, "private").is_some()
+}
+
+/// 경로나 이벤트로 프레임워크가 부르는 정의 (`@GetMapping`, `[HttpGet]`, `@app.post`, `#[tauri::command]`).
+/// 코드에서 이름으로 찾은 참조는 대개 이름만 같은 다른 메서드다. 표시만 있는 것(`@Cacheable` 등)은 평범하게 불리므로 뺀다
+fn called_by_framework(signature: &str) -> bool {
+    framework_marks(signature).iter().any(|mark| {
+        let bare = mark.trim_start_matches(['#', '[', '@']).trim_end_matches(']');
+        let last = bare.rsplit(['.', ':']).next().unwrap_or("").to_ascii_lowercase();
+        let verb = last.strip_prefix("http").unwrap_or(&last);
+        matches!(verb, "get" | "post" | "put" | "patch" | "delete" | "head" | "options")
+            || last.ends_with("mapping")
+            || last.ends_with("listener")
+            || matches!(last.as_str(), "route" | "path" | "websocket" | "scheduled" | "exceptionhandler" | "command")
+    })
+}
+
+/// 참조 파일 본문을 읽는 함수. 루트 기준 경로를 받고, 못 읽으면 `None`
+pub type ReadFile<'a> = &'a dyn Fn(&str) -> Option<Vec<u8>>;
+
+/// 디스크의 한 폴더에서 읽는다
+pub fn read_under(root: &Path) -> impl Fn(&str) -> Option<Vec<u8>> + '_ {
+    move |rel| std::fs::read(root.join(rel)).ok()
+}
+
+/// 본문을 파일마다 한 번만 읽는다
+struct Sources<'a> {
+    read: ReadFile<'a>,
+    cache: HashMap<String, Option<Rc<String>>>,
+}
+
+impl Sources<'_> {
+    fn text(&mut self, path: &str) -> Option<Rc<String>> {
+        let read = self.read;
+        self.cache.entry(path.to_string()).or_insert_with(|| read(path).map(|b| Rc::new(String::from_utf8_lossy(&b).into_owned()))).clone()
+    }
+}
+
+/// `word`가 식별자로 나오는가. `$`도 식별자의 일부다
+fn mentions(text: &str, word: &str) -> bool {
+    let part = |c: char| is_word(c) || c == '$';
+    !word.is_empty()
+        && text.match_indices(word).any(|(i, _)| !text[..i].chars().next_back().is_some_and(part) && !text[i + word.len()..].chars().next().is_some_and(part))
+}
+
+/// 호출하는 쪽이 정의 파일을 부를 때 쓰는 이름. `index`, `mod`, `__init__`은 폴더가 이름이다
+fn module_name(path: &str) -> &str {
+    let p = Path::new(path);
+    let stem = p.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+    let stem = stem.strip_suffix(".d").unwrap_or(stem);
+    let dir = p.parent().and_then(Path::file_name).and_then(|s| s.to_str()).unwrap_or("");
+    if matches!(stem, "index" | "mod" | "__init__") && !dir.is_empty() {
+        dir
+    } else {
+        stem
+    }
+}
+
+fn package_of(text: &str) -> Option<&str> {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    let re = RE.get_or_init(|| Regex::new(r"(?m)^[ \t]*package[ \t]+([\w.]+)").expect("정규식"));
+    re.captures(text).and_then(|c| c.get(1)).map(|m| m.as_str())
+}
+
+/// 이 이름을 파일 안으로 가져오는 문장
+fn import_re(lang: Lang, name: &str) -> Option<Regex> {
+    let n = regex::escape(name);
+    let pattern = match lang {
+        Lang::Rust => format!(r"\buse\s[^;]*\b{n}\b|\b(?:crate|super|self)::(?:\w+::)*{n}\b"),
+        Lang::Python => format!(r"(?m)^[ \t]*from[ \t]+\S+[ \t]+import[ \t]+(?:\([^)]*\b{n}\b|[^\n]*\b{n}\b)"),
+        Lang::TypeScript | Lang::Tsx | Lang::JavaScript => {
+            format!(r#"\bimport\b[^;'"]*\b{n}\b[^;'"]*\bfrom\s*['"](?:\.|@/|~/|#)|\b{n}\b[^;\n]*=\s*require\(\s*['"](?:\.|@/|~/|#)"#)
+        }
+        Lang::Java => format!(r"(?m)^[ \t]*import[ \t]+static[ \t]+[\w.]+\.{n}[ \t]*;"),
+        Lang::Kotlin => format!(r"(?m)^[ \t]*import[ \t]+[\w.]+\.{n}\b"),
+        _ => return None,
+    };
+    Regex::new(&pattern).ok()
+}
+
+/// 바뀐 정의 하나와 참조 파일을 잇는 근거 찾기
+struct Link<'a> {
+    fc: &'a FileChanges,
+    name: &'a str,
+    kind: &'a str,
+    import: OnceCell<Option<Regex>>,
+    /// 파일마다 한 번만 판단한다
+    seen: HashMap<String, bool>,
+}
+
+impl<'a> Link<'a> {
+    fn new(fc: &'a FileChanges, name: &'a str, kind: &'a str) -> Self {
+        Self { fc, name, kind, import: OnceCell::new(), seen: HashMap::new() }
+    }
+
+    /// 메서드와 함수는 이름이 흔히 겹쳐, 참조 파일이 정의 파일이나 감싼 타입을 부르거나 이름을 가져올 때만 잇는다.
+    /// 타입은 이름 자체가 근거다. C 계열은 헤더로 이어져 파일 이름으로 판단할 수 없다.
+    fn holds(&mut self, path: &str, sources: &mut Sources<'_>) -> bool {
+        if let Some(known) = self.seen.get(path) {
+            return *known;
+        }
+        let answer = self.look(path, sources);
+        self.seen.insert(path.to_string(), answer);
+        answer
+    }
+
+    fn look(&self, path: &str, sources: &mut Sources<'_>) -> bool {
+        if !is_callable(self.kind) || matches!(self.fc.lang, Lang::C | Lang::Cpp) {
+            return true;
+        }
+        // 읽지 못하면 모르는 것이니 남겨 둔다
+        let Some(text) = sources.text(path) else { return true };
+        if mentions(&text, module_name(&self.fc.path)) {
+            return true;
+        }
+        if self.fc.containers.get(self.name).is_some_and(|names| names.iter().any(|c| mentions(&text, c))) {
+            return true;
+        }
+        if self.same_package(path, &text, sources) || self.qualified_by_package(&text) {
+            return true;
+        }
+        self.import.get_or_init(|| import_re(self.fc.lang, self.name)).as_ref().is_some_and(|re| re.is_match(&text))
+    }
+
+    /// `import flask` 뒤의 `flask.redirect(...)`: 패키지를 통째로 가져와 부르면 파일 이름은 나오지 않는다
+    fn qualified_by_package(&self, text: &str) -> bool {
+        if !matches!(self.fc.lang, Lang::Python | Lang::TypeScript | Lang::Tsx | Lang::JavaScript) {
+            return false;
+        }
+        let mut dirs = Path::new(&self.fc.path).parent().into_iter().flat_map(Path::components).filter_map(|c| c.as_os_str().to_str());
+        dirs.any(|dir| mentions(text, &format!("{dir}.{}", self.name)))
+    }
+
+    /// 같은 패키지는 가져오는 문장 없이 부른다
+    fn same_package(&self, path: &str, text: &str, sources: &mut Sources<'_>) -> bool {
+        let dir = |p: &str| Path::new(p).parent().map(path_key);
+        match self.fc.lang {
+            Lang::Go => dir(path) == dir(&self.fc.path) || sources.text(&self.fc.path).is_some_and(|def| package_of(&def).is_some_and(|p| mentions(text, p))),
+            Lang::Kotlin => sources.text(&self.fc.path).is_some_and(|def| package_of(&def) == package_of(text)),
+            _ => false,
+        }
+    }
 }
 
 fn key(path: &str) -> String {
@@ -772,24 +1030,29 @@ fn why_stale(name: &str, file: &str, reads_known: bool) -> String {
     format!("The signature of `{name}` changed in {file} and this caller {seen}. Name based, may call a different `{name}`.")
 }
 
-/// 전부 모은다 (상한 전)
-pub(crate) fn collect_findings(store: &Store, changes: &[FileChanges], touched: &[String], read: &[String], reads_known: bool) -> Result<Vec<Finding>> {
+/// 전부 모은다 (상한 전). `files`는 참조 파일을 인덱스와 같은 시점으로 읽는다
+pub(crate) fn collect_findings(store: &Store, files: ReadFile<'_>, changes: &[FileChanges], touched: &[String], read: &[String], reads_known: bool) -> Result<Vec<Finding>> {
     let mut touched: HashSet<String> = touched.iter().map(|p| key(p)).collect();
     touched.extend(changes.iter().map(|f| key(&f.path)));
     let read: HashSet<String> = read.iter().map(|p| key(p)).collect();
     let mut seen = HashSet::new();
+    let mut sources = Sources { read: files, cache: HashMap::new() };
     let mut out = Vec::new();
     for fc in changes {
         let family = Lang::family(fc.lang.name());
         for change in &fc.changes {
-            let (name, renamed_to, removed) = match change {
+            let (name, renamed_to, removed, kind, signature) = match change {
                 // 모듈과 impl 블록은 호출 참조로 이어지지 않는다
                 SymbolChange::Removed { kind, .. } if matches!(kind.as_str(), "module" | "impl") => continue,
-                SymbolChange::Removed { name, renamed_to, .. } => (name, renamed_to.as_deref(), true),
-                SymbolChange::Signature { name, .. } => (name, None, false),
+                SymbolChange::Removed { name, renamed_to, kind, signature, .. } => (name, renamed_to.as_deref(), true, kind, signature),
+                SymbolChange::Signature { name, kind, old, .. } => (name, None, false, kind, old),
                 SymbolChange::Body { .. } => continue,
             };
-            if skip_name(name) || !seen.insert((removed, family, name.as_str())) || store.count_defs(name)? > MAX_DEFS {
+            // 오버로드 중 하나가 걸러져도 다른 하나는 봐야 하니 `seen`보다 먼저 거른다
+            if skip_name(name) || private_to_file(fc.lang, name, signature) || called_by_framework(signature) {
+                continue;
+            }
+            if !seen.insert((removed, family, name.as_str())) || store.count_defs(name)? > MAX_DEFS {
                 continue;
             }
             if removed && definition_remains(store, name, family, changes, &touched)? {
@@ -797,6 +1060,7 @@ pub(crate) fn collect_findings(store: &Store, changes: &[FileChanges], touched: 
             }
             // 자기 파일에 같은 이름의 정의가 있으면 그 참조는 십중팔구 자기 것을 가리킨다
             let own_defs: HashSet<String> = store.symbols_by_name(name, MAX_DEFS as usize + 1)?.iter().map(|d| key(&d.path)).collect();
+            let mut link = Link::new(fc, name, kind);
             let mut by_file: Vec<Finding> = Vec::new();
             for r in store.references(name, MAX_REFS)? {
                 let k = key(&r.path);
@@ -807,17 +1071,22 @@ pub(crate) fn collect_findings(store: &Store, changes: &[FileChanges], touched: 
                 if !removed && (!matches!(r.kind.as_str(), "call" | "class") || (reads_known && read.contains(&k))) {
                     continue;
                 }
+                if !link.holds(&r.path, &mut sources) {
+                    continue;
+                }
                 if let Some(last) = by_file.last_mut().filter(|f| f.path == r.path) {
                     last.refs_in_file += 1;
                     continue;
                 }
+                let finding_kind = if removed { FindingKind::Dangling } else { FindingKind::StaleCaller };
                 by_file.push(Finding {
-                    kind: if removed { FindingKind::Dangling } else { FindingKind::StaleCaller },
+                    kind: finding_kind,
                     confidence: if removed { Confidence::High } else { Confidence::Medium },
                     symbol: name.clone(),
                     renamed_to: renamed_to.map(str::to_string),
                     changed_file: fc.path.clone(),
                     in_test: is_test_path(&r.path),
+                    details_only: finding_kind.details_only(),
                     why: if removed { why_dangling(name, renamed_to, &fc.path) } else { why_stale(name, &fc.path, reads_known) },
                     path: r.path,
                     line: r.line,
@@ -838,8 +1107,8 @@ pub(crate) fn collect_findings(store: &Store, changes: &[FileChanges], touched: 
 ///
 /// - `touched`, `read`: 루트 기준 상대 경로. Windows에서는 대소문자를 가리지 않는다
 /// - `reads_known`: false면 읽은 파일을 모른다 (Codex). 이때 `read`는 보지 않는다
-pub fn left_behind(store: &Store, changes: &[FileChanges], touched: &[String], read: &[String], reads_known: bool) -> Result<Vec<Finding>> {
-    let mut all = collect_findings(store, changes, touched, read, reads_known)?;
+pub fn left_behind(store: &Store, files: ReadFile<'_>, changes: &[FileChanges], touched: &[String], read: &[String], reads_known: bool) -> Result<Vec<Finding>> {
+    let mut all = collect_findings(store, files, changes, touched, read, reads_known)?;
     all.truncate(MAX_FINDINGS);
     Ok(all)
 }
@@ -981,6 +1250,8 @@ pub struct CheckReport {
     pub body: usize,
     /// 상한 전 개수
     pub total_findings: usize,
+    /// 그중 `--details`에서만 보이는 개수
+    pub details_only: usize,
     pub findings: Vec<Finding>,
     pub method: &'static str,
     pub not_covered: &'static str,
@@ -996,29 +1267,38 @@ pub fn plural(n: usize, word: &str) -> String {
 }
 
 impl CheckReport {
-    pub fn blocking(&self) -> usize {
-        self.findings.iter().filter(|f| f.blocks()).count()
+    /// `--strict`가 실패로 보는 발견. 사람이 켜는 옵션이라 에이전트를 막는 기준과 따로 본다
+    pub fn high_findings(&self) -> usize {
+        self.findings.iter().filter(|f| f.confidence == Confidence::High).count()
     }
 
-    pub fn to_text(&self) -> String {
+    /// 기본은 기준을 못 넘긴 종류를 빼고, `details`면 전부 보여 준다
+    pub fn to_text(&self, details: bool) -> String {
         let files = plural(self.changed_code_files, "changed code file");
         let short = &self.commit[..self.commit.len().min(10)];
-        if self.findings.is_empty() {
-            return format!("lantern check: nothing left behind in {files} since {} ({short}). Name based.\n", self.base);
+        let hidden = if details { 0 } else { self.details_only };
+        let total = self.total_findings - hidden;
+        let shown: Vec<&Finding> = self.findings.iter().filter(|f| details || !f.details_only).collect();
+        let hidden_note = (hidden > 0).then(|| format!("{} below the precision bar, hidden. --details shows them.", plural(hidden, "signature warning")));
+        if total == 0 {
+            let mut out = format!("lantern check: nothing left behind in {files} since {} ({short}). Name based.\n", self.base);
+            if let Some(note) = hidden_note {
+                let _ = writeln!(out, "{note}");
+            }
+            return out;
         }
-        let mut out = format!(
-            "lantern check: {} in {files} since {} ({short}). Name based, may be wrong.\n\n",
-            plural(self.total_findings, "possible miss"),
-            self.base
-        );
-        for f in &self.findings {
+        let mut out = format!("lantern check: {} in {files} since {} ({short}). Name based, may be wrong.\n\n", plural(total, "possible miss"), self.base);
+        for f in &shown {
             let level = if f.confidence == Confidence::High { "HIGH" } else { "MEDIUM" };
             let caller = f.caller.as_deref().map(|c| format!(" in {c}")).unwrap_or_default();
             let more = if f.refs_in_file > 1 { format!(" (+{} more in this file)", f.refs_in_file - 1) } else { String::new() };
             let _ = writeln!(out, "{level:<6}  {}:{}{caller}{more}\n        {}", f.path, f.line, f.why);
         }
-        if self.total_findings > self.findings.len() {
-            let _ = writeln!(out, "\nShowing {} of {}. --all shows the rest.", self.findings.len(), self.total_findings);
+        if total > shown.len() {
+            let _ = writeln!(out, "\nShowing {} of {total}. --all shows the rest.", shown.len());
+        }
+        if let Some(note) = hidden_note {
+            let _ = writeln!(out, "\n{note}");
         }
         let _ = writeln!(out, "\n{METHOD}\n{NOT_COVERED}");
         out
@@ -1034,12 +1314,13 @@ pub fn run_check(dir: &Path, data: &Path, base: &str, show_all: bool) -> Result<
     let changes = analyze_files(&root, &commit, &files, &HashMap::new(), &mut parser)?;
     let mut all = if changes.iter().any(FileChanges::may_leave_behind) {
         let store = refreshed_index(&root, data, &mut parser)?;
-        collect_findings(&store, &changes, &files, &[], false)?
+        collect_findings(&store, &read_under(&root), &changes, &files, &[], false)?
     } else {
         Vec::new()
     };
     let count = |pick: fn(&SymbolChange) -> bool| changes.iter().flat_map(|f| &f.changes).filter(|c| pick(c)).count();
     let total_findings = all.len();
+    let details_only = all.iter().filter(|f| f.details_only).count();
     if !show_all {
         all.truncate(MAX_FINDINGS);
     }
@@ -1052,6 +1333,7 @@ pub fn run_check(dir: &Path, data: &Path, base: &str, show_all: bool) -> Result<
         signature: count(|c| matches!(c, SymbolChange::Signature { .. })),
         body: count(|c| matches!(c, SymbolChange::Body { .. })),
         total_findings,
+        details_only,
         findings: all,
         method: METHOD,
         not_covered: NOT_COVERED,
@@ -1323,6 +1605,11 @@ mod tests {
         with_parser(|p| file_changes(p, path, lang, before.as_bytes(), after.as_bytes())).unwrap()
     }
 
+    /// 본문을 읽지 못하면 이어진 것으로 본다. 이름 찾기만 보는 시험은 본문이 없다
+    fn left_behind(store: &Store, changes: &[FileChanges], touched: &[String], read: &[String], reads_known: bool) -> Result<Vec<Finding>> {
+        super::left_behind(store, &|_| None, changes, touched, read, reads_known)
+    }
+
     const OLD_LIB: &str = "pub fn compute_total(a: i32) -> i32 { a + 1 }\n";
     const CALLER: &str = "fn show_it() -> i32 {\n    compute_total(1)\n}\n";
 
@@ -1339,7 +1626,9 @@ mod tests {
             assert_eq!((f.path.as_str(), f.line, f.caller.as_deref()), ("src/show.rs", 2, Some("show_it")));
             assert_eq!(f.symbol, "compute_total");
             assert!(f.why.contains("Name based"), "{}", f.why);
-            assert!(f.blocks());
+            // 기준을 못 넘겨 막지는 않지만 기본 출력에는 보인다
+            assert!(!BlockPolicy::MEASURED.blocks(f) && !f.details_only);
+            assert!(BlockPolicy { dangling: true, stale: false }.blocks(f));
         }
     }
 
@@ -1392,7 +1681,7 @@ mod tests {
         let got = left_behind(&store, &[signature_change()], &[], &[], true).unwrap();
         assert_eq!(got.len(), 1, "{got:?}");
         assert_eq!((got[0].kind, got[0].confidence), (FindingKind::StaleCaller, Confidence::Medium));
-        assert!(!got[0].blocks());
+        assert!(!BlockPolicy::MEASURED.blocks(&got[0]) && got[0].details_only);
         assert!(got[0].why.contains("not edited or read"), "{}", got[0].why);
 
         // 세션에서 읽은 호출자는 뺀다
@@ -1465,6 +1754,224 @@ mod tests {
         assert_eq!(got[0].kind, FindingKind::Dangling);
         assert_eq!((got[0].refs_in_file, got[0].line), (2, 2));
         assert!(got[1..].iter().all(|f| f.kind == FindingKind::StaleCaller && f.refs_in_file == 2));
+    }
+
+    // ── 호환되는 변화 ────────────────────────────────────
+
+    #[test]
+    fn java_boxing_keeps_old_calls_working_but_other_types_do_not() {
+        for (before, after) in [
+            ("class A { int putIt(int a) { return a; } }", "class A { int putIt(Integer a) { return a; } }"),
+            ("class A { int putIt(Long a) { return 1; } }", "class A { int putIt(long a) { return 1; } }"),
+            ("class A { int putIt() { return 1; } }", "class A { Integer putIt() { return 1; } }"),
+            ("record Pair(String a, int b) {}", "record Pair(String a, Integer b) {}"),
+        ] {
+            let c = changes(Lang::Java, before, after);
+            assert!(signatures(&c).is_empty(), "{after}: {c:?}");
+        }
+        assert_eq!(signatures(&changes(Lang::Java, "class A { int putIt(int a) { return a; } }", "class A { int putIt(Long a) { return 1; } }")), ["putIt"]);
+        assert_eq!(signatures(&changes(Lang::Java, "class A { int putIt(int a) { return a; } }", "class A { int putIt(String a) { return 1; } }")), ["putIt"]);
+    }
+
+    #[test]
+    fn typescript_widening_keeps_old_calls_working_but_narrowing_does_not() {
+        let f = |p: &str| format!("function putIt({p}): void {{}}\n");
+        for (before, after) in [
+            ("a: string", "a: string | null"),
+            ("a: Ref<string>", "a: Ref<string> | string | null"),
+            ("a: string | number", "a: number | string"),
+            ("a: string", "a?: string"),
+            ("a: string", "a?: string | number"),
+        ] {
+            let c = changes(Lang::TypeScript, &f(before), &f(after));
+            assert!(signatures(&c).is_empty(), "{after}: {c:?}");
+        }
+        for (before, after) in [("a: string | null", "a: string"), ("a?: string", "a: string"), ("a: string", "a: number")] {
+            assert_eq!(signatures(&changes(Lang::TypeScript, &f(before), &f(after))), ["putIt"], "{after}");
+        }
+        // 반환 타입은 넓어지면 호출하는 쪽이 깨질 수 있다
+        assert_eq!(signatures(&changes(Lang::TypeScript, "function putIt(): string { return ''; }\n", "function putIt(): string | null { return ''; }\n")), ["putIt"]);
+    }
+
+    #[test]
+    fn kotlin_inserted_default_is_compatible_only_when_the_rest_have_defaults() {
+        let d = |p: &str| format!("data class Box({p})\n");
+        let c = changes(Lang::Kotlin, &d("val a: Int = 1, val c: Int = 2"), &d("val a: Int = 1, val b: String = \"\", val c: Int = 2"));
+        assert!(signatures(&c).is_empty(), "{c:?}");
+        // 뒤에 기본값 없는 매개변수가 있으면 위치로 넘긴 호출이 깨진다
+        assert_eq!(signatures(&changes(Lang::Kotlin, &d("val a: Int, val c: Int"), &d("val a: Int, val b: String = \"\", val c: Int"))), ["Box"]);
+        // 기본값 없이 끼우면 당연히 깨진다
+        assert_eq!(signatures(&changes(Lang::Kotlin, &d("val a: Int = 1"), &d("val b: String, val a: Int = 1"))), ["Box"]);
+        // null 허용으로 넓히면 그대로 되고, 좁히면 아니다
+        assert!(signatures(&changes(Lang::Kotlin, "fun putIt(a: Int) { }\n", "fun putIt(a: Int?) { }\n")).is_empty());
+        assert_eq!(signatures(&changes(Lang::Kotlin, "fun putIt(a: Int?) { }\n", "fun putIt(a: Int) { }\n")), ["putIt"]);
+    }
+
+    // ── 이름만 같은 것 거르기 ────────────────────────────
+
+    /// 참조 파일이 발견으로 남는가. `def`: (경로, 전, 후), `caller`: (경로, 본문)
+    fn flagged(def: (&str, &str, &str), caller: (&str, &str)) -> bool {
+        let (path, before, after) = def;
+        let on_disk = [(path, before), caller];
+        let read = |p: &str| on_disk.iter().find(|(n, _)| *n == p).map(|(_, s)| s.as_bytes().to_vec());
+        let store = store_with(&on_disk);
+        !super::left_behind(&store, &read, &[change(path, before, after)], &[], &[], true).unwrap().is_empty()
+    }
+
+    const JAVA_DEF: (&str, &str, &str) = (
+        "src/a/OrderService.java",
+        "class OrderService { public int place(int a) { return a; } }\n",
+        "class OrderService { public int place(String a) { return 1; } }\n",
+    );
+
+    #[test]
+    fn method_needs_the_caller_to_name_its_file_or_type() {
+        assert!(flagged(JAVA_DEF, ("src/b/Shop.java", "class Shop { int go(OrderService s) { return s.place(1); } }\n")));
+        assert!(!flagged(JAVA_DEF, ("src/b/Shop.java", "class Shop { int go(Thing s) { return s.place(1); } }\n")));
+        // 낱말이 일부만 겹치는 것은 이어진 것이 아니다
+        assert!(!flagged(JAVA_DEF, ("src/b/Shop.java", "class Shop { int go(OrderServiceImpl s) { return s.place(1); } }\n")));
+        // 클래스 이름이 파일 이름과 달라도 감싼 타입을 부르면 이어진다
+        let def = ("src/a/orders.ts", "export class Basket {\n  place(a: number): void {}\n}\n", "export class Basket {\n  place(a: string): void {}\n}\n");
+        assert!(flagged(def, ("src/b/go.ts", "import { Basket } from '@/a';\nfunction go(s: Basket) { s.place(1); }\n")));
+        assert!(!flagged(def, ("src/b/go.ts", "function go(s: Other) { s.place(1); }\n")));
+    }
+
+    #[test]
+    fn imports_and_packages_link_without_naming_the_file() {
+        let py = ("app/orders.py", "def place_order(a):\n    pass\n", "def place_order(b):\n    pass\n");
+        assert!(flagged(py, ("app/go.py", "from app.orders import place_order\n\ndef go():\n    place_order(1)\n")));
+        assert!(flagged(py, ("app/go.py", "from app import (\n    other,\n    place_order,\n)\n\ndef go():\n    place_order(1)\n")));
+        assert!(!flagged(py, ("app/go.py", "def go(client):\n    client.place_order(1)\n")));
+        // 패키지를 통째로 가져와 부른다
+        assert!(flagged(py, ("tests/go.py", "import app\n\ndef go():\n    app.place_order(1)\n")));
+
+        let ts = ("src/lib/place.ts", "export function placeOrder(a: number): void {}\n", "export function placeOrder(a: string): void {}\n");
+        assert!(flagged(ts, ("src/go.ts", "import { placeOrder } from '@/lib';\nplaceOrder(1);\n")));
+        assert!(flagged(ts, ("src/go.js", "const { placeOrder } = require('./lib');\nplaceOrder(1);\n")));
+        assert!(!flagged(ts, ("src/go.ts", "import { placeOrder } from 'some-package';\nplaceOrder(1);\n")));
+        assert!(flagged(ts, ("src/go.ts", "import * as lib from '@/lib';\nlib.placeOrder(1);\n")));
+
+        let rs = ("src/lib.rs", "pub fn place_order(a: i32) {}\n", "pub fn place_order(a: i64) {}\n");
+        assert!(flagged(rs, ("src/go.rs", "use crate::place_order;\nfn go() { place_order(1); }\n")));
+        assert!(flagged(rs, ("src/go.rs", "fn go() { crate::place_order(1); }\n")));
+        assert!(!flagged(rs, ("src/go.rs", "fn go(x: Thing) { x.place_order(1); }\n")));
+
+        let go = ("pkg/orders/place.go", "package orders\n\nfunc PlaceOrder(a int) {}\n", "package orders\n\nfunc PlaceOrder(a string) {}\n");
+        assert!(flagged(go, ("pkg/orders/other.go", "package orders\n\nfunc Go() { PlaceOrder(1) }\n")));
+        assert!(flagged(go, ("cmd/main.go", "package main\n\nimport \"x/pkg/orders\"\n\nfunc Go() { orders.PlaceOrder(1) }\n")));
+        assert!(!flagged(go, ("cmd/main.go", "package main\n\nfunc Go(x T) { x.PlaceOrder(1) }\n")));
+
+        let kt = ("a/src/main/orders/Place.kt", "package x.orders\n\nfun placeOrder(a: Int) { }\n", "package x.orders\n\nfun placeOrder(a: String) { }\n");
+        assert!(flagged(kt, ("a/src/test/orders/Go.kt", "package x.orders\n\nfun go() { placeOrder(1) }\n")));
+        assert!(flagged(kt, ("a/src/main/b/Go.kt", "package x.b\n\nimport x.orders.placeOrder\n\nfun go() { placeOrder(1) }\n")));
+        assert!(!flagged(kt, ("a/src/main/b/Go.kt", "package x.b\n\nfun go(t: T) { t.placeOrder(1) }\n")));
+
+        // C는 헤더로 이어져 파일 이름으로 판단하지 않는다
+        let c = ("src/impl.c", "int place_order(int a) { return a; }\n", "int place_order(long a) { return 1; }\n");
+        assert!(flagged(c, ("src/go.c", "#include \"api.h\"\nint go(void) { return place_order(1); }\n")));
+    }
+
+    #[test]
+    fn types_link_by_their_own_name() {
+        let def = ("a/model/Rules.kt", "package a.model\n\nclass LeasePlan(val a: Int)\n", "package a.model\n\nclass LeasePlan(val a: String)\n");
+        assert!(flagged(def, ("a/app/Go.kt", "package a.app\n\nimport a.model.LeasePlan\n\nfun go() { LeasePlan(1) }\n")));
+    }
+
+    #[test]
+    fn removed_method_uses_the_same_link() {
+        let def = ("src/a/Orders.java", "class Orders { public int cancelIt(int a) { return a; } }\n", "class Orders { }\n");
+        assert!(flagged(def, ("src/b/Shop.java", "class Shop { int go(Orders s) { return s.cancelIt(1); } }\n")));
+        assert!(!flagged(def, ("src/b/Shop.java", "class Shop { int go(Thing s) { return s.cancelIt(1); } }\n")));
+    }
+
+    #[test]
+    fn private_definitions_are_not_called_from_other_files() {
+        let caller = ("src/b/Shop.java", "class Shop { int go(Orders s) { return s.place(1); } }\n");
+        let java = |vis: &str| {
+            (
+                "src/a/Orders.java",
+                format!("class Orders {{ {vis} int place(int a) {{ return a; }} }}\n"),
+                format!("class Orders {{ {vis} int place(String a) {{ return 1; }} }}\n"),
+            )
+        };
+        let (path, before, after) = java("private");
+        assert!(!flagged((path, &before, &after), caller));
+        let (path, before, after) = java("protected");
+        assert!(flagged((path, &before, &after), caller));
+
+        // 공개된 오버로드가 바뀌었으면 비공개 오버로드에 가려지지 않는다
+        let before = "class Orders { private int place(int a) { return a; } public int place(long a) { return 1; } }\n";
+        let after = "class Orders { private int place(String a) { return 1; } public int place(String a, int b) { return 1; } }\n";
+        assert!(flagged(("src/a/Orders.java", before, after), caller));
+
+        let ts = ("src/orders.ts", "class Orders {\n  private place(a: number): void {}\n}\n", "class Orders {\n  private place(a: string): void {}\n}\n");
+        assert!(!flagged(ts, ("src/go.ts", "import { Orders } from './orders';\nfunction go(s: Orders) { s.place(1); }\n")));
+        // 매개변수 속성의 private은 그 메서드의 공개 범위가 아니다
+        assert!(!private_to_file(Lang::TypeScript, "place", "place(private a: number): void"));
+        // private이 그런 뜻이 아닌 언어
+        assert!(!private_to_file(Lang::Python, "private", "def private(a)"));
+    }
+
+    #[test]
+    fn endpoints_are_called_by_the_framework_but_other_marks_are_plain_calls() {
+        for mark in ["@PostMapping(\"/x\")", "@GetMapping", "@RequestMapping(\"/y\")", "@KafkaListener(topics = \"t\")", "@Scheduled(cron = \"0\")"] {
+            let before = format!("class Orders {{ {mark} public int place(int a) {{ return a; }} }}\n");
+            let after = format!("class Orders {{ {mark} public int place(String a) {{ return 1; }} }}\n");
+            assert!(!flagged(("src/a/Orders.java", &before, &after), ("src/b/Shop.java", "class Shop { int go(Orders s) { return s.place(1); } }\n")), "{mark}");
+        }
+        let before = "class Orders { @Cacheable(\"o\") public int place(int a) { return a; } }\n";
+        let after = "class Orders { @Cacheable(\"o\") public int place(String a) { return 1; } }\n";
+        assert!(flagged(("src/a/Orders.java", before, after), ("src/b/Shop.java", "class Shop { int go(Orders s) { return s.place(1); } }\n")));
+
+        for signature in ["@app.get(\"/items\") async def read_item(id: int)", "[HttpPost(\"x\")] public int Go()", "#[tauri::command] fn git_repos()", "@Get(':id') place(a)", "@Path(\"/x\") public int go()"] {
+            assert!(called_by_framework(signature), "{signature}");
+        }
+        for signature in ["@Override public int go()", "@lru_cache def go(a)", "#[instrument] fn go()", "pub fn go()", "@Async public void go()"] {
+            assert!(!called_by_framework(signature), "{signature}");
+        }
+    }
+
+    fn report(findings: Vec<Finding>, total: usize) -> CheckReport {
+        CheckReport {
+            base: "HEAD".into(),
+            commit: "0123456789abcdef".into(),
+            changed_files: 1,
+            changed_code_files: 1,
+            removed: 0,
+            signature: 0,
+            body: 0,
+            total_findings: total,
+            details_only: findings.iter().filter(|f| f.details_only).count(),
+            findings,
+            method: METHOD,
+            not_covered: NOT_COVERED,
+        }
+    }
+
+    #[test]
+    fn stale_callers_are_only_shown_with_details() {
+        let store = store_with(&[("src/lib.rs", OLD_LIB), ("src/show.rs", CALLER)]);
+        let stale = left_behind(&store, &[signature_change()], &[], &[], true).unwrap();
+        let store = store_with(&[("src/lib.rs", "pub fn other_fn() {}\n"), ("src/show.rs", CALLER)]);
+        let dangling = left_behind(&store, &[change("src/lib.rs", OLD_LIB, "pub fn other_fn() {}\n")], &[], &[], true).unwrap();
+
+        let only_stale = report(stale.clone(), 1);
+        let text = only_stale.to_text(false);
+        assert!(text.contains("nothing left behind") && text.contains("1 signature warning below the precision bar") && !text.contains("src/show.rs"), "{text}");
+        assert!(only_stale.to_text(true).contains("MEDIUM  src/show.rs:2"), "{}", only_stale.to_text(true));
+        assert_eq!(only_stale.high_findings(), 0);
+
+        let both = report(dangling.into_iter().chain(stale).collect(), 2);
+        let text = both.to_text(false);
+        assert!(text.contains("1 possible miss") && text.contains("HIGH") && !text.contains("MEDIUM") && text.contains("--details"), "{text}");
+        let text = both.to_text(true);
+        assert!(text.contains("2 possible misses") && text.contains("HIGH") && text.contains("MEDIUM") && !text.contains("below the precision bar"), "{text}");
+        assert_eq!(both.high_findings(), 1);
+    }
+
+    #[test]
+    fn nothing_blocks_until_a_kind_is_measured_past_its_bar() {
+        assert_eq!(BlockPolicy::MEASURED, BlockPolicy { dangling: false, stale: false });
     }
 
     #[test]

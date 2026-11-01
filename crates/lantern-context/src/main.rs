@@ -80,10 +80,13 @@ enum Cmd {
         /// JSON으로 출력
         #[arg(long)]
         json: bool,
-        /// 20개로 자르지 않고 발견을 전부 보여 준다
+        /// 20개로 자르지 않는다
         #[arg(long)]
         all: bool,
-        /// 막을 만한 발견이 있으면 종료 코드 1, 검사를 못 했으면 2
+        /// 정밀도 기준을 못 넘겨 숨긴 시그니처 경고(Stale caller)도 보여 준다
+        #[arg(long)]
+        details: bool,
+        /// 사라진 이름의 참조(HIGH)가 남아 있으면 종료 코드 1, 검사를 못 했으면 2
         #[arg(long)]
         strict: bool,
         /// Claude Code Stop 훅으로 실행. stdin의 JSON을 읽고, 어떤 오류든 출력 없이 0으로 끝난다
@@ -318,7 +321,7 @@ fn main() -> Result<()> {
             };
             println!("{json}");
         }
-        Cmd::Check { base, json, all, strict, stop_hook: _, stats } => check_command(&cli.root, base.as_deref(), json, all, strict, stats)?,
+        Cmd::Check { base, json, all, details, strict, stop_hook: _, stats } => check_command(&cli.root, base.as_deref(), json, all, details, strict, stats)?,
         Cmd::Hook { action } => hook_command(&cli.root, action)?,
         Cmd::Autopsy { days, max_sessions, agent, deep, all, json, lang, details, max_seconds, replay: _, no_replay } => {
             let opts = autopsy::AutopsyOpts {
@@ -368,8 +371,8 @@ fn parse_for_stop_hook() -> Cli {
     }
 }
 
-/// 평소에는 결과와 상관없이 0. `--strict`일 때만 막을 만한 발견이 1, 검사를 못 하면 2
-fn check_command(root: &Path, base: Option<&str>, json: bool, all: bool, strict: bool, stats: bool) -> Result<()> {
+/// 평소에는 결과와 상관없이 0. `--strict`일 때만 사라진 이름의 참조(HIGH)가 있으면 1, 검사를 못 하면 2
+fn check_command(root: &Path, base: Option<&str>, json: bool, all: bool, details: bool, strict: bool, stats: bool) -> Result<()> {
     if stats {
         let data = hook::data_dir().context("데이터 폴더를 찾지 못했습니다")?;
         let s = hook::stats(&data);
@@ -394,9 +397,9 @@ fn check_command(root: &Path, base: Option<&str>, json: bool, all: bool, strict:
     if json {
         println!("{}", serde_json::to_string_pretty(&report)?);
     } else {
-        print!("{}", report.to_text());
+        print!("{}", report.to_text(details));
     }
-    if strict && report.blocking() > 0 {
+    if strict && report.high_findings() > 0 {
         std::process::exit(1);
     }
     Ok(())
@@ -419,6 +422,9 @@ fn hook_command(root: &Path, action: HookAction) -> Result<()> {
     };
     for line in lines {
         println!("{line}");
+    }
+    if install {
+        println!("The hook only records counts for now (lantern check --stats). It does not stop the agent: no finding kind has met its precision bar.");
     }
     if install && !user {
         if let Some(note) = hook::commit_warning(&dir, &path) {
