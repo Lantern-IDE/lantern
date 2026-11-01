@@ -574,7 +574,8 @@ function draw() {
     el.width = Math.round(w * dpr);
     el.height = Math.round(hgt * dpr);
   }
-  const ctx = el.getContext("2d")!;
+  // GPU 캔버스를 쓰지 않는다: 휠로 확대·축소만 해도 GPU 프로세스가 450MB(화면 배율 2에서 760MB)까지 오른다. 소프트웨어는 110MB이고 그리기가 1~3ms 늘어난다
+  const ctx = el.getContext("2d", { willReadFrequently: true })!;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, hgt);
   ctx.translate(view.x, view.y);
