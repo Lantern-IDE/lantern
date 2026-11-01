@@ -752,7 +752,7 @@ impl Ctx<'_> {
         }
         let body = match state {
             State::Commit { hash, .. } => self.sandbox.blobs(hash, std::slice::from_ref(&path.to_string())).ok().and_then(|mut b| b.remove(path)),
-            State::WorkTree => std::fs::read(self.root.join(path)).ok(),
+            State::WorkTree => check::read_capped(&self.root.join(path)).ok().flatten(),
         };
         let body = body.map(Rc::new);
         self.bytes.insert(k, body.clone());
