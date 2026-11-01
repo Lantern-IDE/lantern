@@ -61,7 +61,7 @@ async function lspCallers(i: Impact): Promise<{ callers: number; files: number; 
   return { callers: code.length, files: new Set(code.map((n) => n.path).filter((p) => p !== i.path)).size, lspOnly };
 }
 
-/** `onImpact`: 결과를 그린 뒤 (줄이 커졌으니 승인 카드는 다시 맞춘다) */
+/** `onImpact`: 결과를 그린 뒤 */
 export function impactRow(diff: string, onTouched: (names: string[]) => void = () => {}, onImpact: (i: Impact) => void = () => {}): HTMLElement | null {
   const target = diffTarget(diff);
   if (!target) return null;
