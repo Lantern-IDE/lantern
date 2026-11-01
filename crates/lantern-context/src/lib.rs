@@ -4,6 +4,7 @@
 //! 설계: `docs/Phase0_맥락엔진_설계.md`
 
 pub mod assemble;
+pub mod autopsy;
 pub mod check;
 pub mod git;
 pub mod graph;
