@@ -15,7 +15,7 @@ import { t } from "./i18n";
 
 export type NodeKind = "dir" | "file" | "symbol" | "memory";
 export type EdgeKind = "ref" | "calls" | "defines" | "cochange" | "mentions";
-export interface GNode { id: string; kind: NodeKind; label: string; path?: string; line?: number; group: string; weight: number; detail?: string; depth?: number }
+export interface GNode { id: string; kind: NodeKind; label: string; path?: string; line?: number; group: string; weight: number; detail?: string; depth?: number; test?: boolean }
 export interface GEdge { source: string; target: string; kind: EdgeKind; weight: number }
 export interface Graph { nodes: GNode[]; edges: GEdge[]; truncated: boolean }
 export interface Impact {
@@ -564,7 +564,7 @@ function draw() {
   const fpActive = mode !== "impact" && mode !== "memory" && overlays.footprint && footprintSize() > 0;
   const dimmed = (n: N) => (focusSet ? !focusSet.has(n.id) : fpActive ? !n.mark && n.kind !== "memory" : false);
   // 영향 지도의 테스트는 물러나 있다: 실제 호출자가 먼저 읽히도록. 고르거나 올리면 또렷해진다
-  const receded = (n: N) => n.mark === "test" && !focusSet?.has(n.id);
+  const receded = (n: N) => (n.mark === "test" || (n.test && !n.mark)) && !focusSet?.has(n.id);
 
   trace(`draw k=${view.k} x=${view.x} y=${view.y} w=${w} h=${hgt}`);
   // 간선
@@ -652,7 +652,7 @@ function draw() {
   ctx.lineJoin = "round";
   // 영향 지도: 바뀌는 곳, 직접 호출, 간접 호출 순으로 자리를 얻고 테스트는 남는 자리에
   const markScore = (n: N) => (n.mark === "impact0" ? 3e5 : n.mark === "impact1" ? 2e5 : n.mark === "test" ? 0 : n.mark ? 1e5 : 0);
-  const score = (n: N) => (n === selected ? 1e9 : n === hovered ? 1e8 : 0) + (focusSet?.has(n.id) ? 1e6 : 0) + markScore(n) + (n.kind === "dir" ? 1e4 : 0) + n.r * 100;
+  const score = (n: N) => (n === selected ? 1e9 : n === hovered ? 1e8 : 0) + (focusSet?.has(n.id) ? 1e6 : 0) + markScore(n) + (n.kind === "dir" ? 1e4 : 0) + n.r * 100 - (n.test ? 2e3 : 0);
   // 흐리게 처리된 노드도 이름은 옅게 남긴다 (어디쯤인지 알 수 있게). 대신 가장 나중에 자리를 얻는다
   const rank = (n: N) => score(n) - (dimmed(n) && n !== hovered ? 5e5 : 0);
   const candidates = nodes.filter((n) => n.x !== undefined).sort((a, b) => rank(b) - rank(a));
@@ -748,6 +748,7 @@ function renderLegend() {
   } else {
     if (nodes.some((n) => n.kind === "dir")) items.push(item(dot("dir"), "폴더 (두 번 눌러 펼치기)"));
     items.push(item(dot("file"), "파일"), item(dot("symbol"), "심볼"), item(dot("cochange"), "함께 바뀜"));
+    if (nodes.some((n) => n.test)) items.push(item(dot("file faded"), "테스트"));
     if (overlays.footprint && footprintSize()) items.push(item(dot("context"), "AI에 보낸 맥락"), item(dot("read"), "읽음"), item(dot("edited"), "수정"));
     if (overlays.memory || mode === "memory") items.push(item(dot("memory"), "기억"));
   }
