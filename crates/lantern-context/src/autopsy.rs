@@ -27,6 +27,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 /// 편집 뒤 이 안의 커밋을 반영 지점으로, 그 뒤 이 안의 변경을 고친 증거로 본다
 const WINDOW_SECS: i64 = 14 * 86_400;
+/// 편집 사이가 이만큼 벌어지면 다른 작업 구간으로 본다
+const PERIOD_GAP_SECS: i64 = 3 * 3600;
 /// 기본 보고서에 보여 줄 발견 수
 const TOP_FINDINGS: usize = 5;
 /// 첫 맥락에서 볼 파일 수
@@ -475,15 +477,18 @@ impl History {
             .find(|&i| self.commits[i].ct <= limit && self.commits[i].files.contains(file_key))
             .map(|i| State::Commit { hash: self.commits[i].hash.clone(), pos: i })
     }
+
+    /// 이 시각 뒤에 이 파일을 건드린 커밋이 있는가. 있으면 작업 트리는 그 커밋까지 담고 있다
+    fn touched_after(&self, file_key: &str, t: i64) -> bool {
+        self.commits.iter().any(|c| c.ct >= t && c.files.contains(file_key))
+    }
 }
 
 // ── 세션 하나 ────────────────────────────────────────────
 
 /// 범위 안에서 편집한 코드 파일 하나
 struct Edited<'a> {
-    rel: String,
     key: String,
-    lang: Lang,
     fc: FileChange<'a>,
 }
 
@@ -492,27 +497,128 @@ fn edited_files<'a>(s: &'a SessionSummary, scope: &Scope) -> Vec<Edited<'a>> {
     let mut out: Vec<Edited<'a>> = Vec::new();
     for fc in s.file_changes() {
         let Some(rel) = scope.relative(fc.path) else { continue };
-        if rel.is_empty() || outside_index(&rel) {
+        if rel.is_empty() || outside_index(&rel) || Lang::from_path(Path::new(&rel)).is_none() {
             continue;
         }
-        let Some(lang) = Lang::from_path(Path::new(&rel)) else { continue };
         let file_key = key(&rel);
         match out.iter_mut().find(|e| e.key == file_key) {
             Some(prev) if fc.last_ts >= prev.fc.last_ts => prev.fc = fc,
             Some(_) => {}
-            None => out.push(Edited { rel, key: file_key, lang, fc }),
+            None => out.push(Edited { key: file_key, fc }),
         }
     }
     out
 }
 
-/// 마지막 코드 편집 뒤에 테스트 명령이 돌았는가
-fn tested_after_last_edit(s: &SessionSummary, scope: &Scope) -> bool {
-    let is_code_edit = |e: &AgentEvent| {
-        e.op == Op::Edit && e.ok != Some(false) && e.path.as_deref().and_then(|p| scope.relative(p)).is_some_and(|r| Lang::from_path(Path::new(&r)).is_some())
-    };
-    let Some(last) = s.events.iter().rposition(is_code_edit) else { return false };
-    s.events[last + 1..].iter().any(|e| e.test_run)
+fn ts_of(e: &AgentEvent) -> Option<i64> {
+    e.ts.as_deref().and_then(parse_ts)
+}
+
+/// 작업 구간 안에서 고친 코드 파일
+struct PeriodFile {
+    rel: String,
+    key: String,
+    lang: Lang,
+    first: i64,
+    last: i64,
+}
+
+/// 한 번에 이어서 고친 묶음. 한 세션이 몇 주씩 이어지기도 해서 처음과 끝만 비교하면 그 사이의 일이 보이지 않는다.
+/// 그래서 세션을 쉬는 시간으로 나눠 구간마다 기준 커밋과 손댄 파일을 따로 본다
+struct Period {
+    first_edit: i64,
+    last_edit: i64,
+    /// 앞 구간의 마지막 편집 (없으면 맨 앞). 이 뒤의 읽기만 이 구간의 것이다
+    from: i64,
+    /// 다음 구간의 첫 편집 (없으면 맨 뒤). 이 앞의 읽기와 테스트까지 이 구간의 것이다
+    until: i64,
+    files: Vec<PeriodFile>,
+}
+
+impl Period {
+    /// 이 구간에서 고치거나 읽은 파일 (루트 기준)
+    fn paths(&self, s: &SessionSummary, scope: &Scope, op: Op) -> Vec<String> {
+        s.events
+            .iter()
+            .filter(|e| e.op == op && e.ok != Some(false))
+            .filter(|e| ts_of(e).is_some_and(|t| t > self.from && t < self.until))
+            .filter_map(|e| scope.relative(e.path.as_deref()?))
+            .filter(|r| !r.is_empty())
+            .collect()
+    }
+
+    /// 마지막 편집 뒤, 다음 구간 전에 테스트 명령이 돌았는가
+    fn tested(&self, s: &SessionSummary) -> bool {
+        s.events.iter().any(|e| e.test_run && ts_of(e).is_some_and(|t| t >= self.last_edit && t < self.until))
+    }
+}
+
+/// 시각이 있는 코드 편집을 쉬는 시간으로 나눈다
+fn periods_of(s: &SessionSummary, scope: &Scope) -> Vec<Period> {
+    let mut edits: Vec<(i64, String, Lang)> = s
+        .events
+        .iter()
+        .filter(|e| e.op == Op::Edit && e.ok != Some(false))
+        .filter_map(|e| {
+            let rel = scope.relative(e.path.as_deref()?).filter(|r| !r.is_empty() && !outside_index(r))?;
+            let lang = Lang::from_path(Path::new(&rel))?;
+            Some((ts_of(e)?, rel, lang))
+        })
+        .collect();
+    edits.sort_by_key(|e| e.0);
+    let mut out: Vec<Period> = Vec::new();
+    for (ts, rel, lang) in edits {
+        let from = match out.last() {
+            Some(p) if ts - p.last_edit < PERIOD_GAP_SECS => None,
+            Some(p) => Some(p.last_edit),
+            None => Some(i64::MIN),
+        };
+        if let Some(from) = from {
+            if let Some(p) = out.last_mut() {
+                p.until = ts;
+            }
+            out.push(Period { first_edit: ts, last_edit: ts, from, until: i64::MAX, files: Vec::new() });
+        }
+        let Some(p) = out.last_mut() else { continue };
+        p.last_edit = ts;
+        let file_key = key(&rel);
+        match p.files.iter_mut().find(|f| f.key == file_key) {
+            Some(f) => f.last = ts,
+            None => p.files.push(PeriodFile { rel, key: file_key, lang, first: ts, last: ts }),
+        }
+    }
+    out
+}
+
+/// 한 세션을 나눠 볼 때 함께 쓰는 것들
+struct SessionView<'a> {
+    s: &'a SessionSummary,
+    /// 로그에 남은 파일별 처음과 끝
+    edited: HashMap<String, Edited<'a>>,
+    periods: Vec<Period>,
+    /// 파일별 고친 구간 수와 마지막 구간
+    file_periods: HashMap<String, (u32, usize)>,
+}
+
+impl<'a> SessionView<'a> {
+    fn new(s: &'a SessionSummary, scope: &Scope) -> Self {
+        let periods = periods_of(s, scope);
+        let mut file_periods: HashMap<String, (u32, usize)> = HashMap::new();
+        for (i, p) in periods.iter().enumerate() {
+            for f in &p.files {
+                let e = file_periods.entry(f.key.clone()).or_default();
+                e.0 += 1;
+                e.1 = i;
+            }
+        }
+        let edited = edited_files(s, scope).into_iter().map(|e| (e.key.clone(), e)).collect();
+        Self { s, edited, periods, file_periods }
+    }
+
+    /// 로그의 처음과 끝을 그대로 쓸 수 있는 파일. 로그는 파일마다 첫 본문과 마지막 본문만 남기므로 한 구간에서만 고친 파일에 맞다
+    fn log_text(&self, file_key: &str) -> Option<&FileChange<'a>> {
+        (self.file_periods.get(file_key).map(|p| p.0) == Some(1)).then(|| self.edited.get(file_key).map(|e| &e.fc)).flatten()
+    }
 }
 
 /// 작업 요청으로 볼 만한 첫 질문인가. 재현은 질문이 말이 될 때만 뜻이 있다
@@ -599,7 +705,7 @@ enum Outcome {
 }
 
 struct Done {
-    row: SessionRow,
+    row: PeriodRow,
     kept: Vec<Verified>,
 }
 
@@ -807,44 +913,49 @@ impl Ctx<'_> {
         out
     }
 
-    /// 파일별 시작과 끝을 정하고 심볼 변화를 뽑는다
-    fn resolve_files(&mut self, edited: &[Edited<'_>], s: &SessionSummary, base: &str, row: &mut SessionRow) -> Result<(HashMap<String, Resolved>, Vec<FileChanges>)> {
+    /// 구간의 파일별 시작과 끝을 정하고 심볼 변화를 뽑는다
+    fn resolve_files(&mut self, v: &SessionView<'_>, index: usize, base: &str, row: &mut PeriodRow) -> Result<(HashMap<String, Resolved>, Vec<FileChanges>)> {
+        let p = &v.periods[index];
         let canon: HashMap<String, String> = self.store.files()?.into_keys().map(|p| (key(&p), p)).collect();
-        let session_end = s.ended.as_deref().and_then(parse_ts);
-        // 시작 본문이 로그에 없으면 그 파일의 첫 편집 직전 커밋에서 읽는다. 세션이 몇 주씩 이어지기도 한다
-        let path_of = |e: &Edited<'_>| canon.get(&e.key).cloned().unwrap_or_else(|| e.rel.clone());
+        let path_of = |f: &PeriodFile| canon.get(&f.key).cloned().unwrap_or_else(|| f.rel.clone());
+        // 시작 본문이 로그에 없으면 그 파일의 이 구간 첫 편집 직전 커밋에서 읽는다
         let mut want: BTreeMap<String, Vec<String>> = BTreeMap::new();
-        for e in edited.iter().filter(|e| e.fc.before.is_none()) {
-            let commit = e.fc.first_ts.and_then(parse_ts).and_then(|t| self.history.before(t)).unwrap_or(base);
-            want.entry(commit.to_string()).or_default().push(path_of(e));
+        for f in &p.files {
+            if v.log_text(&f.key).and_then(|fc| fc.before).is_none() {
+                let commit = self.history.before(f.first).unwrap_or(base);
+                want.entry(commit.to_string()).or_default().push(path_of(f));
+            }
         }
         let mut starts: HashMap<(String, String), Vec<u8>> = HashMap::new();
         for (commit, paths) in &want {
-            for (p, body) in self.sandbox.blobs(commit, paths)? {
-                starts.insert((commit.clone(), p), body);
+            for (path, body) in self.sandbox.blobs(commit, paths)? {
+                starts.insert((commit.clone(), path), body);
             }
         }
 
         let mut files = HashMap::new();
         let mut changes = Vec::new();
-        for e in edited {
-            let path = path_of(e);
-            let state = e.fc.last_ts.and_then(parse_ts).or(session_end).map_or(State::WorkTree, |t| self.history.landing(&e.key, t));
-            let from_base: Option<String> = if e.fc.before.is_some() {
-                None
-            } else {
-                let commit = e.fc.first_ts.and_then(parse_ts).and_then(|t| self.history.before(t)).unwrap_or(base);
-                // 그 커밋에 없으면 새 파일이다
-                Some(starts.get(&(commit.to_string(), path.clone())).map_or(String::new(), |b| String::from_utf8_lossy(b).into_owned()))
-            };
-            let (before, after) = match e.fc.resolve(from_base.as_deref()) {
+        for f in &p.files {
+            let path = path_of(f);
+            let state = self.history.landing(&f.key, f.last);
+            let log = v.log_text(&f.key);
+            let log_start = log.and_then(|fc| fc.before);
+            // 그 커밋에 없으면 새 파일이다
+            let git_start = log_start.is_none().then(|| {
+                let commit = self.history.before(f.first).unwrap_or(base);
+                starts.get(&(commit.to_string(), path.clone())).map_or(String::new(), |b| String::from_utf8_lossy(b).into_owned())
+            });
+            let (before, after) = match log.and_then(|fc| fc.resolve(git_start.as_deref())) {
                 Some(pair) => pair,
                 None => {
-                    // 셸로 고쳤거나 변경을 적용하지 못했다. 끝은 반영된 본문에서 본다
-                    let Some(start) = e.fc.before.map(str::to_string).or(from_base) else {
+                    // 셸로 고쳤거나, 여러 구간에 걸쳐 고쳤거나, 변경을 적용하지 못했다. 끝은 반영된 본문에서 본다.
+                    // 작업 트리는 이 파일을 마지막으로 고친 구간이고 그 뒤 커밋이 없을 때만 이 구간의 끝이다
+                    let last_here = v.file_periods.get(&f.key).is_some_and(|x| x.1 == index);
+                    if state == State::WorkTree && !(last_here && !self.history.touched_after(&f.key, f.last)) {
                         row.files_skipped += 1;
                         continue;
-                    };
+                    }
+                    let start = log_start.map(str::to_string).or(git_start).unwrap_or_default();
                     let end = self.read_at(&state, &path).map_or(String::new(), |b| String::from_utf8_lossy(&b).into_owned());
                     row.files_from_git += 1;
                     (start, end)
@@ -857,11 +968,11 @@ impl Ctx<'_> {
                 row.files_skipped += 1;
                 continue;
             }
-            let Ok(fc) = file_changes(&mut self.parser, &path, e.lang, before.as_bytes(), after.as_bytes()) else {
+            let Ok(fc) = file_changes(&mut self.parser, &path, f.lang, before.as_bytes(), after.as_bytes()) else {
                 row.files_skipped += 1;
                 continue;
             };
-            files.insert(e.key.clone(), Resolved { path, lang: e.lang, after, state });
+            files.insert(f.key.clone(), Resolved { path, lang: f.lang, after, state });
             changes.push(fc);
         }
         Ok((files, changes))
@@ -882,19 +993,18 @@ impl Ctx<'_> {
         Ok(first.iter().any(|p| edited.contains(&key(p))))
     }
 
-    fn analyze(&mut self, s: &SessionSummary, replay_on: bool, replay_time: bool) -> Result<Outcome> {
+    /// 작업 구간 하나. `replay`는 재현을 켠 경우 시간이 남았는지이고, 세션의 첫 구간에서만 준다
+    fn analyze_period(&mut self, v: &SessionView<'_>, index: usize, replay: Option<bool>) -> Result<Outcome> {
         self.bytes.clear();
         self.parsed.clear();
-        let edited = edited_files(s, self.scope);
-        let first_edit = edited.iter().filter_map(|e| e.fc.first_ts.and_then(parse_ts)).min().or_else(|| s.started.as_deref().and_then(parse_ts));
-        let Some(first_edit) = first_edit else { return Ok(Outcome::NoBase) };
-        // 세션이 저장소의 첫 커밋보다 먼저 시작했으면 그때의 코드는 git에 없다. 첫 커밋부터 본다
-        let (base, base_after_first_edit) = match (self.history.before(first_edit), self.history.timeline.first()) {
+        let s = v.s;
+        let p = &v.periods[index];
+        // 저장소의 첫 커밋보다 먼저 고친 구간은 그때의 코드가 git에 없다. 첫 커밋부터 본다
+        let (base, base_after_first_edit) = match (self.history.before(p.first_edit), self.history.timeline.first()) {
             (Some(b), _) => (b.to_string(), false),
             (None, Some((_, oldest))) => (oldest.clone(), true),
             (None, None) => return Ok(Outcome::NoBase),
         };
-        let last_edit = edited.iter().filter_map(|e| e.fc.last_ts.and_then(parse_ts)).max().unwrap_or(first_edit);
 
         let t = Instant::now();
         self.sandbox.checkout(&base)?;
@@ -903,30 +1013,24 @@ impl Ctx<'_> {
         let _ = refresh_cochange(&self.sandbox.dir, &self.store);
         self.timing.checkout_and_index += t.elapsed().as_millis() as u64;
 
-        let mut row = SessionRow {
-            id: s.id.clone(),
+        let mut row = PeriodRow {
+            session: s.id.clone(),
             agent: s.agent.name().to_string(),
+            period: index as u32,
             base: base.clone(),
             base_after_first_edit,
-            edit_span_days: ((last_edit - first_edit).max(0) / 86_400) as u32,
-            started: s.started.clone(),
-            ended: s.ended.clone(),
             reads_known: s.reads_known,
-            tool_calls_before_first_edit: s.tool_calls_before_first_edit,
-            tokens_before_first_edit: s.tokens_before_first_edit,
-            cache_read_before_first_edit: s.cache_read_before_first_edit,
             ..Default::default()
         };
-        let (files, changes) = self.resolve_files(&edited, s, &base, &mut row)?;
+        let (files, changes) = self.resolve_files(v, index, &base, &mut row)?;
         if files.is_empty() {
             return Ok(Outcome::NoText);
         }
         row.files_changed = files.len() as u32;
 
         let t = Instant::now();
-        let rel = |paths: Vec<&Path>| -> Vec<String> { paths.into_iter().filter_map(|p| self.scope.relative(p)).filter(|r| !r.is_empty()).collect() };
-        let touched = rel(s.touched_paths());
-        let read = rel(s.read_paths());
+        let touched = p.paths(s, self.scope, Op::Edit);
+        let read = p.paths(s, self.scope, Op::Read);
         let mut raw = if check::may_leave_behind(&changes) { collect_findings(&self.store, &changes, &touched, &read, s.reads_known)? } else { Vec::new() };
         row.findings_raw = raw.len() as u32;
         let cut = raw.len().saturating_sub(MAX_VERIFY);
@@ -938,26 +1042,27 @@ impl Ctx<'_> {
         row.findings_kept = verified.kept.len() as u32;
 
         row.related_tests = has_related_tests(&self.store, &changes)?;
-        row.test_after_last_edit = tested_after_last_edit(s, self.scope);
+        row.test_after_last_edit = p.tested(s);
         self.timing.verify += t.elapsed().as_millis() as u64;
 
         let t = Instant::now();
-        row.replay = if !replay_on {
-            ReplayResult::Off
-        } else if !replay_time {
-            ReplayResult::SkippedTime
-        } else {
-            // 기준 커밋에 없던 파일은 맥락에 나올 수 없으니 재현의 답이 될 수 없다
-            let at_base: HashSet<String> = self.store.files()?.keys().map(|p| key(p)).collect();
-            let targets: HashSet<String> = edited.iter().map(|e| e.key.clone()).filter(|k| at_base.contains(k)).collect();
-            match s.first_prompt.as_deref().filter(|p| is_task_prompt(p)) {
-                None => ReplayResult::SkippedPrompt,
-                Some(_) if targets.is_empty() => ReplayResult::SkippedNoFile,
-                Some(prompt) => match self.replay(prompt, &targets) {
-                    Ok(true) => ReplayResult::Hit,
-                    Ok(false) => ReplayResult::Miss,
-                    Err(_) => ReplayResult::Failed,
-                },
+        row.replay = match replay {
+            None => ReplayResult::Off,
+            Some(false) => ReplayResult::SkippedTime,
+            Some(true) => {
+                // 기준 커밋에 없던 파일은 맥락에 나올 수 없으니 재현의 답이 될 수 없다.
+                // 첫 질문은 첫 구간의 일을 말하므로 답도 첫 구간에서 고친 파일이다
+                let at_base: HashSet<String> = self.store.files()?.keys().map(|p| key(p)).collect();
+                let targets: HashSet<String> = p.files.iter().map(|f| f.key.clone()).filter(|k| at_base.contains(k)).collect();
+                match s.first_prompt.as_deref().filter(|q| is_task_prompt(q)) {
+                    None => ReplayResult::SkippedPrompt,
+                    Some(_) if targets.is_empty() => ReplayResult::SkippedNoFile,
+                    Some(prompt) => match self.replay(prompt, &targets) {
+                        Ok(true) => ReplayResult::Hit,
+                        Ok(false) => ReplayResult::Miss,
+                        Err(_) => ReplayResult::Failed,
+                    },
+                }
             }
         };
         self.timing.replay += t.elapsed().as_millis() as u64;
@@ -995,8 +1100,12 @@ pub struct SessionCounts {
     pub found: u32,
     /// 이 저장소의 코드를 고친 세션: `k of n`의 n
     pub with_code_edits: u32,
-    /// `k of n`의 k
+    /// `k of n`의 k. 구간을 하나라도 분석한 세션
     pub analyzed: u32,
+    /// 쉬는 시간으로 나눈 작업 구간
+    pub periods_total: u32,
+    pub periods_analyzed: u32,
+    pub period_gap_hours: u32,
     pub skipped: Skipped,
     pub agents: BTreeMap<String, u32>,
     pub models: Vec<String>,
@@ -1008,8 +1117,6 @@ pub struct SessionCounts {
     pub unreadable_files: u32,
     /// 알아본 줄이 절반 아래인 로그. 형식이 바뀌었을 수 있다
     pub format_warnings: u32,
-    /// 편집이 14일 넘게 이어진 세션. 처음과 끝만 비교해서 그 사이에 놓쳤다 고친 곳은 보이지 않는다
-    pub long_sessions: u32,
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -1041,9 +1148,9 @@ pub struct AutopsyFinding {
 
 #[derive(Debug, Default, Serialize)]
 pub struct TestCounts {
-    /// 바뀐 심볼에 이어진 테스트가 있는 세션
-    pub sessions_with_related_tests: u32,
-    /// 그중 마지막 편집 뒤 테스트 명령이 없던 세션
+    /// 바뀐 심볼에 이어진 테스트가 있는 작업 구간
+    pub periods_with_related_tests: u32,
+    /// 그중 마지막 편집 뒤 테스트 명령이 없던 구간
     pub tests_not_run: u32,
 }
 
@@ -1102,16 +1209,14 @@ pub struct CostEstimate {
 }
 
 #[derive(Debug, Default, Serialize)]
-pub struct SessionRow {
-    pub id: String,
+pub struct PeriodRow {
+    pub session: String,
     pub agent: String,
+    /// 세션 안에서 몇 번째 구간인가 (0부터)
+    pub period: u32,
     pub base: String,
     /// 첫 편집 앞에 커밋이 없어 저장소의 첫 커밋을 기준으로 썼다
     pub base_after_first_edit: bool,
-    /// 첫 편집부터 마지막 편집까지 며칠인가
-    pub edit_span_days: u32,
-    pub started: Option<String>,
-    pub ended: Option<String>,
     pub reads_known: bool,
     pub files_changed: u32,
     /// 끝 본문을 git에서 본 파일
@@ -1124,9 +1229,7 @@ pub struct SessionRow {
     pub unverified: u32,
     pub related_tests: bool,
     pub test_after_last_edit: bool,
-    pub tool_calls_before_first_edit: Option<u32>,
-    pub tokens_before_first_edit: Option<u64>,
-    pub cache_read_before_first_edit: Option<u64>,
+    /// 세션의 첫 구간에서만 돌린다
     pub replay: ReplayResult,
 }
 
@@ -1154,7 +1257,7 @@ pub struct AutopsyReport {
     pub replay: ReplayCounts,
     pub tokens: TokenCounts,
     pub cost: CostEstimate,
-    pub per_session: Vec<SessionRow>,
+    pub per_period: Vec<PeriodRow>,
     pub method: &'static str,
     pub not_covered: &'static str,
     pub timing_ms: Timing,
@@ -1218,8 +1321,10 @@ fn dollars(v: f64) -> String {
     }
 }
 
+type SeenSites = HashMap<(bool, String, String), usize>;
+
 /// 여러 세션이 같은 곳을 짚으면 하나로 센다
-fn merge_finding(all: &mut Vec<AutopsyFinding>, index: &mut HashMap<(bool, String, String), usize>, v: Verified, session: &str, agent: &str) {
+fn merge_finding(all: &mut Vec<AutopsyFinding>, index: &mut SeenSites, v: Verified, session: &str, agent: &str) {
     let k = (v.finding.kind == FindingKind::Dangling, v.finding.symbol.clone(), key(&v.finding.path));
     if let Some(&i) = index.get(&k) {
         let f = &mut all[i];
@@ -1327,8 +1432,41 @@ pub fn run(dir: &Path, homes: &Homes, opts: &AutopsyOpts) -> Result<AutopsyRepor
     Ok(report)
 }
 
+fn record_period(report: &mut AutopsyReport, seen_sites: &mut SeenSites, done: Done) {
+    let Done { row, kept } = done;
+    report.sessions.periods_analyzed += 1;
+    let m = &mut report.missed;
+    m.raw += row.findings_raw;
+    m.not_landed += row.not_landed;
+    m.already_resolved += row.already_resolved;
+    m.unverified += row.unverified;
+    for v in kept {
+        merge_finding(&mut report.findings, seen_sites, v, &row.session, &row.agent);
+    }
+    if row.related_tests {
+        report.tests.periods_with_related_tests += 1;
+        report.tests.tests_not_run += u32::from(!row.test_after_last_edit);
+    }
+    let r = &mut report.replay;
+    match row.replay {
+        ReplayResult::Off => {}
+        ReplayResult::Hit => {
+            r.ran += 1;
+            r.edited_file_in_first_3 += 1;
+        }
+        ReplayResult::Miss => r.ran += 1,
+        ReplayResult::SkippedPrompt => r.skipped_prompt += 1,
+        ReplayResult::SkippedNoFile => r.skipped_no_file += 1,
+        ReplayResult::SkippedTime => r.skipped_time += 1,
+        ReplayResult::Failed => r.failed += 1,
+    }
+    report.per_period.push(row);
+}
+
 #[allow(clippy::too_many_arguments)]
 fn analyze_all(root: &Path, scope: &Scope, head: &str, eligible: VecDeque<SessionSummary>, opts: &AutopsyOpts, started: Instant, cap: Duration, report: &mut AutopsyReport) -> Result<()> {
+    report.sessions.period_gap_hours = (PERIOD_GAP_SECS / 3600) as u32;
+    report.sessions.periods_total = eligible.iter().map(|s| periods_of(s, scope).len() as u32).sum();
     // 읽는 데 시간을 다 썼으면 클론을 만들 필요도 없다
     if started.elapsed() >= cap {
         report.sessions.skipped.time_cap = eligible.len() as u32;
@@ -1346,36 +1484,52 @@ fn analyze_all(root: &Path, scope: &Scope, head: &str, eligible: VecDeque<Sessio
     let total = eligible.len();
     let mut models: BTreeSet<String> = BTreeSet::new();
     let (mut tool_calls, mut tokens, mut cache_read) = (Vec::new(), Vec::new(), Vec::new());
-    let mut seen_sites: HashMap<(bool, String, String), usize> = HashMap::new();
-    let c_cap = cap.as_secs_f64();
+    let mut seen_sites: SeenSites = HashMap::new();
+    let replay_until = cap.as_secs_f64() * REPLAY_TIME_SHARE;
     for (i, s) in eligible.into_iter().enumerate() {
         if started.elapsed() >= cap {
-            report.sessions.skipped.time_cap = (total - i) as u32;
+            report.sessions.skipped.time_cap += (total - i) as u32;
             report.timed_out = true;
             break;
         }
-        let replay_time = started.elapsed().as_secs_f64() < c_cap * REPLAY_TIME_SHARE;
-        let done = match ctx.analyze(&s, opts.replay, replay_time) {
-            Ok(Outcome::NoBase) => {
-                report.sessions.skipped.no_base += 1;
-                continue;
+        let view = SessionView::new(&s, scope);
+        let (mut done, mut no_base, mut errors, mut cut) = (0u32, 0u32, 0u32, false);
+        for index in 0..view.periods.len() {
+            if started.elapsed() >= cap {
+                report.timed_out = true;
+                cut = true;
+                break;
             }
-            Ok(Outcome::NoText) => {
-                report.sessions.skipped.no_text += 1;
-                continue;
+            let replay = (opts.replay && index == 0).then(|| started.elapsed().as_secs_f64() < replay_until);
+            match ctx.analyze_period(&view, index, replay) {
+                Ok(Outcome::Done(d)) => {
+                    done += 1;
+                    record_period(report, &mut seen_sites, *d);
+                }
+                Ok(Outcome::NoBase) => no_base += 1,
+                Ok(Outcome::NoText) => {}
+                Err(e) => {
+                    eprintln!("lantern autopsy: skipped a work period: {e:#}");
+                    errors += 1;
+                }
             }
-            Err(e) => {
-                eprintln!("lantern autopsy: skipped a session: {e:#}");
-                report.sessions.skipped.errors += 1;
-                continue;
-            }
-            Ok(Outcome::Done(d)) => *d,
-        };
-        let Done { row, kept } = done;
+        }
         let c = &mut report.sessions;
+        if done == 0 {
+            // 어느 구간도 분석하지 못한 까닭 하나만 센다
+            if cut {
+                c.skipped.time_cap += 1;
+            } else if errors > 0 {
+                c.skipped.errors += 1;
+            } else if no_base > 0 || view.periods.is_empty() {
+                c.skipped.no_base += 1;
+            } else {
+                c.skipped.no_text += 1;
+            }
+            continue;
+        }
         c.analyzed += 1;
-        c.long_sessions += u32::from(i64::from(row.edit_span_days) * 86_400 > WINDOW_SECS);
-        *c.agents.entry(row.agent.clone()).or_default() += 1;
+        *c.agents.entry(s.agent.name().to_string()).or_default() += 1;
         models.extend(s.models.iter().cloned());
         if let Some(from) = s.started.as_deref().map(date_of) {
             if c.period_from.as_ref().is_none_or(|p| from < *p) {
@@ -1387,35 +1541,9 @@ fn analyze_all(root: &Path, scope: &Scope, head: &str, eligible: VecDeque<Sessio
                 c.period_to = Some(to);
             }
         }
-        let m = &mut report.missed;
-        m.raw += row.findings_raw;
-        m.not_landed += row.not_landed;
-        m.already_resolved += row.already_resolved;
-        m.unverified += row.unverified;
-        for v in kept {
-            merge_finding(&mut report.findings, &mut seen_sites, v, &row.id, &row.agent);
-        }
-        if row.related_tests {
-            report.tests.sessions_with_related_tests += 1;
-            report.tests.tests_not_run += u32::from(!row.test_after_last_edit);
-        }
-        tool_calls.extend(row.tool_calls_before_first_edit.map(u64::from));
-        tokens.extend(row.tokens_before_first_edit);
-        cache_read.extend(row.cache_read_before_first_edit);
-        let r = &mut report.replay;
-        match row.replay {
-            ReplayResult::Off => {}
-            ReplayResult::Hit => {
-                r.ran += 1;
-                r.edited_file_in_first_3 += 1;
-            }
-            ReplayResult::Miss => r.ran += 1,
-            ReplayResult::SkippedPrompt => r.skipped_prompt += 1,
-            ReplayResult::SkippedNoFile => r.skipped_no_file += 1,
-            ReplayResult::SkippedTime => r.skipped_time += 1,
-            ReplayResult::Failed => r.failed += 1,
-        }
-        report.per_session.push(row);
+        tool_calls.extend(s.tool_calls_before_first_edit.map(u64::from));
+        tokens.extend(s.tokens_before_first_edit);
+        cache_read.extend(s.cache_read_before_first_edit);
     }
     report.sessions.models = models.into_iter().collect();
     report.search_cost = SearchCost {
@@ -1484,7 +1612,12 @@ impl AutopsyReport {
         }
 
         let agents: Vec<String> = s.agents.iter().map(|(a, n)| format!("{a} {n}")).collect();
-        let mut parts = vec![if ko { format!("세션 {}개 중 {}개 분석", s.with_code_edits, s.analyzed) } else { format!("Analyzed {} of {} sessions", s.analyzed, s.with_code_edits) }];
+        let mut head = if ko { format!("세션 {}개 중 {}개 분석", s.with_code_edits, s.analyzed) } else { format!("Analyzed {} of {} sessions", s.analyzed, s.with_code_edits) };
+        // 세션과 작업 구간이 같으면 굳이 말하지 않는다
+        if s.periods_total != s.with_code_edits || s.periods_analyzed != s.analyzed {
+            let _ = if ko { write!(head, " (작업 구간 {}개 중 {}개)", s.periods_total, s.periods_analyzed) } else { write!(head, " ({} of {} work periods)", s.periods_analyzed, s.periods_total) };
+        }
+        let mut parts = vec![head];
         if !agents.is_empty() {
             parts.push(agents.join(", "));
         }
@@ -1541,11 +1674,11 @@ impl AutopsyReport {
         out.push('\n');
 
         let t = &self.tests;
-        if t.sessions_with_related_tests > 0 {
+        if t.periods_with_related_tests > 0 {
             let _ = if ko {
-                writeln!(out, "테스트: 관련 테스트가 있는 세션 {}개 중 {}개는 마지막 편집 뒤 테스트 명령이 없음", t.sessions_with_related_tests, t.tests_not_run)
+                writeln!(out, "테스트: 관련 테스트가 있는 작업 구간 {}개 중 {}개는 마지막 편집 뒤 테스트 명령이 없음", t.periods_with_related_tests, t.tests_not_run)
             } else {
-                writeln!(out, "Tests: {} of {} sessions with related tests ran no test command after the last edit", t.tests_not_run, t.sessions_with_related_tests)
+                writeln!(out, "Tests: {} of {} work periods with related tests ran no test command after the last edit", t.tests_not_run, t.periods_with_related_tests)
             };
         }
         let c = &self.search_cost;
@@ -1622,13 +1755,6 @@ impl AutopsyReport {
                 format!("{} log files: format may have changed, counts can be low.", s.format_warnings)
             });
         }
-        if s.long_sessions > 0 {
-            notes.push(if ko {
-                format!("세션 {}개는 편집이 14일 넘게 이어져 처음과 끝만 비교했습니다. 그 사이에 놓쳤다 고친 곳은 보이지 않습니다.", s.long_sessions)
-            } else {
-                format!("{} sessions edited for over 14 days: only their first and last state are compared, misses fixed in between do not show.", s.long_sessions)
-            });
-        }
         if !notes.is_empty() {
             let _ = writeln!(out, "{}", notes.join(" "));
         }
@@ -1651,13 +1777,13 @@ impl AutopsyReport {
             let usd = m.usd.map_or_else(|| if ko { "모르는 모델".to_string() } else { "unknown model".to_string() }, dollars);
             let _ = writeln!(out, "  {}: {} / {} / {} / {}  {usd}", m.model, compact(m.input), compact(m.output), compact(m.cache_read), compact(m.cache_write));
         }
-        for row in &self.per_session {
-            let id: String = row.id.chars().take(8).collect();
+        for row in &self.per_period {
+            let id: String = row.session.chars().take(8).collect();
             let base: String = row.base.chars().take(8).collect();
             let _ = writeln!(
                 out,
-                "  {id} {} base {base}: files {} (git {}, skipped {}), findings {}/{}, not landed {}, resolved {}",
-                row.agent, row.files_changed, row.files_from_git, row.files_skipped, row.findings_kept, row.findings_raw, row.not_landed, row.already_resolved
+                "  {id}#{} {} base {base}: files {} (git {}, skipped {}), findings {}/{}, not landed {}, resolved {}",
+                row.period, row.agent, row.files_changed, row.files_from_git, row.files_skipped, row.findings_kept, row.findings_raw, row.not_landed, row.already_resolved
             );
         }
         out.push('\n');
@@ -1815,7 +1941,8 @@ mod tests {
         r.sessions.with_code_edits = 40;
         r.sessions.analyzed = 12;
         r.sessions.format_warnings = 1;
-        r.sessions.long_sessions = 2;
+        r.sessions.periods_total = 88;
+        r.sessions.periods_analyzed = 30;
         r.sessions.agents.insert("claude".into(), 10);
         r.sessions.agents.insert("codex".into(), 2);
         r.sessions.models = vec!["claude-opus-5-5".into(), "gpt-5.5".into(), "other".into()];
@@ -1823,7 +1950,7 @@ mod tests {
         r.sessions.period_to = Some("2026-10-30".into());
         r.findings = (0..9).map(|i| finding(i, if i < 4 { FindingKind::Dangling } else { FindingKind::StaleCaller })).collect();
         r.missed = MissedCounts { dangling: 4, dangling_later_fixed: 1, stale_caller: 5, stale_caller_later_fixed: 0, raw: 20, not_landed: 3, already_resolved: 7, unverified: 1 };
-        r.tests = TestCounts { sessions_with_related_tests: 9, tests_not_run: 3 };
+        r.tests = TestCounts { periods_with_related_tests: 9, tests_not_run: 3 };
         r.search_cost = SearchCost { sessions: 12, median_tool_calls: Some(14), median_tokens: Some(5200), median_cache_read: Some(90_000) };
         r.replay = ReplayCounts { enabled: true, ran: 8, edited_file_in_first_3: 5, note: REPLAY_NOTE, ..Default::default() };
         r.tokens = TokenCounts { sessions: 12, input: 1, output: 2, cache_read: 3, cache_write: 4, note: "" };
@@ -1843,11 +1970,11 @@ mod tests {
             assert!(text.contains("$12.50") && text.contains(PRICE_TABLE_DATE), "{text}");
         }
         let en = r.to_text(ReportLang::En, false);
-        assert!(en.contains("Analyzed 12 of 40 sessions") && en.contains("not an agent run") && en.contains("Unknown model: 2"), "{en}");
-        assert!(en.contains("time cap") && en.contains("format may have changed") && en.contains("2 sessions edited for over 14 days"), "{en}");
+        assert!(en.contains("Analyzed 12 of 40 sessions (30 of 88 work periods)") && en.contains("not an agent run") && en.contains("Unknown model: 2"), "{en}");
+        assert!(en.contains("time cap") && en.contains("format may have changed"), "{en}");
         let ko = r.to_text(ReportLang::Ko, false);
-        assert!(ko.contains("세션 40개 중 12개 분석") && ko.contains("에이전트 실행 아님") && ko.contains("모르는 모델 2개"), "{ko}");
-        assert!(ko.contains("시간 상한") && ko.contains("세션 2개는 편집이 14일 넘게"), "{ko}");
+        assert!(ko.contains("세션 40개 중 12개 분석 (작업 구간 88개 중 30개)") && ko.contains("에이전트 실행 아님") && ko.contains("모르는 모델 2개"), "{ko}");
+        assert!(ko.contains("시간 상한"), "{ko}");
 
         // 전부 보기에는 모두 나온다
         let all = r.to_text(ReportLang::En, true);
