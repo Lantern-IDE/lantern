@@ -887,9 +887,14 @@ impl Ctx<'_> {
         self.parsed.clear();
         let edited = edited_files(s, self.scope);
         let first_edit = edited.iter().filter_map(|e| e.fc.first_ts.and_then(parse_ts)).min().or_else(|| s.started.as_deref().and_then(parse_ts));
-        let Some(base) = first_edit.and_then(|t| self.history.before(t)).map(str::to_string) else {
-            return Ok(Outcome::NoBase);
+        let Some(first_edit) = first_edit else { return Ok(Outcome::NoBase) };
+        // 세션이 저장소의 첫 커밋보다 먼저 시작했으면 그때의 코드는 git에 없다. 첫 커밋부터 본다
+        let (base, base_after_first_edit) = match (self.history.before(first_edit), self.history.timeline.first()) {
+            (Some(b), _) => (b.to_string(), false),
+            (None, Some((_, oldest))) => (oldest.clone(), true),
+            (None, None) => return Ok(Outcome::NoBase),
         };
+        let last_edit = edited.iter().filter_map(|e| e.fc.last_ts.and_then(parse_ts)).max().unwrap_or(first_edit);
 
         let t = Instant::now();
         self.sandbox.checkout(&base)?;
@@ -902,6 +907,8 @@ impl Ctx<'_> {
             id: s.id.clone(),
             agent: s.agent.name().to_string(),
             base: base.clone(),
+            base_after_first_edit,
+            edit_span_days: ((last_edit - first_edit).max(0) / 86_400) as u32,
             started: s.started.clone(),
             ended: s.ended.clone(),
             reads_known: s.reads_known,
@@ -1001,6 +1008,8 @@ pub struct SessionCounts {
     pub unreadable_files: u32,
     /// 알아본 줄이 절반 아래인 로그. 형식이 바뀌었을 수 있다
     pub format_warnings: u32,
+    /// 편집이 14일 넘게 이어진 세션. 처음과 끝만 비교해서 그 사이에 놓쳤다 고친 곳은 보이지 않는다
+    pub long_sessions: u32,
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -1097,6 +1106,10 @@ pub struct SessionRow {
     pub id: String,
     pub agent: String,
     pub base: String,
+    /// 첫 편집 앞에 커밋이 없어 저장소의 첫 커밋을 기준으로 썼다
+    pub base_after_first_edit: bool,
+    /// 첫 편집부터 마지막 편집까지 며칠인가
+    pub edit_span_days: u32,
     pub started: Option<String>,
     pub ended: Option<String>,
     pub reads_known: bool,
@@ -1361,6 +1374,7 @@ fn analyze_all(root: &Path, scope: &Scope, head: &str, eligible: VecDeque<Sessio
         let Done { row, kept } = done;
         let c = &mut report.sessions;
         c.analyzed += 1;
+        c.long_sessions += u32::from(i64::from(row.edit_span_days) * 86_400 > WINDOW_SECS);
         *c.agents.entry(row.agent.clone()).or_default() += 1;
         models.extend(s.models.iter().cloned());
         if let Some(from) = s.started.as_deref().map(date_of) {
@@ -1590,21 +1604,33 @@ impl AutopsyReport {
         out
     }
 
+    /// 알아 둘 것들. 한 화면에 들어가게 한 줄로 잇는다
     fn push_warnings(&self, out: &mut String, ko: bool) {
         let s = &self.sessions;
+        let mut notes = Vec::new();
         if self.timed_out {
-            let _ = if ko {
-                writeln!(out, "시간 상한 {}초에 멈췄습니다. --max-seconds 로 늘릴 수 있습니다.", self.options.max_seconds)
+            notes.push(if ko {
+                format!("시간 상한 {}초에 멈췄습니다 (--max-seconds).", self.options.max_seconds)
             } else {
-                writeln!(out, "Stopped at the {} s time cap. Use --max-seconds to analyze more.", self.options.max_seconds)
-            };
+                format!("Stopped at the {} s time cap (--max-seconds).", self.options.max_seconds)
+            });
         }
         if s.format_warnings > 0 {
-            let _ = if ko {
-                writeln!(out, "로그 {}개는 형식이 바뀌었을 수 있어 숫자가 적게 나올 수 있습니다.", s.format_warnings)
+            notes.push(if ko {
+                format!("로그 {}개는 형식이 바뀌었을 수 있어 숫자가 적을 수 있습니다.", s.format_warnings)
             } else {
-                writeln!(out, "{} log files: format may have changed, counts can be low.", s.format_warnings)
-            };
+                format!("{} log files: format may have changed, counts can be low.", s.format_warnings)
+            });
+        }
+        if s.long_sessions > 0 {
+            notes.push(if ko {
+                format!("세션 {}개는 편집이 14일 넘게 이어져 처음과 끝만 비교했습니다. 그 사이에 놓쳤다 고친 곳은 보이지 않습니다.", s.long_sessions)
+            } else {
+                format!("{} sessions edited for over 14 days: only their first and last state are compared, misses fixed in between do not show.", s.long_sessions)
+            });
+        }
+        if !notes.is_empty() {
+            let _ = writeln!(out, "{}", notes.join(" "));
         }
     }
 
@@ -1789,6 +1815,7 @@ mod tests {
         r.sessions.with_code_edits = 40;
         r.sessions.analyzed = 12;
         r.sessions.format_warnings = 1;
+        r.sessions.long_sessions = 2;
         r.sessions.agents.insert("claude".into(), 10);
         r.sessions.agents.insert("codex".into(), 2);
         r.sessions.models = vec!["claude-opus-5-5".into(), "gpt-5.5".into(), "other".into()];
@@ -1817,8 +1844,10 @@ mod tests {
         }
         let en = r.to_text(ReportLang::En, false);
         assert!(en.contains("Analyzed 12 of 40 sessions") && en.contains("not an agent run") && en.contains("Unknown model: 2"), "{en}");
+        assert!(en.contains("time cap") && en.contains("format may have changed") && en.contains("2 sessions edited for over 14 days"), "{en}");
         let ko = r.to_text(ReportLang::Ko, false);
         assert!(ko.contains("세션 40개 중 12개 분석") && ko.contains("에이전트 실행 아님") && ko.contains("모르는 모델 2개"), "{ko}");
+        assert!(ko.contains("시간 상한") && ko.contains("세션 2개는 편집이 14일 넘게"), "{ko}");
 
         // 전부 보기에는 모두 나온다
         let all = r.to_text(ReportLang::En, true);
