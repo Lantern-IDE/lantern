@@ -588,6 +588,7 @@ fn test_runner_re() -> &'static Regex {
             | \bnode(?:\.exe)?["']?\s+--test\b
             | \b(?:mvn|mvnw|gradle|gradlew)(?:\.cmd|\.bat)?["']?(?:\s+\S+)*?\s+(?:\S*:)?(?:(?:[^\s\-]\S*)?test\S*|check|verify|build|install|package)(?:\s|$|["'])
             | \b(?:make|just|rake)\s+(?:-\S+\s+)*\S*test\S*
+            | \bmanage\.py["']?\s+(?:test|check)\b
             | \bzig\s+build\s+test\b
             | \bsbt\s+\S*test\S*
             | \brun[-_]tests?\b
@@ -1154,6 +1155,8 @@ mod tests {
             "\"C:\\flutter\\bin\\flutter.bat\" test test/a_test.dart",
             "go.exe test ./...",
             "cargo.exe test -p a",
+            "python manage.py test app.tests",
+            "python.exe manage.py check",
         ] {
             assert!(is_test_command(c), "{c}");
         }
@@ -1175,6 +1178,7 @@ mod tests {
             "mvn compile -DskipTests",
             "flutter analyze",
             "flutter.bat pub get",
+            "python manage.py migrate",
         ] {
             assert!(!is_test_command(c), "{c}");
         }
