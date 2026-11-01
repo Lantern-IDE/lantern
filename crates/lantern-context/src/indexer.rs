@@ -9,9 +9,21 @@ use serde::Serialize;
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Instant, UNIX_EPOCH};
 
 pub(crate) const MAX_FILE_BYTES: u64 = 1024 * 1024;
+
+/// 그만하라는 요청 (Ctrl+C). 켜지면 묶음 사이에서 되돌리고 오류로 끝난다
+static STOP: AtomicBool = AtomicBool::new(false);
+
+pub fn request_stop() {
+    STOP.store(true, Ordering::SeqCst);
+}
+
+pub fn stop_requested() -> bool {
+    STOP.load(Ordering::SeqCst)
+}
 
 /// .gitignore가 없어도 항상 건너뛰는 폴더
 pub(crate) const SKIP_DIRS: &[&str] = &[
@@ -161,6 +173,11 @@ pub fn index_project(root: &Path, store: &Store, parser: &mut Parser) -> Result<
         }
         jobs.push(Job { prev: prev.map(|p| (p.id, p.hash.clone())), file, mtime, size });
     }
+    // 바꿀 것이 없으면 쓰기 잠금을 잡지 않는다. 다른 프로세스가 쓰는 중이어도 기다리지 않는다
+    if jobs.is_empty() && existing.keys().all(|p| seen.contains(p)) {
+        stats.elapsed_ms = started.elapsed().as_millis();
+        return Ok(stats);
+    }
 
     // 2. 읽고 파싱해서 저장 (바뀐 파일이 많으면 묶음마다 병렬로)
     let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).clamp(1, 8);
@@ -173,6 +190,7 @@ pub fn index_project(root: &Path, store: &Store, parser: &mut Parser) -> Result<
     store.begin()?;
     let result = (|| -> Result<()> {
         for batch in jobs.chunks(PARSE_BATCH) {
+            anyhow::ensure!(!stop_requested(), "중단됨");
             let results: Vec<Work> = if extra.is_empty() {
                 batch.iter().map(|j| work(j, parser)).collect()
             } else {
