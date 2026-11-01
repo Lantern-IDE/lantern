@@ -56,6 +56,8 @@ cargo build --release -p lantern-context
 claude mcp add lantern -- <path-to-lantern> mcp <project>
 ```
 
+**What an agent may have left behind.** `lantern check` compares symbols before and after a change and looks up removed names and changed signatures in the code graph; `lantern autopsy` runs the same check over past Claude Code and Codex session logs already on your disk, verified against git history. No model, no API key, no network, and it is name based, so it can be wrong. It stays quiet and misses most of these commits. On 71 public multi-file commits, applying one changed file at a time, a warning pointed to another file of the commit in 6 of 71 commits (8.5%); wide nets reach about 80% but flag 42 to 65 files per commit. It gave 63 warnings in total, 0.89 per commit (median 0), 48 of them in test files; 5 were removed names (Dangling), of which 4 pointed to a file the commit changed, too few to call a precision. On the author's own sessions (18 Claude Code sessions, one person, not generalizable), a Claude agent read and judged a sample of signature warnings, with no second reader, and 0 of 30 were real misses, so no warning stops the agent and signature warnings appear only with `--details`. Method and limits: [eval/check](eval/check/README.md) ([results](eval/check/results.md)), [docs/에이전트_부검.md](docs/에이전트_부검.md).
+
 ## Install
 
 Download from [Releases](https://github.com/Lantern-IDE/lantern/releases). Builds are not code-signed yet:
