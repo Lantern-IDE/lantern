@@ -127,6 +127,8 @@ export async function launch(dir = DIRS.proj) {
     if (m.method === "Debugger.scriptParsed") scripts.set(m.params.scriptId, m.params.url);
   });
   hangReported = false;
+  // 창 초점이 다른 프로그램으로 가도 입력칸이 blur로 닫히지 않게 (쓰던 PC에서도 CI에서도 같은 결과가 나오도록)
+  await cdp("Emulation.setFocusEmulationEnabled", { enabled: true });
   if (argv.includes("--trace")) {
     await cdp("Runtime.enable");
     await cdp("Runtime.evaluate", { expression: "localStorage.setItem('lantern.trace','1')", returnByValue: true });
