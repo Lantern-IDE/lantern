@@ -16,7 +16,7 @@ import { t } from "./i18n";
 export type NodeKind = "dir" | "file" | "symbol" | "memory";
 export type EdgeKind = "ref" | "calls" | "defines" | "cochange" | "mentions";
 export interface GNode { id: string; kind: NodeKind; label: string; path?: string; line?: number; group: string; weight: number; detail?: string; depth?: number; test?: boolean }
-export interface GEdge { source: string; target: string; kind: EdgeKind; weight: number }
+export interface GEdge { source: string; target: string; kind: EdgeKind; weight: number; uncertain?: boolean }
 export interface Graph { nodes: GNode[]; edges: GEdge[]; truncated: boolean }
 export interface Impact {
   path: string; touched: string[]; callers: number; callers2: number; files: number; modules: number;
@@ -59,7 +59,7 @@ export function emptyFootprint(): Footprint {
 // ── 상태 ─────────────────────────────────────────────────
 
 interface N extends SimulationNodeDatum, GNode { r: number; mark?: "context" | "read" | "edited" | "impact0" | "impact1" | "impact2" | "test"; notes?: string[] }
-interface L extends SimulationLinkDatum<N> { kind: EdgeKind; weight: number }
+interface L extends SimulationLinkDatum<N> { kind: EdgeKind; weight: number; uncertain?: boolean }
 
 type Mode = "overview" | "focus" | "impact" | "memory";
 const overlays = { footprint: true, memory: false };
@@ -158,6 +158,7 @@ function setGraph(g: Graph, keepPositions = false) {
   });
   byId = new Map(nodes.map((n) => [n.id, n]));
   links = g.edges.filter((e) => byId.has(e.source) && byId.has(e.target)).map((e) => ({ source: e.source, target: e.target, kind: e.kind, weight: e.weight }) as unknown as L);
+  links = g.edges.filter((e) => byId.has(e.source) && byId.has(e.target)).map((e) => ({ source: e.source, target: e.target, kind: e.kind, weight: e.weight, uncertain: e.uncertain }) as unknown as L);
   truncated = g.truncated;
   // 노드 객체가 새로 만들어졌다: 고른 노드도 새 것으로 잇는다 (아니면 고리와 이름표가 사라진다)
   selected = keepPositions && selected ? byId.get(selected.id) ?? null : null;
@@ -575,7 +576,7 @@ function draw() {
     ctx.beginPath();
     ctx.moveTo(a.x, a.y!);
     ctx.lineTo(b.x, b.y!);
-    ctx.setLineDash(l.kind === "cochange" ? [5, 4] : l.kind === "mentions" ? [2, 3] : []);
+    ctx.setLineDash(l.kind === "cochange" ? [5, 4] : l.kind === "mentions" ? [2, 3] : l.uncertain ? [1, 3] : []);
     const base = l.kind === "cochange" ? colors.context : l.kind === "mentions" ? colors.link : colors.border;
     ctx.strokeStyle = withAlpha(base, lit ? (l.kind === "defines" ? 0.35 : receded(a) || receded(b) ? 0.3 : 0.7) : 0.12);
     ctx.lineWidth = (l.kind === "defines" ? 0.8 : Math.min(3, 0.8 + Math.log1p(l.weight) * 0.5)) / Math.sqrt(view.k);
@@ -749,6 +750,7 @@ function renderLegend() {
     if (nodes.some((n) => n.kind === "dir")) items.push(item(dot("dir"), "폴더 (두 번 눌러 펼치기)"));
     items.push(item(dot("file"), "파일"), item(dot("symbol"), "심볼"), item(dot("cochange"), "함께 바뀜"));
     if (nodes.some((n) => n.test)) items.push(item(dot("file faded"), "테스트"));
+    if (links.some((l) => l.uncertain)) items.push(item(dot("uncertain"), "이름만 일치"));
     if (overlays.footprint && footprintSize()) items.push(item(dot("context"), "AI에 보낸 맥락"), item(dot("read"), "읽음"), item(dot("edited"), "수정"));
     if (overlays.memory || mode === "memory") items.push(item(dot("memory"), "기억"));
   }
