@@ -68,6 +68,7 @@ let mode: Mode = "overview";
 let focusLabel = "";
 /** 주변 지도의 중심. 폴더를 펼치면 첫 노드가 중심이 아니라서 따로 둔다 (다시 그릴 때 같은 지도를 받으려고) */
 let focusCenter = "";
+let focusName = "";
 let nodes: N[] = [];
 let links: L[] = [];
 let byId = new Map<string, N>();
@@ -150,12 +151,15 @@ function radius(n: GNode): number {
   return Math.min(14, 5 + Math.sqrt(n.weight) * 1.6);
 }
 
+/** 다시 그려도 같은 노드로 치는 열쇠. 심볼 id는 파일을 다시 인덱싱하면 바뀐다 */
+const nodeKey = (n: GNode) => `${n.kind}:${n.path ?? ""}:${n.label}`;
+
 function setGraph(g: Graph, keepPositions = false) {
   trace(`setGraph n=${g.nodes.length} e=${g.edges.length} keep=${keepPositions}`);
   statsCache = new Map();
-  const old = keepPositions ? byId : new Map<string, N>();
+  const old = new Map<string, N>(keepPositions ? nodes.map((n) => [nodeKey(n), n]) : []);
   nodes = g.nodes.map((n) => {
-    const prev = old.get(n.id);
+    const prev = old.get(nodeKey(n));
     return { ...n, r: radius(n), x: prev?.x, y: prev?.y };
   });
   byId = new Map(nodes.map((n) => [n.id, n]));
@@ -166,7 +170,8 @@ function setGraph(g: Graph, keepPositions = false) {
   links = g.edges.filter((e) => byId.has(e.source) && byId.has(e.target)).map((e) => ({ source: e.source, target: e.target, kind: e.kind, weight: e.weight, uncertain: e.uncertain }) as unknown as L);
   truncated = g.truncated;
   // 노드 객체가 새로 만들어졌다: 고른 노드도 새 것으로 잇는다 (아니면 고리와 이름표가 사라진다)
-  selected = keepPositions && selected ? byId.get(selected.id) ?? null : null;
+  const was = selected && nodeKey(selected);
+  selected = keepPositions && was ? nodes.find((n) => nodeKey(n) === was) ?? null : null;
   hovered = null;
   applyMarks();
   trace("setGraph: layout");
@@ -238,12 +243,25 @@ export function showOverview() {
   return load(() => invoke<Graph>("graph_overview", { maxNodes: 400 }), "overview");
 }
 
+/** 주변 지도를 받는다. 다시 인덱싱해 심볼 id가 바뀌었으면 같은 이름을 찾아 잇는다 (같은 파일의 것을 먼저) */
+async function fetchFocus(): Promise<Graph> {
+  const g = await invoke<Graph>("graph_neighborhood", { center: focusCenter, limit: 30 });
+  if (g.nodes.length || !focusCenter.startsWith("s:")) return g;
+  const path = byId.get(focusCenter)?.path;
+  const same = (await invoke<GNode[]>("graph_find", { query: focusName })).filter((n) => n.kind === "symbol" && n.label === focusName);
+  const next = same.find((n) => n.path === path) ?? same[0];
+  if (!next) return g;
+  focusCenter = next.id;
+  return invoke<Graph>("graph_neighborhood", { center: next.id, limit: 30 });
+}
+
 /** `f:경로`, `s:id`, 또는 이름 */
 export function focus(center: string, label?: string) {
   impact = null;
   show();
   focusCenter = center;
-  return load(() => invoke<Graph>("graph_neighborhood", { center, limit: 30 }), "focus", label ?? center.replace(/^[fs]:/, ""));
+  focusName = label ?? "";
+  return load(fetchFocus, "focus", label ?? center.replace(/^[fs]:/, ""));
 }
 
 function applyImpact(i: Impact) {
@@ -489,7 +507,7 @@ function bounds() {
 }
 
 export function fit(animate = true) {
-  if (!nodes.length) return;
+  if (!nodes.length) return kick(); // 비었으면 지난 지도를 지운다
   const el = canvas();
   const { x0, y0, x1, y1 } = bounds();
   const w = el.clientWidth, hgt = el.clientHeight;
@@ -1153,7 +1171,7 @@ export function refreshSoon() {
     // 그래프를 다시 받지 않더라도(노드를 고른 채 보는 중) 카드의 수는 새로 센다
     statsCache = new Map();
     if (selected && visible) renderCard();
-    const fetcher = mode === "overview" ? () => invoke<Graph>("graph_overview", { maxNodes: 400 }) : mode === "focus" && selected === null ? () => invoke<Graph>("graph_neighborhood", { center: focusCenter, limit: 30 }) : null;
+    const fetcher = mode === "overview" ? () => invoke<Graph>("graph_overview", { maxNodes: 400 }) : mode === "focus" && selected === null ? fetchFocus : null;
     if (!fetcher || !visible) return;
     const my = loadSeq;
     try {
