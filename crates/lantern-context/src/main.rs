@@ -1,10 +1,11 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use lantern_context::assemble::{ContextRequest, DEFAULT_BUDGET};
-use lantern_context::sessions;
+use lantern_context::{check, hook, sessions};
 use lantern_context::tokenize::estimate_tokens;
 use lantern_context::Engine;
 use std::collections::HashSet;
+use std::io::Write as _;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime};
 
@@ -71,6 +72,29 @@ enum Cmd {
         #[command(subcommand)]
         view: GraphView,
     },
+    /// 에이전트가 고친 뒤 놓친 곳 찾기 (이름 기반, 저장소를 바꾸지 않음)
+    Check {
+        /// 비교할 기준 커밋 (기본 HEAD)
+        #[arg(long)]
+        base: Option<String>,
+        /// JSON으로 출력
+        #[arg(long)]
+        json: bool,
+        /// 막을 만한 발견이 있으면 종료 코드 1, 검사를 못 했으면 2
+        #[arg(long)]
+        strict: bool,
+        /// Claude Code Stop 훅으로 실행. stdin의 JSON을 읽고, 어떤 오류든 출력 없이 0으로 끝난다
+        #[arg(long)]
+        stop_hook: bool,
+        /// Stop 훅 기록 합계
+        #[arg(long)]
+        stats: bool,
+    },
+    /// 에이전트 훅 넣기와 빼기
+    Hook {
+        #[command(subcommand)]
+        action: HookAction,
+    },
     /// 세션 로그 점검용. 개수와 경로만 내고 메시지·명령·코드는 내지 않는다
     #[command(hide = true)]
     Sessions {
@@ -114,6 +138,31 @@ enum GraphView {
     },
 }
 
+#[derive(Subcommand)]
+enum HookAction {
+    /// Stop 훅 넣기. 다른 설정은 그대로 두고 백업을 먼저 쓴다
+    Install(HookTarget),
+    /// Stop 훅 빼기
+    Uninstall(HookTarget),
+}
+
+#[derive(clap::Args)]
+struct HookTarget {
+    /// 대상 에이전트
+    agent: HookAgent,
+    /// `.claude/settings.local.json` (기본, 커밋하지 않는 파일)
+    #[arg(long, conflicts_with = "user")]
+    project: bool,
+    /// 사용자 설정 `~/.claude/settings.json`
+    #[arg(long)]
+    user: bool,
+}
+
+#[derive(Clone, Copy, clap::ValueEnum)]
+enum HookAgent {
+    Claude,
+}
+
 /// `10-20` 또는 `15` → (시작, 끝). 1부터, 양끝 포함
 fn parse_range(s: &str) -> Result<(u32, u32)> {
     let bad = || anyhow::anyhow!("줄 범위는 `10-20`이나 `15`처럼 쓰세요: {s}");
@@ -143,7 +192,7 @@ fn main() -> Result<()> {
         let _ = std::io::stdin().read_line(&mut String::new());
         return Ok(());
     }
-    let cli = Cli::parse();
+    let cli = if std::env::args().any(|a| a == "--stop-hook") { parse_for_stop_hook() } else { Cli::parse() };
     match cli.cmd {
         Cmd::Index { full } => {
             let mut engine = if full { Engine::open_fresh(&cli.root)? } else { Engine::open(&cli.root)? };
@@ -218,8 +267,87 @@ fn main() -> Result<()> {
             };
             println!("{json}");
         }
+        Cmd::Check { base, json, strict, stop_hook: _, stats } => check_command(&cli.root, base.as_deref(), json, strict, stats)?,
+        Cmd::Hook { action } => hook_command(&cli.root, action)?,
         Cmd::Sessions { json, deep, days, agent, max_sessions } => {
             sessions_report(&cli.root, json, deep, days, agent.as_deref(), max_sessions)?;
+        }
+    }
+    Ok(())
+}
+
+/// `--stop-hook`이 보이면 인자 해석부터 조심한다: clap의 오류 종료 코드 2를 Claude Code는 "막기"로 읽는다.
+/// 훅이면 돌리고 어떤 실패든 출력 없이 0으로 끝낸다. 다른 명령의 인자일 뿐이면(`search --stop-hook`) 그대로 돌려준다.
+fn parse_for_stop_hook() -> Cli {
+    match Cli::try_parse() {
+        Ok(Cli { root, cmd: Cmd::Check { stop_hook: true, base, .. } }) => {
+            std::panic::set_hook(Box::new(|_| {}));
+            if let Some(text) = hook::stop_hook_process(&root, base.as_deref()) {
+                let mut stdout = std::io::stdout();
+                let _ = stdout.write_all(text.as_bytes()).and_then(|_| stdout.flush());
+            }
+            std::process::exit(0)
+        }
+        Ok(other) => other,
+        Err(_) => std::process::exit(0),
+    }
+}
+
+/// 평소에는 결과와 상관없이 0. `--strict`일 때만 막을 만한 발견이 1, 검사를 못 하면 2
+fn check_command(root: &Path, base: Option<&str>, json: bool, strict: bool, stats: bool) -> Result<()> {
+    if stats {
+        let data = hook::data_dir().context("데이터 폴더를 찾지 못했습니다")?;
+        let s = hook::stats(&data);
+        if json {
+            println!("{}", serde_json::to_string_pretty(&s)?);
+        } else {
+            print!("{}", s.to_text());
+        }
+        return Ok(());
+    }
+    let run = || -> Result<check::CheckReport> {
+        let data = hook::data_dir().context("데이터 폴더를 찾지 못했습니다")?;
+        check::run_check(root, &data, base.unwrap_or("HEAD"))
+    };
+    let report = match run() {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("lantern check: {e:#}");
+            std::process::exit(if strict { 2 } else { 0 });
+        }
+    };
+    if json {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+    } else {
+        print!("{}", report.to_text());
+    }
+    if strict && report.blocking() > 0 {
+        std::process::exit(1);
+    }
+    Ok(())
+}
+
+fn hook_command(root: &Path, action: HookAction) -> Result<()> {
+    let (install, target) = match action {
+        HookAction::Install(t) => (true, t),
+        HookAction::Uninstall(t) => (false, t),
+    };
+    let HookAgent::Claude = target.agent;
+    let user = target.user && !target.project;
+    let dir = check::repo_root(root).unwrap_or_else(|_| root.to_path_buf());
+    let path = hook::claude_settings_path(&dir, user, &sessions::Homes::detect());
+    let lines = if install {
+        let exe = std::env::current_exe().context("실행 파일 경로")?;
+        hook::install_claude(&path, &hook::stop_hook_command(&exe))?
+    } else {
+        hook::uninstall_claude(&path)?
+    };
+    for line in lines {
+        println!("{line}");
+    }
+    if install && !user {
+        if let Some(note) = hook::commit_warning(&dir, &path) {
+            println!("{note}");
         }
     }
     Ok(())
