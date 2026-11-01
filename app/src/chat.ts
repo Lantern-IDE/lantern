@@ -377,12 +377,12 @@ function handle(ev: AgentEvent) {
       const target = isEdit ? diffTarget(ev.detail) : null;
       const newPath = isEdit ? ev.detail.match(/^\+\+\+ (?:b\/)?(.+)$/m)?.[1]?.trim() : undefined;
       if (newPath) task.approvalPaths.set(ev.id, newPath);
-      // 카드 전체가 보이게 맞춘다 (길면 머리부터, 버튼 줄은 sticky). 사용자가 스크롤했으면 건드리지 않는다
+      // 카드 전체가 보이게 맞춘다. 창보다 길면 제목과 diff 머리부터 (버튼 줄은 sticky로 늘 보인다). 사용자가 스크롤했으면 건드리지 않는다
       let scrolledTo = -1;
       const reveal = () => {
         const box = messages();
         if (task !== active || el.classList.contains("resolved") || (scrolledTo >= 0 && box.scrollTop !== scrolledTo)) return;
-        el.scrollIntoView({ block: "nearest" });
+        el.scrollIntoView({ block: el.offsetHeight > box.clientHeight ? "start" : "nearest" });
         scrolledTo = box.scrollTop;
       };
       const el = h("div", { class: "approval", role: "group", "aria-label": ev.title, "data-kind": ev.approval_kind },
