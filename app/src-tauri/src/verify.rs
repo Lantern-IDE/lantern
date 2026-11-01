@@ -3,6 +3,7 @@
 
 use crate::state::{rel_path, Project};
 use lantern_context::graph;
+use serde::Serialize;
 use similar::{DiffOp, TextDiff};
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -12,6 +13,20 @@ pub const MAX_ROUNDS: usize = 2;
 /// 모델에 돌려줄 테스트 출력 (끝부분이 실패 원인인 경우가 많다)
 const OUTPUT_TAIL: usize = 6000;
 
+/// 마지막 확인이 어떻게 끝났는지. 완료 카드가 '바꿨다'와 '확인했다'를 구분해 보여 준다
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TestOutcome {
+    Passed,
+    Failed,
+    /// 바꾼 코드와 연결된 테스트를 찾지 못함
+    NoneFound,
+    /// 이 프로젝트의 테스트 명령을 알 수 없음
+    NoCommand,
+    /// 실행을 승인하지 않음 (거절하거나 중단)
+    Skipped,
+}
+
 /// 한 작업에서 앞서 확인한 것
 #[derive(Default)]
 pub struct Checked {
@@ -19,6 +34,8 @@ pub struct Checked {
     pub tests: BTreeSet<String>,
     /// 마지막 실패의 지문 (같은 실패가 반복되면 멈춘다)
     pub last_failure: Option<String>,
+    /// 마지막 확인의 결과. 확인을 하지 않았으면 None
+    pub outcome: Option<TestOutcome>,
 }
 
 /// 바뀐 줄 범위 (1부터). `new_side`면 새 내용 기준, 아니면 원래 내용 기준
@@ -100,9 +117,9 @@ pub fn command(root: &Path, tests: &[String], template: Option<&str>) -> Option<
         }
         "py" => Some(format!("python -m pytest {files}")),
         "go" => {
-            let mut pkgs: Vec<String> = tests.iter().map(|t| format!("./{}", Path::new(t).parent().map(|p| p.to_string_lossy().replace('\\', "/")).unwrap_or_default())).collect();
-            pkgs.dedup();
-            has("go.mod").then(|| format!("go test {}", pkgs.join(" ")))
+            // 테스트 파일이 여럿이어도 패키지는 한 번씩 (경로 순서라 같은 폴더가 떨어져 있을 수 있다)
+            let pkgs: BTreeSet<String> = tests.iter().map(|t| format!("./{}", Path::new(t).parent().map(|p| p.to_string_lossy().replace('\\', "/")).unwrap_or_default())).collect();
+            has("go.mod").then(|| format!("go test {}", pkgs.into_iter().collect::<Vec<_>>().join(" ")))
         }
         "rs" => has("Cargo.toml").then(|| "cargo test".into()),
         "java" | "kt" | "kts" => {
@@ -172,6 +189,18 @@ mod tests {
         std::fs::write(r.join("pom.xml"), "<project/>").unwrap();
         assert!(command(r, &["src/test/java/a/FooTest.java".into()], None).unwrap().starts_with("mvn -q test -Dtest=FooTest"));
         assert!(command(r, &["x.unknown".into()], None).is_none());
+        // gin처럼 루트와 하위 폴더에 테스트가 섞여 있어도 패키지는 한 번씩
+        assert!(command(r, &["a_test.go".into()], None).is_none(), "go.mod가 없으면 Go 프로젝트가 아니다");
+        std::fs::write(r.join("go.mod"), "module x\n").unwrap();
+        let go: Vec<String> = ["binding/a_test.go", "context_test.go", "gin_test.go", "render/b_test.go", "z_test.go"].map(String::from).to_vec();
+        assert_eq!(command(r, &go, None).unwrap(), "go test ./ ./binding ./render");
+    }
+
+    #[test]
+    fn outcomes_keep_their_names_on_the_wire() {
+        // 화면(api.ts의 TestOutcome)과 같은 이름이어야 한다
+        let names: Vec<String> = [TestOutcome::Passed, TestOutcome::Failed, TestOutcome::NoneFound, TestOutcome::NoCommand, TestOutcome::Skipped].iter().map(|o| serde_json::to_string(o).unwrap()).collect();
+        assert_eq!(names, ["\"passed\"", "\"failed\"", "\"none_found\"", "\"no_command\"", "\"skipped\""]);
     }
 
     #[test]

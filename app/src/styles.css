@@ -435,6 +435,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .tool .tstate.run { color: var(--muted); }
 .tool .tstate.ok { color: var(--ok); }
 .tool .tstate.err { color: var(--error); }
+.tool .tstate.skip { color: var(--warning); }
 .tool .tname { font-family: var(--code-font); color: var(--fg); }
 .tool .targ { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
 .tool pre { margin: 0; padding: 8px 10px; border-top: 1px solid var(--border); max-height: 240px; overflow: auto; font: 12px/1.5 var(--code-font); white-space: pre-wrap; background: var(--sunken); }
@@ -489,7 +490,12 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 
 .changed { font-size: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--elevated); overflow: hidden; }
 .changed .ch-head { padding: 6px 10px; color: var(--muted); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
-.changed .ch-head .codicon { color: var(--ok); font-size: 14px; }
+.changed .ch-head .codicon { font-size: 14px; }
+.changed .ch-test { padding: 6px 10px; color: var(--fg); border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 6px; }
+.changed .ch-test .codicon { flex-shrink: 0; margin-top: 1px; font-size: 14px; color: var(--muted); }
+.changed .ch-test.passed .codicon { color: var(--ok); }
+.changed .ch-test.failed .codicon { color: var(--error); }
+.changed .ch-test.skipped .codicon { color: var(--warning); }
 .changed a { display: flex; align-items: center; gap: 6px; padding: 4px 10px; color: var(--fg); cursor: pointer; }
 .changed a:hover { background: var(--hover); }
 
@@ -933,6 +939,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .task-status { width: 16px; height: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--dim); }
 .task-status .hex { width: 15px; height: 15px; color: var(--context); }
 .task.s-done .task-status { color: var(--ok); }
+.task.s-unverified .task-status { color: var(--warning); }
 .task.s-error .task-status { color: var(--error); }
 .task.s-approval .task-status { color: var(--warning); }
 .task-main { flex: 1; min-width: 0; }
@@ -950,6 +957,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .th-status { display: flex; color: var(--dim); }
 .th-status .hex { width: 14px; height: 14px; color: var(--context); }
 .th-status.s-done { color: var(--ok); }
+.th-status.s-unverified { color: var(--warning); }
 .th-status.s-error { color: var(--error); }
 .th-status.s-approval { color: var(--warning); }
 .th-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--fg-strong); }

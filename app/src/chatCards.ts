@@ -1,10 +1,24 @@
 // 채팅에 들어가는 카드와 표시 도우미: Lantern이 본 코드(맥락 카드), 외부 에이전트 로그인 카드,
 // 승인 카드 제목, 도구 이름·요약. 작업 상태에 기대지 않고 필요한 것은 인자로 받는다.
-import { api, errorText, type AuthMethod } from "./api";
+import { api, errorText, type AuthMethod, type TestOutcome } from "./api";
 import { basename, dirname, h } from "./dom";
 import { codicon, fileIcon, hex } from "./icons";
 import * as editor from "./editor";
 import { parseContext } from "./lib/context";
+
+const TEST_ROW: Record<TestOutcome, { icon: string; text: string }> = {
+  passed: { icon: "pass", text: "관련 테스트를 통과했습니다" },
+  failed: { icon: "error", text: "관련 테스트가 실패한 채 끝났습니다" },
+  none_found: { icon: "circle-slash", text: "바꾼 코드와 연결된 테스트를 찾지 못해 돌리지 않았습니다" },
+  no_command: { icon: "circle-slash", text: "테스트 명령을 알 수 없어 돌리지 않았습니다" },
+  skipped: { icon: "warning", text: "테스트 실행을 승인하지 않아 돌리지 않았습니다" },
+};
+
+/** 완료 카드의 한 줄: 바꾼 코드를 테스트로 확인했는가 */
+export function testRow(outcome: TestOutcome): HTMLElement {
+  const { icon, text } = TEST_ROW[outcome];
+  return h("div", { class: `ch-test ${outcome}` }, codicon(icon), h("span", {}, text));
+}
 
 export function contextCard(md: string, tokens: number, requestId: number, on: { inspector: (requestId: number) => void; map: () => void }): HTMLElement {
   const { files, memory } = parseContext(md);

@@ -20,7 +20,7 @@ import * as i18n from "./i18n";
 export { parseContext } from "./lib/context";
 import { impactRow } from "./impact";
 import * as impact from "./impact";
-import { approvalTitle, authCard, contextCard, toolLabel, toolSummary } from "./chatCards";
+import { approvalTitle, authCard, contextCard, testRow, toolLabel, toolSummary } from "./chatCards";
 export { impactRow } from "./impact";
 import * as toast from "./toast";
 import * as attach from "./attach";
@@ -58,6 +58,8 @@ interface Task {
   renderQueued: boolean;
   lastPrompt: string;
   pendingApprovals: number;
+  /** 끝났지만 테스트가 실패했거나 돌리지 않았다: 작업 목록에서 초록으로 보이지 않게 */
+  unverified: boolean;
   /** 다시 켰을 때 되살리는 기록 */
   log: Entry[];
   isolated: Isolation | null;
@@ -359,8 +361,9 @@ function handle(ev: AgentEvent) {
       const el = task.toolEls.get(ev.id);
       if (ev.name === "get_context" && !ev.is_error) addContext(task, ev.content);
       if (!el) break;
-      el.querySelector(".tstate")!.replaceWith(
-        h("span", { class: `tstate ${ev.is_error ? "err" : "ok"}`, title: ev.is_error ? "실패" : "완료" }, codicon(ev.is_error ? "error" : "check")));
+      el.querySelector(".tstate")!.replaceWith(ev.skipped
+        ? h("span", { class: "tstate skip", title: "돌리지 않음" }, codicon("circle-slash"))
+        : h("span", { class: `tstate ${ev.is_error ? "err" : "ok"}`, title: ev.is_error ? "실패" : "완료" }, codicon(ev.is_error ? "error" : "check")));
       el.querySelector("pre")!.textContent = ev.content;
       break;
     }
@@ -432,8 +435,10 @@ function handle(ev: AgentEvent) {
         const unique = [...new Set(ev.changed)];
         for (const p of unique) task.footprint.edited.add(p);
         task.changed = [...new Set([...task.changed, ...unique])];
-        const head = h("div", { class: "ch-head" }, codicon("pass"), `파일 ${unique.length}개를 바꿨습니다`);
-        const box = h("div", { class: "changed" }, head);
+        // 바꾼 것과 확인한 것은 다르다: 초록 표시는 테스트를 통과했을 때만
+        const head = h("div", { class: "ch-head" }, codicon("edit"), `파일 ${unique.length}개를 바꿨습니다`);
+        const box = h("div", { class: "changed" }, head, ev.tests ? testRow(ev.tests) : null);
+        task.unverified = ev.tests === "failed" || ev.tests === "skipped";
         if (ev.checkpoint) {
           const cp = ev.checkpoint;
           const undo = h("button", { class: "btn btn-secondary ch-undo" }, codicon("discard"), "이 작업 되돌리기");
@@ -444,8 +449,12 @@ function handle(ev: AgentEvent) {
               const n = await revertSafely(cp);
               if (n === null) return;
               undo.remove();
+              box.querySelector(".ch-test")?.remove();
+              task.unverified = false;
               head.replaceChildren(codicon("discard"), `되돌렸습니다 (파일 ${n}개)`);
               box.classList.add("reverted");
+              hooks.onTasks();
+              renderHead();
               if (!task.isolated || task.isolated.state !== "active") {
                 for (const p of unique) void editor.reloadIfClean(p);
                 hooks.onFilesChanged(unique);
@@ -588,7 +597,7 @@ function newTask(): Task {
     el: h("div", { class: "task-log" }),
     body: null, botMark: null, current: null, pendingTool: null,
     toolEls: new Map(), approvalEls: new Map(), approvalPaths: new Map(), approvalTouched: new Map(), toolInputs: new Map(),
-    renderQueued: false, lastPrompt: "", pendingApprovals: 0,
+    renderQueued: false, lastPrompt: "", pendingApprovals: 0, unverified: false,
     log: [], isolated: null, updated: Date.now(),
   };
   task.el.append(emptyState());
@@ -622,7 +631,7 @@ function renderHead() {
   const mapBtn = h("button", { class: "icon-btn", title: "발자취를 지도에서 보기", "aria-label": "발자취를 지도에서 보기" }, codicon("type-hierarchy"));
   mapBtn.addEventListener("click", () => hooks.showOnMap());
   head.replaceChildren(
-    h("span", { class: `th-status s-${t.status}` }, statusIcon(t)),
+    h("span", { class: `th-status s-${statusClass(t)}` }, statusIcon(t)),
     h("span", { class: "th-title", title: t.title }, t.title),
     chip("eye", fp.context.size, "AI에 보낸 맥락 파일", "c"),
     chip("book", fp.read.size, "읽은 파일", "r"),
@@ -631,11 +640,15 @@ function renderHead() {
   head.classList.remove("hidden");
 }
 
+function statusClass(t: Task): string {
+  return t.status === "done" && t.unverified ? "unverified" : t.status;
+}
+
 function statusIcon(t: Task): HTMLElement {
   switch (t.status) {
     case "running": return hex("plain", true);
     case "approval": return codicon("bell-dot");
-    case "done": return codicon("pass");
+    case "done": return codicon(t.unverified ? "warning" : "pass");
     case "error": return codicon("error");
     case "stopped": return codicon("debug-pause");
     default: return codicon("circle-large-outline");
@@ -696,8 +709,8 @@ export function renderTaskList() {
       activate(t);
       hooks.showOnMap();
     });
-    const row = h("div", { class: `task${t === active ? " active" : ""} s-${t.status}`, role: "option", tabindex: "0", "aria-selected": String(t === active) },
-      h("span", { class: "task-status", title: STATUS_TEXT[t.status] }, statusIcon(t)),
+    const row = h("div", { class: `task${t === active ? " active" : ""} s-${statusClass(t)}`, role: "option", tabindex: "0", "aria-selected": String(t === active) },
+      h("span", { class: "task-status", title: t.status === "done" && t.unverified ? "완료 · 테스트 확인 안 됨" : STATUS_TEXT[t.status] }, statusIcon(t)),
       h("div", { class: "task-main" },
         h("div", { class: "task-title" }, t.title),
         h("div", { class: "task-meta" },

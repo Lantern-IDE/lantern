@@ -6,6 +6,7 @@ use crate::config::{self, Config};
 use crate::llm::{self, Block, ChatRequest, ImageInput, Message, Role, StopReason, StreamEvent, Usage};
 use crate::state::{self, AppState};
 use crate::tools::{Approver, BoxFuture, ToolCtx, ToolOutcome};
+use crate::verify::TestOutcome;
 use anyhow::{bail, Context, Result};
 use lantern_context::assemble::ContextRequest;
 use serde::Serialize;
@@ -40,7 +41,16 @@ pub enum AgentEvent {
     /// 일시적 오류로 기다렸다가 다시 보낸다 (attempt/max번째, wait_secs초 뒤)
     Retry { session: String, attempt: u32, max: u32, wait_secs: u64, reason: String },
     ToolCall { session: String, id: String, name: String, input: Value },
-    ToolResult { session: String, id: String, name: String, content: String, is_error: bool },
+    ToolResult {
+        session: String,
+        id: String,
+        name: String,
+        content: String,
+        is_error: bool,
+        /// 돌리지 않음 (테스트 실행을 승인하지 않음). 성공으로 보이면 안 된다
+        #[serde(skip_serializing_if = "std::ops::Not::not")]
+        skipped: bool,
+    },
     Approval { session: String, id: String, approval_kind: String, title: String, detail: String },
     ApprovalResolved { session: String, id: String, approved: bool },
     Usage {
@@ -52,7 +62,14 @@ pub enum AgentEvent {
         month_cost_usd: f64,
         month_limit_usd: f64,
     },
-    Done { session: String, changed: Vec<String>, checkpoint: Option<String> },
+    Done {
+        session: String,
+        changed: Vec<String>,
+        checkpoint: Option<String>,
+        /// 고친 뒤 테스트 확인의 결과. 확인을 하지 않는 작업이면 없다
+        #[serde(skip_serializing_if = "Option::is_none")]
+        tests: Option<TestOutcome>,
+    },
     Error { session: String, message: String },
     /// 외부 에이전트가 로그인을 요구함. `methods`는 에이전트가 알려 준 로그인 방법 ({id, name, description})
     AuthRequired { session: String, agent: String, agent_name: String, methods: Vec<Value> },
@@ -216,11 +233,11 @@ pub async fn run(
         }
     }
     match result {
-        Ok((changed, checkpoint)) => {
+        Ok((changed, checkpoint, tests)) => {
             if plan {
                 emit(&app, AgentEvent::PlanReady { session: session.clone() });
             }
-            emit(&app, AgentEvent::Done { session, changed, checkpoint })
+            emit(&app, AgentEvent::Done { session, changed, checkpoint, tests })
         }
         Err(e) => {
             crate::applog::error(&format!("에이전트 오류: {e:#}"));
@@ -250,23 +267,27 @@ async fn verify(app: &AppHandle, session: &str, project: &Arc<state::Project>, t
     let tests: Vec<String> = checked.tests.iter().cloned().collect();
     if tests.is_empty() {
         note("바꾼 코드와 연결된 테스트를 찾지 못해 테스트 확인은 건너뜁니다");
+        checked.outcome = Some(TestOutcome::NoneFound);
         return None;
     }
     let Some(cmd) = crate::verify::command(tctx.root(), &tests, config.agent.test_command.as_deref()) else {
         note("이 프로젝트의 테스트 명령을 알 수 없어 확인을 건너뜁니다. 설정 → 에이전트 → 테스트 명령에서 정할 수 있습니다");
+        checked.outcome = Some(TestOutcome::NoCommand);
         return None;
     };
     let id = format!("verify{}", next_id());
     emit(app, AgentEvent::ToolCall { session: session.into(), id: id.clone(), name: "run_tests".into(), input: json!({ "command": cmd, "tests": tests }) });
-    let (content, failed) = match tctx.run_check(&cmd).await {
+    let (content, outcome) = match tctx.run_check(&cmd).await {
         Ok(Some(out)) => {
-            let failed = crate::verify::exit_code(&out) != Some(0);
-            (out, failed)
+            let passed = crate::verify::exit_code(&out) == Some(0);
+            (out, if passed { TestOutcome::Passed } else { TestOutcome::Failed })
         }
-        Ok(None) => ("사용자가 테스트 실행을 거절했습니다".into(), false),
-        Err(e) => (format!("{e:#}"), true),
+        Ok(None) => ("사용자가 테스트 실행을 거절했습니다".into(), TestOutcome::Skipped),
+        Err(e) => (format!("{e:#}"), TestOutcome::Failed),
     };
-    emit(app, AgentEvent::ToolResult { session: session.into(), id, name: "run_tests".into(), content: content.clone(), is_error: failed });
+    checked.outcome = Some(outcome);
+    let failed = outcome == TestOutcome::Failed;
+    emit(app, AgentEvent::ToolResult { session: session.into(), id, name: "run_tests".into(), content: content.clone(), is_error: failed, skipped: outcome == TestOutcome::Skipped });
     if !failed {
         return None;
     }
@@ -323,7 +344,7 @@ async fn run_inner(
     file: Option<String>,
     line: Option<u32>,
     cancel: &Arc<AtomicBool>,
-) -> Result<(Vec<String>, Option<String>)> {
+) -> Result<(Vec<String>, Option<String>, Option<TestOutcome>)> {
     let st = app.state::<AppState>();
     let project = st.project()?;
     let config = config::load(project.config_root())?;
@@ -547,6 +568,7 @@ When you finish editing, Lantern runs the tests related to the files you changed
                     name,
                     content: out.content.clone(),
                     is_error: out.is_error,
+                    skipped: false,
                 },
             );
             results.push(Block::ToolResult { tool_use_id: id, content: out.content, is_error: out.is_error });
@@ -570,7 +592,7 @@ When you finish editing, Lantern runs the tests related to the files you changed
     if workdir.is_none() && project.is_trusted() && !changed.is_empty() && !config.hooks.on_agent_done.is_empty() {
         crate::hooks::run(app, &project.root, "on_agent_done", &config.hooks.on_agent_done).await;
     }
-    Ok((changed, checkpoint))
+    Ok((changed, checkpoint, checked.outcome))
 }
 
 #[cfg(test)]

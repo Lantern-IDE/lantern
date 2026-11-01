@@ -720,7 +720,14 @@
   "검토": "Review",
   "검토할 PR 또는 브랜치": "PR or branch to review",
   "설정 파일 열기": "Open settings file",
-  "프로젝트 설정의 일부 값은 쓰지 않았습니다": "Some project settings were ignored"
+  "프로젝트 설정의 일부 값은 쓰지 않았습니다": "Some project settings were ignored",
+  "관련 테스트를 통과했습니다": "Related tests passed",
+  "관련 테스트가 실패한 채 끝났습니다": "Finished with related tests failing",
+  "바꾼 코드와 연결된 테스트를 찾지 못해 돌리지 않았습니다": "Tests not run: no tests are linked to the changed code",
+  "테스트 명령을 알 수 없어 돌리지 않았습니다": "Tests not run: the test command is unknown",
+  "테스트 실행을 승인하지 않아 돌리지 않았습니다": "Tests not run: the test command wasn't approved",
+  "돌리지 않음": "Not run",
+  "완료 · 테스트 확인 안 됨": "Done · tests not confirmed"
  },
  "templates": {
   "'{}'{}을(를) 휴지통으로 옮길까요?": "Move '{}'{} to Trash?",
