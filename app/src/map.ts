@@ -577,7 +577,8 @@ function draw() {
     ctx.moveTo(a.x, a.y!);
     ctx.lineTo(b.x, b.y!);
     ctx.setLineDash(l.kind === "cochange" ? [5, 4] : l.kind === "mentions" ? [2, 3] : l.uncertain ? [1, 3] : []);
-    const base = l.kind === "cochange" ? colors.context : l.kind === "mentions" ? colors.link : colors.border;
+    // 함께 바뀜은 무채색: 청록은 맥락 엔진이 보낸 것만 뜻한다
+    const base = l.kind === "cochange" ? colors.dim : l.kind === "mentions" ? colors.link : colors.border;
     ctx.strokeStyle = withAlpha(base, lit ? (l.kind === "defines" ? 0.35 : receded(a) || receded(b) ? 0.3 : 0.7) : 0.12);
     ctx.lineWidth = (l.kind === "defines" ? 0.8 : Math.min(3, 0.8 + Math.log1p(l.weight) * 0.5)) / Math.sqrt(view.k);
     ctx.stroke();
