@@ -58,7 +58,7 @@ export function emptyFootprint(): Footprint {
 
 // ── 상태 ─────────────────────────────────────────────────
 
-interface N extends SimulationNodeDatum, GNode { r: number; mark?: "context" | "read" | "edited" | "impact0" | "impact1" | "impact2" | "test"; notes?: string[] }
+interface N extends SimulationNodeDatum, GNode { r: number; mark?: "context" | "read" | "edited" | "impact0" | "impact1" | "impact2" | "test"; notes?: string[]; text?: string }
 interface L extends SimulationLinkDatum<N> { kind: EdgeKind; weight: number; uncertain?: boolean }
 
 type Mode = "overview" | "focus" | "impact" | "memory";
@@ -157,7 +157,10 @@ function setGraph(g: Graph, keepPositions = false) {
     return { ...n, r: radius(n), x: prev?.x, y: prev?.y };
   });
   byId = new Map(nodes.map((n) => [n.id, n]));
-  links = g.edges.filter((e) => byId.has(e.source) && byId.has(e.target)).map((e) => ({ source: e.source, target: e.target, kind: e.kind, weight: e.weight }) as unknown as L);
+  // 같은 이름의 파일은 폴더까지 보인다 (binding/json.go, render/json.go)
+  const sameName = new Map<string, number>();
+  for (const n of nodes) if (n.kind === "file") sameName.set(n.label, (sameName.get(n.label) ?? 0) + 1);
+  for (const n of nodes) if (n.kind === "file" && sameName.get(n.label)! > 1) n.text = n.path?.split("/").slice(-2).join("/");
   links = g.edges.filter((e) => byId.has(e.source) && byId.has(e.target)).map((e) => ({ source: e.source, target: e.target, kind: e.kind, weight: e.weight, uncertain: e.uncertain }) as unknown as L);
   truncated = g.truncated;
   // 노드 객체가 새로 만들어졌다: 고른 노드도 새 것으로 잇는다 (아니면 고리와 이름표가 사라진다)
@@ -547,6 +550,22 @@ function drawNodeShape(ctx: CanvasRenderingContext2D, n: N) {
   } else ctx.arc(x, y, r, 0, Math.PI * 2);
 }
 
+/** 전체 구조의 덩어리와 이름 자리. 노드가 셋 이상인 모듈만 (한두 개면 자기 이름표로 충분하다) */
+function clusters() {
+  const by = new Map<string, N[]>();
+  for (const n of nodes) {
+    if (n.kind === "memory" || !n.group || n.x === undefined) continue;
+    if (!by.has(n.group)) by.set(n.group, []);
+    by.get(n.group)!.push(n);
+  }
+  if (by.size < 2) return [];
+  return [...by].filter(([, list]) => list.length >= 3).sort((a, b) => b[1].length - a[1].length).map(([group, list]) => {
+    // 멀리 떨어진 노드 하나 때문에 이름이 덩어리에서 멀어지지 않게 맨 위가 아니라 위쪽 10% 자리에 둔다
+    const tops = list.map((n) => n.y! - n.r).sort((a, b) => a - b);
+    return { group, x: list.reduce((sum, n) => sum + n.x!, 0) / list.length, top: tops[Math.floor(tops.length * 0.1)] };
+  });
+}
+
 function draw() {
   const el = canvas();
   const dpr = window.devicePixelRatio || 1;
@@ -660,14 +679,37 @@ function draw() {
   const candidates = nodes.filter((n) => n.x !== undefined).sort((a, b) => rank(b) - rank(a));
   const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
   const pad = 2 / view.k;
+  const taken = (box: (typeof placed)[number]) => placed.some((b) => box.x0 < b.x1 && b.x0 < box.x1 && box.y0 < b.y1 && b.y0 < box.y1);
+  // 덩어리 이름: 전체 구조에서만. 노드 이름표보다 먼저 자리를 잡는다
+  if (mode === "overview") {
+    const size = 12 / view.k;
+    ctx.font = `600 ${size}px Pretendard Variable, Pretendard, sans-serif`;
+    ctx.textBaseline = "bottom";
+    ctx.globalAlpha = focusSet || fpActive ? 0.45 : 1;
+    for (const c of clusters()) {
+      const half = ctx.measureText(c.group).width / 2;
+      const y = c.top - 5 / view.k;
+      const box = { x0: c.x - half - pad, y0: y - size - pad, x1: c.x + half + pad, y1: y + pad };
+      if (taken(box)) continue;
+      placed.push(box);
+      ctx.lineWidth = 3 / view.k;
+      ctx.strokeStyle = colors.bg;
+      ctx.strokeText(c.group, c.x, y);
+      ctx.fillStyle = groupColor(c.group);
+      ctx.fillText(c.group, c.x, y);
+    }
+    ctx.globalAlpha = 1;
+    ctx.textBaseline = "top";
+    ctx.font = `${fs}px Pretendard Variable, Pretendard, sans-serif`;
+  }
   for (const n of candidates) {
     const must = n === selected || n === hovered;
     if (!must && n.kind !== "dir" && n.r * view.k < 6 && !n.mark && !focusSet?.has(n.id)) continue;
-    const text = n.kind === "memory" ? (n.detail ?? n.label).slice(0, 28) + ((n.detail?.length ?? 0) > 28 ? "…" : "") : n.label;
+    const text = n.kind === "memory" ? (n.detail ?? n.label).slice(0, 28) + ((n.detail?.length ?? 0) > 28 ? "…" : "") : n.text ?? n.label;
     const w = ctx.measureText(text).width;
     const y = n.y! + (n.kind === "dir" ? n.r * 0.8 : n.r) + 3 / view.k;
     const box = { x0: n.x! - w / 2 - pad, y0: y - pad, x1: n.x! + w / 2 + pad, y1: y + fs + pad };
-    if (!must && placed.some((b) => box.x0 < b.x1 && b.x0 < box.x1 && box.y0 < b.y1 && b.y0 < box.y1)) continue;
+    if (!must && taken(box)) continue;
     placed.push(box);
     ctx.globalAlpha = dimmed(n) && n !== hovered ? 0.45 : 1;
     ctx.lineWidth = 3 / view.k;
