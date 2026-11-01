@@ -1,0 +1,213 @@
+# CLI 단독 릴리스: cli-v로 시작하는 태그를 올리면 플랫폼별 lantern 바이너리를 만들어 실행해 보고 초안 릴리스에 올린다.
+# 앱 릴리스(release.yml, v* 태그)와 따로 돈다. 태그 cli-v*는 v*에 걸리지 않는다.
+#
+# ★ CLI 릴리스는 절대 "latest"가 되면 안 된다. 앱 자동 업데이트(releases/latest/download/latest.json)와
+#   소개 사이트, Scoop이 latest를 읽는다. GitHub는 초안을 게시할 때 make_latest를 따로 주지 않으면
+#   true로 친다. 그래서 --latest=false에 더해 pre-release로 만든다. pre-release는 latest가 될 수 없다.
+#   게시 방법: docs/배포_가이드.md 5절
+#
+# 손으로 돌리면(workflow_dispatch) 기본은 dry run: 빌드와 실행 확인만 하고 릴리스는 만들지 않는다.
+# 필요한 비밀값은 GITHUB_TOKEN뿐이다.
+name: CLI Release
+
+on:
+  push:
+    tags: ["cli-v*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "빌드와 실행 확인만 하고 릴리스는 만들지 않는다 (끄면 cli-v 태그에서만 실행 가능)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: 버전 확인
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      publish: ${{ steps.plan.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # 여섯 플랫폼을 다 빌드하기 전에 태그 실수를 잡는다
+      - name: 태그와 크레이트 버전 비교
+        id: plan
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' crates/lantern-context/Cargo.toml | head -n 1)
+          is_cli_tag=false
+          if [ "$REF_TYPE" = tag ] && [[ "$REF_NAME" == cli-v* ]]; then
+            is_cli_tag=true
+            if [ "$REF_NAME" != "cli-v$version" ]; then
+              echo "::error::태그 $REF_NAME와 crates/lantern-context/Cargo.toml의 버전 $version이 다릅니다"
+              exit 1
+            fi
+            if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::CLI 버전은 X.Y.Z만 받습니다: $version (설치 스크립트가 이 형태만 고릅니다)"
+              exit 1
+            fi
+          fi
+          publish=false
+          if [ "$DRY_RUN" != true ]; then
+            if [ "$is_cli_tag" != true ]; then
+              echo "::error::실제 릴리스는 cli-v 태그에서만 만듭니다. 지금은 $REF_NAME입니다 (dry run을 켜거나 태그를 고르세요)"
+              exit 1
+            fi
+            publish=true
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+          echo "버전 $version, 릴리스 생성: $publish"
+
+  build:
+    name: ${{ matrix.target }}
+    needs: plan
+    runs-on: ${{ matrix.os }}
+    # optional인 플랫폼은 실패해도 릴리스를 막지 않는다 (scripts/npm_pack.mjs의 표와 같다)
+    continue-on-error: ${{ matrix.optional == true }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+          # ARM 호스트에서 직접 빌드해 실행 확인까지 한다. 아직 실제로 돌려 보지 못했다
+          - target: aarch64-pc-windows-msvc
+            os: windows-11-arm
+            optional: true
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          # 인텔 Mac을 실행 확인까지 하려면 인텔 호스트가 필요하다
+          - target: x86_64-apple-darwin
+            os: macos-15-intel
+          # 지원되는 가장 오래된 Ubuntu에서 빌드해야 glibc 하한이 낮다
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-22.04
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04-arm
+    env:
+      TARGET: ${{ matrix.target }}
+      EXE: ${{ contains(matrix.target, 'windows') && 'lantern.exe' || 'lantern' }}
+      # 이 러너보다 오래된 macOS에서도 돌게
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      # ring은 Windows ARM에서 clang을 요구한다. 이미지에 LLVM이 있지만 PATH는 보장되지 않는다
+      - name: clang 경로 (Windows ARM)
+        if: matrix.target == 'aarch64-pc-windows-msvc'
+        shell: pwsh
+        run: |
+          if (-not (Get-Command clang -ErrorAction SilentlyContinue)) {
+            "C:\Program Files\LLVM\bin" >> $Env:GITHUB_PATH
+          }
+
+      - name: 빌드
+        env:
+          # Windows는 C 런타임을 정적으로 묶는다. 안 그러면 VC++ 재배포 패키지가 없는 새 PC에서 안 돈다
+          RUSTFLAGS: ${{ runner.os == 'Windows' && '-C target-feature=+crt-static' || '' }}
+        run: cargo build --release -p lantern-context --locked --target ${{ matrix.target }}
+
+      - name: 실행 확인
+        shell: bash
+        env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: bash scripts/cli_smoke.sh "target/$TARGET/release/$EXE" "$VERSION"
+
+      - name: glibc 하한 (기록용)
+        if: runner.os == 'Linux'
+        run: objdump -T "target/$TARGET/release/$EXE" | grep -o 'GLIBC_[0-9.]*' | sort -Vu | tail -n 1
+
+      - name: 묶기 (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force stage, dist | Out-Null
+          Copy-Item "target\$Env:TARGET\release\$Env:EXE", LICENSE, THIRD_PARTY_NOTICES.md -Destination stage
+          Compress-Archive -Path stage\* -DestinationPath "dist\lantern-$Env:TARGET.zip"
+
+      - name: 묶기 (macOS, Linux)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p stage dist
+          cp "target/$TARGET/release/$EXE" LICENSE THIRD_PARTY_NOTICES.md stage/
+          tar -czf "dist/lantern-$TARGET.tar.gz" -C stage "$EXE" LICENSE THIRD_PARTY_NOTICES.md
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: cli-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: 초안 릴리스
+    needs: [plan, build]
+    # 필수 플랫폼이 하나라도 실패하면 needs 실패로 건너뛴다
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: cli-*
+          merge-multiple: true
+
+      - name: 체크섬
+        working-directory: dist
+        run: |
+          for file in lantern-x86_64-pc-windows-msvc.zip \
+                      lantern-aarch64-apple-darwin.tar.gz lantern-x86_64-apple-darwin.tar.gz \
+                      lantern-x86_64-unknown-linux-gnu.tar.gz lantern-aarch64-unknown-linux-gnu.tar.gz; do
+            if [ ! -f "$file" ]; then
+              echo "::error::필수 파일이 없습니다: $file"
+              exit 1
+            fi
+          done
+          sha256sum lantern-* > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: 초안 릴리스 만들기
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          cat > notes.md <<'EOF'
+          Command-line build of the Lantern context engine, separate from the desktop app.
+
+          Each archive holds the `lantern` binary. `SHA256SUMS` lists their checksums.
+          EOF
+          # 다시 돌릴 때: 초안이면 파일만 바꾸고, 이미 게시됐으면 건드리지 않는다
+          is_draft=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null || echo none)
+          case "$is_draft" in
+            none)
+              gh release create "$TAG" dist/* --verify-tag --draft --prerelease --latest=false \
+                --title "Lantern CLI $VERSION" --notes-file notes.md
+              ;;
+            true)
+              gh release upload "$TAG" dist/* --clobber
+              ;;
+            *)
+              echo "::error::$TAG 릴리스는 이미 게시됐습니다"
+              exit 1
+              ;;
+          esac
