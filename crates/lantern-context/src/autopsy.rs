@@ -20,9 +20,11 @@ use anyhow::{bail, Context, Result};
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
 use std::fmt::Write as _;
+use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
 use std::rc::Rc;
+use std::sync::{Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 /// 편집 뒤 이 안의 커밋을 반영 지점으로, 그 뒤 이 안의 변경을 고친 증거로 본다
@@ -214,6 +216,43 @@ fn date_of(ts: &str) -> String {
 
 // ── 임시 클론 ────────────────────────────────────────────
 
+/// 지금 있는 임시 폴더. Ctrl+C 처리기가 본다
+static ACTIVE_TEMPS: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
+
+fn active_temps() -> MutexGuard<'static, Vec<PathBuf>> {
+    ACTIVE_TEMPS.lock().unwrap_or_else(PoisonError::into_inner)
+}
+
+/// 바이러스 검사 등이 잠깐 잡고 있을 수 있어 몇 번 더 해 본다
+fn remove_tree(dir: &Path) {
+    for attempt in 1..=5u64 {
+        if std::fs::remove_dir_all(dir).is_ok() || !dir.exists() {
+            return;
+        }
+        std::thread::sleep(Duration::from_millis(100 * attempt));
+    }
+}
+
+/// Ctrl+C로 끝날 때의 종료 코드
+pub const INTERRUPTED_EXIT: i32 = 130;
+/// 분석하는 쪽이 스스로 정리하기를 기다리는 시간
+const INTERRUPT_GRACE: Duration = Duration::from_secs(5);
+
+/// Ctrl+C 처리기. 임시 클론에 저장소 코드가 있어 지우고 끝낸다.
+/// 인덱스 파일은 분석하는 쪽이 열고 있으면 Windows에서 지울 수 없으니, 먼저 그쪽이 멈추고 스스로 지우기를 기다린다.
+/// 그래도 안 끝나면 지울 수 있는 것만 지운다
+pub fn on_interrupt() {
+    indexer::request_stop();
+    let deadline = Instant::now() + INTERRUPT_GRACE;
+    while !active_temps().is_empty() && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    for dir in active_temps().iter() {
+        remove_tree(dir);
+    }
+    std::process::exit(INTERRUPTED_EXIT);
+}
+
 /// 사라질 때 지우는 임시 폴더
 struct TempRoot(PathBuf);
 
@@ -224,8 +263,13 @@ impl TempRoot {
         for n in 0..100u32 {
             let nanos = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.subsec_nanos());
             let dir = base.join(format!("{TEMP_PREFIX}{}-{nanos}-{n}", std::process::id()));
+            // 잠근 채 만들어야 처리기가 "임시 폴더가 없다"고 보고 끝낸 뒤에 폴더가 남는 일이 없다
+            let mut active = active_temps();
             match std::fs::create_dir(&dir) {
-                Ok(()) => return Ok(Self(dir)),
+                Ok(()) => {
+                    active.push(dir.clone());
+                    return Ok(Self(dir));
+                }
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
                 Err(e) => return Err(e).context("임시 폴더 만들기"),
             }
@@ -236,14 +280,40 @@ impl TempRoot {
 
 impl Drop for TempRoot {
     fn drop(&mut self) {
-        // 바이러스 검사 등이 잠깐 잡고 있을 수 있어 몇 번 더 해 본다
-        for attempt in 1..=5u64 {
-            if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
-                return;
-            }
-            std::thread::sleep(Duration::from_millis(100 * attempt));
-        }
+        remove_tree(&self.0);
+        active_temps().retain(|d| *d != self.0);
     }
+}
+
+/// 끝날 때까지 기다리되 그만하라는 요청이 오면 죽인다. 창 없이 띄운 자식은 콘솔의 Ctrl+C를 받지 못해
+/// 그대로 두면 이쪽이 끝난 뒤에도 임시 폴더에 파일을 쓴다
+fn output_or_stop(mut cmd: Command) -> Result<Output> {
+    fn drain(pipe: Option<impl Read + Send + 'static>) -> std::thread::JoinHandle<Vec<u8>> {
+        std::thread::spawn(move || {
+            let mut buf = Vec::new();
+            if let Some(mut p) = pipe {
+                let _ = p.read_to_end(&mut buf);
+            }
+            buf
+        })
+    }
+    cmd.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    let mut child = cmd.spawn()?;
+    let (out, err) = (drain(child.stdout.take()), drain(child.stderr.take()));
+    let mut wait = Duration::from_millis(1);
+    let status = loop {
+        if let Some(status) = child.try_wait()? {
+            break status;
+        }
+        if indexer::stop_requested() {
+            let _ = child.kill();
+            let _ = child.wait();
+            bail!("중단됨");
+        }
+        std::thread::sleep(wait);
+        wait = (wait * 2).min(Duration::from_millis(20));
+    };
+    Ok(Output { status, stdout: out.join().unwrap_or_default(), stderr: err.join().unwrap_or_default() })
 }
 
 const TEMP_PREFIX: &str = "lantern-autopsy-";
@@ -310,7 +380,9 @@ impl Sandbox {
     }
 
     fn output(&self, cwd: &Path, args: &[&str]) -> Result<Output> {
-        Ok(self.git_cmd(cwd).args(args).output()?)
+        let mut cmd = self.git_cmd(cwd);
+        cmd.args(args);
+        output_or_stop(cmd)
     }
 
     fn run(&self, cwd: &Path, args: &[&str]) -> Result<String> {
@@ -880,6 +952,10 @@ impl Ctx<'_> {
         }
         let mut defined: HashMap<(String, String, String), Option<bool>> = HashMap::new();
         for mut f in raw {
+            // 결과는 버려진다. 위에서 구간을 끝낼 때 오류로 멈춘다
+            if indexer::stop_requested() {
+                break;
+            }
             let Some(x) = files.get(&key(&f.changed_file)) else {
                 out.unverified += 1;
                 continue;
@@ -1530,7 +1606,10 @@ fn analyze_all(root: &Path, scope: &Scope, head: &str, eligible: VecDeque<Sessio
                 break;
             }
             let replay = (opts.replay && index == 0).then(|| started.elapsed().as_secs_f64() < replay_until);
-            match ctx.analyze_period(&view, index, replay) {
+            let outcome = ctx.analyze_period(&view, index, replay);
+            // 임시 폴더를 지우러 올라간다. 도중에 끊긴 구간은 세지 않는다
+            anyhow::ensure!(!indexer::stop_requested(), "중단됨");
+            match outcome {
                 Ok(Outcome::Done(d)) => {
                     done += 1;
                     record_period(report, &mut seen_sites, *d);
