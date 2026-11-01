@@ -62,6 +62,9 @@ pub struct Node {
     /// 영향 반경에서의 거리 (0 = 바뀌는 곳)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub depth: Option<u8>,
+    /// 테스트 코드 (지도에서 물러나 보인다)
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub test: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -151,6 +154,7 @@ impl Builder {
                 weight,
                 detail: None,
                 depth: None,
+                test: is_test_path(path),
             });
         }
         id
@@ -172,6 +176,7 @@ impl Builder {
                 weight: files as f64,
                 detail: Some(files.to_string()),
                 depth: None,
+                test: is_test_path(&format!("{dir}/")),
             });
         }
         id
@@ -190,6 +195,7 @@ impl Builder {
                 weight,
                 detail: Some(s.kind.clone()),
                 depth,
+                test: is_test_path(&s.path),
             });
         } else if let Some(d) = depth {
             // 더 가까운 거리로 다시 만나면 갱신
@@ -891,6 +897,7 @@ pub fn memory(store: &Store, root: &Path) -> Result<(Vec<MemoryNote>, Graph)> {
                 weight: 1.0,
                 detail: Some(clean.clone()),
                 depth: None,
+                test: false,
             });
             let links = link_note(store, note, &files, &mut b)?;
             for l in &links {
