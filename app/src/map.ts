@@ -94,6 +94,8 @@ let openFile: (path: string, line?: number) => void = () => {};
 let onVisibility: (v: boolean) => void = () => {};
 
 const canvas = () => $<HTMLCanvasElement>("#map-canvas");
+/** 운영체제의 움직임 줄이기 설정 */
+const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // 멈춤 진단: localStorage "lantern.trace" = "1"이면 지도가 지금 어느 단계인지 남긴다 (멈춘 뒤 다시 켜서 읽는다)
 const readTrace = () => {
@@ -464,7 +466,14 @@ function layout(keep = false) {
     }
     // 다 놓였다: 끌어 움직일 때 처음부터 다시 흔들지 않게
     sim.alpha(sim.alphaMin());
-  } else sim.tick(Math.min(120, 30 + nodes.length / 4)); // 처음 몇 번은 그리지 않고 계산만 (첫 화면이 덜 흔들리게)
+  } else {
+    sim.tick(Math.min(120, 30 + nodes.length / 4)); // 처음 몇 번은 그리지 않고 계산만 (첫 화면이 덜 흔들리게)
+    if (calm()) {
+      // 움직임 줄이기: 노드가 떠다니는 모습 없이 끝난 배치를 바로 보인다
+      sim.stop();
+      while (sim.alpha() > sim.alphaMin()) sim.tick();
+    }
+  }
   trace(`layout: fit ${nodes.map((n) => `${Math.round(n.x ?? NaN)},${Math.round(n.y ?? NaN)}`).join(" ")}`);
   if (cameraMoved) kick();
   else fit(false);
@@ -490,7 +499,7 @@ export function fit(animate = true) {
   const k = Math.max(0.2, Math.min(2.2, Math.min(w / (x1 - x0 + 80), hgt / (y1 - y0 + 80))));
   trace(`fit w=${w} h=${hgt} k=${k} box=${x0},${y0},${x1},${y1}`);
   const target = { k, x: w / 2 - ((x0 + x1) / 2) * k, y: hgt / 2 - ((y0 + y1) / 2) * k };
-  if (!animate) {
+  if (!animate || calm()) {
     view = target;
     kick();
     return;
@@ -655,7 +664,7 @@ function draw() {
     }
     // 에이전트가 방금 본 곳: 번지는 고리 (작업 중일 때만)
     if (footprint?.last && n.path === footprint.last && overlays.footprint && mode !== "impact" && pulseOn) {
-      const p = (pulse % 1200) / 1200;
+      const p = calm() ? 0.4 : (pulse % 1200) / 1200;
       ctx.beginPath();
       ctx.arc(n.x, n.y!, n.r + 4 + p * 14, 0, Math.PI * 2);
       ctx.strokeStyle = withAlpha(colors.context, 0.6 * (1 - p));
@@ -731,7 +740,7 @@ let pulseTimer = 0;
 export function setWorking(on: boolean) {
   pulseOn = on;
   cancelAnimationFrame(pulseTimer);
-  if (!on) return kick();
+  if (!on || calm()) return kick();
   const loop = (ts: number) => {
     pulse = ts;
     if (visible) draw();
