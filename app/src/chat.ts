@@ -60,6 +60,8 @@ interface Task {
   pendingApprovals: number;
   /** 끝났지만 테스트가 실패했거나 돌리지 않았다: 작업 목록에서 초록으로 보이지 않게 */
   unverified: boolean;
+  /** 승인을 기다리는 수정의 영향 반경 (지도가 보여 준다) */
+  waitingImpact: Impact | null;
   /** 다시 켰을 때 되살리는 기록 */
   log: Entry[];
   isolated: Isolation | null;
@@ -87,11 +89,14 @@ type Hooks = {
   onFootprint: (fp: Footprint, title: string, running: boolean) => void;
   showOnMap: () => void;
   showImpact: (i: Impact) => void;
+  /** 수정 승인을 기다리는 동안 지도에 영향 반경을 보인다 */
+  previewImpact: (i: Impact) => void;
+  endImpactPreview: () => void;
   showChat: () => void;
 };
 let hooks: Hooks = {
   onContext: () => {}, onFilesChanged: () => {}, onUsage: () => {}, showInspector: () => {}, openSettings: () => {}, pickModel: () => {}, onRunning: () => {},
-  onTasks: () => {}, onFootprint: () => {}, showOnMap: () => {}, showImpact: () => {}, showChat: () => {},
+  onTasks: () => {}, onFootprint: () => {}, showOnMap: () => {}, showImpact: () => {}, previewImpact: () => {}, endImpactPreview: () => {}, showChat: () => {},
 };
 
 const messages = () => $("#messages");
@@ -169,6 +174,13 @@ function syncComposer() {
   $("#btn-send").classList.toggle("hidden", r);
   updateSendState();
   hooks.onRunning(tasks.some(isRunning));
+}
+
+/** 지금 작업이 승인을 기다리는 수정이 있으면 지도를 그 영향 반경으로, 없으면 보던 화면으로 */
+function syncMapPreview() {
+  if (replaying) return;
+  if (active?.waitingImpact) hooks.previewImpact(active.waitingImpact);
+  else hooks.endImpactPreview();
 }
 
 function setStatus(task: Task, status: TaskStatus) {
@@ -392,7 +404,13 @@ function handle(ev: AgentEvent) {
           task.approvalTouched.set(ev.id, names);
           task.log.push({ t: "touched", id: ev.id, names });
           persist(task);
-        }, reveal) : null,
+        }, (i) => {
+          reveal();
+          // 결정하는 동안 지도는 이 수정이 닿는 곳을 보여 준다
+          if (el.classList.contains("resolved") || !i.supported || i.comment_only || i.graph.nodes.length < 2) return;
+          task.waitingImpact = i;
+          syncMapPreview();
+        }) : null,
         h("div", { class: "actions" },
           apply,
           h("button", { class: "btn btn-secondary", onclick: () => decide(false) }, "거절"),
@@ -420,6 +438,8 @@ function handle(ev: AgentEvent) {
         for (const name of task.approvalTouched.get(ev.id) ?? []) task.footprint.editedSymbols.add(`${p}#${name}`);
       }
       task.pendingApprovals = Math.max(0, task.pendingApprovals - 1);
+      task.waitingImpact = null;
+      syncMapPreview();
       if (task.status === "approval" && !task.pendingApprovals) setStatus(task, "running");
       else emitFootprint(task);
       break;
@@ -479,12 +499,16 @@ function handle(ev: AgentEvent) {
       }
       task.body = null;
       task.pendingApprovals = 0;
+      task.waitingImpact = null;
+      syncMapPreview();
       setStatus(task, "done");
       break;
     case "error":
       showError(task, ev.message);
       task.body = null;
       task.pendingApprovals = 0;
+      task.waitingImpact = null;
+      syncMapPreview();
       setStatus(task, "error");
       break;
   }
@@ -597,7 +621,7 @@ function newTask(): Task {
     el: h("div", { class: "task-log" }),
     body: null, botMark: null, current: null, pendingTool: null,
     toolEls: new Map(), approvalEls: new Map(), approvalPaths: new Map(), approvalTouched: new Map(), toolInputs: new Map(),
-    renderQueued: false, lastPrompt: "", pendingApprovals: 0, unverified: false,
+    renderQueued: false, lastPrompt: "", pendingApprovals: 0, unverified: false, waitingImpact: null,
     log: [], isolated: null, updated: Date.now(),
   };
   task.el.append(emptyState());
@@ -615,6 +639,7 @@ function activate(task: Task) {
   syncIsolateToggle();
   hooks.onTasks();
   hooks.onFootprint(task.footprint, task.title, isRunning(task));
+  syncMapPreview();
   renderHead();
 }
 

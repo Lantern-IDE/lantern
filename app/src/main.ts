@@ -794,6 +794,8 @@ function init() {
     },
     showOnMap: showFootprintOnMap,
     showImpact: (i) => map.showImpact(i),
+    previewImpact: (i) => map.previewImpact(i),
+    endImpactPreview: () => map.endPreview(),
     showChat: () => showAux("chat"),
   });
   map.init({
