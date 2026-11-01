@@ -886,7 +886,11 @@ function init() {
   void api.startupPath().then(async (arg) => {
     const target = arg ?? recent()[0];
     if (target) await openProject(target);
-    if (!onboarding.done()) onboarding.open();
+    if (!onboarding.done()) {
+      onboarding.open();
+      // 프로젝트를 열었으면 첫 화면은 지도다. 끝내지 않은 시작하기가 켤 때마다 지도를 가리지 않게 탭으로만 둔다
+      if (project) map.show();
+    }
   });
 }
 
