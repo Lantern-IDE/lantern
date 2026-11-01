@@ -73,6 +73,9 @@ pub struct Edge {
     pub target: String,
     pub kind: EdgeKind,
     pub weight: f64,
+    /// 이름만 맞춘 호출: 같은 이름의 정의가 여럿이라 실제로 이 정의를 부르는지 모른다
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub uncertain: bool,
 }
 
 #[derive(Debug, Default, Serialize)]
@@ -211,7 +214,16 @@ impl Builder {
             return;
         }
         if self.edges.insert((source.into(), target.into(), kind as u8)) {
-            self.graph.edges.push(Edge { source: source.into(), target: target.into(), kind, weight });
+            self.graph.edges.push(Edge { source: source.into(), target: target.into(), kind, weight, uncertain: false });
+        }
+    }
+
+    /// 이름으로 찾은 호출. `unsure`면 같은 이름의 정의가 여럿이라 이 정의인지 모른다
+    fn call(&mut self, source: &str, target: &str, unsure: bool) {
+        let before = self.graph.edges.len();
+        self.edge(source, target, EdgeKind::Calls, 1.0);
+        if self.graph.edges.len() > before {
+            self.graph.edges[before].uncertain = unsure;
         }
     }
 
@@ -254,6 +266,11 @@ fn callee_defs(store: &Store, s: &SymbolRow, name: &str) -> Result<Vec<SymbolRow
     Ok(defs(store, name, MAX_DEFS as usize)?.into_iter().filter(|d| d.id != s.id && !s.contains(d) && Lang::family(&d.lang) == Lang::family(&s.lang)).collect())
 }
 
+/// 같은 언어 계열에 이 이름이 정의된 곳 수 (`s` 포함). 둘 이상이면 이름만으로 어느 쪽인지 모른다
+fn same_name_defs(store: &Store, s: &SymbolRow) -> Result<usize> {
+    Ok(store.symbols_by_name(&s.name, MAX_DEFS as usize)?.iter().filter(|d| Lang::family(&d.lang) == Lang::family(&s.lang)).count())
+}
+
 // ── 노드 카드의 수 ─────────────────────────────────────────
 
 /// 지도 카드의 수. 지금 보이는 그래프가 아니라 프로젝트 전체에서 센다.
@@ -264,7 +281,7 @@ pub struct NodeStats {
     pub callers: Option<usize>,
     /// 심볼: 부르는 곳 중 테스트 코드
     pub test_callers: Option<usize>,
-    /// 심볼: 이 이름이 프로젝트에 정의된 곳 수. 2 이상이면 부르는 곳에 다른 정의를 부른 것이 섞일 수 있다
+    /// 심볼: 이 이름이 정의된 곳 수. `callers`가 있으면 같은 언어 계열 안에서 센 것으로, 2 이상이면 다른 정의를 부른 것이 섞일 수 있다
     pub defs: usize,
     /// 심볼: 본문에서 부르는 프로젝트 안 이름 수
     pub callees: usize,
@@ -288,6 +305,7 @@ pub fn node_stats(store: &Store, id: &str, label: &str) -> Result<Option<NodeSta
         let defs = store.count_defs(&s.name)?;
         let mut st = NodeStats { defs: defs as usize, ..Default::default() };
         if defs <= MAX_DEFS {
+            st.defs = same_name_defs(store, &s)?;
             let all = callers(store, &s, i64::MAX as usize)?;
             let tests = all.iter().filter(|c| is_test_path(&c.path)).count();
             st.callers = Some(all.len() - tests);
@@ -530,18 +548,20 @@ pub fn neighborhood(store: &Store, center: &str, limit: usize) -> Result<Graph> 
             let me = b.symbol(&s, ups.len().max(1) as f64, None);
             let file = b.file(&s.path, 1.0);
             b.edge(&file, &me, EdgeKind::Defines, 1.0);
+            let shared_name = same_name_defs(store, &s)? > 1;
             for c in ups.iter().take(limit) {
                 let id = b.symbol(c, 1.0, None);
-                b.edge(&id, &me, EdgeKind::Calls, 1.0);
+                b.call(&id, &me, shared_name);
             }
             for name in store.callee_names(s.id)? {
                 if b.graph.nodes.len() >= limit * 2 {
                     b.graph.truncated = true;
                     break;
                 }
-                for d in callee_defs(store, &s, &name)?.iter().take(2) {
+                let found = callee_defs(store, &s, &name)?;
+                for d in found.iter().take(2) {
                     let id = b.symbol(d, 1.0, None);
-                    b.edge(&me, &id, EdgeKind::Calls, 1.0);
+                    b.call(&me, &id, found.len() > 1);
                 }
             }
             for (other, n) in store.cochanged(&s.path, 5)? {
@@ -1144,6 +1164,38 @@ mod tests {
 
         let d = node_stats(&e.store, "d:src/core", "").unwrap().unwrap();
         assert_eq!((d.refs_in, d.refs_out), (0, 0), "다른 언어의 호출은 잇지 않고, 안쪽끼리는 세지 않는다");
+    }
+
+    #[test]
+    fn neighborhood_marks_name_only_calls() {
+        let dir = tempfile::tempdir().unwrap();
+        let r = dir.path();
+        std::fs::create_dir_all(r.join("tests")).unwrap();
+        std::fs::write(r.join("a.ts"), "export function start(v: string) {\n  once(v);\n  twin(v);\n}\n\nexport function once(v: string) {\n  return v;\n}\n").unwrap();
+        std::fs::write(r.join("b.ts"), "export function twin(v: string) {\n  return v;\n}\n").unwrap();
+        std::fs::write(r.join("c.ts"), "export function twin(v: string) {\n  return v + 'c';\n}\n").unwrap();
+        std::fs::write(r.join("d.py"), "def once(v):\n    return v\n").unwrap();
+        std::fs::write(r.join("tests/a.test.ts"), "export function testOnce() {\n  return once('x');\n}\n").unwrap();
+        let mut e = Engine::open(r).unwrap();
+        e.refresh().unwrap();
+
+        let g = neighborhood(&e.store, &symbol_node_id(e.store.symbols_by_name("start", 1).unwrap()[0].id), 20).unwrap();
+        let path_of = |id: &str| g.nodes.iter().find(|n| n.id == id).and_then(|n| n.path.as_deref()).unwrap_or("");
+        let calls: Vec<(&str, bool)> = g.edges.iter().filter(|x| x.kind == EdgeKind::Calls).map(|x| (path_of(&x.target), x.uncertain)).collect();
+        assert!(calls.contains(&("a.ts", false)), "정의가 하나면 확실: {calls:?}");
+        assert!(calls.contains(&("b.ts", true)) && calls.contains(&("c.ts", true)), "둘이면 이름만 맞춘 것: {calls:?}");
+        assert!(!calls.iter().any(|c| c.0 == "d.py"), "다른 언어의 같은 이름은 잇지 않는다: {calls:?}");
+        // 같은 언어에 이름이 둘이면 부르는 쪽도 이름만 맞춘 것. 다른 언어의 같은 이름은 섞이지 않는다
+        let once = neighborhood(&e.store, &file_node_id("a.ts"), 20).unwrap();
+        assert!(once.edges.iter().all(|x| !x.uncertain));
+        let once_up = neighborhood(&e.store, &symbol_node_id(e.store.symbols_by_name("once", 2).unwrap().iter().find(|s| s.path == "a.ts").unwrap().id), 20).unwrap();
+        assert!(once_up.edges.iter().filter(|x| x.kind == EdgeKind::Calls).all(|x| !x.uncertain), "{:?}", once_up.edges);
+        let up = neighborhood(&e.store, &symbol_node_id(e.store.symbols_by_name("twin", 1).unwrap()[0].id), 20).unwrap();
+        assert!(up.edges.iter().filter(|x| x.kind == EdgeKind::Calls).all(|x| x.uncertain), "{:?}", up.edges);
+
+        let test = neighborhood(&e.store, &file_node_id("tests/a.test.ts"), 20).unwrap();
+        assert!(test.nodes.iter().find(|n| n.path.as_deref() == Some("tests/a.test.ts")).unwrap().test);
+        assert!(!overview(&e.store, 100).unwrap().nodes.iter().find(|n| n.path.as_deref() == Some("a.ts")).unwrap().test);
     }
 
     #[test]
