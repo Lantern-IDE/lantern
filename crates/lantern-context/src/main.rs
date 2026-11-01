@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use lantern_context::assemble::{ContextRequest, DEFAULT_BUDGET};
-use lantern_context::{check, hook, sessions};
+use lantern_context::{autopsy, check, hook, sessions};
 use lantern_context::tokenize::estimate_tokens;
 use lantern_context::Engine;
 use std::collections::HashSet;
@@ -95,6 +95,42 @@ enum Cmd {
         #[command(subcommand)]
         action: HookAction,
     },
+    /// 지난 에이전트 세션이 놓쳤을 수 있는 곳 되짚기 (이름 기반, 저장소를 바꾸지 않음)
+    Autopsy {
+        /// 이 일수 안에 바뀐 세션만
+        #[arg(long, default_value_t = 30)]
+        days: u64,
+        /// 이 저장소의 코드를 고친 세션 중 최근 이만큼만
+        #[arg(long, default_value_t = 40)]
+        max_sessions: usize,
+        /// 한 에이전트만
+        #[arg(long, value_enum)]
+        agent: Option<SessionAgent>,
+        /// 슬러그와 상관없이 모든 Claude 프로젝트 폴더를 본다
+        #[arg(long)]
+        deep: bool,
+        /// 일수와 세션 수 제한 없이 전부
+        #[arg(long)]
+        all: bool,
+        /// JSON으로 출력. 메시지·명령·코드는 없다
+        #[arg(long)]
+        json: bool,
+        /// 보고서 언어. 없으면 시스템 언어
+        #[arg(long, value_enum)]
+        lang: Option<ReportLangArg>,
+        /// 발견과 세션을 전부 보여 준다
+        #[arg(long)]
+        details: bool,
+        /// 세션 분석을 이 시간에서 멈추고 몇 개를 봤는지 알린다
+        #[arg(long, default_value_t = 120)]
+        max_seconds: u64,
+        /// 첫 질문으로 맥락을 다시 조립해 본다 (기본, 시간이 남을 때만)
+        #[arg(long, conflicts_with = "no_replay")]
+        replay: bool,
+        /// 첫 질문 재현을 하지 않는다
+        #[arg(long)]
+        no_replay: bool,
+    },
     /// 세션 로그 점검용. 개수와 경로만 내고 메시지·명령·코드는 내지 않는다
     #[command(hide = true)]
     Sessions {
@@ -161,6 +197,18 @@ struct HookTarget {
 #[derive(Clone, Copy, clap::ValueEnum)]
 enum HookAgent {
     Claude,
+}
+
+#[derive(Clone, Copy, clap::ValueEnum)]
+enum SessionAgent {
+    Claude,
+    Codex,
+}
+
+#[derive(Clone, Copy, clap::ValueEnum)]
+enum ReportLangArg {
+    Ko,
+    En,
 }
 
 /// `10-20` 또는 `15` → (시작, 끝). 1부터, 양끝 포함
@@ -269,6 +317,30 @@ fn main() -> Result<()> {
         }
         Cmd::Check { base, json, strict, stop_hook: _, stats } => check_command(&cli.root, base.as_deref(), json, strict, stats)?,
         Cmd::Hook { action } => hook_command(&cli.root, action)?,
+        Cmd::Autopsy { days, max_sessions, agent, deep, all, json, lang, details, max_seconds, replay: _, no_replay } => {
+            let opts = autopsy::AutopsyOpts {
+                days: (!all).then_some(days),
+                max_sessions: (!all).then_some(max_sessions),
+                agent: agent.map(|a| match a {
+                    SessionAgent::Claude => sessions::Agent::ClaudeCode,
+                    SessionAgent::Codex => sessions::Agent::Codex,
+                }),
+                deep,
+                replay: !no_replay,
+                max_seconds,
+            };
+            let report = autopsy::run(&cli.root, &sessions::Homes::detect(), &opts)?;
+            if json {
+                println!("{}", serde_json::to_string_pretty(&report)?);
+            } else {
+                let lang = match lang {
+                    Some(ReportLangArg::Ko) => autopsy::ReportLang::Ko,
+                    Some(ReportLangArg::En) => autopsy::ReportLang::En,
+                    None => autopsy::system_lang(),
+                };
+                print!("{}", report.to_text(lang, details));
+            }
+        }
         Cmd::Sessions { json, deep, days, agent, max_sessions } => {
             sessions_report(&cli.root, json, deep, days, agent.as_deref(), max_sessions)?;
         }
