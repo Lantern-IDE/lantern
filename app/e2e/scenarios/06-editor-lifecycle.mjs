@@ -13,17 +13,18 @@ scenario("편집기 안 즉시 수정 (Ctrl+K): diff·영향 반경 → 적용 �
     return true;
   });
   // session.ts를 열고 signCookie 본문의 v + '.sig'를 선택
-  await run(async () => {
-    for (const p of ["src", "src/auth"]) {
+  // 트리의 자식은 비동기로 채워진다: 다음 줄이 나타날 때까지 기다리며 펼친다
+  for (const p of ["src", "src/auth", "src/auth/session.ts"]) {
+    await waitFor((p) => {
       const n = [...document.querySelectorAll("#tree .node[data-path]")].find((e) => e.dataset.path === p);
-      if (n && n.getAttribute("aria-expanded") !== "true") n.click();
-      await new Promise((r) => setTimeout(r, 400));
-    }
-    const f = [...document.querySelectorAll("#tree .node[data-path]")].find((e) => e.dataset.path === "src/auth/session.ts");
-    f.click();
-    f.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
-    return true;
-  });
+      if (!n) return false;
+      if (p.endsWith(".ts")) {
+        n.click();
+        n.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+      } else if (n.getAttribute("aria-expanded") !== "true") n.click();
+      return true;
+    }, 10000, `트리의 ${p}`, p);
+  }
   await waitFor(() => [...document.querySelectorAll(".cm-editor")].some((e) => e.offsetParent && e.textContent.includes("signCookie")), 10000, "편집기");
   await run(() => {
     const ed = [...document.querySelectorAll(".cm-editor")].find((e) => e.offsetParent && e.textContent.includes("signCookie"));
