@@ -1,0 +1,22 @@
+{
+  "name": "lantern-ide",
+  "version": "0.0.0",
+  "description": "Lantern context engine CLI: local code indexing and context assembly for LLMs",
+  "license": "Apache-2.0",
+  "homepage": "https://lantern-ide.github.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lantern-IDE/lantern.git",
+    "directory": "packaging/npm/lantern-ide"
+  },
+  "bugs": "https://github.com/Lantern-IDE/lantern/issues",
+  "keywords": ["lantern", "context", "code-search", "mcp", "cli"],
+  "bin": {
+    "lantern": "bin/lantern.js"
+  },
+  "files": ["bin"],
+  "engines": {
+    "node": ">=16"
+  },
+  "optionalDependencies": {}
+}
