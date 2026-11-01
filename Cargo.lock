@@ -2185,6 +2185,7 @@ dependencies = [
  "anyhow",
  "blake3",
  "clap",
+ "dirs 7.0.0",
  "ignore",
  "regex",
  "rusqlite",

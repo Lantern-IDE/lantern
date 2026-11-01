@@ -7,6 +7,7 @@ pub mod assemble;
 pub mod check;
 pub mod git;
 pub mod graph;
+pub mod hook;
 pub mod indexer;
 pub mod lang;
 pub mod mcp;
