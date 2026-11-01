@@ -1022,7 +1022,9 @@ impl Ctx<'_> {
             reads_known: s.reads_known,
             ..Default::default()
         };
+        let t = Instant::now();
         let (files, changes) = self.resolve_files(v, index, &base, &mut row)?;
+        self.timing.resolve_files += t.elapsed().as_millis() as u64;
         if files.is_empty() {
             return Ok(Outcome::NoText);
         }
@@ -1239,6 +1241,7 @@ pub struct Timing {
     pub parse: u64,
     pub clone_and_history: u64,
     pub checkout_and_index: u64,
+    pub resolve_files: u64,
     pub verify: u64,
     pub replay: u64,
 }
@@ -1554,6 +1557,7 @@ fn analyze_all(root: &Path, scope: &Scope, head: &str, eligible: VecDeque<Sessio
     };
     let t = ctx.timing;
     report.timing_ms.checkout_and_index = t.checkout_and_index;
+    report.timing_ms.resolve_files = t.resolve_files;
     report.timing_ms.verify = t.verify;
     report.timing_ms.replay = t.replay;
     Ok(())
