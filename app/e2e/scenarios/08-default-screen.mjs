@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { cdp, DIRS, git, launch, openScm, run, scenario, sleep, stop, waitFor } from "../harness.mjs";
+import "../mock-model.mjs"; // 다른 시나리오처럼 이것을 기다려야 run.mjs의 순서대로 등록된다
 
 const toMap = async () => {
   await run(() => {
@@ -71,12 +72,13 @@ const zoomIn = () => run(() => {
   for (let i = 0; i < 3; i++) c.dispatchEvent(new WheelEvent("wheel", { deltaY: -240, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, bubbles: true, cancelable: true }));
   return true;
 });
-function expectStill(a, b, what) {
+/** `only`: 비교할 이름표. 전체 구조의 덩어리 이름은 노드가 늘면 따라 움직이므로 파일만 본다 */
+function expectStill(a, b, what, only = (t) => t.includes(".")) {
   if (a.k !== b.k || a.x !== b.x || a.y !== b.y) throw new Error(`${what}: 카메라가 바뀜 ${JSON.stringify([a.k, a.x, a.y])} → ${JSON.stringify([b.k, b.x, b.y])}`);
   let common = 0;
   for (const [t, [x, y]] of Object.entries(a.labels)) {
     const q = b.labels[t];
-    if (!q) continue;
+    if (!q || !only(t)) continue;
     common++;
     if (Math.hypot(x - q[0], y - q[1]) * a.k > 1) throw new Error(`${what}: ${t} 이름표가 ${Math.round(Math.hypot(x - q[0], y - q[1]) * a.k)}px 움직임`);
   }
@@ -229,6 +231,24 @@ scenario("기본 화면: 카드의 호출 수는 보이는 간선이 아니라 �
   if (!(await run(() => !!document.querySelector("#map-legend .sw.faded")))) throw new Error("테스트 범례가 없음");
   await run(() => {
     document.querySelector("#map-card .icon-btn").click();
+    return true;
+  });
+
+  // 중심 심볼의 파일을 저장해 심볼 id가 바뀌어도 지도가 비거나 흔들리지 않는다
+  await watchDraw();
+  await zoomIn();
+  await sleep(400);
+  const before = await snapshot();
+  const count = await nodeCount();
+  fs.appendFileSync(path.join(DIRS.proj, "src/auth/session.ts"), "// 주변 지도 확인\n// 한 줄 더\n");
+  await waitFor((n) => __draw.draws > n, 8000, "저장 뒤 다시 그림", before.draws);
+  await sleep(1500);
+  if ((await nodeCount()) !== count) throw new Error(`저장 뒤 주변 노드 ${await nodeCount()}개 (전에는 ${count}개)`);
+  expectStill(before, await snapshot(), "심볼 파일 저장", () => true);
+  git("checkout", "-q", "--", ".");
+  await sleep(1500);
+
+  await run(() => {
     document.querySelector("#map-crumb .crumb-link").click();
     return true;
   });
