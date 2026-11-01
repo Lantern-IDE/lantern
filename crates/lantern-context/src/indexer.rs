@@ -14,7 +14,7 @@ use std::time::{Instant, UNIX_EPOCH};
 pub(crate) const MAX_FILE_BYTES: u64 = 1024 * 1024;
 
 /// .gitignore가 없어도 항상 건너뛰는 폴더
-const SKIP_DIRS: &[&str] = &[
+pub(crate) const SKIP_DIRS: &[&str] = &[
     "node_modules", "target", "dist", "build", "out", ".next", ".nuxt", "vendor", "__pycache__",
     ".venv", "venv", ".git", ".lantern", "coverage",
 ];

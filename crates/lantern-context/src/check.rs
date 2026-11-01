@@ -741,7 +741,7 @@ fn key(path: &str) -> String {
     path_key(Path::new(path))
 }
 
-fn same_family(path: &str, family: &str) -> bool {
+pub(crate) fn same_family(path: &str, family: &str) -> bool {
     Lang::from_path(Path::new(path)).is_some_and(|l| Lang::family(l.name()) == family)
 }
 
@@ -773,7 +773,7 @@ fn why_stale(name: &str, file: &str, reads_known: bool) -> String {
 }
 
 /// 전부 모은다 (상한 전)
-fn collect_findings(store: &Store, changes: &[FileChanges], touched: &[String], read: &[String], reads_known: bool) -> Result<Vec<Finding>> {
+pub(crate) fn collect_findings(store: &Store, changes: &[FileChanges], touched: &[String], read: &[String], reads_known: bool) -> Result<Vec<Finding>> {
     let mut touched: HashSet<String> = touched.iter().map(|p| key(p)).collect();
     touched.extend(changes.iter().map(|f| key(&f.path)));
     let read: HashSet<String> = read.iter().map(|p| key(p)).collect();
@@ -877,11 +877,17 @@ pub fn changed_files(root: &Path, commit: &str) -> Result<Vec<String>> {
 
 /// 커밋의 파일 본문 여러 개를 프로세스 하나로 읽는다. 없는 파일은 결과에 없다
 fn read_blobs(root: &Path, commit: &str, paths: &[String]) -> Result<HashMap<String, Vec<u8>>> {
+    let mut cmd = Command::new("git");
+    cmd.arg("-C").arg(root).arg("--no-optional-locks");
+    blobs_with(cmd, commit, paths)
+}
+
+/// `cmd`는 하위 명령 앞까지 채운 git. 부검의 임시 클론처럼 환경을 따로 잡아야 할 때 넘긴다
+pub(crate) fn blobs_with(mut cmd: Command, commit: &str, paths: &[String]) -> Result<HashMap<String, Vec<u8>>> {
     if paths.is_empty() {
         return Ok(HashMap::new());
     }
-    let mut cmd = Command::new("git");
-    cmd.arg("-C").arg(root).args(["--no-optional-locks", "cat-file", "--batch"]);
+    cmd.args(["cat-file", "--batch"]);
     cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null());
     let mut child = no_window(&mut cmd).spawn().context("git 실행")?;
     let mut stdin = child.stdin.take().context("git 입력")?;
