@@ -781,7 +781,8 @@ let indexInfo = "";
 /** 빈 채팅 화면에 보여줄 인덱스 정보 (맥락이 먼저다) */
 export function setIndexInfo(text: string) {
   indexInfo = text;
-  for (const note of document.querySelectorAll(".empty-chat .index-note span")) note.textContent = text;
+  // 글자 칸만: 앞의 육각형도 span이라 덮어쓰면 세로 글자로 깨진다
+  for (const note of document.querySelectorAll(".empty-chat .index-note > span:last-child")) note.textContent = text;
   if (text && active && active.el.querySelector(".empty-chat") && !active.el.querySelector(".index-note")) active.el.replaceChildren(emptyState());
 }
 
