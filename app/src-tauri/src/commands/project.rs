@@ -26,13 +26,24 @@ pub(crate) async fn open_project(app: AppHandle, state: State<'_, AppState>, pat
     if migrated {
         applog::info(&format!("프로젝트 설정 폴더를 옮김: {}/.khala → .lantern", root.display()));
     }
-    let engine = tauri::async_runtime::spawn_blocking({
-        let root = root.clone();
-        move || Engine::open(&root)
-    })
-    .await
-    .map_err(err)?
-    .map_err(anyhow_err)?;
+    let _opening = state.opening.lock().await;
+    // 같은 폴더를 다시 열면(창 새로 고침, 언어 바꾸기) 쓰던 프로젝트를 그대로 쓴다.
+    // 새 연결을 열면 아직 도는 인덱싱과 같은 인덱스에 동시에 써서 "database is locked"가 난다.
+    let reopened = state.project.lock().unwrap().clone().filter(|p| p.root == root);
+    let first_open = reopened.is_none();
+    let project = match reopened {
+        Some(p) => p,
+        None => {
+            let engine = tauri::async_runtime::spawn_blocking({
+                let root = root.clone();
+                move || Engine::open(&root)
+            })
+            .await
+            .map_err(err)?
+            .map_err(anyhow_err)?;
+            Arc::new(Project::new(root.clone(), engine, false))
+        }
+    };
 
     // 이전 프로젝트의 세션·언어 서버 정리
     for (_, mut l) in state.lsps.lock().unwrap().drain() {
@@ -43,7 +54,7 @@ pub(crate) async fn open_project(app: AppHandle, state: State<'_, AppState>, pat
     mcp_client::close_all(&state);
 
     let trusted = state::is_trusted(&root);
-    let project = Arc::new(Project::new(root.clone(), engine, trusted));
+    project.trusted.store(trusted, std::sync::atomic::Ordering::Relaxed);
     *state.project.lock().unwrap() = Some(project.clone());
 
     // 외부 변경 감시 (실패해도 앱은 계속 쓴다)
@@ -53,6 +64,7 @@ pub(crate) async fn open_project(app: AppHandle, state: State<'_, AppState>, pat
             Some(w)
         }
         Err(e) => {
+            project.watched.store(false, std::sync::atomic::Ordering::Relaxed);
             applog::error(&format!("파일 감시를 시작하지 못했습니다: {e}"));
             None
         }
@@ -67,7 +79,10 @@ pub(crate) async fn open_project(app: AppHandle, state: State<'_, AppState>, pat
             project.index_dirty.store(false, std::sync::atomic::Ordering::SeqCst);
             e.refresh()
         };
-        semantic::spawn_background(app2.clone(), project.clone());
+        // 다시 열었으면 처음 열 때 띄운 일꾼이 같은 프로젝트로 계속 돈다
+        if first_open {
+            semantic::spawn_background(app2.clone(), project.clone());
+        }
         let payload = match r {
             Ok(s) => json!({ "status": "done", "stats": s }),
             Err(e) => json!({ "status": "error", "message": format!("{e:#}") }),

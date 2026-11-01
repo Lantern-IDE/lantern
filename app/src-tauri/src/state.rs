@@ -58,6 +58,8 @@ impl Project {
 #[derive(Default)]
 pub struct AppState {
     pub project: Mutex<Option<Arc<Project>>>,
+    /// 프로젝트 열기를 차례로 (창을 새로 고치면 앞선 열기가 도는 채로 또 들어온다)
+    pub opening: tokio::sync::Mutex<()>,
     pub sessions: Mutex<HashMap<String, Vec<Message>>>,
     pub cancels: Mutex<HashMap<String, Arc<AtomicBool>>>,
     pub approvals: Mutex<HashMap<String, oneshot::Sender<bool>>>,
