@@ -242,6 +242,86 @@ fn callers(store: &Store, s: &SymbolRow, limit: usize) -> Result<Vec<SymbolRow>>
     Ok(out)
 }
 
+/// 심볼 본문의 이름이 가리킬 수 있는 프로젝트 안 정의. 자기 자신과 안쪽 심볼, 다른 언어 계열은 뺀다.
+/// 이름이 흔해(정의가 `MAX_DEFS`개 넘음) 가려낼 수 없으면 빈 목록
+fn callee_defs(store: &Store, s: &SymbolRow, name: &str) -> Result<Vec<SymbolRow>> {
+    Ok(defs(store, name, MAX_DEFS as usize)?.into_iter().filter(|d| d.id != s.id && !s.contains(d) && Lang::family(&d.lang) == Lang::family(&s.lang)).collect())
+}
+
+// ── 노드 카드의 수 ─────────────────────────────────────────
+
+/// 지도 카드의 수. 지금 보이는 그래프가 아니라 프로젝트 전체에서 센다.
+/// 참조는 이름 기반이라, 같은 이름의 다른 정의를 부른 것이 섞일 수 있으면 그 수도 함께 준다.
+#[derive(Debug, Default, Serialize)]
+pub struct NodeStats {
+    /// 심볼: 부르는 곳 (테스트 코드 제외). 이름이 너무 흔해 가려낼 수 없으면 `None`
+    pub callers: Option<usize>,
+    /// 심볼: 부르는 곳 중 테스트 코드
+    pub test_callers: Option<usize>,
+    /// 심볼: 이 이름이 프로젝트에 정의된 곳 수. 2 이상이면 부르는 곳에 다른 정의를 부른 것이 섞일 수 있다
+    pub defs: usize,
+    /// 심볼: 본문에서 부르는 프로젝트 안 이름 수
+    pub callees: usize,
+    /// `callees` 중 같은 이름이 여러 곳에 정의되어 어느 것인지 모르는 수
+    pub callees_ambiguous: usize,
+    /// 본문에 있지만 이름이 너무 흔해 세지 않은 수 (`callees`에 들지 않는다)
+    pub callees_common: usize,
+    /// 파일·폴더: 참조하는 바깥 파일 수
+    pub refs_in: usize,
+    /// 파일·폴더: 참조되는 바깥 파일 수
+    pub refs_out: usize,
+    /// 파일: 함께 바뀌던 파일 수
+    pub cochange: usize,
+}
+
+/// `id`는 지도 노드 id. 심볼은 `label`(이름)까지 맞아야 센다: 다시 인덱싱하면 같은 id가 다른 심볼일 수 있다.
+/// 노드가 이제 없거나 수를 말할 수 없는 종류(메모)면 `None`
+pub fn node_stats(store: &Store, id: &str, label: &str) -> Result<Option<NodeStats>> {
+    if let Some(sid) = id.strip_prefix("s:").and_then(|x| x.parse::<i64>().ok()) {
+        let Some(s) = store.symbol(sid)?.filter(|s| s.name == label) else { return Ok(None) };
+        let defs = store.count_defs(&s.name)?;
+        let mut st = NodeStats { defs: defs as usize, ..Default::default() };
+        if defs <= MAX_DEFS {
+            let all = callers(store, &s, i64::MAX as usize)?;
+            let tests = all.iter().filter(|c| is_test_path(&c.path)).count();
+            st.callers = Some(all.len() - tests);
+            st.test_callers = Some(tests);
+        }
+        for name in store.callee_names(s.id)? {
+            if store.count_defs(&name)? > MAX_DEFS {
+                st.callees_common += 1;
+                continue;
+            }
+            let found = callee_defs(store, &s, &name)?;
+            if !found.is_empty() {
+                st.callees += 1;
+            }
+            if found.len() > 1 {
+                st.callees_ambiguous += 1;
+            }
+        }
+        return Ok(Some(st));
+    }
+    if let Some(path) = id.strip_prefix("f:") {
+        let Some((refs_in, refs_out)) = store.file_ref_counts(path, MAX_DEFS)? else { return Ok(None) };
+        return Ok(Some(NodeStats { refs_in, refs_out, cochange: store.cochanged_count(path)?, ..Default::default() }));
+    }
+    if let Some(dir) = id.strip_prefix("d:") {
+        let prefix = format!("{dir}/");
+        let inside = |p: &str| if dir.is_empty() { !p.contains('/') } else { p.starts_with(&prefix) };
+        let (mut from, mut to) = (HashSet::new(), HashSet::new());
+        for (a, c, _) in store.file_ref_edges(MAX_DEFS)? {
+            match (inside(&a), inside(&c)) {
+                (false, true) => from.insert(a),
+                (true, false) => to.insert(c),
+                _ => false,
+            };
+        }
+        return Ok(Some(NodeStats { refs_in: from.len(), refs_out: to.len(), ..Default::default() }));
+    }
+    Ok(None)
+}
+
 // ── 전체 지도 ──────────────────────────────────────────────
 
 /// 파일 단위 전체 지도. 파일이 많으면 연결이 많은 순으로 `max_nodes`개만.
@@ -453,11 +533,8 @@ pub fn neighborhood(store: &Store, center: &str, limit: usize) -> Result<Graph> 
                     b.graph.truncated = true;
                     break;
                 }
-                for d in defs(store, &name, 2)? {
-                    if d.id == s.id || s.contains(&d) {
-                        continue;
-                    }
-                    let id = b.symbol(&d, 1.0, None);
+                for d in callee_defs(store, &s, &name)?.iter().take(2) {
+                    let id = b.symbol(d, 1.0, None);
                     b.edge(&me, &id, EdgeKind::Calls, 1.0);
                 }
             }
@@ -1011,6 +1088,55 @@ mod tests {
         assert!(files.contains(&"src/auth/login.ts") && files.contains(&"src/auth/session.ts"), "{files:?}");
         assert!(!files.contains(&"src/api.ts"), "바깥 파일은 폴더로 묶는다");
         assert!(g.edges.iter().any(|x| x.source == file_node_id("src/auth/login.ts") && x.target == file_node_id("src/auth/session.ts")));
+    }
+
+    #[test]
+    fn node_stats_count_the_whole_project() {
+        let dir = tempfile::tempdir().unwrap();
+        let r = dir.path();
+        std::fs::create_dir_all(r.join("src/core")).unwrap();
+        std::fs::create_dir_all(r.join("web")).unwrap();
+        std::fs::write(r.join("src/core/next.ts"), "export function runNext(v: string) {\n  helper(v);\n  twin(v);\n  common(v);\n  console.log(v);\n  return v;\n}\n\nexport function helper(v: string) {\n  return v;\n}\n").unwrap();
+        std::fs::write(r.join("src/core/twin_a.ts"), "export function twin(v: string) {\n  return v;\n}\n").unwrap();
+        std::fs::write(r.join("src/core/twin_b.ts"), "export function twin(v: string) {\n  return v + 'b';\n}\n\nexport function callsTwin() {\n  return twin('x');\n}\n").unwrap();
+        for i in 0..5 {
+            std::fs::write(r.join(format!("src/core/c{i}.ts")), "export function common(v: string) {\n  return v;\n}\n").unwrap();
+        }
+        // 지도 한도(limit 30)보다 많은 호출자와 테스트 하나, 다른 언어의 같은 이름
+        for i in 0..40 {
+            std::fs::write(r.join(format!("src/core/u{i}.ts")), format!("export function use{i}(v: string) {{\n  return runNext(v);\n}}\n")).unwrap();
+        }
+        std::fs::write(r.join("src/core/next.test.ts"), "export function testNext() {\n  return runNext('x');\n}\n").unwrap();
+        std::fs::write(r.join("web/other.py"), "def other():\n    return runNext('x')\n").unwrap();
+        let mut e = Engine::open(r).unwrap();
+        e.refresh().unwrap();
+
+        let id_of = |name: &str| symbol_node_id(e.store.symbols_by_name(name, 1).unwrap()[0].id);
+        let s = node_stats(&e.store, &id_of("runNext"), "runNext").unwrap().unwrap();
+        assert_eq!((s.callers, s.test_callers, s.defs), (Some(40), Some(1), 1), "보이는 그래프가 아니라 전체. 다른 언어는 빼고 테스트는 따로");
+        assert_eq!((s.callees, s.callees_ambiguous, s.callees_common), (2, 1, 1), "helper와 twin(정의 둘), common은 흔해서 세지 않고 console.log는 프로젝트 밖");
+
+        let twin = node_stats(&e.store, &id_of("twin"), "twin").unwrap().unwrap();
+        assert_eq!((twin.defs, twin.callers), (2, Some(2)), "이름이 둘이면 다른 쪽을 부른 것이 섞일 수 있음을 알린다");
+        let common = node_stats(&e.store, &id_of("common"), "common").unwrap().unwrap();
+        assert_eq!((common.defs, common.callers), (5, None), "흔한 이름은 0이 아니라 모름");
+
+        assert!(node_stats(&e.store, &id_of("runNext"), "다른이름").unwrap().is_none(), "id가 다른 심볼을 가리키면 세지 않는다");
+        assert!(node_stats(&e.store, "s:999999", "x").unwrap().is_none());
+        assert!(node_stats(&e.store, "f:없는파일.ts", "").unwrap().is_none());
+        assert!(node_stats(&e.store, "m:rules#1", "").unwrap().is_none());
+
+        // 파일 수는 전체 지도의 참조와 같은 기준
+        let edges = e.store.file_ref_edges(MAX_DEFS).unwrap();
+        let path = "src/core/next.ts";
+        let f = node_stats(&e.store, &file_node_id(path), "next.ts").unwrap().unwrap();
+        assert_eq!(f.refs_in, edges.iter().filter(|x| x.1 == path).count());
+        assert_eq!(f.refs_out, edges.iter().filter(|x| x.0 == path).count());
+        assert_eq!(f.refs_in, 41);
+        assert_eq!(f.refs_out, 2, "twin_a, twin_b");
+
+        let d = node_stats(&e.store, "d:src/core", "").unwrap().unwrap();
+        assert_eq!((d.refs_in, d.refs_out), (0, 0), "다른 언어의 호출은 잇지 않고, 안쪽끼리는 세지 않는다");
     }
 
     #[test]

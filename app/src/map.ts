@@ -34,6 +34,12 @@ export interface Impact {
   graph: Graph;
 }
 export interface MemoryNote { id: string; topic: string; file: string; line: number; text: string; links: string[] }
+/** 지도 카드의 수 (프로젝트 전체 기준). callers가 null이면 이름이 흔해 셀 수 없다 */
+interface NodeStats {
+  callers: number | null; test_callers: number | null; defs: number;
+  callees: number; callees_ambiguous: number; callees_common: number;
+  refs_in: number; refs_out: number; cochange: number;
+}
 
 /** 에이전트가 한 작업에서 남긴 흔적 */
 export interface Footprint {
@@ -60,22 +66,24 @@ const overlays = { footprint: true, memory: false };
 
 let mode: Mode = "overview";
 let focusLabel = "";
+/** 주변 지도의 중심. 폴더를 펼치면 첫 노드가 중심이 아니라서 따로 둔다 (다시 그릴 때 같은 지도를 받으려고) */
+let focusCenter = "";
 let nodes: N[] = [];
 let links: L[] = [];
 let byId = new Map<string, N>();
 let sim: Simulation<N, L> | null = null;
 let view = { x: 0, y: 0, k: 1 };
 /** 사용자가 지도를 옮기거나 확대했다: 다시 배치해도 화면을 맞추지 않는다 */
-/** 주변 지도의 중심. 폴더를 펼치면 첫 노드가 중심이 아니라서 따로 둔다 (다시 그릴 때 같은 지도를 받으려고) */
-let focusCenter = "";
 let cameraMoved = false;
+let fitPending = false;
 let selected: N | null = null;
 let hovered: N | null = null;
+let statsCache = new Map<string, NodeStats | null | undefined>();
+let lastStats: { id: string; stats: NodeStats | null } | null = null;
 let footprint: Footprint | null = null;
 let footprintTitle = "";
 let impact: Impact | null = null;
 let memoryNotes: MemoryNote[] = [];
-let fitPending = false;
 let truncated = false;
 let visible = false;
 let loaded = false;
@@ -142,6 +150,7 @@ function radius(n: GNode): number {
 
 function setGraph(g: Graph, keepPositions = false) {
   trace(`setGraph n=${g.nodes.length} e=${g.edges.length} keep=${keepPositions}`);
+  statsCache = new Map();
   const old = keepPositions ? byId : new Map<string, N>();
   nodes = g.nodes.map((n) => {
     const prev = old.get(n.id);
@@ -227,6 +236,7 @@ export function showOverview() {
 export function focus(center: string, label?: string) {
   impact = null;
   show();
+  focusCenter = center;
   return load(() => invoke<Graph>("graph_neighborhood", { center, limit: 30 }), "focus", label ?? center.replace(/^[fs]:/, ""));
 }
 
@@ -235,7 +245,6 @@ function applyImpact(i: Impact) {
   impact = i;
   mode = "impact";
   focusLabel = `${basename(i.path)}${i.touched.length ? ` · ${i.touched.join(", ")}` : ""}`;
-  focusCenter = center;
   view = { x: 0, y: 0, k: 1 };
   cameraMoved = false;
   baseGraph = i.graph;
@@ -386,6 +395,7 @@ function layout(keep = false) {
   const el = canvas();
   const w = el.clientWidth || 800;
   const hgt = el.clientHeight || 600;
+  const fresh = new Set(nodes.filter((n) => n.x === undefined));
   const groups = [...new Set(nodes.map((n) => n.group))];
   const ring = Math.min(w, hgt) * (nodes.length < 40 ? 0.18 : 0.3);
   // 연결이 없는 노드는 멀리 밀려나지 않게 가운데 쪽으로 더 당긴다
@@ -394,7 +404,6 @@ function layout(keep = false) {
     const a = typeof l.source === "string" ? l.source : (l.source as N).id;
     const b = typeof l.target === "string" ? l.target : (l.target as N).id;
     degree.set(a, (degree.get(a) ?? 0) + 1);
-  const fresh = new Set(nodes.filter((n) => n.x === undefined));
     degree.set(b, (degree.get(b) ?? 0) + 1);
   }
   const pull = (d: N, base: number) => (degree.get(d.id) ? base : Math.max(base, 0.12));
@@ -402,14 +411,6 @@ function layout(keep = false) {
     const a = (i / Math.max(1, groups.length)) * Math.PI * 2;
     return [g, groups.length > 1 ? { x: Math.cos(a) * ring, y: Math.sin(a) * ring } : { x: 0, y: 0 }];
   }));
-  const dist: Record<EdgeKind, number> = { defines: 36, calls: 70, ref: 80, cochange: 110, mentions: 70 };
-  // 영향 지도: 테스트는 바깥쪽으로 밀어 실제 호출자가 바뀌는 곳 가까이에 모이게 한다
-  const reach = (l: L) => dist[l.kind] * ((l.source as N).mark === "test" || (l.target as N).mark === "test" ? 1.8 : 1);
-  const clustered = mode === "overview";
-  sim = forceSimulation<N, L>(nodes)
-    .force("link", forceLink<N, L>(links).id((d) => d.id).distance(reach).strength((l) => (l.kind === "cochange" ? 0.05 : Math.min(0.6, 0.15 + Math.log1p(l.weight) * 0.08))))
-    .force("charge", forceManyBody<N>().strength(nodes.length > 200 ? -60 : -160).distanceMax(400))
-    .force("collide", forceCollide<N>().radius((d) => (d.kind === "dir" ? d.r * 1.15 + 8 : d.r + 3)).strength(0.9))
   // 대부분 새 노드면(인덱싱 중에 그린 지도) 처음부터 배치한다
   const gentle = keep && fresh.size <= nodes.length / 2;
   if (gentle) {
@@ -422,6 +423,14 @@ function layout(keep = false) {
       n.y = (from?.y ?? anchor.get(n.group)!.y) + Math.sin(a) * 40;
     }
   }
+  const dist: Record<EdgeKind, number> = { defines: 36, calls: 70, ref: 80, cochange: 110, mentions: 70 };
+  // 영향 지도: 테스트는 바깥쪽으로 밀어 실제 호출자가 바뀌는 곳 가까이에 모이게 한다
+  const reach = (l: L) => dist[l.kind] * ((l.source as N).mark === "test" || (l.target as N).mark === "test" ? 1.8 : 1);
+  const clustered = mode === "overview";
+  sim = forceSimulation<N, L>(nodes)
+    .force("link", forceLink<N, L>(links).id((d) => d.id).distance(reach).strength((l) => (l.kind === "cochange" ? 0.05 : Math.min(0.6, 0.15 + Math.log1p(l.weight) * 0.08))))
+    .force("charge", forceManyBody<N>().strength(nodes.length > 200 ? -60 : -160).distanceMax(400))
+    .force("collide", forceCollide<N>().radius((d) => (d.kind === "dir" ? d.r * 1.15 + 8 : d.r + 3)).strength(0.9))
     .force("center", forceCenter(0, 0))
     .force("x", forceX<N>((d) => (clustered ? anchor.get(d.group)!.x : 0)).strength((d) => pull(d, clustered ? 0.06 : 0.02)))
     .force("y", forceY<N>((d) => (clustered ? anchor.get(d.group)!.y : 0)).strength((d) => pull(d, clustered ? 0.06 : 0.02)))
@@ -471,6 +480,9 @@ export function fit(animate = true) {
   const el = canvas();
   const { x0, y0, x1, y1 } = bounds();
   const w = el.clientWidth, hgt = el.clientHeight;
+  // 숨어 있는 동안 배치가 끝났다: 크기를 모르니 다시 보일 때 맞춘다
+  fitPending = !w || !hgt;
+  if (fitPending) return;
   const k = Math.max(0.2, Math.min(2.2, Math.min(w / (x1 - x0 + 80), hgt / (y1 - y0 + 80))));
   trace(`fit w=${w} h=${hgt} k=${k} box=${x0},${y0},${x1},${y1}`);
   const target = { k, x: w / 2 - ((x0 + x1) / 2) * k, y: hgt / 2 - ((y0 + y1) / 2) * k };
@@ -479,9 +491,6 @@ export function fit(animate = true) {
     kick();
     return;
   }
-  // 숨어 있는 동안 배치가 끝났다: 크기를 모르니 다시 보일 때 맞춘다
-  fitPending = !w || !hgt;
-  if (fitPending) return;
   const from = { ...view };
   const start = performance.now();
   const step = (now: number) => {
@@ -762,6 +771,34 @@ function renderLegend() {
   } else fp.classList.add("hidden");
 }
 
+/** 노드의 전체 수. 값이 undefined면 받는 중, null이면 말할 수 없다 (노드가 이제 없다) */
+function statsOf(n: N): NodeStats | null | undefined {
+  const cache = statsCache;
+  if (!cache.has(n.id)) {
+    cache.set(n.id, undefined);
+    void invoke<NodeStats | null>("graph_node_stats", { id: n.id, label: n.label }).catch(() => null).then((s) => {
+      cache.set(n.id, s);
+      if (cache === statsCache && selected?.id === n.id) renderCard();
+    });
+  }
+  const got = cache.get(n.id);
+  // 다시 세는 동안은 보던 수를 둔다 (에이전트가 일할 때 카드가 깜박이지 않게)
+  if (got === undefined) return lastStats?.id === n.id ? lastStats.stats : undefined;
+  lastStats = { id: n.id, stats: got };
+  return got;
+}
+
+/** 수를 어떻게 셌는지와 얼마나 믿을 수 있는지 */
+function statsBasis(n: N, s: NodeStats): HTMLElement {
+  if (n.kind !== "symbol") return h("div", { class: "mc-basis" }, t(n.kind === "dir" ? "참조는 이름으로 찾은 바깥 파일 수입니다" : "참조는 이름으로 찾은 파일 수입니다"));
+  const lines = [t("이름으로 찾은 수입니다")];
+  if (s.callers === null) lines.push(t(`이름이 흔해(${s.defs}곳 정의) 부르는 곳을 셀 수 없습니다`));
+  else if (s.defs > 1) lines.push(t(`같은 이름이 ${s.defs}곳에 정의되어 다른 쪽을 부르는 곳이 섞일 수 있습니다`));
+  if (s.callees_ambiguous) lines.push(t(`부르는 것 중 ${s.callees_ambiguous}개는 같은 이름이 여러 곳에 있어 확실하지 않습니다`));
+  if (s.callees_common) lines.push(t(`이름이 흔해 세지 않은 것 ${s.callees_common}개`));
+  return h("div", { class: "mc-basis", title: t("이름으로 찾은 호출 관계(정적 분석)입니다. 테스트 코드는 호출자로 세지 않고 따로 보입니다. DI·리플렉션·이벤트·라우팅처럼 실행 중에 정해지는 호출과, URL로 부르는 테스트는 세지 않습니다.") }, lines.join(" · "));
+}
+
 function renderCard() {
   const card = $("#map-card");
   const n = selected;
@@ -769,23 +806,14 @@ function renderCard() {
     card.classList.add("hidden");
     return;
   }
-  const inE = links.filter((l) => (l.target as N).id === n.id);
-  const outE = links.filter((l) => (l.source as N).id === n.id);
-  const count = (list: L[], kinds: EdgeKind[]) => list.filter((l) => kinds.includes(l.kind)).length;
   const kindLabel = n.kind === "dir" ? t("폴더") : n.kind === "file" ? t("파일") : n.kind === "memory" ? t("기억") : (n.detail ?? t("심볼"));
+  // 수는 지금 보이는 그래프가 아니라 프로젝트 전체에서 센 것만 보인다. 받는 중에는 '–'
+  const s = n.kind === "memory" ? null : statsOf(n);
+  const stat = (label: string, value?: number | string | null) => h("div", { class: "mc-stat" }, h("span", {}, t(label)), h("b", {}, value === undefined ? "–" : String(value ?? "?")));
   const rows: HTMLElement[] = [];
-  if (n.kind === "symbol") {
-    rows.push(h("div", { class: "mc-stat" }, h("span", {}, t("부르는 곳")), h("b", {}, String(count(inE, ["calls"])))));
-    rows.push(h("div", { class: "mc-stat" }, h("span", {}, t("부르는 것")), h("b", {}, String(count(outE, ["calls"])))));
-  } else if (n.kind === "dir") {
-    rows.push(h("div", { class: "mc-stat" }, h("span", {}, t("파일")), h("b", {}, n.detail ?? "0")));
-    rows.push(h("div", { class: "mc-stat" }, h("span", {}, t("참조받음")), h("b", {}, String(count(inE, ["ref"])))));
-    rows.push(h("div", { class: "mc-stat" }, h("span", {}, t("참조함")), h("b", {}, String(count(outE, ["ref"])))));
-  } else if (n.kind === "file") {
-    rows.push(h("div", { class: "mc-stat" }, h("span", {}, t("참조받음")), h("b", {}, String(count(inE, ["ref"])))));
-    rows.push(h("div", { class: "mc-stat" }, h("span", {}, t("참조함")), h("b", {}, String(count(outE, ["ref"])))));
-    rows.push(h("div", { class: "mc-stat" }, h("span", {}, t("함께 바뀜")), h("b", {}, String(count([...inE, ...outE], ["cochange"])))));
-  }
+  if (s !== null && n.kind === "symbol") rows.push(stat("부르는 곳", s?.callers), stat("테스트", s?.test_callers), stat("부르는 것", s?.callees));
+  else if (s !== null && n.kind === "dir") rows.push(stat("파일", n.detail), stat("참조받음", s?.refs_in), stat("참조함", s?.refs_out));
+  else if (s !== null && n.kind === "file") rows.push(stat("참조받음", s?.refs_in), stat("참조함", s?.refs_out), stat("함께 바뀜", s?.cochange));
   const markText: Record<string, string> = { edited: "이 작업에서 수정함", context: "AI에 맥락으로 보냄", read: "에이전트가 읽음", impact0: "이 변경이 바꾸는 곳", impact1: "바뀌는 코드를 직접 호출", impact2: "간접적으로 영향", test: "영향 범위의 테스트" };
   const actions = h("div", { class: "mc-actions" });
   const btn = (icon: string, label: string, fn: () => void, primary = false) => {
@@ -815,6 +843,7 @@ function renderCard() {
     n.kind === "dir" ? h("div", { class: "mc-path", title: n.path }, `${n.path || "(root)"}/`) : null,
     n.mark ? h("div", { class: `mc-mark m-${n.mark}` }, t(markText[n.mark])) : null,
     rows.length ? h("div", { class: "mc-stats" }, ...rows) : null,
+    s ? statsBasis(n, s) : null,
     n.notes?.length ? h("div", { class: "mc-notes" }, h("div", { class: "mc-sub" }, codicon("book"), t("연결된 기억")), ...n.notes.slice(0, 4).map((x) => h("div", { class: "mc-note" }, x))) : null,
     actions,
   ].filter(Boolean) as Node[]));
@@ -1015,6 +1044,7 @@ export function show() {
   readColors();
   if (preview && !preview.opened) openPreview();
   else if (!loaded || nodes.length === 0) void showOverview();
+  else if (fitPending && !cameraMoved) fit(false);
   else kick();
 }
 
@@ -1038,8 +1068,8 @@ export function reset() {
   links = [];
   byId = new Map();
   selected = null;
+  lastStats = null;
   impact = null;
-  else if (fitPending && !cameraMoved) fit(false);
   preview = null;
   footprint = null;
   memoryNotes = [];
@@ -1062,6 +1092,9 @@ export function refreshSoon() {
   clearTimeout(refreshTimer);
   refreshTimer = window.setTimeout(async () => {
     if (held()) return;
+    // 그래프를 다시 받지 않더라도(노드를 고른 채 보는 중) 카드의 수는 새로 센다
+    statsCache = new Map();
+    if (selected && visible) renderCard();
     const fetcher = mode === "overview" ? () => invoke<Graph>("graph_overview", { maxNodes: 400 }) : mode === "focus" && selected === null ? () => invoke<Graph>("graph_neighborhood", { center: focusCenter, limit: 30 }) : null;
     if (!fetcher || !visible) return;
     const my = loadSeq;

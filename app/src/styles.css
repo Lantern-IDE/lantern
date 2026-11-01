@@ -1083,6 +1083,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .mc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
 .mc-stat { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; background: var(--sunken); border-radius: var(--radius-sm); font-size: 11px; color: var(--muted); }
 .mc-stat b { font-size: 15px; color: var(--fg-strong); font-variant-numeric: tabular-nums; }
+.mc-basis { margin-top: 6px; font-size: 11.5px; line-height: 1.5; color: var(--muted); }
 .mc-notes { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
 .mc-sub { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--link); font-weight: 600; }
 .mc-note { font-size: 12px; line-height: 1.5; padding: 5px 8px; border-left: 2px solid color-mix(in srgb, var(--link) 60%, transparent); background: var(--sunken); }
