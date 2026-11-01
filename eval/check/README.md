@@ -40,7 +40,7 @@ For each commit in `eval/bilingual/*.json` with 2 or more gold files (the code f
 
 ## Results
 
-Lantern `be18cda`, 2026-11-02. 71 commits, 152 applications, 182 pairs. All tables are in [results.md](results.md). The rules for dropped overloads and Go receiver names changed after this run and it was not repeated, so Stale caller counts may differ.
+Lantern `ea865cf`, 2026-11-02. 71 commits, 152 applications, 182 pairs. All tables are in [results.md](results.md).
 
 | Method | Commits with a hit | Applications with a hit | Pairs found | Files flagged per commit (mean / median) | Flagged files outside gold (upper bound on noise) |
 |---|---|---|---|---|---|
@@ -69,7 +69,7 @@ How to read this:
 - Dangling flagged 5 files and 4 are gold. That is too few to call a precision.
 - One hit read by hand: applying only `fs.go` of gin `8791c96960` gives a HIGH warning at `routergroup.go:221` for `onlyFilesFS`, and the commit changes exactly that line to `OnlyFilesFS`.
 
-Run time: `lantern check` median 580 ms, 90th percentile 1578 ms, max 30897 ms; 145 of 152 within 3 s. The whole run took 612.0 s, of which setup 12.9 s; the longest repository was axios at 173.2 s. Builds and other jobs were running on the PC, so these times are noisy and the maximum is mostly that load: the run before tuning, on a quieter PC, gave a median of 545 ms, a 90th percentile of 1144 ms, a max of 3197 ms and 151 of 152 within 3 s.
+Run time: `lantern check` median 474.5 ms, 90th percentile 736 ms, max 3270 ms; 151 of 152 within 3 s. The whole run took 271.3 s, of which setup 12.1 s; the longest repository was httpx at 45.0 s. Builds were running on the PC at low priority, so read these as rough.
 
 Index check, measured before tuning at `639b2e1`: `--keep-index` reuses one index across a repository's commits. Compared with the empty-index run, all warnings and both "every symbol" and co-change numbers are identical on all 152 applications. Only the impact radius changes, in 26 applications, most likely because `graph impact` gets callers from an unordered query with a limit. Commits hit stay at 57 for the impact radius and go from 48 to 47 for direct callers alone.
 
