@@ -340,7 +340,13 @@ fn main() -> Result<()> {
                 replay,
                 max_seconds,
             };
-            let report = autopsy::run(&cli.root, &sessions::Homes::detect(), &opts)?;
+            // 임시 클론에 저장소 코드가 있다. Ctrl+C로 끝나도 남기지 않는다. 처리기를 못 달아도 부검은 돌린다
+            let _ = ctrlc::set_handler(autopsy::on_interrupt);
+            let report = match autopsy::run(&cli.root, &sessions::Homes::detect(), &opts) {
+                Ok(report) => report,
+                Err(_) if lantern_context::indexer::stop_requested() => std::process::exit(autopsy::INTERRUPTED_EXIT),
+                Err(e) => return Err(e),
+            };
             if json {
                 println!("{}", serde_json::to_string_pretty(&report)?);
             } else {
