@@ -1,6 +1,7 @@
 //! 확장자 → 언어 판별과 언어별 tree-sitter 태그 설정.
 
 use anyhow::{Context, Result};
+use std::cell::OnceCell;
 use std::path::Path;
 use tree_sitter_tags::TagsConfiguration;
 
@@ -20,6 +21,8 @@ pub enum Lang {
 }
 
 impl Lang {
+    const COUNT: usize = 11;
+
     pub fn from_path(path: &Path) -> Option<Lang> {
         let ext = path.extension()?.to_str()?.to_ascii_lowercase();
         Some(match ext.as_str() {
@@ -173,92 +176,51 @@ const CPP_EXTRA: &str = r#"
 (new_expression type: (type_identifier) @name) @reference.class
 "#;
 
+/// 언어별 태그 설정. 질의를 만드는 데 시간이 들어 (11개 언어 400ms쯤) 그 언어를 처음 읽을 때 만든다.
+#[derive(Default)]
 pub struct TagConfigs {
-    rust: TagsConfiguration,
-    python: TagsConfiguration,
-    typescript: TagsConfiguration,
-    tsx: TagsConfiguration,
-    javascript: TagsConfiguration,
-    java: TagsConfiguration,
-    go: TagsConfiguration,
-    csharp: TagsConfiguration,
-    kotlin: TagsConfiguration,
-    c: TagsConfiguration,
-    cpp: TagsConfiguration,
+    cells: [OnceCell<TagsConfiguration>; Lang::COUNT],
+}
+
+fn build_config(lang: Lang) -> Result<TagsConfiguration> {
+    // TypeScript 문법은 JavaScript의 상위 집합이라 JS 태그 질의를 함께 쓴다.
+    let ts_q = || format!("{}\n{}\n{}", tree_sitter_javascript::TAGS_QUERY, tree_sitter_typescript::TAGS_QUERY, TS_EXTRA);
+    let built = match lang {
+        Lang::Rust => TagsConfiguration::new(tree_sitter_rust::LANGUAGE.into(), RUST_TAGS, ""),
+        Lang::Python => TagsConfiguration::new(tree_sitter_python::LANGUAGE.into(), tree_sitter_python::TAGS_QUERY, ""),
+        Lang::TypeScript => TagsConfiguration::new(tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(), &ts_q(), ""),
+        Lang::Tsx => TagsConfiguration::new(tree_sitter_typescript::LANGUAGE_TSX.into(), &ts_q(), ""),
+        Lang::JavaScript => TagsConfiguration::new(tree_sitter_javascript::LANGUAGE.into(), tree_sitter_javascript::TAGS_QUERY, ""),
+        Lang::Java => TagsConfiguration::new(tree_sitter_java::LANGUAGE.into(), &format!("{}\n{}", tree_sitter_java::TAGS_QUERY, JAVA_EXTRA), ""),
+        Lang::Go => TagsConfiguration::new(tree_sitter_go::LANGUAGE.into(), tree_sitter_go::TAGS_QUERY, ""),
+        // 원본 질의의 `@module` 캡처는 tree-sitter-tags가 받지 않아 그 줄만 뺀다
+        Lang::CSharp => TagsConfiguration::new(
+            tree_sitter_c_sharp::LANGUAGE.into(),
+            &format!(
+                "{}\n{}",
+                tree_sitter_c_sharp::TAGS_QUERY.lines().filter(|l| !l.trim_end().ends_with("@module")).collect::<Vec<_>>().join("\n"),
+                CSHARP_EXTRA
+            ),
+            "",
+        ),
+        Lang::Kotlin => TagsConfiguration::new(tree_sitter_kotlin_ng::LANGUAGE.into(), KOTLIN_TAGS, ""),
+        Lang::C => TagsConfiguration::new(tree_sitter_c::LANGUAGE.into(), &format!("{C_EXTRA}\n{}", tree_sitter_c::TAGS_QUERY), ""),
+        Lang::Cpp => TagsConfiguration::new(tree_sitter_cpp::LANGUAGE.into(), &format!("{CPP_EXTRA}\n{}", tree_sitter_cpp::TAGS_QUERY), ""),
+    };
+    built.with_context(|| format!("{} 태그 질의", lang.name()))
 }
 
 impl TagConfigs {
     pub fn new() -> Result<Self> {
-        // TypeScript 문법은 JavaScript의 상위 집합이라 JS 태그 질의를 함께 쓴다.
-        let ts_q = format!(
-            "{}\n{}\n{}",
-            tree_sitter_javascript::TAGS_QUERY,
-            tree_sitter_typescript::TAGS_QUERY,
-            TS_EXTRA
-        );
-        Ok(Self {
-            rust: TagsConfiguration::new(tree_sitter_rust::LANGUAGE.into(), RUST_TAGS, "")
-                .context("rust 태그 질의")?,
-            python: TagsConfiguration::new(
-                tree_sitter_python::LANGUAGE.into(),
-                tree_sitter_python::TAGS_QUERY,
-                "",
-            )
-            .context("python 태그 질의")?,
-            typescript: TagsConfiguration::new(
-                tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
-                &ts_q,
-                "",
-            )
-            .context("typescript 태그 질의")?,
-            tsx: TagsConfiguration::new(tree_sitter_typescript::LANGUAGE_TSX.into(), &ts_q, "")
-                .context("tsx 태그 질의")?,
-            javascript: TagsConfiguration::new(
-                tree_sitter_javascript::LANGUAGE.into(),
-                tree_sitter_javascript::TAGS_QUERY,
-                "",
-            )
-            .context("javascript 태그 질의")?,
-            java: TagsConfiguration::new(
-                tree_sitter_java::LANGUAGE.into(),
-                &format!("{}\n{}", tree_sitter_java::TAGS_QUERY, JAVA_EXTRA),
-                "",
-            )
-            .context("java 태그 질의")?,
-            go: TagsConfiguration::new(tree_sitter_go::LANGUAGE.into(), tree_sitter_go::TAGS_QUERY, "")
-                .context("go 태그 질의")?,
-            // 원본 질의의 `@module` 캡처는 tree-sitter-tags가 받지 않아 그 줄만 뺀다
-            csharp: TagsConfiguration::new(
-                tree_sitter_c_sharp::LANGUAGE.into(),
-                &format!(
-                    "{}\n{}",
-                    tree_sitter_c_sharp::TAGS_QUERY.lines().filter(|l| !l.trim_end().ends_with("@module")).collect::<Vec<_>>().join("\n"),
-                    CSHARP_EXTRA
-                ),
-                "",
-            )
-            .context("c# 태그 질의")?,
-            kotlin: TagsConfiguration::new(tree_sitter_kotlin_ng::LANGUAGE.into(), KOTLIN_TAGS, "").context("kotlin 태그 질의")?,
-            c: TagsConfiguration::new(tree_sitter_c::LANGUAGE.into(), &format!("{C_EXTRA}
-{}", tree_sitter_c::TAGS_QUERY), "").context("c 태그 질의")?,
-            cpp: TagsConfiguration::new(tree_sitter_cpp::LANGUAGE.into(), &format!("{CPP_EXTRA}
-{}", tree_sitter_cpp::TAGS_QUERY), "").context("c++ 태그 질의")?,
-        })
+        Ok(Self::default())
     }
 
-    pub fn get(&self, lang: Lang) -> &TagsConfiguration {
-        match lang {
-            Lang::Rust => &self.rust,
-            Lang::Python => &self.python,
-            Lang::TypeScript => &self.typescript,
-            Lang::Tsx => &self.tsx,
-            Lang::JavaScript => &self.javascript,
-            Lang::Java => &self.java,
-            Lang::Go => &self.go,
-            Lang::CSharp => &self.csharp,
-            Lang::Kotlin => &self.kotlin,
-            Lang::C => &self.c,
-            Lang::Cpp => &self.cpp,
+    pub fn get(&self, lang: Lang) -> Result<&TagsConfiguration> {
+        let cell = &self.cells[lang as usize];
+        if let Some(cfg) = cell.get() {
+            return Ok(cfg);
         }
+        let cfg = build_config(lang)?;
+        Ok(cell.get_or_init(|| cfg))
     }
 }
