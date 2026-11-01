@@ -20,5 +20,6 @@ import "./scenarios/04-agent-tools.mjs";
 import "./scenarios/05-review-security.mjs";
 import "./scenarios/06-editor-lifecycle.mjs";
 import "./scenarios/07-approval-trust.mjs";
+import "./scenarios/08-default-screen.mjs";
 
 await runAll(() => mockServer.close());
