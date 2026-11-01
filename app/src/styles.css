@@ -870,7 +870,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .s-R, .s-C { color: var(--info); }
 .s-\! { color: var(--error); }
 .ab-badge { position: absolute; right: 6px; bottom: 7px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--accent); color: var(--accent-fg); font-size: 10px; font-weight: 700; line-height: 16px; text-align: center; font-variant-numeric: tabular-nums; }
-.diff-page { display: flex; flex-direction: column; }
+.diff-page.active { display: flex; flex-direction: column; }
 .diff-page .diff-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .diff-page .diff { max-height: none; flex: 1; font-size: 13px; line-height: 20px; padding: 6px 0; }
 
