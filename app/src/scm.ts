@@ -44,6 +44,8 @@ let pending: { repos: boolean } | null = null;
 let historyOpen = false;
 let history: Commit[] = [];
 let historyMore = false;
+// 열린 새 브랜치 입력칸의 취소 함수. 있는 동안은 브랜치 줄을 다시 그리지 않는다 (파일이 바뀔 때마다 치던 이름이 사라진다).
+let cancelBranchInput: (() => void) | null = null;
 const expanded = new Set<string>();
 let onCount: (n: number) => void = () => {};
 let onBranch: (text: string | null, title: string) => void = () => {};
@@ -268,8 +270,10 @@ function newBranchInput() {
         toast.error("브랜치를 만들지 못했습니다", errorText(e));
       }
     }
-    void refresh({ repos: true });
+    cancelBranchInput = null;
+    void refresh({ repos: true }); // 미뤄 둔 브랜치 줄도 여기서 그린다
   };
+  cancelBranchInput = () => void finish(false);
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") void finish(true);
     if (e.key === "Escape") void finish(false);
@@ -278,6 +282,7 @@ function newBranchInput() {
 }
 
 function renderSync(r: Repo | null) {
+  if (cancelBranchInput) return;
   const bar = $("#scm-sync");
   if (!r || !last?.repo) {
     bar.classList.add("hidden");
@@ -501,6 +506,7 @@ export async function refresh(opts: { repos?: boolean } = {}) {
 
 /** 프로젝트를 바꾸면 처음부터 */
 export function reset() {
+  cancelBranchInput?.();
   repos = [];
   active = "";
   last = null;
