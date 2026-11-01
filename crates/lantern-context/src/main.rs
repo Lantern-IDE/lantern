@@ -1,11 +1,12 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use lantern_context::assemble::{ContextRequest, DEFAULT_BUDGET};
+use lantern_context::sessions;
 use lantern_context::tokenize::estimate_tokens;
 use lantern_context::Engine;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::time::{Duration, Instant, SystemTime};
 
 #[derive(Parser)]
 #[command(name = "lantern", version, about = "Lantern 맥락 엔진: 로컬 코드 인덱싱과 LLM용 맥락 조립")]
@@ -69,6 +70,25 @@ enum Cmd {
     Graph {
         #[command(subcommand)]
         view: GraphView,
+    },
+    /// 세션 로그 점검용. 개수와 경로만 내고 메시지·명령·코드는 내지 않는다
+    #[command(hide = true)]
+    Sessions {
+        /// 세션별 내용을 JSON으로. 없으면 합계 한 줄
+        #[arg(long)]
+        json: bool,
+        /// 슬러그와 상관없이 모든 Claude 프로젝트 폴더를 본다
+        #[arg(long)]
+        deep: bool,
+        /// 이 일수 안에 바뀐 세션만
+        #[arg(long)]
+        days: Option<u64>,
+        /// claude 또는 codex
+        #[arg(long)]
+        agent: Option<String>,
+        /// 최근 세션 이만큼만
+        #[arg(long)]
+        max_sessions: Option<usize>,
     },
 }
 
@@ -198,6 +218,63 @@ fn main() -> Result<()> {
             };
             println!("{json}");
         }
+        Cmd::Sessions { json, deep, days, agent, max_sessions } => {
+            sessions_report(&cli.root, json, deep, days, agent.as_deref(), max_sessions)?;
+        }
+    }
+    Ok(())
+}
+
+/// 숨은 점검 명령: 이 저장소의 세션 로그를 읽고 개수와 경로만 낸다
+fn sessions_report(root: &Path, json: bool, deep: bool, days: Option<u64>, agent: Option<&str>, max_sessions: Option<usize>) -> Result<()> {
+    let agent = match agent {
+        None => None,
+        Some("claude") => Some(sessions::Agent::ClaudeCode),
+        Some("codex") => Some(sessions::Agent::Codex),
+        Some(other) => anyhow::bail!("--agent는 claude나 codex입니다: {other}"),
+    };
+    let root = std::path::absolute(root)?;
+    let scope = sessions::Scope::for_repo(&root);
+    let since = days.and_then(|d| SystemTime::now().checked_sub(Duration::from_secs(d * 86_400)));
+    let opts = sessions::DiscoverOpts { deep, since, agent };
+    let mut found = sessions::discover(&sessions::Homes::detect(), &scope, &opts);
+    if let Some(n) = max_sessions {
+        found.drain(..found.len().saturating_sub(n));
+    }
+
+    let started = Instant::now();
+    let mut seen = sessions::Seen::default();
+    let mut rows = Vec::new();
+    let mut touching = 0;
+    let (mut events, mut parsed, mut unknown, mut oversized, mut warned, mut files) = (0, 0, 0, 0, 0, 0);
+    for s in &found {
+        let summary = sessions::parse_session(s, &scope, &mut seen);
+        files += s.files.len();
+        events += summary.events.len();
+        parsed += summary.parsed_lines;
+        unknown += summary.unknown_lines;
+        oversized += summary.oversized_lines;
+        warned += summary.format_warnings.len();
+        touching += usize::from(!summary.touched_paths().is_empty());
+        if json {
+            rows.push(summary.counts_json(&scope));
+        }
+    }
+    let elapsed_ms = started.elapsed().as_millis() as u64;
+    if json {
+        let roots: Vec<&str> = scope.roots().collect();
+        let report = serde_json::json!({
+            "roots": roots,
+            "elapsed_ms": elapsed_ms,
+            "log_files": files,
+            "sessions": rows,
+        });
+        println!("{report}");
+    } else {
+        println!(
+            "세션 {}개 (파일 {files}개), 이 저장소를 편집한 세션 {touching}개, 이벤트 {events}개, 줄 {parsed}개 읽음 · 모름 {unknown} · 너무 김 {oversized}, 형식 경고 {warned}개, {elapsed_ms}ms",
+            found.len()
+        );
     }
     Ok(())
 }
