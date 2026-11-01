@@ -8,7 +8,7 @@
 
 use crate::assemble::{self, ContextRequest};
 use crate::check::{self, blobs_with, collect_findings, file_changes, same_family, Confidence, FileChanges, Finding, FindingKind, SymbolChange};
-use crate::git::{git, no_window, refresh_cochange};
+use crate::git::{git, no_window, refresh_cochange, NO_LAZY_FETCH};
 use crate::graph;
 use crate::indexer::{self, is_unindexable, MAX_FILE_BYTES, SKIP_DIRS};
 use crate::lang::Lang;
@@ -283,6 +283,10 @@ impl Sandbox {
             "core.safecrlf=false",
             "core.fsmonitor=false",
             "core.longpaths=true",
+            // Git for Windows는 시스템 설정으로 켜 둔다. 아래에서 시스템 설정을 끄니 빠른 순회를 여기서 켠다
+            "core.fscache=true",
+            // 사용자 설정을 끄면 그 안의 safe.directory도 사라진다. 이 저장소는 이미 사용자의 설정으로 열어 본 것이다
+            "safe.directory=*",
             // 저장소의 심볼릭 링크가 임시 폴더 밖을 가리켜도 따라가지 않게 글 파일로 꺼낸다
             "core.symlinks=false",
             "core.quotepath=off",
@@ -295,10 +299,12 @@ impl Sandbox {
         ] {
             cmd.args(["-c", c]);
         }
-        for k in ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES"] {
+        for k in ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_CONFIG_PARAMETERS", "GIT_CONFIG_COUNT"] {
             cmd.env_remove(k);
         }
-        cmd.env("GIT_LFS_SKIP_SMUDGE", "1").env("GIT_TERMINAL_PROMPT", "0").env("GIT_NO_LAZY_FETCH", "1").env("GIT_OPTIONAL_LOCKS", "0");
+        // 전역 설정의 `filter.*.smudge`는 저장소에 커밋된 `.gitattributes`만으로 꺼내기 때 돌아간다
+        cmd.env("GIT_CONFIG_NOSYSTEM", "1").env("GIT_CONFIG_GLOBAL", "/dev/null");
+        cmd.env("GIT_LFS_SKIP_SMUDGE", "1").env("GIT_TERMINAL_PROMPT", "0").env(NO_LAZY_FETCH, "1").env("GIT_OPTIONAL_LOCKS", "0");
         no_window(&mut cmd);
         cmd
     }
