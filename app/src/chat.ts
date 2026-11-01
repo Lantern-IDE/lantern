@@ -389,14 +389,17 @@ function handle(ev: AgentEvent) {
       const target = isEdit ? diffTarget(ev.detail) : null;
       const newPath = isEdit ? ev.detail.match(/^\+\+\+ (?:b\/)?(.+)$/m)?.[1]?.trim() : undefined;
       if (newPath) task.approvalPaths.set(ev.id, newPath);
-      // 카드 전체가 보이게 맞춘다. 창보다 길면 제목과 diff 머리부터 (버튼 줄은 sticky로 늘 보인다). 사용자가 스크롤했으면 건드리지 않는다
+      // 카드 전체가 보이게 맞춘다. 창보다 길면 제목과 diff 머리부터 (버튼 줄은 sticky로 늘 보인다).
+      // 영향 반경·번역·언어 서버 결과로 늦게 커져도 다시 맞춘다. 사용자가 스크롤했으면 건드리지 않는다
       let scrolledTo = -1;
       const reveal = () => {
         const box = messages();
-        if (task !== active || el.classList.contains("resolved") || (scrolledTo >= 0 && box.scrollTop !== scrolledTo)) return;
+        if (!el.isConnected || el.classList.contains("resolved")) return growth.disconnect();
+        if (task !== active || (scrolledTo >= 0 && box.scrollTop !== scrolledTo)) return;
         el.scrollIntoView({ block: el.offsetHeight > box.clientHeight ? "start" : "nearest" });
         scrolledTo = box.scrollTop;
       };
+      const growth = new ResizeObserver(reveal);
       const el = h("div", { class: "approval", role: "group", "aria-label": ev.title, "data-kind": ev.approval_kind },
         h("div", { class: "ahead" }, codicon(isEdit ? "edit" : isMcp ? "plug" : isFetch ? "globe" : "terminal"), approvalTitle(ev.title, isEdit), h("span", { class: "verdict" })),
         isEdit ? renderDiff(ev.detail) : h("pre", { class: "diff" }, h("div", {}, ev.detail)),
@@ -405,7 +408,6 @@ function handle(ev: AgentEvent) {
           task.log.push({ t: "touched", id: ev.id, names });
           persist(task);
         }, (i) => {
-          reveal();
           // 결정하는 동안 지도는 이 수정이 닿는 곳을 보여 준다
           if (el.classList.contains("resolved") || !i.supported || i.comment_only || i.graph.nodes.length < 2) return;
           task.waitingImpact = i;
@@ -421,6 +423,7 @@ function handle(ev: AgentEvent) {
       setStatus(task, "approval");
       if (task === active && !replaying) {
         reveal();
+        growth.observe(el);
         if (mayTakeFocus()) apply.focus({ preventScroll: true });
       }
       break;
