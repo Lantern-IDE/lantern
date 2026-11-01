@@ -12,6 +12,7 @@ pub mod mcp;
 pub mod parse;
 pub mod secrets;
 pub mod semantic;
+pub mod sessions;
 pub mod store;
 pub mod tokenize;
 
