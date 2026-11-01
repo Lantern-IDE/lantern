@@ -439,6 +439,41 @@ fn shell_edit_takes_the_end_state_from_the_landing_commit() {
 }
 
 #[test]
+fn session_older_than_the_first_commit_starts_from_the_first_commit() {
+    // 첫 커밋이 세션의 결과를 이미 담고 있다. 시작 본문은 기록에만 있다
+    let s = Sandbox::new();
+    s.write("src/lib.rs", LIB_AFTER);
+    s.write("src/dangling_user.rs", DANGLING_USER);
+    s.commit_at(BASE_DATE, &["."]);
+    let mut log = Log::new(&s, "2025-12-30");
+    log.prompt(PROMPT);
+    log.write_file("src/lib.rs", LIB_BEFORE, LIB_AFTER);
+    s.write_session("session-old", &log);
+    let v = s.json(&[]);
+    assert_eq!((v["sessions"]["analyzed"].as_u64(), v["sessions"]["skipped"]["no_base"].as_u64()), (Some(1), Some(0)), "{v:#}");
+    assert_eq!(v["per_session"][0]["base_after_first_edit"], true, "{v:#}");
+    assert_eq!(finding(&v, "old_helper")["path"], "src/dangling_user.rs");
+}
+
+#[test]
+fn session_editing_for_weeks_is_flagged_as_coarse() {
+    let s = Sandbox::new();
+    s.base_repo();
+    let mut log = Log::new(&s, "2026-01-10");
+    log.prompt(PROMPT);
+    log.edit("src/lib.rs", "pub fn old_helper(a: i32)", "pub fn fresh_helper(a: i32)");
+    log.day = "2026-02-01".to_string();
+    log.edit("src/lib.rs", "    a + 1\n", "    a + 2\n");
+    s.write_session("session-long", &log);
+    let v = s.json(&[]);
+    assert_eq!(v["sessions"]["long_sessions"], 1, "{v:#}");
+    assert_eq!(v["per_session"][0]["edit_span_days"], 22, "{v:#}");
+    assert_eq!(v["per_session"][0]["base_after_first_edit"], false, "{v:#}");
+    let text = String::from_utf8_lossy(&s.lantern(&["--lang", "en"]).stdout).into_owned();
+    assert!(text.contains("1 sessions edited for over 14 days"), "{text}");
+}
+
+#[test]
 fn time_cap_reports_k_of_n() {
     let s = Sandbox::new();
     s.base_repo();
