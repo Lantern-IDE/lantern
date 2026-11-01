@@ -22,7 +22,7 @@ pub fn no_window(cmd: &mut Command) -> &mut Command {
     cmd
 }
 
-fn git(root: &Path, args: &[&str]) -> Result<String> {
+pub(crate) fn git(root: &Path, args: &[&str]) -> Result<String> {
     let out = no_window(&mut Command::new("git"))
         .arg("-C")
         .arg(root)
