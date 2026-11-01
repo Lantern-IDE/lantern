@@ -66,6 +66,8 @@ let byId = new Map<string, N>();
 let sim: Simulation<N, L> | null = null;
 let view = { x: 0, y: 0, k: 1 };
 /** 사용자가 지도를 옮기거나 확대했다: 다시 배치해도 화면을 맞추지 않는다 */
+/** 주변 지도의 중심. 폴더를 펼치면 첫 노드가 중심이 아니라서 따로 둔다 (다시 그릴 때 같은 지도를 받으려고) */
+let focusCenter = "";
 let cameraMoved = false;
 let selected: N | null = null;
 let hovered: N | null = null;
@@ -73,6 +75,7 @@ let footprint: Footprint | null = null;
 let footprintTitle = "";
 let impact: Impact | null = null;
 let memoryNotes: MemoryNote[] = [];
+let fitPending = false;
 let truncated = false;
 let visible = false;
 let loaded = false;
@@ -147,11 +150,12 @@ function setGraph(g: Graph, keepPositions = false) {
   byId = new Map(nodes.map((n) => [n.id, n]));
   links = g.edges.filter((e) => byId.has(e.source) && byId.has(e.target)).map((e) => ({ source: e.source, target: e.target, kind: e.kind, weight: e.weight }) as unknown as L);
   truncated = g.truncated;
-  if (!keepPositions || (selected && !byId.has(selected.id))) selected = null;
+  // 노드 객체가 새로 만들어졌다: 고른 노드도 새 것으로 잇는다 (아니면 고리와 이름표가 사라진다)
+  selected = keepPositions && selected ? byId.get(selected.id) ?? null : null;
   hovered = null;
   applyMarks();
   trace("setGraph: layout");
-  layout();
+  layout(keepPositions);
   trace("setGraph: chrome");
   renderChrome();
   trace("setGraph: done");
@@ -231,6 +235,7 @@ function applyImpact(i: Impact) {
   impact = i;
   mode = "impact";
   focusLabel = `${basename(i.path)}${i.touched.length ? ` · ${i.touched.join(", ")}` : ""}`;
+  focusCenter = center;
   view = { x: 0, y: 0, k: 1 };
   cameraMoved = false;
   baseGraph = i.graph;
@@ -374,7 +379,9 @@ export function setFootprint(fp: Footprint | null, title = "") {
 
 // ── 배치 ─────────────────────────────────────────────────
 
-function layout() {
+/** keep: 파일이 바뀌어 다시 그린다. 있던 노드는 제자리에 두고 새 노드만 자리를 찾는다 (보던 곳이 흔들리지 않게) */
+function layout(keep = false) {
+  const unfinished = sim && sim.alpha() > sim.alphaMin() ? sim.alpha() : 0;
   sim?.stop();
   const el = canvas();
   const w = el.clientWidth || 800;
@@ -387,6 +394,7 @@ function layout() {
     const a = typeof l.source === "string" ? l.source : (l.source as N).id;
     const b = typeof l.target === "string" ? l.target : (l.target as N).id;
     degree.set(a, (degree.get(a) ?? 0) + 1);
+  const fresh = new Set(nodes.filter((n) => n.x === undefined));
     degree.set(b, (degree.get(b) ?? 0) + 1);
   }
   const pull = (d: N, base: number) => (degree.get(d.id) ? base : Math.max(base, 0.12));
@@ -402,6 +410,18 @@ function layout() {
     .force("link", forceLink<N, L>(links).id((d) => d.id).distance(reach).strength((l) => (l.kind === "cochange" ? 0.05 : Math.min(0.6, 0.15 + Math.log1p(l.weight) * 0.08))))
     .force("charge", forceManyBody<N>().strength(nodes.length > 200 ? -60 : -160).distanceMax(400))
     .force("collide", forceCollide<N>().radius((d) => (d.kind === "dir" ? d.r * 1.15 + 8 : d.r + 3)).strength(0.9))
+  // 대부분 새 노드면(인덱싱 중에 그린 지도) 처음부터 배치한다
+  const gentle = keep && fresh.size <= nodes.length / 2;
+  if (gentle) {
+    // 새 노드는 연결된 노드 곁에서 시작한다
+    for (const n of fresh) {
+      const near = links.flatMap((l) => (l.source === n.id ? [byId.get(l.target as string)] : l.target === n.id ? [byId.get(l.source as string)] : [])).find((o) => o && o.x !== undefined);
+      const from = near ?? nodes.find((o) => o.group === n.group && o.x !== undefined);
+      const a = Math.random() * Math.PI * 2;
+      n.x = (from?.x ?? anchor.get(n.group)!.x) + Math.cos(a) * 40;
+      n.y = (from?.y ?? anchor.get(n.group)!.y) + Math.sin(a) * 40;
+    }
+  }
     .force("center", forceCenter(0, 0))
     .force("x", forceX<N>((d) => (clustered ? anchor.get(d.group)!.x : 0)).strength((d) => pull(d, clustered ? 0.06 : 0.02)))
     .force("y", forceY<N>((d) => (clustered ? anchor.get(d.group)!.y : 0)).strength((d) => pull(d, clustered ? 0.06 : 0.02)))
@@ -415,9 +435,23 @@ function layout() {
     nodes[0].fx = 0;
     nodes[0].fy = 0;
   }
-  // 처음 몇 번은 그리지 않고 계산만 (첫 화면이 덜 흔들리게)
   trace("layout: tick");
-  sim.tick(Math.min(120, 30 + nodes.length / 4));
+  if (gentle && unfinished) sim.alpha(unfinished); // 아직 배치 중이었다: 하던 만큼만 마저 한다
+  else if (gentle) {
+    sim.stop();
+    const pinned = nodes.filter((n) => !fresh.has(n) && n.fx == null);
+    for (const n of pinned) {
+      n.fx = n.x;
+      n.fy = n.y;
+    }
+    if (fresh.size) sim.tick(60);
+    for (const n of pinned) {
+      n.fx = null;
+      n.fy = null;
+    }
+    // 다 놓였다: 끌어 움직일 때 처음부터 다시 흔들지 않게
+    sim.alpha(sim.alphaMin());
+  } else sim.tick(Math.min(120, 30 + nodes.length / 4)); // 처음 몇 번은 그리지 않고 계산만 (첫 화면이 덜 흔들리게)
   trace(`layout: fit ${nodes.map((n) => `${Math.round(n.x ?? NaN)},${Math.round(n.y ?? NaN)}`).join(" ")}`);
   if (cameraMoved) kick();
   else fit(false);
@@ -445,6 +479,9 @@ export function fit(animate = true) {
     kick();
     return;
   }
+  // 숨어 있는 동안 배치가 끝났다: 크기를 모르니 다시 보일 때 맞춘다
+  fitPending = !w || !hgt;
+  if (fitPending) return;
   const from = { ...view };
   const start = performance.now();
   const step = (now: number) => {
@@ -1002,6 +1039,7 @@ export function reset() {
   byId = new Map();
   selected = null;
   impact = null;
+  else if (fitPending && !cameraMoved) fit(false);
   preview = null;
   footprint = null;
   memoryNotes = [];
@@ -1024,7 +1062,7 @@ export function refreshSoon() {
   clearTimeout(refreshTimer);
   refreshTimer = window.setTimeout(async () => {
     if (held()) return;
-    const fetcher = mode === "overview" ? () => invoke<Graph>("graph_overview", { maxNodes: 400 }) : mode === "focus" && selected === null && nodes[0] ? () => invoke<Graph>("graph_neighborhood", { center: nodes[0].id, limit: 30 }) : null;
+    const fetcher = mode === "overview" ? () => invoke<Graph>("graph_overview", { maxNodes: 400 }) : mode === "focus" && selected === null ? () => invoke<Graph>("graph_neighborhood", { center: focusCenter, limit: 30 }) : null;
     if (!fetcher || !visible) return;
     const my = loadSeq;
     try {
