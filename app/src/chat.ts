@@ -14,6 +14,7 @@ import * as editor from "./editor";
 import { emptyFootprint, type Footprint, type Impact } from "./map";
 import { parseContext } from "./lib/context";
 import { diffTarget } from "./lib/diff";
+import { mayTakeFocus, watchKeys } from "./lib/focusGuard";
 import { testPrompt, type TestTarget } from "./lib/testPrompt";
 import * as i18n from "./i18n";
 export { parseContext } from "./lib/context";
@@ -392,7 +393,7 @@ function handle(ev: AgentEvent) {
       if (task === active && !replaying) {
         // 승인 버튼 줄까지 보이게 한다.
         el.querySelector(".actions")!.scrollIntoView({ block: "nearest" });
-        apply.focus({ preventScroll: true });
+        if (mayTakeFocus()) apply.focus({ preventScroll: true });
       }
       break;
     }
@@ -978,6 +979,7 @@ export function setModelLabel(text: string, warn: boolean) {
 export function init(h_: Hooks) {
   hooks = h_;
   impact.configure({ showImpact: (i) => hooks.showImpact(i), createTests });
+  watchKeys();
   on<AgentEvent>("agent", handle);
   activate(newTask());
   $("#btn-send").addEventListener("click", () => void send());

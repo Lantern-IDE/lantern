@@ -6,6 +6,7 @@ import { Decoration, EditorView, type DecorationSet } from "@codemirror/view";
 import { errorText } from "./api";
 import { h, renderDiff } from "./dom";
 import { codicon } from "./icons";
+import { isEditable, mayTakeFocus } from "./lib/focusGuard";
 import * as toast from "./toast";
 
 interface Result { replacement: string; diff: string }
@@ -117,7 +118,12 @@ export function start(view: EditorView, path: string) {
           renderDiff(result.diff),
           ...[impactRow(result.diff)].filter((x): x is HTMLElement => !!x),
           h("div", { class: "ie-actions" }, ok, again, cancel, h("span", { class: "ie-keys" }, "Ctrl+Enter 적용")));
-        ok.focus();
+        // 지시를 치고 Enter를 한 번 더 눌러도 적용되지 않게, 치는 중이면 입력칸으로 (Ctrl+Enter는 그대로 된다)
+        if (mayTakeFocus()) ok.focus();
+        else if (!isEditable(document.activeElement)) {
+          input.disabled = false;
+          input.focus();
+        }
       }
       place(view, panel, to);
     } catch (e) {
