@@ -95,6 +95,9 @@ enum Cmd {
         /// Stop 훅 기록 합계
         #[arg(long)]
         stats: bool,
+        /// 다음 검사가 쓸 인덱스만 만든다. 훅이 예산을 넘겼을 때 뒤에서 부른다
+        #[arg(long, hide = true)]
+        index_only: bool,
     },
     /// 에이전트 훅 넣기와 빼기
     Hook {
@@ -318,7 +321,11 @@ fn main() -> Result<()> {
             };
             println!("{json}");
         }
-        Cmd::Check { base, json, all, details, strict, stop_hook: _, stats } => check_command(&cli.root, base.as_deref(), json, all, details, strict, stats)?,
+        Cmd::Check { index_only: true, .. } => {
+            let data = hook::data_dir().context("데이터 폴더를 찾지 못했습니다")?;
+            check::refresh_index_only(&cli.root, &data)?;
+        }
+        Cmd::Check { base, json, all, details, strict, stop_hook: _, stats, index_only: _ } => check_command(&cli.root, base.as_deref(), json, all, details, strict, stats)?,
         Cmd::Hook { action } => hook_command(&cli.root, action)?,
         Cmd::Autopsy { days, max_sessions, agent, deep, all, json, lang, details, max_seconds, replay } => {
             let opts = autopsy::AutopsyOpts {

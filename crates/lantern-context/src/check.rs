@@ -6,24 +6,25 @@
 //! 옛 이름은 편집 전 본문에서 얻고 참조는 이름으로 찾는다. 갱신된 인덱스만 보면 이름을 바꾼 함수의 호출자가
 //! 0개로 나오기 때문이다. 이름 기반이라 결과는 늘 "그럴 수 있다"로만 말한다.
 
-use crate::git::{git, no_window};
+use crate::git::{git, no_window, NO_LAZY_FETCH};
 use crate::graph::{framework_marks, is_test_path};
 use crate::indexer::{self, is_unindexable, MAX_FILE_BYTES};
 use crate::lang::Lang;
 use crate::parse::{NewSymbol, Parser};
 use crate::sessions::path_key;
-use crate::store::Store;
+use crate::store::{is_busy, remove_db, Store};
 use anyhow::{bail, Context, Result};
 use regex::Regex;
 use serde::Serialize;
 use std::cell::OnceCell;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
-use std::io::{Read, Write as _};
+use std::io::{BufRead, BufReader, Read, Write as _};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::rc::Rc;
 use std::sync::OnceLock;
+use std::time::Duration;
 
 /// 이보다 많이 정의된 이름은 누구를 가리키는지 몰라 건너뛴다
 pub const MAX_DEFS: i64 = 5;
@@ -919,7 +920,7 @@ pub type ReadFile<'a> = &'a dyn Fn(&str) -> Option<Vec<u8>>;
 
 /// 디스크의 한 폴더에서 읽는다
 pub fn read_under(root: &Path) -> impl Fn(&str) -> Option<Vec<u8>> + '_ {
-    move |rel| std::fs::read(root.join(rel)).ok()
+    move |rel| read_capped(&root.join(rel)).ok().flatten()
 }
 
 /// 본문을 파일마다 한 번만 읽는다
@@ -1190,10 +1191,11 @@ pub fn changed_files(root: &Path, commit: &str) -> Result<Vec<String>> {
     Ok(files)
 }
 
-/// 커밋의 파일 본문 여러 개를 프로세스 하나로 읽는다. 없는 파일은 결과에 없다
+/// 커밋의 파일 본문 여러 개를 프로세스 하나로 읽는다. 없는 파일과 인덱싱 상한보다 큰 파일은 결과에 없다.
+/// 일부만 받은 클론에서 빠진 본문을 받으러 네트워크에 나가지 않고 없는 것으로 친다
 fn read_blobs(root: &Path, commit: &str, paths: &[String]) -> Result<HashMap<String, Vec<u8>>> {
     let mut cmd = Command::new("git");
-    cmd.arg("-C").arg(root).arg("--no-optional-locks");
+    cmd.arg("-C").arg(root).arg("--no-optional-locks").env(NO_LAZY_FETCH, "1");
     blobs_with(cmd, commit, paths)
 }
 
@@ -1210,79 +1212,180 @@ pub(crate) fn blobs_with(mut cmd: Command, commit: &str, paths: &[String]) -> Re
     let writer = std::thread::spawn(move || {
         let _ = stdin.write_all(requests.as_bytes());
     });
-    let mut out = Vec::new();
-    child.stdout.take().context("git 출력")?.read_to_end(&mut out)?;
+    let read = read_batch(BufReader::new(child.stdout.take().context("git 출력")?), paths);
     let _ = writer.join();
     child.wait()?;
+    read
+}
 
+/// `cat-file --batch`의 출력을 차례로 읽는다. 큰 본문은 메모리에 올리지 않고 흘려보낸다
+fn read_batch(mut out: impl BufRead, paths: &[String]) -> Result<HashMap<String, Vec<u8>>> {
     let mut blobs = HashMap::new();
-    let mut pos = 0;
+    let mut head = Vec::new();
     for p in paths {
-        let Some(nl) = out[pos.min(out.len())..].iter().position(|&b| b == b'\n') else { break };
-        let head = String::from_utf8_lossy(&out[pos..pos + nl]).into_owned();
-        pos += nl + 1;
-        let mut words = head.rsplit(' ');
+        head.clear();
+        if out.read_until(b'\n', &mut head)? == 0 {
+            break;
+        }
+        let head = String::from_utf8_lossy(&head);
+        let mut words = head.trim_end().rsplit(' ');
         let (size, ty) = (words.next().unwrap_or(""), words.next().unwrap_or(""));
         // `<이름> missing`은 크기가 없다
-        let Ok(size) = size.parse::<usize>() else { continue };
-        let Some(body) = out.get(pos..pos + size) else { break };
-        if ty == "blob" {
-            blobs.insert(p.clone(), body.to_vec());
+        let Ok(size) = size.parse::<u64>() else { continue };
+        if ty == "blob" && size <= MAX_FILE_BYTES {
+            let mut body = vec![0; size as usize];
+            out.read_exact(&mut body)?;
+            blobs.insert(p.clone(), body);
+        } else {
+            std::io::copy(&mut out.by_ref().take(size), &mut std::io::sink())?;
         }
-        pos += size + 1;
+        // 본문 뒤의 줄바꿈
+        let rest = out.fill_buf()?.len();
+        out.consume(rest.min(1));
     }
     Ok(blobs)
 }
 
+/// 커밋에 있는 파일 (`path_key` → git의 표기). 못 읽으면 비어 있다
+fn tree_paths(root: &Path, commit: &str) -> HashMap<String, String> {
+    let Ok(list) = git(root, &["ls-tree", "-r", "--name-only", "-z", commit]) else { return HashMap::new() };
+    list.split('\0').filter(|p| !p.is_empty()).map(|p| (key(p), p.to_string())).collect()
+}
+
+/// 세션 로그의 경로를 git의 표기로 바꾼다. 로그는 에이전트가 쓴 대소문자 그대로인데 Windows에서는 그래도 같은 파일이고,
+/// git은 표기가 다르면 찾지 못한다. 커밋에 없는 파일은 그대로 둔다
+pub fn git_spelling(root: &Path, commit: &str, files: Vec<String>) -> Vec<String> {
+    if !cfg!(windows) {
+        return files;
+    }
+    let tree = tree_paths(root, commit);
+    files.into_iter().map(|f| tree.get(&key(&f)).cloned().unwrap_or(f)).collect()
+}
+
+/// 이 크기 안의 디스크 파일을 읽는다. 크면 `Ok(None)`. 큰 파일을 메모리에 올린 뒤에 버리지 않게 먼저 크기를 본다
+pub(crate) fn read_capped(path: &Path) -> std::io::Result<Option<Vec<u8>>> {
+    if std::fs::metadata(path)?.len() > MAX_FILE_BYTES {
+        return Ok(None);
+    }
+    std::fs::read(path).map(Some)
+}
+
+/// 파일별 비교 결과
+#[derive(Debug, Default)]
+pub struct Analyzed {
+    pub changes: Vec<FileChanges>,
+    /// 바뀌었지만 비교하지 못한 코드 파일: 너무 크거나, 바이너리이거나, 읽거나 파싱하지 못했다
+    pub skipped: usize,
+}
+
 /// 파일들의 시작 본문과 지금 디스크 본문을 비교한다.
 /// `known`은 로그에 있던 시작 본문 (`path_key` 기준). 없으면 `commit`에서 읽고, 거기도 없으면 새 파일이다.
-pub fn analyze_files(root: &Path, commit: &str, files: &[String], known: &HashMap<String, String>, parser: &mut Parser) -> Result<Vec<FileChanges>> {
+pub fn analyze_files(root: &Path, commit: &str, files: &[String], known: &HashMap<String, String>, parser: &mut Parser) -> Result<Analyzed> {
     let code: Vec<&String> = files.iter().filter(|f| Lang::from_path(Path::new(f)).is_some()).collect();
     let from_git: Vec<String> = code.iter().filter(|f| !known.contains_key(&key(f))).map(|f| (*f).clone()).collect();
     let blobs = read_blobs(root, commit, &from_git)?;
-    let mut out = Vec::new();
+    // 못 읽은 파일 중 커밋에 있는 것은 새 파일이 아니라 본문을 모르는 것이다 (너무 크거나, 일부만 받은 클론)
+    let tree = if from_git.iter().any(|f| !blobs.contains_key(f)) { tree_paths(root, commit) } else { HashMap::new() };
+    let mut out = Analyzed::default();
     for f in code {
         let Some(lang) = Lang::from_path(Path::new(f)) else { continue };
-        let before: &[u8] = match known.get(&key(f)) {
-            Some(text) => text.as_bytes(),
-            None => blobs.get(f).map_or(&[], Vec::as_slice),
+        let before: &[u8] = match (known.get(&key(f)), blobs.get(f)) {
+            (Some(text), _) => text.as_bytes(),
+            (None, Some(body)) => body,
+            (None, None) if tree.contains_key(&key(f)) => {
+                out.skipped += 1;
+                continue;
+            }
+            (None, None) => &[],
         };
-        let after = match std::fs::read(root.join(f)) {
-            Ok(b) => b,
+        let after = match read_capped(&root.join(f)) {
+            Ok(Some(b)) => b,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
-            Err(_) => continue,
+            Ok(None) | Err(_) => {
+                out.skipped += 1;
+                continue;
+            }
         };
+        if before == after.as_slice() {
+            continue;
+        }
         let too_big = |b: &[u8]| b.len() as u64 > MAX_FILE_BYTES || is_unindexable(b);
-        if before == after.as_slice() || too_big(before) || too_big(&after) {
+        if too_big(before) || too_big(&after) {
+            out.skipped += 1;
             continue;
         }
         // 파싱하지 못한 파일은 건너뛴다. 손댄 파일로는 남는다
-        if let Ok(fc) = file_changes(parser, f, lang, before, &after) {
-            out.push(fc);
+        match file_changes(parser, f, lang, before, &after) {
+            Ok(fc) => out.changes.push(fc),
+            Err(_) => out.skipped += 1,
         }
     }
     Ok(out)
 }
 
-/// 이 검사가 쓸 인덱스. 저장소에 `.lantern` 인덱스가 있으면 그것을, 없으면 저장소를 건드리지 않게 데이터 폴더에 둔다.
-pub fn index_db(root: &Path, data: &Path) -> Result<PathBuf> {
+/// 이 검사가 쓸 인덱스와 이름만 담을지. 저장소에 `.lantern` 인덱스가 있거나 위치를 정해 줬으면 사용자가 고른 인덱스라 그대로 쓴다.
+/// 없으면 저장소를 건드리지 않게 데이터 폴더에 두는데, 사용자가 만들라고 한 적이 없으니 코드를 담지 않는다
+fn index_db(root: &Path, data: &Path) -> Result<(PathBuf, bool)> {
     if std::env::var_os("LANTERN_INDEX_DIR").is_some_and(|d| !d.is_empty()) {
-        return crate::index_path(root);
+        return Ok((crate::index_path(root)?, false));
     }
     let own = root.join(crate::PROJECT_DIR).join("index.db");
     if own.exists() {
-        return Ok(own);
+        return Ok((own, false));
     }
     let dir = data.join("index");
     std::fs::create_dir_all(&dir)?;
-    Ok(crate::keyed_index(&dir, root))
+    Ok((crate::keyed_index(&dir, root), true))
 }
 
-/// 증분 갱신한 인덱스를 연다
-pub fn refreshed_index(root: &Path, data: &Path, parser: &mut Parser) -> Result<Store> {
-    let store = Store::open(&index_db(root, data)?).context("인덱스 열기")?;
-    indexer::index_project(root, &store, parser)?;
-    Ok(store)
+/// `lantern check`가 다른 프로세스의 쓰기를 기다리는 시간
+pub const INDEX_WAIT: Duration = Duration::from_secs(5);
+
+/// 검사가 쓸 인덱스
+pub struct CheckIndex {
+    pub store: Store,
+    /// 다른 프로세스가 쓰고 있어 갱신하지 못하고 마지막으로 저장된 것을 쓴다
+    pub stale: bool,
+}
+
+/// 증분 갱신한 인덱스를 연다. 다른 프로세스가 `wait`보다 오래 쓰고 있으면 저장된 인덱스로 본다.
+/// 저장된 것이 비어 있으면 볼 것이 없으니 오류다
+pub fn refreshed_index(root: &Path, data: &Path, parser: &mut Parser, wait: Duration) -> Result<CheckIndex> {
+    let (path, names_only) = index_db(root, data)?;
+    refresh_at(&path, names_only, root, parser, wait)
+}
+
+fn refresh_at(path: &Path, names_only: bool, root: &Path, parser: &mut Parser, wait: Duration) -> Result<CheckIndex> {
+    let store = if names_only { Store::open_names_only(path) } else { Store::open(path) }.context("인덱스 열기")?;
+    store.set_busy_wait(wait)?;
+    match indexer::index_project(root, &store, parser) {
+        Ok(_) => Ok(CheckIndex { store, stale: false }),
+        Err(e) if is_busy(&e) && !store.files()?.is_empty() => Ok(CheckIndex { store, stale: true }),
+        Err(e) => Err(e),
+    }
+}
+
+/// `lantern check --index-only`: 다음 검사가 쓸 인덱스를 미리 만든다
+pub fn refresh_index_only(dir: &Path, data: &Path) -> Result<()> {
+    refreshed_index(&repo_root(dir)?, data, &mut Parser::new()?, INDEX_WAIT).map(|_| ())
+}
+
+/// 데이터 폴더의 인덱스를 지운다. `root`가 없으면 전부. 지운 것을 말하는 줄을 돌려준다
+pub fn forget_index(root: Option<&Path>, data: &Path) -> Vec<String> {
+    let dir = data.join("index");
+    let (what, result) = match root {
+        Some(root) => {
+            let db = crate::keyed_index(&dir, root);
+            (db.clone(), remove_db(&db))
+        }
+        None if dir.exists() => (dir.clone(), std::fs::remove_dir_all(&dir).map(|()| true)),
+        None => (dir.clone(), Ok(false)),
+    };
+    match result {
+        Ok(true) => vec![format!("Deleted the index of symbol names: {}", what.display())],
+        Ok(false) => Vec::new(),
+        Err(e) => vec![format!("Could not delete the index of symbol names: {} ({e})", what.display())],
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -1291,6 +1394,10 @@ pub struct CheckReport {
     pub commit: String,
     pub changed_files: usize,
     pub changed_code_files: usize,
+    /// 바뀌었지만 비교하지 못한 코드 파일
+    pub skipped_files: usize,
+    /// 다른 프로세스가 인덱스를 쓰고 있어 마지막으로 저장된 인덱스로 봤다
+    pub index_stale: bool,
     pub removed: usize,
     pub signature: usize,
     pub body: usize,
@@ -1320,15 +1427,25 @@ impl CheckReport {
 
     /// 기본은 기준을 못 넘긴 종류를 빼고, `details`면 전부 보여 준다
     pub fn to_text(&self, details: bool) -> String {
-        let files = plural(self.changed_code_files, "changed code file");
+        let files = plural(self.changed_code_files.saturating_sub(self.skipped_files), "changed code file");
         let short = &self.commit[..self.commit.len().min(10)];
         let hidden = if details { 0 } else { self.details_only };
         let total = self.total_findings - hidden;
         let shown: Vec<&Finding> = self.findings.iter().filter(|f| details || !f.details_only).collect();
         let hidden_note = (hidden > 0).then(|| format!("{} below the precision bar, hidden. --details shows them.", plural(hidden, "signature warning")));
+        let mut notes: Vec<String> = Vec::new();
+        if self.skipped_files > 0 {
+            let more = plural(self.skipped_files, "more changed code file");
+            notes.push(format!("{more} not checked: too big, binary or unreadable."));
+        }
+        if self.index_stale {
+            notes.push("Another process is writing the index, so this used the last saved one.".to_string());
+        }
         if total == 0 {
-            let mut out = format!("lantern check: nothing left behind in {files} since {} ({short}). Name based.\n", self.base);
-            if let Some(note) = hidden_note {
+            // 숨긴 경고가 있으면 "아무것도 없다"고 말할 수 없다
+            let what = if hidden > 0 { "no removed names still referenced" } else { "no possible misses found" };
+            let mut out = format!("lantern check: {what} in {files} since {} ({short}). Name based, so this is not proof.\n", self.base);
+            for note in notes.iter().chain(&hidden_note) {
                 let _ = writeln!(out, "{note}");
             }
             return out;
@@ -1343,7 +1460,7 @@ impl CheckReport {
         if total > shown.len() {
             let _ = writeln!(out, "\nShowing {} of {total}. --all shows the rest.", shown.len());
         }
-        if let Some(note) = hidden_note {
+        for note in notes.iter().chain(&hidden_note) {
             let _ = writeln!(out, "\n{note}");
         }
         let _ = writeln!(out, "\n{METHOD}\n{NOT_COVERED}");
@@ -1357,10 +1474,12 @@ pub fn run_check(dir: &Path, data: &Path, base: &str, show_all: bool) -> Result<
     let commit = resolve_commit(&root, base)?;
     let files = changed_files(&root, &commit)?;
     let mut parser = Parser::new()?;
-    let changes = analyze_files(&root, &commit, &files, &HashMap::new(), &mut parser)?;
+    let Analyzed { changes, skipped } = analyze_files(&root, &commit, &files, &HashMap::new(), &mut parser)?;
+    let mut index_stale = false;
     let mut all = if changes.iter().any(FileChanges::may_leave_behind) {
-        let store = refreshed_index(&root, data, &mut parser)?;
-        collect_findings(&store, &read_under(&root), &changes, &files, &[], false)?
+        let index = refreshed_index(&root, data, &mut parser, INDEX_WAIT)?;
+        index_stale = index.stale;
+        collect_findings(&index.store, &read_under(&root), &changes, &files, &[], false)?
     } else {
         Vec::new()
     };
@@ -1375,6 +1494,8 @@ pub fn run_check(dir: &Path, data: &Path, base: &str, show_all: bool) -> Result<
         commit,
         changed_files: files.len(),
         changed_code_files: files.iter().filter(|f| Lang::from_path(Path::new(f)).is_some()).count(),
+        skipped_files: skipped,
+        index_stale,
         removed: count(|c| matches!(c, SymbolChange::Removed { .. })),
         signature: count(|c| matches!(c, SymbolChange::Signature { .. })),
         body: count(|c| matches!(c, SymbolChange::Body { .. })),
@@ -1983,6 +2104,8 @@ mod tests {
             commit: "0123456789abcdef".into(),
             changed_files: 1,
             changed_code_files: 1,
+            skipped_files: 0,
+            index_stale: false,
             removed: 0,
             signature: 0,
             body: 0,
@@ -2003,7 +2126,9 @@ mod tests {
 
         let only_stale = report(stale.clone(), 1);
         let text = only_stale.to_text(false);
-        assert!(text.contains("nothing left behind") && text.contains("1 signature warning below the precision bar") && !text.contains("src/show.rs"), "{text}");
+        // 숨긴 경고가 있으면 "아무것도 없다"고 하지 않는다
+        assert!(text.contains("no removed names still referenced") && text.contains("not proof") && !text.contains("no possible misses"), "{text}");
+        assert!(text.contains("1 signature warning below the precision bar") && !text.contains("src/show.rs"), "{text}");
         assert!(only_stale.to_text(true).contains("MEDIUM  src/show.rs:2"), "{}", only_stale.to_text(true));
         assert_eq!(only_stale.high_findings(), 0);
 
@@ -2013,6 +2138,161 @@ mod tests {
         let text = both.to_text(true);
         assert!(text.contains("2 possible misses") && text.contains("HIGH") && text.contains("MEDIUM") && !text.contains("below the precision bar"), "{text}");
         assert_eq!(both.high_findings(), 1);
+    }
+
+    #[test]
+    fn notes_say_what_the_report_could_not_look_at() {
+        let quiet = |skipped_files, index_stale| CheckReport { skipped_files, index_stale, changed_code_files: 3, ..report(Vec::new(), 0) };
+        let text = quiet(0, false).to_text(false);
+        assert!(text.contains("no possible misses found in 3 changed code files") && text.contains("not proof") && text.lines().count() == 1, "{text}");
+        let text = quiet(1, false).to_text(false);
+        assert!(text.contains("in 2 changed code files") && text.contains("1 more changed code file not checked"), "{text}");
+        let text = quiet(0, true).to_text(false);
+        assert!(text.contains("last saved"), "{text}");
+    }
+
+    #[test]
+    fn dropping_an_overload_breaks_the_calls_it_took() {
+        let before = "class Svc {\n  public int doWork(int a) { return a; }\n  public int doWork(int a, int b) { return a + b; }\n}\n";
+        let after = "class Svc {\n  public int doWork(int a) { return a; }\n}\n";
+        let c = changes(Lang::Java, before, after);
+        assert_eq!((signatures(&c), removed(&c)), (vec!["doWork"], vec![]), "{c:?}");
+        // 이름만 같은 호출도 찾지만 어차피 `--details`에만 나오는 종류다
+        let caller = ("Use.java", "class Use {\n  int go(Svc s) { return s.doWork(1, 2); }\n}\n");
+        assert!(flagged(("Svc.java", before, after), caller));
+    }
+
+    #[test]
+    fn dropping_a_duplicate_of_the_same_shape_is_not_a_change() {
+        // 선언과 정의 중 선언만 지웠다. 호출은 그대로 된다
+        let before = "int go_on(int a);\nint go_on(int a) { return a; }\n";
+        let after = "int go_on(int a) { return a; }\n";
+        for lang in [Lang::C, Lang::Cpp] {
+            assert!(signatures(&changes(lang, before, after)).is_empty(), "{lang:?}: {:?}", changes(lang, before, after));
+        }
+        // Go에서 다른 타입의 같은 이름 메서드가 남아도 이 타입의 메서드는 사라졌다
+        let before = "package a\n\nfunc (a *Aa) GoOn() int { return 1 }\nfunc (b *Bb) GoOn() int { return 2 }\n";
+        assert_eq!(signatures(&changes(Lang::Go, before, "package a\n\nfunc (b *Bb) GoOn() int { return 2 }\n")), ["GoOn"]);
+        // 남은 쪽이 기본값으로 그 호출을 받으면 괜찮고, 받지 못하면 바뀐 것이다
+        let before = "class A { int goOn(int a) { return a; } int goOn(int a, int b) { return b; } }";
+        assert!(signatures(&changes(Lang::CSharp, before, "class A { int goOn(int a, int b = 0) { return b; } }")).is_empty());
+        assert_eq!(signatures(&changes(Lang::CSharp, before, "class A { int goOn(int a, int b) { return b; } }")), ["goOn"]);
+        // 파일 안의 같은 이름 impl 블록은 호출 모양이 없다
+        let before = "struct Aa;\nimpl Aa { fn one_fn() {} }\nimpl Aa { fn two_fn() {} }\n";
+        let after = "struct Aa;\nimpl Aa { fn one_fn() {} }\n";
+        assert!(signatures(&changes(Lang::Rust, before, after)).is_empty());
+    }
+
+    #[test]
+    fn go_receiver_names_do_not_matter_but_types_do() {
+        let (before, renamed) = ("package a\n\nfunc (u *User) LookupIt(a int) int { return a }\n", "package a\n\nfunc (usr *User) LookupIt(a int) int { return a }\n");
+        assert!(signatures(&changes(Lang::Go, before, renamed)).is_empty());
+        // 받는 쪽 이름 없음, 제네릭
+        assert!(signatures(&changes(Lang::Go, before, "package a\n\nfunc (*User) LookupIt(a int) int { return a }\n")).is_empty());
+        assert!(signatures(&changes(Lang::Go, "package a\n\nfunc (m Map[K, V]) GetIt() V { return m.v }\n", "package a\n\nfunc (mm Map[K, V]) GetIt() V { return mm.v }\n")).is_empty());
+        // 다른 타입의 메서드나 값/포인터 차이는 호출할 수 있는 곳이 달라진다
+        for other in ["package a\n\nfunc (u User) LookupIt(a int) int { return a }\n", "package a\n\nfunc (a *Account) LookupIt(a int) int { return a }\n"] {
+            assert_eq!(signatures(&changes(Lang::Go, before, other)), ["LookupIt"], "{other}");
+        }
+    }
+
+    #[test]
+    fn batch_output_skips_big_and_missing_entries_without_keeping_them() {
+        let huge = MAX_FILE_BYTES as usize + 1;
+        let mut out = b"aaaa blob 3\nabc\nmissing.rs missing\nbbbb blob ".to_vec();
+        out.extend_from_slice(format!("{huge}\n").as_bytes());
+        out.extend(std::iter::repeat_n(b'x', huge));
+        out.extend_from_slice(b"\ncccc tree 2\nzz\ndddd blob 0\n\neeee blob 2\nok\n");
+        let paths: Vec<String> = ["a.rs", "missing.rs", "big.rs", "dir", "empty.rs", "last.rs"].iter().map(|s| s.to_string()).collect();
+        let got = read_batch(&out[..], &paths).unwrap();
+        assert_eq!(got.get("a.rs").map(Vec::as_slice), Some(&b"abc"[..]));
+        assert_eq!(got.get("empty.rs").map(Vec::as_slice), Some(&b""[..]));
+        assert_eq!(got.get("last.rs").map(Vec::as_slice), Some(&b"ok"[..]));
+        assert_eq!(got.len(), 3, "{:?}", got.keys());
+    }
+
+    #[test]
+    fn read_capped_does_not_read_past_the_limit() {
+        let dir = tempfile::tempdir().unwrap();
+        let (small, big) = (dir.path().join("small.js"), dir.path().join("big.js"));
+        std::fs::write(&small, "x").unwrap();
+        std::fs::File::create(&big).unwrap().set_len(MAX_FILE_BYTES + 1).unwrap();
+        assert_eq!(read_capped(&small).unwrap().as_deref(), Some(&b"x"[..]));
+        assert!(read_capped(&big).unwrap().is_none());
+        assert!(read_capped(&dir.path().join("none.js")).is_err());
+    }
+
+    /// 시험용 폴더: 코드 파일 하나와 인덱스 파일 경로. 환경 변수를 보는 [`index_db`]를 거치지 않는다
+    fn index_dirs() -> (tempfile::TempDir, PathBuf, PathBuf) {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("repo");
+        std::fs::create_dir_all(root.join("src")).unwrap();
+        std::fs::write(root.join("src/lib.rs"), OLD_LIB).unwrap();
+        let db = dir.path().join("index.db");
+        (dir, root, db)
+    }
+
+    fn refresh(db: &Path, root: &Path, wait: Duration) -> Result<CheckIndex> {
+        with_parser(|p| refresh_at(db, true, root, p, wait))
+    }
+
+    #[test]
+    fn a_busy_index_falls_back_to_the_saved_one() {
+        let (_dir, root, db) = index_dirs();
+        assert!(!refresh(&db, &root, INDEX_WAIT).unwrap().stale);
+
+        std::fs::write(root.join("src/more.rs"), CALLER).unwrap();
+        let holder = rusqlite::Connection::open(&db).unwrap();
+        holder.execute_batch("BEGIN IMMEDIATE").unwrap();
+        let got = refresh(&db, &root, Duration::from_millis(100)).unwrap();
+        assert!(got.stale);
+        let files = got.store.files().unwrap();
+        assert!(files.contains_key("src/lib.rs") && !files.contains_key("src/more.rs"), "{:?}", files.keys());
+        drop(got);
+        holder.execute_batch("ROLLBACK").unwrap();
+
+        let got = refresh(&db, &root, INDEX_WAIT).unwrap();
+        assert!(!got.stale && got.store.files().unwrap().contains_key("src/more.rs"));
+    }
+
+    #[test]
+    fn a_busy_empty_index_is_an_error_not_a_clean_report() {
+        let (_dir, root, db) = index_dirs();
+        drop(Store::open_names_only(&db).unwrap());
+        let holder = rusqlite::Connection::open(&db).unwrap();
+        holder.execute_batch("BEGIN IMMEDIATE").unwrap();
+        assert!(refresh(&db, &root, Duration::from_millis(100)).is_err());
+        holder.execute_batch("ROLLBACK").unwrap();
+    }
+
+    #[test]
+    fn nothing_to_write_means_no_wait_on_a_busy_index() {
+        let (_dir, root, db) = index_dirs();
+        drop(refresh(&db, &root, INDEX_WAIT).unwrap());
+        let holder = rusqlite::Connection::open(&db).unwrap();
+        holder.execute_batch("BEGIN IMMEDIATE").unwrap();
+        // 쓰려고 했다면 잠금을 못 잡아 stale로 나온다
+        assert!(!refresh(&db, &root, Duration::from_millis(50)).unwrap().stale);
+        holder.execute_batch("ROLLBACK").unwrap();
+    }
+
+    #[test]
+    fn an_old_index_with_code_in_it_is_replaced() {
+        let (_dir, root, db) = index_dirs();
+        // 이름만 담는다는 표시가 없는 예전 파일
+        let old = Store::open(&db).unwrap();
+        with_parser(|p| indexer::index_project(&root, &old, p)).unwrap();
+        drop(old);
+        let count = |sql: &str| rusqlite::Connection::open(&db).unwrap().query_row(sql, [], |r| r.get::<_, i64>(0)).unwrap();
+        const WITH_CODE: &str = "SELECT COUNT(*) FROM symbols_fts WHERE body <> '' OR terms <> ''";
+        assert!(count(WITH_CODE) > 0);
+
+        let got = refresh(&db, &root, INDEX_WAIT).unwrap();
+        assert!(got.store.files().unwrap().contains_key("src/lib.rs"));
+        assert_eq!(got.store.symbols_by_name("compute_total", 2).unwrap().len(), 1, "이름은 남는다");
+        drop(got);
+        assert_eq!(count(WITH_CODE), 0);
+        assert_eq!(count("SELECT COUNT(*) FROM symbols WHERE signature <> '' OR doc IS NOT NULL"), 0);
     }
 
     #[test]

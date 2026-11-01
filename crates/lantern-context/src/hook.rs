@@ -2,6 +2,7 @@
 //!
 //! Stop 훅은 에이전트를 세울 수 있어서 조심한다. 어떤 오류든 종료 코드 0에 출력 없음으로 끝나고(fail open),
 //! 세션마다 한 번만 막고, 예산 안에 못 끝내면 그냥 지나간다. 기록에는 개수와 해시만 남기고 이름과 경로는 남기지 않는다.
+//! 검사에 쓰는 인덱스는 저장소에 없으면 데이터 폴더에 두는데, 거기에는 심볼 이름과 경로만 있고 코드는 없다.
 //! 막는 것은 측정으로 정밀도 기준을 넘긴 종류뿐이다([`BlockPolicy::MEASURED`]). 지금은 그런 종류가 없어 세우지 않는다.
 
 use crate::check::{self, plural, BlockPolicy, Finding, FindingKind};
@@ -30,6 +31,8 @@ const MAX_INPUT: u64 = 1024 * 1024;
 const MAX_TRANSCRIPT_BYTES: u64 = 64 * 1024 * 1024;
 const HOOK_TIMEOUT_SECS: u64 = 10;
 const HOOK_MARK: &str = "check --stop-hook";
+/// 다른 프로세스가 인덱스를 쓰는 동안 기다리는 시간. 넘기면 저장된 인덱스로 본다. 예산 안에 끝나야 한다
+const INDEX_WAIT: Duration = Duration::from_millis(500);
 /// 막는 이유에 넣을 줄 수
 const MAX_REASON_LINES: usize = 8;
 /// 이보다 오래된 세션 상태는 지운다
@@ -292,9 +295,12 @@ pub fn stop_hook_with(input: &str, data: &Path, fallback_root: &Path, base: Opti
     };
 
     let diff = check::changed_files(&root, &commit)?;
-    let files = session_files.clone().unwrap_or_else(|| diff.clone());
+    let files = match session_files {
+        Some(f) => check::git_spelling(&root, &commit, f),
+        None => diff.clone(),
+    };
     let mut parser = Parser::new()?;
-    let changes = check::analyze_files(&root, &commit, &files, &before, &mut parser)?;
+    let changes = check::analyze_files(&root, &commit, &files, &before, &mut parser)?.changes;
     line.code_files = changes.len() as u32;
 
     let findings = if check::may_leave_behind(&changes) {
@@ -302,9 +308,9 @@ pub fn stop_hook_with(input: &str, data: &Path, fallback_root: &Path, base: Opti
         let read: Vec<String> = log.map(|s| s.read_paths().into_iter().filter_map(rel).collect()).unwrap_or_default();
         let reads_known = log.is_some_and(|s| s.reads_known);
         progress.set(Some(root.clone()));
-        let store = check::refreshed_index(&root, data, &mut parser)?;
+        let index = check::refreshed_index(&root, data, &mut parser, INDEX_WAIT)?;
         progress.set(None);
-        check::left_behind(&store, &check::read_under(&root), &changes, &touched, &read, reads_known)?
+        check::left_behind(&index.store, &check::read_under(&root), &changes, &touched, &read, reads_known)?
     } else {
         Vec::new()
     };
@@ -398,15 +404,11 @@ fn keep_stdio_from_children() {
 #[cfg(not(windows))]
 fn keep_stdio_from_children() {}
 
-/// 훅이 기다리지 않는 낮은 우선순위 인덱싱
+/// 훅이 기다리지 않는 낮은 우선순위 인덱싱. 훅과 같은 인덱스를 같은 규칙으로 만든다 (데이터 폴더면 이름만)
 fn index_in_background(root: &Path, data: &Path) {
     let Ok(exe) = std::env::current_exe() else { return };
     let mut cmd = Command::new(exe);
-    cmd.arg("-C").arg(root).arg("index").stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
-    // 저장소에 인덱스가 없으면 훅과 같은 데이터 폴더 인덱스로
-    if std::env::var_os("LANTERN_INDEX_DIR").is_none() && !root.join(crate::PROJECT_DIR).join("index.db").exists() {
-        cmd.env("LANTERN_INDEX_DIR", data.join("index"));
-    }
+    cmd.arg("-C").arg(root).args(["check", "--index-only"]).env("LANTERN_DATA_DIR", data).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
