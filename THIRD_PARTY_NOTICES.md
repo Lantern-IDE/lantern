@@ -12,7 +12,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - **Pretendard (글꼴)** — OFL-1.1 — https://github.com/orioncactus/pretendard
   Pretendard는 SIL Open Font License 1.1에 따라 배포됩니다.
 
-## Rust 크레이트 (369개)
+## Rust 크레이트 (375개)
 
 ### (MIT OR Apache-2.0) AND Unicode-3.0
 
@@ -162,6 +162,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - quick-xml 0.42.0 — https://github.com/tafia/quick-xml
 - rfd 0.16.0 — https://github.com/PolyMeilex/rfd
 - rusqlite 0.40.2 — https://github.com/rusqlite/rusqlite
+- ruzstd 0.9.1 — https://github.com/KillingSpark/zstd-rs
 - schemars 0.8.22 — https://github.com/GREsau/schemars
 - schemars 0.9.0 — https://github.com/GREsau/schemars
 - schemars 1.2.2 — https://github.com/GREsau/schemars
@@ -181,16 +182,20 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - tracing-core 0.1.36 — https://github.com/tokio-rs/tracing
 - trash 5.2.9 — https://github.com/ArturKovacs/trash
 - tree-sitter 0.25.10 — https://github.com/tree-sitter/tree-sitter
+- tree-sitter-c 0.24.2 — https://github.com/tree-sitter/tree-sitter-c
 - tree-sitter-c-sharp 0.23.5 — https://github.com/tree-sitter/tree-sitter-c-sharp
+- tree-sitter-cpp 0.23.4 — https://github.com/tree-sitter/tree-sitter-cpp
 - tree-sitter-go 0.25.0 — https://github.com/tree-sitter/tree-sitter-go
 - tree-sitter-java 0.23.5 — https://github.com/tree-sitter/tree-sitter-java
 - tree-sitter-javascript 0.25.0 — https://github.com/tree-sitter/tree-sitter-javascript
+- tree-sitter-kotlin-ng 1.1.0 — https://github.com/tree-sitter-grammars/tree-sitter-kotlin
 - tree-sitter-language 0.1.8 — https://github.com/tree-sitter/tree-sitter
 - tree-sitter-python 0.25.0 — https://github.com/tree-sitter/tree-sitter-python
 - tree-sitter-rust 0.24.2 — https://github.com/tree-sitter/tree-sitter-rust
 - tree-sitter-tags 0.25.10 — https://github.com/tree-sitter/tree-sitter
 - tree-sitter-typescript 0.23.2 — https://github.com/tree-sitter/tree-sitter-typescript
 - try-lock 0.2.5 — https://github.com/seanmonstar/try-lock
+- twox-hash 2.1.5 — https://github.com/shepmaster/twox-hash
 - urlpattern 0.3.0 — https://github.com/denoland/rust-urlpattern
 - want 0.3.1 — https://github.com/seanmonstar/want
 - webview2-com 0.38.2 — https://github.com/wravery/webview2-rs
@@ -402,6 +407,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 - bitflags 1.3.2 — https://github.com/bitflags/bitflags
 - bs58 0.5.1 — https://github.com/Nullus157/bs58-rs
+- ctrlc 3.5.2 — https://github.com/Detegr/rust-ctrlc
 - downcast-rs 1.2.1 — https://github.com/marcianx/downcast-rs
 - fallible-iterator 0.3.0 — https://github.com/sfackler/rust-fallible-iterator
 - fallible-streaming-iterator 0.1.9 — https://github.com/sfackler/fallible-streaming-iterator
