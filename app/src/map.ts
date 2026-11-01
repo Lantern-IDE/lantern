@@ -65,6 +65,8 @@ let links: L[] = [];
 let byId = new Map<string, N>();
 let sim: Simulation<N, L> | null = null;
 let view = { x: 0, y: 0, k: 1 };
+/** 사용자가 지도를 옮기거나 확대했다: 다시 배치해도 화면을 맞추지 않는다 */
+let cameraMoved = false;
 let selected: N | null = null;
 let hovered: N | null = null;
 let footprint: Footprint | null = null;
@@ -177,21 +179,32 @@ function mergeMemory(g: Graph, memory: Graph): Graph {
 }
 
 let baseGraph: Graph | null = null;
+/** 지도를 바꿀 때마다 늘린다. 늦게 끝난 불러오기가 그 사이 바뀐 화면을 덮지 않게 한다 */
+let loadSeq = 0;
 
 async function load(fetcher: () => Promise<Graph>, nextMode: Mode, label = "") {
+  const my = ++loadSeq;
+  // 미리 보기 중에 사용자가 직접 다른 지도로 갔다: 결정해도 되돌리지 않는다
+  if (preview) {
+    preview.saved = null;
+    preview.opened = true;
+  }
   setStatus(t("지도를 그리는 중…"));
   try {
     let g = await fetcher();
+    if (my !== loadSeq) return;
     baseGraph = g;
     if (overlays.memory && nextMode !== "memory") g = await withMemory(g);
+    if (my !== loadSeq) return;
     mode = nextMode;
     focusLabel = label;
     view = { x: 0, y: 0, k: 1 };
+    cameraMoved = false;
     setGraph(g);
     loaded = true;
     setStatus(g.nodes.length ? "" : t("표시할 코드가 없습니다. 인덱싱이 끝났는지 확인하세요."));
   } catch (e) {
-    setStatus(errorText(e));
+    if (my === loadSeq) setStatus(errorText(e));
   }
 }
 
@@ -213,16 +226,87 @@ export function focus(center: string, label?: string) {
   return load(() => invoke<Graph>("graph_neighborhood", { center, limit: 30 }), "focus", label ?? center.replace(/^[fs]:/, ""));
 }
 
-export function showImpact(i: Impact) {
+function applyImpact(i: Impact) {
+  loadSeq++;
   impact = i;
-  show();
   mode = "impact";
   focusLabel = `${basename(i.path)}${i.touched.length ? ` · ${i.touched.join(", ")}` : ""}`;
   view = { x: 0, y: 0, k: 1 };
+  cameraMoved = false;
   baseGraph = i.graph;
   setGraph(i.graph);
   loaded = true;
   setStatus(i.graph.nodes.length > 1 ? "" : t("이 변경에 닿는 다른 코드를 찾지 못했습니다."));
+}
+
+export function showImpact(i: Impact) {
+  // 승인 카드의 '지도에서 보기': 기다리는 동안의 미리 보기와 같아서, 결정하면 돌아온다
+  if (preview?.impact === i && (preview.saved || !preview.opened)) return show();
+  if (preview) {
+    preview.saved = null;
+    preview.opened = true;
+  }
+  show();
+  applyImpact(i);
+}
+
+// ── 승인 대기 미리 보기 ─────────────────────────────────────
+// 수정 승인을 기다리는 동안 지도는 그 수정의 영향 반경을 보여 준다. 결정하면 보던 화면으로,
+// 배치와 카메라까지 그대로 돌아간다 (다시 불러오면 사용자가 옮겨 둔 곳을 잃는다).
+
+interface Saved {
+  mode: Mode; focusLabel: string; impact: Impact | null; baseGraph: Graph | null;
+  nodes: N[]; links: L[]; byId: Map<string, N>; sim: Simulation<N, L> | null;
+  view: typeof view; cameraMoved: boolean; selected: N | null; truncated: boolean; loaded: boolean;
+  /** 미리 보는 사이 파일이 바뀌었다: 돌아간 뒤 새로 그린다 */
+  stale: boolean;
+}
+
+/** opened: 한 번 띄웠다 (사용자가 닫으면 다시 띄우지 않는다). saved: 돌아갈 화면 (사용자가 직접 옮겼으면 null) */
+let preview: { impact: Impact; opened: boolean; saved: Saved | null } | null = null;
+
+function openPreview() {
+  if (!preview) return;
+  preview.saved ??= { mode, focusLabel, impact, baseGraph, nodes, links, byId, sim, view, cameraMoved, selected, truncated, loaded, stale: false };
+  preview.opened = true;
+  applyImpact(preview.impact);
+}
+
+function restore(s: Saved) {
+  loadSeq++;
+  sim?.stop();
+  ({ mode, focusLabel, impact, baseGraph, nodes, links, byId, sim, view, cameraMoved, selected, truncated, loaded } = s);
+  hovered = null;
+  applyMarks();
+  renderChrome();
+  setStatus("");
+  // 배치가 끝나기 전에 미리 보기가 끼어들었으면 마저 한다
+  if (sim && sim.alpha() > sim.alphaMin()) sim.restart();
+  kick();
+  if (visible && !nodes.length) void showOverview();
+  else if (s.stale) refreshSoon();
+}
+
+/** 수정 승인을 기다린다. 지도가 숨어 있으면 띄울 때 보여 준다 */
+export function previewImpact(i: Impact) {
+  if (preview?.impact === i) return;
+  preview = { impact: i, opened: false, saved: preview?.saved ?? null };
+  if (visible) openPreview();
+}
+
+/** 결정했다 (적용·거절·중단) */
+export function endPreview() {
+  const s = preview?.saved;
+  preview = null;
+  if (s) restore(s);
+}
+
+/** 사용자가 지도에서 직접 돌아왔다. 승인은 아직 기다리는 중이어도 다시 띄우지 않는다 */
+function leavePreview() {
+  const s = preview?.saved;
+  if (!s) return;
+  preview!.saved = null;
+  restore(s);
 }
 
 export async function showMemory() {
@@ -311,9 +395,11 @@ function layout() {
     return [g, groups.length > 1 ? { x: Math.cos(a) * ring, y: Math.sin(a) * ring } : { x: 0, y: 0 }];
   }));
   const dist: Record<EdgeKind, number> = { defines: 36, calls: 70, ref: 80, cochange: 110, mentions: 70 };
+  // 영향 지도: 테스트는 바깥쪽으로 밀어 실제 호출자가 바뀌는 곳 가까이에 모이게 한다
+  const reach = (l: L) => dist[l.kind] * ((l.source as N).mark === "test" || (l.target as N).mark === "test" ? 1.8 : 1);
   const clustered = mode === "overview";
   sim = forceSimulation<N, L>(nodes)
-    .force("link", forceLink<N, L>(links).id((d) => d.id).distance((l) => dist[l.kind]).strength((l) => (l.kind === "cochange" ? 0.05 : Math.min(0.6, 0.15 + Math.log1p(l.weight) * 0.08))))
+    .force("link", forceLink<N, L>(links).id((d) => d.id).distance(reach).strength((l) => (l.kind === "cochange" ? 0.05 : Math.min(0.6, 0.15 + Math.log1p(l.weight) * 0.08))))
     .force("charge", forceManyBody<N>().strength(nodes.length > 200 ? -60 : -160).distanceMax(400))
     .force("collide", forceCollide<N>().radius((d) => (d.kind === "dir" ? d.r * 1.15 + 8 : d.r + 3)).strength(0.9))
     .force("center", forceCenter(0, 0))
@@ -321,7 +407,9 @@ function layout() {
     .force("y", forceY<N>((d) => (clustered ? anchor.get(d.group)!.y : 0)).strength((d) => pull(d, clustered ? 0.06 : 0.02)))
     .alphaDecay(0.035)
     .on("tick", kick)
-    .on("end", () => fit(false));
+    .on("end", () => {
+      if (!cameraMoved) fit(false);
+    });
   // 중심 노드는 가운데에 고정
   if (mode !== "overview" && nodes[0] && mode !== "memory") {
     nodes[0].fx = 0;
@@ -331,7 +419,8 @@ function layout() {
   trace("layout: tick");
   sim.tick(Math.min(120, 30 + nodes.length / 4));
   trace(`layout: fit ${nodes.map((n) => `${Math.round(n.x ?? NaN)},${Math.round(n.y ?? NaN)}`).join(" ")}`);
-  fit(false);
+  if (cameraMoved) kick();
+  else fit(false);
 }
 
 function bounds() {
@@ -428,8 +517,10 @@ function draw() {
   const focusSet = selected ? neighborsOf(selected) : hovered ? neighborsOf(hovered) : null;
   const fpActive = mode !== "impact" && mode !== "memory" && overlays.footprint && footprintSize() > 0;
   const dimmed = (n: N) => (focusSet ? !focusSet.has(n.id) : fpActive ? !n.mark && n.kind !== "memory" : false);
+  // 영향 지도의 테스트는 물러나 있다: 실제 호출자가 먼저 읽히도록. 고르거나 올리면 또렷해진다
+  const receded = (n: N) => n.mark === "test" && !focusSet?.has(n.id);
 
-  trace(`draw k=${view.k} w=${w} h=${hgt}`);
+  trace(`draw k=${view.k} x=${view.x} y=${view.y} w=${w} h=${hgt}`);
   // 간선
   for (const l of links) {
     const a = l.source as N, b = l.target as N;
@@ -440,7 +531,7 @@ function draw() {
     ctx.lineTo(b.x, b.y!);
     ctx.setLineDash(l.kind === "cochange" ? [5, 4] : l.kind === "mentions" ? [2, 3] : []);
     const base = l.kind === "cochange" ? colors.context : l.kind === "mentions" ? colors.link : colors.border;
-    ctx.strokeStyle = withAlpha(base, lit ? (l.kind === "defines" ? 0.35 : 0.7) : 0.12);
+    ctx.strokeStyle = withAlpha(base, lit ? (l.kind === "defines" ? 0.35 : receded(a) || receded(b) ? 0.3 : 0.7) : 0.12);
     ctx.lineWidth = (l.kind === "defines" ? 0.8 : Math.min(3, 0.8 + Math.log1p(l.weight) * 0.5)) / Math.sqrt(view.k);
     ctx.stroke();
     // 호출 방향 화살표
@@ -467,7 +558,7 @@ function draw() {
     if (n.x === undefined) continue;
     const dim = dimmed(n);
     const mc = markColor(n.mark);
-    ctx.globalAlpha = dim ? 0.22 : 1;
+    ctx.globalAlpha = dim ? 0.22 : receded(n) ? 0.5 : 1;
     drawNodeShape(ctx, n);
     ctx.fillStyle = colors.bg;
     ctx.fill();
@@ -513,7 +604,9 @@ function draw() {
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.lineJoin = "round";
-  const score = (n: N) => (n === selected ? 1e9 : n === hovered ? 1e8 : 0) + (focusSet?.has(n.id) ? 1e6 : 0) + (n.mark ? 1e5 : 0) + (n.kind === "dir" ? 1e4 : 0) + n.r * 100;
+  // 영향 지도: 바뀌는 곳, 직접 호출, 간접 호출 순으로 자리를 얻고 테스트는 남는 자리에
+  const markScore = (n: N) => (n.mark === "impact0" ? 3e5 : n.mark === "impact1" ? 2e5 : n.mark === "test" ? 0 : n.mark ? 1e5 : 0);
+  const score = (n: N) => (n === selected ? 1e9 : n === hovered ? 1e8 : 0) + (focusSet?.has(n.id) ? 1e6 : 0) + markScore(n) + (n.kind === "dir" ? 1e4 : 0) + n.r * 100;
   // 흐리게 처리된 노드도 이름은 옅게 남긴다 (어디쯤인지 알 수 있게). 대신 가장 나중에 자리를 얻는다
   const rank = (n: N) => score(n) - (dimmed(n) && n !== hovered ? 5e5 : 0);
   const candidates = nodes.filter((n) => n.x !== undefined).sort((a, b) => rank(b) - rank(a));
@@ -532,7 +625,7 @@ function draw() {
     ctx.lineWidth = 3 / view.k;
     ctx.strokeStyle = colors.bg;
     ctx.strokeText(text, n.x!, y);
-    ctx.fillStyle = n === selected ? colors.strong : n.kind === "dir" ? colors.strong : colors.fg;
+    ctx.fillStyle = n === selected ? colors.strong : n.kind === "dir" ? colors.strong : receded(n) ? colors.muted : colors.fg;
     if (n.kind === "dir") ctx.font = `600 ${fs}px Pretendard Variable, Pretendard, sans-serif`;
     ctx.fillText(text, n.x!, y);
     if (n.kind === "dir") ctx.font = `${fs}px Pretendard Variable, Pretendard, sans-serif`;
@@ -580,7 +673,10 @@ function renderChrome() {
     ...(mode === "overview" ? [h("span", { class: "cur" }, modeTitle())] : [
       (() => {
         const b = h("button", { class: "crumb-link" }, codicon("type-hierarchy"), t("전체 구조"));
-        b.addEventListener("click", () => void showOverview());
+        b.addEventListener("click", () => {
+          leavePreview();
+          if (mode !== "overview" || !nodes.length) void showOverview();
+        });
         return b;
       })(),
       codicon("chevron-right"),
@@ -731,7 +827,10 @@ function bindCanvas() {
     if (!visible) return;
     if (drag) {
       const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
-      if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+      if (Math.abs(dx) + Math.abs(dy) > 3) {
+        drag.moved = true;
+        cameraMoved = true;
+      }
       if (drag.node) {
         const p = toWorld(e);
         drag.node.fx = p.x;
@@ -780,6 +879,7 @@ function bindCanvas() {
     view.x = mx - ((mx - view.x) / view.k) * k;
     view.y = my - ((my - view.y) / view.k) * k;
     view.k = k;
+    cameraMoved = true;
     kick();
   }, { passive: false });
   el.addEventListener("keydown", (e) => {
@@ -851,6 +951,7 @@ function bindSearch() {
 export function showFootprint() {
   overlays.footprint = true;
   show();
+  leavePreview();
   if (!loaded || mode === "impact" || mode === "memory") void showOverview();
   else {
     applyMarks();
@@ -875,7 +976,8 @@ export function show() {
   $("#editor-group").classList.add("hidden");
   onVisibility(true);
   readColors();
-  if (!loaded || nodes.length === 0) void showOverview();
+  if (preview && !preview.opened) openPreview();
+  else if (!loaded || nodes.length === 0) void showOverview();
   else kick();
 }
 
@@ -900,24 +1002,38 @@ export function reset() {
   byId = new Map();
   selected = null;
   impact = null;
+  preview = null;
   footprint = null;
   memoryNotes = [];
   loaded = false;
   mode = "overview";
+  cameraMoved = false;
   groupHue.clear();
   if (visible) void showOverview();
 }
 
 /** 파일이 바뀌면 (인덱스 갱신 후) 지금 보는 지도를 다시 그린다 */
 export function refreshSoon() {
-  if (!loaded || mode === "impact") return;
+  // 미리 보기 중이면 돌아간 뒤에 새로 그린다
+  const held = () => {
+    if (mode !== "impact") return false;
+    if (preview?.saved) preview.saved.stale = true;
+    return true;
+  };
+  if (!loaded || held()) return;
   clearTimeout(refreshTimer);
   refreshTimer = window.setTimeout(async () => {
+    if (held()) return;
     const fetcher = mode === "overview" ? () => invoke<Graph>("graph_overview", { maxNodes: 400 }) : mode === "focus" && selected === null && nodes[0] ? () => invoke<Graph>("graph_neighborhood", { center: nodes[0].id, limit: 30 }) : null;
     if (!fetcher || !visible) return;
+    const my = loadSeq;
     try {
       let g = await fetcher();
       if (overlays.memory) g = await withMemory(g);
+      if (my !== loadSeq) {
+        held();
+        return;
+      }
       setGraph(g, true);
       setStatus(g.nodes.length ? "" : t("표시할 코드가 없습니다. 인덱싱이 끝났는지 확인하세요."));
     } catch { /* 다음 변경 때 다시 */ }
@@ -930,7 +1046,10 @@ export function init(opts: { openFile: (path: string, line?: number) => void; on
   onVisibility = opts.onVisibility;
   bindCanvas();
   bindSearch();
-  $("#map-fit").addEventListener("click", () => fit());
+  $("#map-fit").addEventListener("click", () => {
+    cameraMoved = false;
+    fit();
+  });
   $("#map-close").addEventListener("click", hide);
   for (const b of document.querySelectorAll<HTMLElement>("#map-overlays [data-overlay]")) {
     b.addEventListener("click", async () => {
@@ -941,6 +1060,7 @@ export function init(opts: { openFile: (path: string, line?: number) => void; on
         if (!overlays.memory) memoryNotes = [];
         setGraph(g, true);
       } else {
+        if (key === "memory" && preview?.saved) preview.saved.stale = true;
         applyMarks();
         renderChrome();
         kick();
