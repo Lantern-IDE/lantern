@@ -1,6 +1,6 @@
 # lantern check on public commits: results
 
-Written by `node eval/check/run.mjs`. Method and limits: [README.md](README.md). Lantern be18cda, 2026-11-02, win32, node v24.16.0; cap 600 s per repository.
+Written by `node eval/check/run.mjs`. Method and limits: [README.md](README.md). Lantern ea865cf, 2026-11-02, win32, node v24.16.0; cap 600 s per repository.
 
 71 commits with 2 or more gold files, 152 applications (one gold file applied to the parent), 182 (applied file, other gold file) pairs.
 
@@ -56,18 +56,18 @@ Written by `node eval/check/run.mjs`. Method and limits: [README.md](README.md).
 
 ## Run time
 
-`lantern check`, one process per application, one file changed, index already at the parent: median 580 ms, 90th percentile 1578 ms, max 30897 ms; 145 of 152 within 3 s. `graph impact` on a ready index: median 154 ms, max 5383 ms. The first `graph impact` of each commit also builds the index from empty: median 1045 ms, max 44159 ms.
+`lantern check`, one process per application, one file changed, index already at the parent: median 474.5 ms, 90th percentile 736 ms, max 3270 ms; 151 of 152 within 3 s. `graph impact` on a ready index: median 121 ms, max 1966 ms. The first `graph impact` of each commit also builds the index from empty: median 959 ms, max 7968 ms.
 
 | Repository | Wall time (s) | Of which setup (s) | Cap reached | Gold blobs fetched into the temp clone | `check` median / max (ms) |
 |---|---|---|---|---|---|
-| axios | 173.2 | 1.6 | no | 4 of 16 | 1137.5 / 6408 |
-| axum | 93.8 | 1.9 | no | 5 of 10 | 792 / 30897 |
-| commons-lang | 20.7 | 1.5 | no | 5 of 7 | 466 / 682 |
-| flask | 28.8 | 1.3 | no | 13 of 23 | 526 / 898 |
-| gin | 20.9 | 1.1 | no | 2 of 14 | 436 / 788 |
-| hono | 34.1 | 1.3 | no | 2 of 10 | 731 / 3549 |
-| httpx | 31.3 | 1.6 | no | 3 of 26 | 442 / 927 |
-| jq | 28.6 | 1.6 | no | 1 of 21 | 452 / 1689 |
-| okhttp | 64.6 | 0.5 | no | 0 of 17 | 869 / 2088 |
-| vite | 115.8 | 0.6 | no | 0 of 8 | 2364 / 19354 |
-| **Total** | 612.0 | 12.9 | 0 repositories | 35 of 152 | |
+| axios | 24.5 | 1.8 | no | 4 of 16 | 464.5 / 691 |
+| axum | 14.1 | 1.3 | no | 5 of 10 | 464.5 / 536 |
+| commons-lang | 15.8 | 1.0 | no | 5 of 7 | 466 / 785 |
+| flask | 22.2 | 1.1 | no | 13 of 23 | 375 / 670 |
+| gin | 15.1 | 1.0 | no | 2 of 14 | 405 / 604 |
+| hono | 17.9 | 1.3 | no | 2 of 10 | 395.5 / 466 |
+| httpx | 45.0 | 1.2 | no | 3 of 26 | 581 / 2193 |
+| jq | 40.0 | 2.0 | no | 1 of 21 | 506 / 3270 |
+| okhttp | 44.9 | 0.9 | no | 0 of 17 | 659 / 1345 |
+| vite | 31.5 | 0.6 | no | 0 of 8 | 657.5 / 1325 |
+| **Total** | 271.3 | 12.1 | 0 repositories | 35 of 152 | |
