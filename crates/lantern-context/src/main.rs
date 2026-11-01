@@ -80,6 +80,9 @@ enum Cmd {
         /// JSON으로 출력
         #[arg(long)]
         json: bool,
+        /// 20개로 자르지 않고 발견을 전부 보여 준다
+        #[arg(long)]
+        all: bool,
         /// 막을 만한 발견이 있으면 종료 코드 1, 검사를 못 했으면 2
         #[arg(long)]
         strict: bool,
@@ -315,7 +318,7 @@ fn main() -> Result<()> {
             };
             println!("{json}");
         }
-        Cmd::Check { base, json, strict, stop_hook: _, stats } => check_command(&cli.root, base.as_deref(), json, strict, stats)?,
+        Cmd::Check { base, json, all, strict, stop_hook: _, stats } => check_command(&cli.root, base.as_deref(), json, all, strict, stats)?,
         Cmd::Hook { action } => hook_command(&cli.root, action)?,
         Cmd::Autopsy { days, max_sessions, agent, deep, all, json, lang, details, max_seconds, replay: _, no_replay } => {
             let opts = autopsy::AutopsyOpts {
@@ -366,7 +369,7 @@ fn parse_for_stop_hook() -> Cli {
 }
 
 /// 평소에는 결과와 상관없이 0. `--strict`일 때만 막을 만한 발견이 1, 검사를 못 하면 2
-fn check_command(root: &Path, base: Option<&str>, json: bool, strict: bool, stats: bool) -> Result<()> {
+fn check_command(root: &Path, base: Option<&str>, json: bool, all: bool, strict: bool, stats: bool) -> Result<()> {
     if stats {
         let data = hook::data_dir().context("데이터 폴더를 찾지 못했습니다")?;
         let s = hook::stats(&data);
@@ -379,7 +382,7 @@ fn check_command(root: &Path, base: Option<&str>, json: bool, strict: bool, stat
     }
     let run = || -> Result<check::CheckReport> {
         let data = hook::data_dir().context("데이터 폴더를 찾지 못했습니다")?;
-        check::run_check(root, &data, base.unwrap_or("HEAD"))
+        check::run_check(root, &data, base.unwrap_or("HEAD"), all)
     };
     let report = match run() {
         Ok(r) => r,

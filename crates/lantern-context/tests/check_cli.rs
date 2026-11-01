@@ -249,6 +249,27 @@ fn check_stale_caller_is_shown_but_does_not_fail_strict() {
 }
 
 #[test]
+fn check_cuts_findings_at_twenty_unless_all() {
+    let s = Sandbox::with_caller();
+    for i in 0..25 {
+        s.write(&format!("src/caller{i}.rs"), "fn call_it() -> i32 {\n    compute_total(1)\n}\n");
+    }
+    s.commit_all();
+    s.write("src/lib.rs", RENAMED);
+
+    let v = json_of(&s.lantern(&["check", "--json"]));
+    assert_eq!(v["total_findings"], 26, "{v}");
+    assert_eq!(v["findings"].as_array().unwrap().len(), 20, "{v}");
+    assert!(stdout(&s.lantern(&["check"])).contains("Showing 20 of 26. --all shows the rest."));
+
+    let all = json_of(&s.lantern(&["check", "--json", "--all"]));
+    assert_eq!(all["total_findings"], 26, "{all}");
+    assert_eq!(all["findings"].as_array().unwrap().len(), 26, "{all}");
+    assert_eq!(all["findings"].as_array().unwrap()[..20], v["findings"].as_array().unwrap()[..], "앞 20개는 기본 출력과 같다");
+    assert!(!stdout(&s.lantern(&["check", "--all"])).contains("Showing"));
+}
+
+#[test]
 fn check_sees_untracked_moves_deleted_files_and_other_bases() {
     // 정의를 새 파일로 옮기면 놓친 것이 아니다
     let s = Sandbox::with_caller();
