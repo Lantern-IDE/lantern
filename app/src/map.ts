@@ -635,10 +635,12 @@ function draw() {
     if (n.x === undefined) continue;
     const dim = dimmed(n);
     const mc = markColor(n.mark);
-    ctx.globalAlpha = dim ? 0.22 : receded(n) ? 0.5 : 1;
+    // 바탕은 물러난 노드도 불투명하게: 간선이 노드 안으로 비쳐 보이지 않게
+    ctx.globalAlpha = dim ? 0.22 : 1;
     drawNodeShape(ctx, n);
     ctx.fillStyle = colors.bg;
     ctx.fill();
+    ctx.globalAlpha = dim ? 0.22 : receded(n) ? 0.5 : 1;
     const fillBase = n.kind === "memory" ? colors.link : groupColor(n.group);
     ctx.fillStyle = mc && (n.mark === "edited" || n.mark === "context" || n.mark === "impact0") ? withAlpha(mc, 0.85) : n.kind === "memory" ? withAlpha(fillBase, 0.8) : groupColor(n.group, n.kind === "dir" ? 0.4 : 0.28);
     ctx.fill();
