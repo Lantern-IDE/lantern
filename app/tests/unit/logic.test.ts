@@ -116,6 +116,8 @@ describe("테스트 만들기 요청", () => {
   it("엔진과 같은 기준으로 테스트 파일을 알아본다", () => {
     for (const p of ["tests/a.ts", "src/test/java/A.java", "a/__tests__/b.js", "x.test.ts", "y.spec.js", "pkg/z_test.go", "app/test_views.py"]) expect(isTestPath(p)).toBe(true);
     for (const p of ["src/auth/session.ts", "src/latest/a.ts", "contest.py"]) expect(isTestPath(p)).toBe(false);
+    for (const p of ["UserServiceTests.java", "src/OrderServiceTest.cs", "Shop.Tests/Order.cs"]) expect(isTestPath(p)).toBe(true);
+    for (const p of ["src/main/java/Contest.java", "src/Test.java"]) expect(isTestPath(p)).toBe(false);
   });
 
   it("대상과 예시 테스트를 담는다", () => {

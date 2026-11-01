@@ -19,9 +19,19 @@ pub(crate) async fn graph_neighborhood(state: State<'_, AppState>, center: Strin
     with_engine(&state, move |e, _| lantern_context::graph::neighborhood(&e.store, &center, n)).await
 }
 
+/// `diff`를 주면(승인 카드) 그 변경이 주석·공백만 건드리는지도 알려 준다.
+/// 격리된 작업처럼 디스크의 원문과 diff가 맞지 않으면 그렇다고 하지 않는다.
 #[tauri::command]
-pub(crate) async fn graph_impact(state: State<'_, AppState>, path: String, ranges: Vec<(u32, u32)>) -> CmdResult<lantern_context::graph::Impact> {
-    with_engine(&state, move |e, _| lantern_context::graph::impact(&e.store, &path, &ranges)).await
+pub(crate) async fn graph_impact(state: State<'_, AppState>, path: String, ranges: Vec<(u32, u32)>, diff: Option<String>) -> CmdResult<lantern_context::graph::Impact> {
+    with_engine(&state, move |e, root| {
+        let mut i = lantern_context::graph::impact(&e.store, &path, &ranges)?;
+        if let Some(d) = diff {
+            let old = crate::state::resolve_in_root(root, &path).ok().and_then(|p| std::fs::read_to_string(p).ok());
+            i.comment_only = old.is_some_and(|o| lantern_context::comment_only::only_comments(&path, &o, &d));
+        }
+        Ok(i)
+    })
+    .await
 }
 
 #[tauri::command]

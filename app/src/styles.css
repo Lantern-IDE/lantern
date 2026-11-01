@@ -982,6 +982,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .risk.risk-low { color: var(--ok); background: color-mix(in srgb, var(--ok) 14%, transparent); }
 .risk.risk-medium { color: var(--warning); background: var(--warning-soft); }
 .risk.risk-high { color: var(--error); background: var(--error-soft); }
+.risk.risk-none { color: var(--muted); background: var(--inactive-sel); }
 .istats { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--muted); }
 .istat { display: inline-flex; align-items: center; gap: 4px; }
 .istat b { color: var(--fg-strong); font-variant-numeric: tabular-nums; }

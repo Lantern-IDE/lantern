@@ -54,9 +54,11 @@ async function lspCallers(i: Impact): Promise<{ callers: number; files: number; 
     if (!enclosing) return null;
     for (const e of enclosing) if (e && !touchedIds.has(e.id)) found.set(e.id, e);
   }
-  const lspOnly = [...found.keys()].filter((id) => !i.graph.nodes.some((n) => n.id === id && n.depth === 1)).length;
+  const lspOnly = [...found.values()].filter((f) => !isTestPath(f.path ?? "") && !i.graph.nodes.some((n) => n.id === f.id && n.depth === 1)).length;
   if (i.unique) for (const n of i.graph.nodes) if (n.depth === 1) found.set(n.id, n);
-  return { callers: found.size, files: new Set([...found.values()].map((n) => n.path).filter((p) => p !== i.path)).size, lspOnly };
+  // 테스트는 호출자가 아니라 따로 보인다
+  const code = [...found.values()].filter((n) => !isTestPath(n.path ?? ""));
+  return { callers: code.length, files: new Set(code.map((n) => n.path).filter((p) => p !== i.path)).size, lspOnly };
 }
 
 /** `onImpact`: 결과를 그린 뒤 (줄이 커졌으니 승인 카드는 다시 맞춘다) */
@@ -64,16 +66,16 @@ export function impactRow(diff: string, onTouched: (names: string[]) => void = (
   const target = diffTarget(diff);
   if (!target) return null;
   const row = h("div", { class: "impact loading" }, codicon("loading", "codicon-modifier-spin"), h("span", {}, "영향 반경 계산 중…"));
-  void invoke<Impact>("graph_impact", { path: target.path, ranges: target.ranges }).then((i) => {
+  void invoke<Impact>("graph_impact", { path: target.path, ranges: target.ranges, diff }).then((i) => {
     onTouched(i.touched);
     row.classList.remove("loading");
     const nothing = !i.touched.length && !i.callers && !i.cochanged.length;
     const stats: HTMLElement[] = [];
     const stat = (n: number, label: string) => stats.push(h("span", { class: "istat" }, h("b", {}, String(n)), label));
     if (i.touched.length) stats.push(h("span", { class: "itouch", title: i.touched.join(", ") }, codicon("symbol-method"), i.touched.slice(0, 2).join(", ") + (i.touched.length > 2 ? ` 외 ${i.touched.length - 2}` : "")));
-    stat(i.callers, "직접 호출");
-    if (i.callers2) stat(i.callers2, "간접 호출");
-    if (i.files) stat(i.files, "파일에 걸침");
+    stat(i.code_callers, "직접 호출");
+    if (i.code_callers2) stat(i.code_callers2, "간접 호출");
+    if (i.code_files) stat(i.code_files, "파일에 걸침");
     if (i.cochanged.length) stat(i.cochanged.length, "함께 바뀌던 파일");
     stats.push(h("span", { class: `istat ${i.tests.length ? "tests" : "no-tests"}` }, codicon(i.tests.length ? "beaker" : "warning"), i.tests.length ? `테스트 ${i.tests.length}` : "테스트 없음"));
     if (!i.tests.length && i.touched.length && !isTestPath(target.path)) {
@@ -87,31 +89,36 @@ export function impactRow(diff: string, onTouched: (names: string[]) => void = (
     const view = h("button", { class: "btn btn-ghost", title: "영향 범위를 지도에서 보기" }, codicon("type-hierarchy"), "지도에서 보기");
     view.addEventListener("click", () => deps.showImpact(i));
     // 숫자를 사실로 믿지 않게: 무엇을 기준으로 셌고 무엇을 놓치는지
-    const basis = h("span", { class: "ibasis", title: "이름으로 찾은 호출 관계(정적 분석)입니다. DI·리플렉션·이벤트·라우팅처럼 실행 중에 정해지는 호출과, URL로 부르는 테스트는 세지 않습니다." }, codicon("info"));
+    const basis = h("span", { class: "ibasis", title: "이름으로 찾은 호출 관계(정적 분석)입니다. 테스트 코드는 호출자로 세지 않고 따로 보입니다. DI·리플렉션·이벤트·라우팅처럼 실행 중에 정해지는 호출과, URL로 부르는 테스트는 세지 않습니다." }, codicon("info"));
+    // 주석·공백만 바뀌면 호출자 수와 위험도는 뜻이 없다: 경고를 믿게 하려면 없을 때 울리지 않는다
+    const quiet = i.comment_only;
     row.replaceChildren(...([
       h("div", { class: "ihead" },
         codicon("pulse"),
         h("span", { class: "ititle" }, "영향 반경"),
         basis,
-        i.supported ? h("span", { class: `risk risk-${i.risk}` }, `위험도 ${RISK_LABEL[i.risk]}`) : null,
+        quiet ? h("span", { class: "risk risk-none" }, "코드 변경 없음") : i.supported ? h("span", { class: `risk risk-${i.code_risk}` }, `위험도 ${RISK_LABEL[i.code_risk]}`) : null,
         i.graph.nodes.length > 1 ? view : null),
-      !i.supported
-        ? h("div", { class: "inote" }, "이 언어는 호출 관계를 분석하지 않아 영향 범위를 알 수 없습니다. 바뀌는 곳을 직접 확인하세요.")
-        : nothing
-          ? h("div", { class: "inote" }, "이 변경을 호출하는 다른 코드를 찾지 못했습니다.")
-          : h("div", { class: "istats" }, ...stats),
-      i.framework.length ? h("div", { class: "inote framework" }, codicon("warning"), `${i.framework.join(", ")}: 프레임워크가 부르는 코드라 호출자·테스트 수에 잡히지 않을 수 있습니다`) : null,
-      i.ambiguous.length ? h("div", { class: "inote ambiguous" }, `이름이 흔해 호출자를 셀 수 없음: ${i.ambiguous.join(", ")}`) : null,
+      quiet
+        ? h("div", { class: "inote" }, "주석·공백만 바뀝니다. 실행되는 코드는 그대로입니다.")
+        : !i.supported
+          ? h("div", { class: "inote" }, "이 언어는 호출 관계를 분석하지 않아 영향 범위를 알 수 없습니다. 바뀌는 곳을 직접 확인하세요.")
+          : nothing
+            ? h("div", { class: "inote" }, "이 변경을 호출하는 다른 코드를 찾지 못했습니다.")
+            : h("div", { class: "istats" }, ...stats),
+      !quiet && i.framework.length ? h("div", { class: "inote framework" }, codicon("warning"), `${i.framework.join(", ")}: 프레임워크가 부르는 코드라 호출자·테스트 수에 잡히지 않을 수 있습니다`) : null,
+      !quiet && i.ambiguous.length ? h("div", { class: "inote ambiguous" }, `이름이 흔해 호출자를 셀 수 없음: ${i.ambiguous.join(", ")}`) : null,
     ].filter(Boolean) as Node[]));
-    if (i.supported) row.classList.add(`risk-${i.risk}`);
+    if (i.supported && !quiet) row.classList.add(`risk-${i.code_risk}`);
     onImpact(i);
+    if (quiet) return;
     // 언어 서버로 다시 확인 (켜져 있을 때만). 이름 기준 결과와 다르면 고쳐 보여준다.
     void lspCallers(i).then((r) => {
       if (!r) return;
       const direct = row.querySelector(".istat b");
       if (direct) direct.textContent = String(r.callers);
       row.querySelector(".inote.ambiguous")?.remove();
-      const note = r.callers === i.callers ? "언어 서버로 확인함" : `언어 서버로 확인함 (이름 기준 ${i.callers})`;
+      const note = r.callers === i.code_callers ? "언어 서버로 확인함" : `언어 서버로 확인함 (이름 기준 ${i.code_callers})`;
       if (r.lspOnly && i.unique) row.querySelector(".istats")?.append(h("span", { class: "istat" }, h("b", {}, `+${r.lspOnly}`), "언어 서버가 더 찾음"));
       row.querySelector(".ihead")!.insertBefore(h("span", { class: "lsp-ok", title: "언어 서버의 참조 찾기로 다시 센 직접 호출 수입니다" }, codicon("verified"), note), row.querySelector(".ihead .btn"));
     });

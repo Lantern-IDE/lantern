@@ -42,6 +42,23 @@ impl Lang {
         })
     }
 
+    /// tree-sitter 문법 (태그 질의 없이 구문 트리만 볼 때)
+    pub fn grammar(self) -> tree_sitter::Language {
+        match self {
+            Lang::Rust => tree_sitter_rust::LANGUAGE.into(),
+            Lang::Python => tree_sitter_python::LANGUAGE.into(),
+            Lang::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+            Lang::Tsx => tree_sitter_typescript::LANGUAGE_TSX.into(),
+            Lang::JavaScript => tree_sitter_javascript::LANGUAGE.into(),
+            Lang::Java => tree_sitter_java::LANGUAGE.into(),
+            Lang::Go => tree_sitter_go::LANGUAGE.into(),
+            Lang::CSharp => tree_sitter_c_sharp::LANGUAGE.into(),
+            Lang::Kotlin => tree_sitter_kotlin_ng::LANGUAGE.into(),
+            Lang::C => tree_sitter_c::LANGUAGE.into(),
+            Lang::Cpp => tree_sitter_cpp::LANGUAGE.into(),
+        }
+    }
+
     pub fn name(self) -> &'static str {
         match self {
             Lang::Rust => "rust",

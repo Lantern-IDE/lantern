@@ -21,8 +21,8 @@ export function reviewPrompt(r: Review, lang: "ko" | "en"): string {
     const fw = i.framework.length ? (ko ? `, 프레임워크가 부름(${i.framework.join(", ")})` : `, called by a framework (${i.framework.join(", ")})`) : "";
     const touched = i.touched.join(", ") || (ko ? "없음" : "none");
     return ko
-      ? `- ${f.path}: 위험도 ${risk[i.risk]}, 바뀐 심볼 ${touched}, 직접 호출 ${i.callers} · 간접 ${i.callers2}, ${tests}${fw}`
-      : `- ${f.path}: risk ${risk[i.risk]}, changed symbols ${touched}, ${i.callers} direct · ${i.callers2} indirect callers, ${tests}${fw}`;
+      ? `- ${f.path}: 위험도 ${risk[i.code_risk]}, 바뀐 심볼 ${touched}, 직접 호출 ${i.code_callers} · 간접 ${i.code_callers2}, ${tests}${fw}`
+      : `- ${f.path}: risk ${risk[i.code_risk]}, changed symbols ${touched}, ${i.code_callers} direct · ${i.code_callers2} indirect callers, ${tests}${fw}`;
   });
   return [
     ko

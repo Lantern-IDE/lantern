@@ -196,14 +196,14 @@ fn build(
     }
     // 위험한 것부터
     files.sort_by(|a, b| {
-        let r = |f: &FileReview| f.impact.as_ref().map(|i| rank(&i.risk)).unwrap_or(0);
-        let callers = |f: &FileReview| f.impact.as_ref().map(|i| i.callers + i.callers2).unwrap_or(0);
+        let r = |f: &FileReview| f.impact.as_ref().map(|i| rank(&i.code_risk)).unwrap_or(0);
+        let callers = |f: &FileReview| f.impact.as_ref().map(|i| i.code_callers + i.code_callers2).unwrap_or(0);
         r(b).cmp(&r(a)).then(callers(b).cmp(&callers(a))).then(a.path.cmp(&b.path))
     });
-    let risk = files.iter().filter_map(|f| f.impact.as_ref()).map(|i| i.risk.as_str()).max_by_key(|r| rank(r)).unwrap_or("low").to_string();
+    let risk = files.iter().filter_map(|f| f.impact.as_ref()).map(|i| i.code_risk.as_str()).max_by_key(|r| rank(r)).unwrap_or("low").to_string();
     let untested = files
         .iter()
-        .filter(|f| f.impact.as_ref().is_some_and(|i| i.supported && i.callers > 0 && i.tests.is_empty()))
+        .filter(|f| f.impact.as_ref().is_some_and(|i| i.supported && i.code_callers > 0 && i.tests.is_empty()))
         .map(|f| f.path.clone())
         .collect();
     let framework = files.iter().filter(|f| f.impact.as_ref().is_some_and(|i| !i.framework.is_empty())).map(|f| f.path.clone()).collect();

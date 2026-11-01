@@ -6,7 +6,10 @@ export interface TestTarget { path: string; symbols: string[] }
 export function isTestPath(path: string): boolean {
   const p = path.toLowerCase().replace(/\\/g, "/");
   const file = p.split("/").pop() ?? "";
-  return /(^|\/)tests?\//.test(p) || p.includes("__tests__") || /\.(test|spec)\./.test(p) || p.includes("_test.") || file.startsWith("test_");
+  // Java·C#: UserServiceTest.java, UserServiceTests.cs (대문자 T로 구분해 Contest.java는 빼기)
+  const stem = (path.replace(/\\/g, "/").split("/").pop() ?? "").replace(/\.[^.]*$/, "");
+  return /(^|\/)tests?\//.test(p) || p.includes("__tests__") || /\.(test|spec)\./.test(p) || p.includes("_test.") || file.startsWith("test_")
+    || p.includes(".tests/") || (stem.length > 4 && /Tests?$/.test(stem));
 }
 
 export function testPrompt(targets: TestTarget[], examples: string[], lang: "ko" | "en"): string {
