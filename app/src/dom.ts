@@ -1,4 +1,5 @@
 // 작은 DOM 헬퍼. 프레임워크 없이 화면을 만든다.
+import { changedSpans } from "./lib/diff";
 
 type Attrs = Record<string, string | number | boolean | EventListener | undefined>;
 type Child = Node | string | null | undefined | false;
@@ -55,12 +56,17 @@ export const store = {
 /** unified diff 텍스트를 색이 있는 요소로 */
 export function renderDiff(diff: string): HTMLElement {
   const box = h("div", { class: "diff" });
-  for (const line of diff.split("\n")) {
+  const lines = diff.split("\n");
+  const spans = changedSpans(lines);
+  lines.forEach((line, i) => {
     const cls = line.startsWith("+++") || line.startsWith("---") ? "meta"
       : line.startsWith("@@") ? "hunk"
       : line.startsWith("+") ? "add"
       : line.startsWith("-") ? "del" : "";
-    box.append(h("div", { class: cls }, line || " "));
-  }
+    const s = spans.get(i);
+    box.append(s
+      ? h("div", { class: cls }, line.slice(0, s[0]), h("span", { class: "chg" }, line.slice(s[0], s[1])), line.slice(s[1]))
+      : h("div", { class: cls }, line || " "));
+  });
   return box;
 }

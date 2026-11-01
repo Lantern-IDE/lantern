@@ -374,6 +374,14 @@ function handle(ev: AgentEvent) {
       const target = isEdit ? diffTarget(ev.detail) : null;
       const newPath = isEdit ? ev.detail.match(/^\+\+\+ (?:b\/)?(.+)$/m)?.[1]?.trim() : undefined;
       if (newPath) task.approvalPaths.set(ev.id, newPath);
+      // 카드 전체가 보이게 맞춘다 (길면 머리부터, 버튼 줄은 sticky). 사용자가 스크롤했으면 건드리지 않는다
+      let scrolledTo = -1;
+      const reveal = () => {
+        const box = messages();
+        if (task !== active || el.classList.contains("resolved") || (scrolledTo >= 0 && box.scrollTop !== scrolledTo)) return;
+        el.scrollIntoView({ block: "nearest" });
+        scrolledTo = box.scrollTop;
+      };
       const el = h("div", { class: "approval", role: "group", "aria-label": ev.title, "data-kind": ev.approval_kind },
         h("div", { class: "ahead" }, codicon(isEdit ? "edit" : isMcp ? "plug" : isFetch ? "globe" : "terminal"), approvalTitle(ev.title, isEdit), h("span", { class: "verdict" })),
         isEdit ? renderDiff(ev.detail) : h("pre", { class: "diff" }, h("div", {}, ev.detail)),
@@ -381,7 +389,7 @@ function handle(ev: AgentEvent) {
           task.approvalTouched.set(ev.id, names);
           task.log.push({ t: "touched", id: ev.id, names });
           persist(task);
-        }) : null,
+        }, reveal) : null,
         h("div", { class: "actions" },
           apply,
           h("button", { class: "btn btn-secondary", onclick: () => decide(false) }, "거절"),
@@ -391,8 +399,7 @@ function handle(ev: AgentEvent) {
       task.pendingApprovals++;
       setStatus(task, "approval");
       if (task === active && !replaying) {
-        // 승인 버튼 줄까지 보이게 한다.
-        el.querySelector(".actions")!.scrollIntoView({ block: "nearest" });
+        reveal();
         if (mayTakeFocus()) apply.focus({ preventScroll: true });
       }
       break;
