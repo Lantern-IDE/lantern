@@ -680,3 +680,115 @@ fn codex_session_uses_the_base_blob_and_does_not_claim_unread() {
     let expected = (200.0 * 5.0 + 20.0 * 30.0 + 100.0 * 0.5) / 1_000_000.0;
     assert!((v["cost"]["estimated_usd"].as_f64().unwrap() - expected).abs() < 1e-9, "{:#}", v["cost"]);
 }
+
+#[test]
+fn a_lost_result_takes_the_end_state_from_the_landing_commit() {
+    let s = Sandbox::new();
+    s.base_repo();
+    let mut log = Log::new(&s, "2026-01-10");
+    log.prompt(PROMPT);
+    let first_step = LIB_BEFORE.replace("    a + 1\n", "    a + 2\n");
+    log.write_file("src/lib.rs", LIB_BEFORE, &first_step);
+    // 두 번째 편집의 결과 줄이 잘렸다. 이 편집이 `old_helper`를 지운다
+    log.n += 1;
+    let (ts, root) = (log.ts(), log.root.clone());
+    let gone = first_step.replace("pub fn old_helper(a: i32) -> i32 {\n    let doubled = a * 2;\n    doubled + 40\n}\n\n", "");
+    log.lines.push(json!({"type": "assistant", "uuid": "lost", "timestamp": ts, "cwd": root,
+        "message": {"id": "lost", "content": [{"type": "tool_use", "id": "lost", "name": "Write", "input": {"file_path": format!("{root}/src/lib.rs"), "content": gone}}]}}).to_string());
+    s.write_session("session-lost", &log);
+    s.write("src/lib.rs", &gone);
+    s.commit_at(LANDING_DATE, &["src/lib.rs"]);
+
+    let v = s.json(&[]);
+    assert_eq!(v["per_period"][0]["files_from_git"], 1, "{v:#}");
+    assert_eq!(finding(&v, "old_helper")["kind"], "dangling");
+}
+
+#[test]
+fn a_hunk_in_an_unknown_format_is_not_fatal() {
+    let s = Sandbox::new();
+    s.base_repo();
+    let mut log = Log::new(&s, "2026-01-10");
+    log.prompt(PROMPT);
+    let path = format!("{}/src/lib.rs", log.root);
+    log.tool(
+        "claude-opus-5-5",
+        "Edit",
+        json!({"file_path": path, "old_string": "gone", "new_string": "z"}),
+        json!({"filePath": path, "oldString": "gone", "newString": "z", "originalFile": "a\nb", "structuredPatch": [{"oldStart": 1, "lines": [" a", "-b", "+c", "EOF"]}]}),
+    );
+    s.write_session("session-odd", &log);
+    assert_eq!(s.lantern(&["--json"]).status.code(), Some(0));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_lantern"));
+    cmd.arg("-C").arg(&s.repo).arg("sessions").stdin(Stdio::null());
+    assert_eq!(s.isolate(&mut cmd).output().unwrap().status.code(), Some(0));
+}
+
+#[test]
+fn the_users_global_git_config_does_not_reach_the_temp_clone() {
+    let s = Sandbox::new();
+    let marker = s.home.join("smudge-ran").to_string_lossy().replace('\\', "/");
+    std::fs::write(s.home.join("gitconfig"), format!("[filter \"mine\"]\n\tsmudge = \"echo ran > '{marker}'; cat\"\n")).unwrap();
+    s.write(".gitattributes", "*.rs filter=mine\n");
+    s.base_repo();
+    s.write_session("session-main", &main_session(&s));
+    s.land_lib();
+    let v = s.json(&[]);
+    assert_eq!(v["sessions"]["analyzed"], 1, "{v:#}");
+    assert!(!Path::new(&marker).exists(), "전역 설정의 필터가 임시 클론에서 돌았다");
+}
+
+/// 프로세스에 Ctrl+C를 보낸다. 콘솔 없이 돌아 보낼 수 없으면 false
+#[cfg(windows)]
+fn interrupt(child: &std::process::Child) -> bool {
+    extern "system" {
+        fn GenerateConsoleCtrlEvent(event: u32, group: u32) -> i32;
+    }
+    const CTRL_BREAK_EVENT: u32 = 1;
+    // SAFETY: 이 시험이 새 프로세스 그룹으로 띄운 자식에게만 보낸다
+    unsafe { GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, child.id()) != 0 }
+}
+
+#[cfg(not(windows))]
+fn interrupt(child: &std::process::Child) -> bool {
+    Command::new("kill").args(["-INT", &child.id().to_string()]).status().is_ok_and(|s| s.success())
+}
+
+#[test]
+fn an_interrupted_run_leaves_no_code_in_temp() {
+    let s = Sandbox::new();
+    s.base_repo();
+    // 임시 클론이 보이는 동안 신호를 보낼 수 있게 인덱싱 거리를 둔다
+    for i in 0..300 {
+        s.write(&format!("src/gen/m{i}.rs"), &format!("pub fn gen_marker_{i}(a: i32) -> i32 {{ a + {i} }}\n"));
+    }
+    s.commit_at(BASE_DATE, &["."]);
+    s.write_session("session-main", &main_session(&s));
+    s.land_lib();
+
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_lantern"));
+    cmd.arg("-C").arg(&s.repo).args(["autopsy", "--json", "--max-seconds", "86400"]).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NEW_PROCESS_GROUP: u32 = 0x0000_0200;
+        cmd.creation_flags(CREATE_NEW_PROCESS_GROUP);
+    }
+    let mut child = s.isolate(&mut cmd).spawn().unwrap();
+    let checked_out = || std::fs::read_dir(&s.temp).unwrap().flatten().any(|t| t.path().join("repo/src/lib.rs").exists());
+    let started = std::time::Instant::now();
+    while !checked_out() {
+        // 신호를 보내기 전에 끝났으면 볼 것이 없다
+        if child.try_wait().unwrap().is_some() || started.elapsed() > std::time::Duration::from_secs(120) {
+            let _ = child.wait();
+            return;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    if !interrupt(&child) {
+        let _ = child.wait();
+        return;
+    }
+    assert_eq!(child.wait().unwrap().code(), Some(130));
+    assert_eq!(std::fs::read_dir(&s.temp).unwrap().count(), 0, "임시 폴더가 남았다");
+}

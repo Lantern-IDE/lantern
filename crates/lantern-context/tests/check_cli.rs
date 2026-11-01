@@ -241,8 +241,133 @@ fn check_is_quiet_when_the_caller_was_updated_too() {
     assert_eq!(v["findings"].as_array().unwrap().len(), 0, "{v}");
     let text = stdout(&s.lantern(&["check"]));
     assert_eq!(text.lines().count(), 1, "{text}");
-    assert!(text.contains("nothing left behind"), "{text}");
+    assert!(text.contains("no possible misses found") && text.contains("not proof"), "{text}");
     assert_eq!(s.lantern(&["check", "--strict"]).status.code(), Some(0));
+}
+
+#[test]
+fn check_says_which_files_it_could_not_compare() {
+    let s = Sandbox::new();
+    // 1MB가 넘으면 비교하지 않는다. 여기서 지운 이름을 다른 파일이 아직 부르지만 알 수 없다
+    let pad: String = (0..110_000).map(|i| format!("var pad{i} = {i};\n")).collect();
+    s.write("big.js", &format!("function old_fn_name() {{ return 1; }}\n{pad}"));
+    s.write("use.js", "const { old_fn_name } = require('./big');\nfunction go() { return old_fn_name(); }\n");
+    s.commit_all();
+    s.write("big.js", &format!("function new_fn_name() {{ return 1; }}\n{pad}"));
+    let v = json_of(&s.lantern(&["check", "--json"]));
+    assert_eq!((v["skipped_files"].as_u64(), v["changed_code_files"].as_u64(), v["total_findings"].as_u64()), (Some(1), Some(1), Some(0)), "{v}");
+    let text = stdout(&s.lantern(&["check"]));
+    assert!(text.contains("0 changed code files") && text.contains("1 more changed code file not checked") && text.contains("not proof"), "{text}");
+    assert!(!text.contains("nothing left"), "{text}");
+}
+
+#[test]
+fn check_counts_a_big_untracked_file_as_not_checked() {
+    let s = Sandbox::with_caller();
+    std::fs::File::create(s.repo.join("big.js")).unwrap().set_len(8 * 1024 * 1024).unwrap();
+    let v = json_of(&s.lantern(&["check", "--json"]));
+    assert_eq!(v["skipped_files"], 1, "{v}");
+}
+
+#[test]
+fn check_keeps_no_code_or_secrets_in_the_data_folder() {
+    const SECRET: &str = "ghp_abcdefghijklmnopqrstuvwxyz0123456789";
+    fn files_under(dir: &Path, out: &mut Vec<PathBuf>) {
+        for e in std::fs::read_dir(dir).unwrap().flatten() {
+            if e.path().is_dir() {
+                files_under(&e.path(), out);
+            } else {
+                out.push(e.path());
+            }
+        }
+    }
+    let s = Sandbox::new();
+    let lib = format!("/// doc {SECRET}\npub fn compute_total(a: i32, t: &str) -> i32 {{\n    let token = \"{SECRET}\";\n    a + 40\n}}\npub const KEY_VALUE: &str = \"{SECRET}\";\n");
+    s.write("src/lib.rs", &lib);
+    s.write("src/show.rs", SHOW);
+    s.commit_all();
+    s.write("src/lib.rs", &lib.replace("compute_total", "add_all_up"));
+
+    // 수동 검사, 훅, 뒤에서 만드는 인덱스 모두
+    assert_eq!(json_of(&s.lantern(&["check", "--json"]))["findings"][0]["symbol"], "compute_total");
+    let t = s.transcript(&["src/lib.rs"], &[]);
+    assert_silent_ok(&s.stop_hook(&s.input("s1", &t, false)), "훅");
+    assert!(s.log().contains(r#""dangling":1"#), "{}", s.log());
+    assert_eq!(s.lantern(&["check", "--index-only"]).status.code(), Some(0));
+
+    let mut files = Vec::new();
+    files_under(&s.data, &mut files);
+    assert!(files.iter().any(|f| f.extension().is_some_and(|x| x == "db")), "{files:?}");
+    for f in &files {
+        let bytes = std::fs::read(f).unwrap();
+        for word in [SECRET, "let token", "doc ghp"] {
+            assert!(!bytes.windows(word.len()).any(|w| w == word.as_bytes()), "{word} in {}", f.display());
+        }
+    }
+
+    // 지우면 남지 않는다. 설정이 없어도 지운다
+    let text = stdout(&s.lantern(&["hook", "uninstall", "claude"]));
+    assert!(text.contains("Deleted the index"), "{text}");
+    assert!(std::fs::read_dir(s.data.join("index")).unwrap().next().is_none());
+    let text = stdout(&s.lantern(&["check"]));
+    assert!(text.contains("possible miss"), "{text}");
+    assert!(std::fs::read_dir(s.data.join("index")).unwrap().next().is_some());
+    assert_eq!(s.lantern(&["hook", "uninstall", "claude", "--user"]).status.code(), Some(0));
+    assert!(!s.data.join("index").exists());
+}
+
+#[test]
+fn check_waits_for_a_short_writer_on_the_index() {
+    let s = Sandbox::with_caller();
+    assert_eq!(s.lantern(&["index"]).status.code(), Some(0));
+    s.write("src/lib.rs", RENAMED);
+    // 쓰는 쪽이 잠깐 잡고 있다. 바로 실패하면 보고서가 없다. 디버그 빌드는 시작에 1초 넘게 걸려 그보다 길게 잡는다
+    let holder = rusqlite::Connection::open(s.repo.join(".lantern/index.db")).unwrap();
+    holder.execute_batch("BEGIN IMMEDIATE").unwrap();
+    let release = std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_secs(3));
+        holder.execute_batch("ROLLBACK").unwrap();
+    });
+    let v = json_of(&s.lantern(&["check", "--json"]));
+    release.join().unwrap();
+    assert_eq!((v["findings"][0]["symbol"].as_str(), v["index_stale"].as_bool()), (Some("compute_total"), Some(false)), "{v}");
+}
+
+#[test]
+#[cfg(windows)]
+fn stop_hook_finds_the_file_when_the_log_spells_its_case_differently() {
+    let s = Sandbox::with_caller();
+    s.write("src/lib.rs", RENAMED);
+    let t = s.transcript(&["SRC/Lib.rs"], &[]);
+    assert_silent_ok(&s.stop_hook(&s.input("s1", &t, false)), "대소문자");
+    assert!(s.log().contains(r#""dangling":1"#), "{}", s.log());
+}
+
+#[test]
+fn partial_clones_stay_off_the_network_and_say_what_they_could_not_read() {
+    let s = Sandbox::with_caller();
+    // 이 설정을 모르는 오래된 git은 막을 방법이 없다
+    if !Command::new("git").args(["--no-lazy-fetch", "version"]).output().unwrap().status.success() {
+        return;
+    }
+    s.git(&["config", "uploadpack.allowFilter", "true"]);
+    s.write("src/lib.rs", RENAMED);
+    s.commit_all();
+    let clone = s.home.join("partial");
+    let url = format!("file://{}", s.repo.to_string_lossy().replace('\\', "/"));
+    let mut cmd = Command::new("git");
+    cmd.args(["clone", "-q", "--filter=blob:none", &url]).arg(&clone);
+    let out = s.isolate(&mut cmd).output().unwrap();
+    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    let packs = || std::fs::read_dir(clone.join(".git/objects/pack")).unwrap().count();
+    let before = packs();
+
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_lantern"));
+    cmd.arg("-C").arg(&clone).args(["check", "--json", "--base", "HEAD~1"]).stdin(Stdio::null());
+    let v = json_of(&s.isolate(&mut cmd).output().unwrap());
+    assert_eq!(packs(), before, "객체를 받으러 나갔다");
+    // 기준 커밋의 본문이 없다. 새 파일로 치면 "찾지 못함"이 거짓말이 된다
+    assert_eq!((v["skipped_files"].as_u64(), v["total_findings"].as_u64()), (Some(1), Some(0)), "{v}");
 }
 
 #[test]
@@ -591,12 +716,18 @@ fn hook_install_and_uninstall_through_the_command_line() {
     assert!(text.contains("Backup:") && text.contains("Added to hooks.Stop") && text.contains("--stop-hook"), "{text}");
     // 임시 저장소에는 무시 규칙이 없으니 커밋되지 않게 알려 준다
     assert!(text.contains("not ignored by git"), "{text}");
+    // 무엇을 남기는지 그대로 말한다
+    assert!(text.contains("symbol names and file paths, no code") && !text.contains("only records"), "{text}");
     let v: Value = serde_json::from_str(&std::fs::read_to_string(&settings).unwrap()).unwrap();
     assert_eq!(v["other"]["keep"], 1);
     assert_eq!(v["hooks"]["Stop"][0]["hooks"][0]["command"], "mine");
     let cmd = v["hooks"]["Stop"][1]["hooks"][0]["command"].as_str().unwrap();
     assert!(cmd.contains("lantern") && cmd.ends_with("check --stop-hook") && !cmd.contains('\\'), "{cmd}");
-    assert!(s.repo.join(".claude/settings.local.json.lantern-backup").exists());
+    // 백업에는 토큰이 있을 수 있어 저장소 안에 두지 않는다
+    let backup = text.lines().find_map(|l| l.strip_prefix("Backup: ")).map(PathBuf::from).unwrap();
+    assert!(backup.starts_with(s.data.join("settings-backups")) && backup.exists(), "{}", backup.display());
+    let beside: Vec<_> = std::fs::read_dir(s.repo.join(".claude")).unwrap().flatten().map(|e| e.file_name()).collect();
+    assert_eq!(beside, ["settings.local.json"]);
 
     let text = stdout(&s.lantern(&["hook", "uninstall", "claude"]));
     assert!(text.contains("Removed from hooks.Stop"), "{text}");
