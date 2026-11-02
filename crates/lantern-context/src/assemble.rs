@@ -124,7 +124,12 @@ impl Candidates {
 
     fn ranked(&self) -> Vec<&Candidate> {
         let mut v: Vec<_> = self.0.values().collect();
-        v.sort_by(|a, b| b.score.total_cmp(&a.score).then(a.sym.id.cmp(&b.sym.id)));
+        // 심볼 id는 다시 파싱할 때마다 바뀌므로 동점은 갱신 이력과 무관한 값으로 가른다
+        v.sort_by(|a, b| {
+            b.score.total_cmp(&a.score).then_with(|| {
+                (&a.sym.path, a.sym.start_line, &a.sym.name).cmp(&(&b.sym.path, b.sym.start_line, &b.sym.name))
+            })
+        });
         v
     }
 }
@@ -630,6 +635,43 @@ impl ContextResult {
 mod tests {
     use super::*;
     use crate::Engine;
+
+    #[test]
+    fn ties_do_not_depend_on_index_history() {
+        let files = ["a.rs", "b.rs", "c.rs"];
+        let src = "pub fn handle_request() {\n    shared_target();\n}\n";
+
+        let fresh = tempfile::tempdir().unwrap();
+        for f in files {
+            std::fs::write(fresh.path().join(f), src).unwrap();
+        }
+        let mut first = Engine::open(fresh.path()).unwrap();
+        first.refresh().unwrap();
+
+        // 뒤 파일부터 색인해 심볼 id가 거꾸로 붙는다
+        let used = tempfile::tempdir().unwrap();
+        let mut second = Engine::open(used.path()).unwrap();
+        for f in files.iter().rev() {
+            std::fs::write(used.path().join(f), src).unwrap();
+            second.refresh().unwrap();
+        }
+
+        let order = |e: &Engine| {
+            let items: Vec<String> =
+                e.context(&ContextRequest::new("handle request")).unwrap().items.into_iter().map(|i| i.path).collect();
+            let callers: Vec<String> = e
+                .store
+                .caller_ids("shared_target", 2)
+                .unwrap()
+                .into_iter()
+                .map(|id| e.store.symbol(id).unwrap().unwrap().path)
+                .collect();
+            (items, callers)
+        };
+        let (items, callers) = order(&second);
+        assert_eq!(order(&first), (items, callers.clone()), "갱신 이력이 달라도 결과는 같아야 함");
+        assert_eq!(callers, ["a.rs", "b.rs"], "잘린 호출자 목록도 경로 순서");
+    }
 
     #[test]
     fn semantic_files_join_the_context() {
