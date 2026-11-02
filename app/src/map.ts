@@ -792,7 +792,7 @@ function renderChrome() {
   $("#map-crumb").replaceChildren(
     ...(mode === "overview" ? [h("span", { class: "cur" }, modeTitle())] : [
       (() => {
-        const b = h("button", { class: "crumb-link" }, codicon("type-hierarchy"), t("전체 구조"));
+        const b = h("button", { class: "crumb-link", title: t("전체 구조") }, codicon("type-hierarchy"), h("span", {}, t("전체 구조")));
         b.addEventListener("click", () => {
           leavePreview();
           if (mode !== "overview" || !nodes.length) void showOverview();
