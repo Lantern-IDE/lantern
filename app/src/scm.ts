@@ -543,7 +543,7 @@ function renderReview(box: HTMLElement, r: Review) {
     const stats = !i
       ? f.status === "deleted" ? "삭제됨" : "분석 안 함"
       : !i.supported ? "분석하지 않는 언어"
-      : `직접 ${i.code_callers} · 간접 ${i.code_callers2} · ${i.tests.length ? `테스트 ${i.tests.length}` : "테스트 없음"}`;
+      : `직접 ${i.code_callers} · 간접 ${i.code_callers2} · ${i.tests.length ? `테스트 파일 ${i.tests.length}` : "테스트 없음"}`;
     const row = h("div", { class: "rv-file", role: "button", tabindex: "0", title: i ? "영향 범위를 지도에서 보기" : f.path },
       fileIcon(f.path),
       h("span", { class: "rv-name" }, basename(f.path), h("span", { class: "rv-dir" }, dirname(f.path))),

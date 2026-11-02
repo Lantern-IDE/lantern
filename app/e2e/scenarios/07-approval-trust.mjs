@@ -236,7 +236,7 @@ scenario("위험도: 테스트 호출자는 세지 않고, 주석만 바꾸면 �
   await run(ui.sendTask, "위험도 확인: 코드 변경", "code", false);
   let row = await impactShown();
   // signCookie: 호출자 issueSession, testSign(테스트). 테스트는 호출자로 세지 않고 따로 보인다
-  if (!/직접 호출/.test(row) || !/테스트 1/.test(row) || /코드 변경 없음/.test(row)) throw new Error(`코드 변경의 영향 반경: ${row}`);
+  if (!/직접 호출/.test(row) || !/테스트 파일 1/.test(row) || /코드 변경 없음/.test(row)) throw new Error(`코드 변경의 영향 반경: ${row}`);
   const direct = await run(() => document.querySelector(".task-log:not(.hidden) .approval:not(.resolved) .impact .istat b")?.textContent);
   if (direct !== "1") throw new Error(`직접 호출 ${direct} (테스트를 뺀 값이 아님)`);
   await refuseAndFinish();

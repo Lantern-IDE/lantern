@@ -34,7 +34,7 @@ function fromPattern(s: string): string | null {
     let i = 0;
     const out = p.out.replace(/\{(\d*)\}/g, (_, n: string) => (n ? args[Number(n) - 1] : args[i++]) ?? "");
     // 한국어는 복수형이 없어 "1 files"가 되기 쉽다
-    return out.replace(/(^|[^\d.,])1 (file|result|occurrence|symbol|item|request|token|line|change|match)(?:es|s)\b/g, (_, pre: string, noun: string) => `${pre}1 ${noun}`);
+    return out.replace(/(^|[^\d.,])1 (file|test file|result|occurrence|symbol|item|request|token|line|change|match)(?:es|s)\b/g, (_, pre: string, noun: string) => `${pre}1 ${noun}`);
   }
   return null;
 }

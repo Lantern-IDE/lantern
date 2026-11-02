@@ -54,6 +54,8 @@ describe("t()", () => {
 
   it("영어 복수형: 1은 단수", () => {
     expect(t("1개 파일에서 1개 결과")).toBe("1 result in 1 file");
+    expect(t("테스트 파일 1")).toBe("1 test file");
+    expect(t("테스트 파일 10")).toBe("10 test files");
   });
 
   it("구분자로 이어진 조각은 각각 번역", () => {
