@@ -95,7 +95,7 @@ scenario("다시 켜면 작업이 복원된다", async () => {
   if (!titles.includes("서명 접미사를 바꿔줘") || !titles.includes("격리해서 바꿔줘")) throw new Error(`작업 목록: ${titles.join(", ")}`);
   // 되돌린 작업은 되돌린 채로: 되돌리기 단추가 다시 나오면 안 된다
   const reverted = await run(() => {
-    [...document.querySelectorAll("#task-list .task")].find((t) => t.textContent.includes("서명 접미사를 바꿔줘")).click();
+    [...document.querySelectorAll("#task-list .task")].find((t) => t.querySelector(".task-title").textContent === "서명 접미사를 바꿔줘").click();
     const box = document.querySelector(".task-log:not(.hidden) .changed");
     return { reverted: box?.classList.contains("reverted"), undo: !!box?.querySelector(".ch-undo") };
   });
