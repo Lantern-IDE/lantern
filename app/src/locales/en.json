@@ -331,7 +331,7 @@
   "저장할 때": "When Saving",
   "적용": "Apply",
   "적용됨": "Applied",
-  "적용하기 전에는 파일이 바뀌지 않습니다": "Files aren't changed until you apply",
+  "거절하면 파일은 그대로이고 AI에게 알립니다": "If you deny, the file stays as it is and the AI is told",
   "전부 파일로 고칠 수 있습니다.": "You can also edit all of it directly in the file.",
   "정해진 순간에 실행할 명령입니다. 결과는 출력 패널에 표시됩니다.": "Commands to run at a specific point. Results appear in the Output panel.",
   "제한 모드": "Restricted Mode",
