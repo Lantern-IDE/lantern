@@ -15,7 +15,7 @@
   --fg: #d5d8e0;
   --fg-strong: #f0f1f5;
   --muted: #9298a8;
-  --dim: #6f7585;
+  --dim: #858b9b;
   --hover: rgba(160, 168, 200, 0.08);
   --press: rgba(160, 168, 200, 0.14);
   --active-sel: rgba(108, 115, 245, 0.26);
@@ -60,7 +60,7 @@
   --fg: #2a2d37;
   --fg-strong: #14161c;
   --muted: #5d6272;
-  --dim: #8a8f9e;
+  --dim: #63687a;
   --hover: rgba(40, 48, 90, 0.06);
   --press: rgba(40, 48, 90, 0.1);
   --active-sel: rgba(79, 85, 216, 0.16);
@@ -70,17 +70,17 @@
   --accent-fg: #ffffff;
   --focus: #5b62e6;
   --accent-soft: rgba(79, 85, 216, 0.1);
-  --context: #0b7f94;
+  --context: #096a7c;
   --context-soft: rgba(11, 127, 148, 0.09);
   --context-line: rgba(11, 127, 148, 0.3);
   --link: #4147c4;
   --input-bg: #ffffff;
   --input-border: #cfd2db;
-  --error: #c9353b;
+  --error: #b52c32;
   --error-soft: rgba(201, 53, 59, 0.08);
-  --warning: #9a6b00;
+  --warning: #7f5800;
   --warning-soft: rgba(154, 107, 0, 0.09);
-  --ok: #1d8a57;
+  --ok: #146a42;
   --info: #2a6fd1;
   --match: #4147c4;
   --search-hit: rgba(234, 170, 0, 0.3);
@@ -143,6 +143,8 @@ select option { background: var(--elevated); color: var(--fg); }
 .btn .codicon { font-size: 14px; }
 .btn-primary { background: var(--accent); color: var(--accent-fg); }
 .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+/* 안쪽 고리는 주 버튼 색과 대비가 1.5 안팎이라 바깥으로 뺀다 */
+.btn-primary:focus-visible { outline-offset: 2px; }
 .btn-secondary { background: transparent; color: var(--fg); border: 1px solid var(--border-strong); }
 .btn-secondary:hover:not(:disabled) { background: var(--hover); }
 .btn-ghost { color: var(--link); padding: 0 6px; }
@@ -553,6 +555,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .chip-btn span { overflow: hidden; text-overflow: ellipsis; }
 #agent-select { background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); color: var(--muted); font-size: 11.5px; max-width: 120px; min-width: 0; flex-shrink: 1; height: 22px; padding: 0 2px; cursor: pointer; }
 #agent-select:hover { background: var(--hover); color: var(--fg); }
+#agent-select:focus-visible { border-color: var(--focus); color: var(--fg); }
 .focus-toggle { cursor: pointer; border-color: var(--border); }
 .focus-toggle input { display: none; }
 .focus-toggle:has(input:not(:checked)) { opacity: 0.5; text-decoration: line-through; }
