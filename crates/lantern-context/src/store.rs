@@ -465,7 +465,7 @@ impl Store {
              JOIN symbols s ON s.id = symbols_fts.rowid
              JOIN files f ON f.id = s.file_id
              WHERE symbols_fts MATCH ?1
-             ORDER BY rank LIMIT ?2"
+             ORDER BY rank, f.path, s.start_line, s.name LIMIT ?2"
         );
         let mut stmt = self.conn.prepare_cached(&sql)?;
         let rows = stmt.query_map(params![fts_query, limit as i64], |r| {
@@ -509,7 +509,7 @@ impl Store {
     /// 심볼 본문 안에서 참조하는 이름들
     pub fn callee_names(&self, symbol_id: i64) -> Result<Vec<String>> {
         let mut stmt = self.conn.prepare_cached(
-            "SELECT name FROM refs WHERE enclosing_symbol_id = ?1 GROUP BY name ORDER BY MIN(line)",
+            "SELECT name FROM refs WHERE enclosing_symbol_id = ?1 GROUP BY name ORDER BY MIN(line), name",
         )?;
         let rows = stmt.query_map([symbol_id], |r| r.get(0))?;
         Ok(rows.collect::<rusqlite::Result<_>>()?)
@@ -518,8 +518,12 @@ impl Store {
     /// `name`을 참조하는 심볼 id들
     pub fn caller_ids(&self, name: &str, limit: usize) -> Result<Vec<i64>> {
         let mut stmt = self.conn.prepare_cached(
-            "SELECT DISTINCT enclosing_symbol_id FROM refs
-             WHERE name = ?1 AND enclosing_symbol_id IS NOT NULL LIMIT ?2",
+            "SELECT r.enclosing_symbol_id FROM refs r
+             JOIN symbols s ON s.id = r.enclosing_symbol_id
+             JOIN files f ON f.id = s.file_id
+             WHERE r.name = ?1
+             GROUP BY r.enclosing_symbol_id
+             ORDER BY f.path, s.start_line, s.name LIMIT ?2",
         )?;
         let rows = stmt.query_map(params![name, limit as i64], |r| r.get(0))?;
         Ok(rows.collect::<rusqlite::Result<_>>()?)
@@ -544,7 +548,7 @@ impl Store {
             "SELECT file_b, count FROM cochange WHERE file_a = ?1
              UNION ALL
              SELECT file_a, count FROM cochange WHERE file_b = ?1
-             ORDER BY 2 DESC LIMIT ?2",
+             ORDER BY 2 DESC, 1 LIMIT ?2",
         )?;
         let rows = stmt.query_map(params![path, limit as i64], |r| Ok((r.get(0)?, r.get(1)?)))?;
         Ok(rows.collect::<rusqlite::Result<_>>()?)
