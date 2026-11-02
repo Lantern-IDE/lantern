@@ -273,6 +273,21 @@ scenario("기본 화면: 카드의 호출 수는 보이는 간선이 아니라 �
   git("checkout", "-q", "--", ".");
   await sleep(1500);
 
+  // 노드를 고른 채 저장해도 카드의 수가 남는다 (옛 심볼 id로 물으면 사라진다)
+  const picked = await clickNode("signCookie");
+  const drawn = (await snapshot()).draws;
+  fs.appendFileSync(path.join(DIRS.proj, "src/auth/session.ts"), "// 카드 확인\n");
+  await waitFor((n) => __draw.draws > n, 8000, "고른 채 저장 뒤 다시 그림", drawn);
+  await sleep(2500);
+  const kept = await run(() => [...document.querySelectorAll("#map-card .mc-stat b")].map((b) => b.textContent));
+  if (kept.length !== Object.keys(picked).length || kept.includes("–") || kept.includes("?")) throw new Error(`저장 뒤 카드의 수: ${JSON.stringify(kept)} (전에는 ${JSON.stringify(picked)})`);
+  git("checkout", "-q", "--", ".");
+  await sleep(1500);
+  await run(() => {
+    document.querySelector("#map-card .icon-btn").click();
+    return true;
+  });
+
   await run(() => {
     document.querySelector("#map-crumb .crumb-link").click();
     return true;
