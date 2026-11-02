@@ -195,6 +195,41 @@ scenario("승인 카드: 긴 줄은 접히고 달라진 곳만 칠해지며 버�
   await refuseAndFinish();
 });
 
+scenario("승인 카드: 좁은 창에서도 줄 끝의 변경과 버튼이 스크롤 없이 보인다", async () => {
+  const LONG = "src/long.ts";
+  const args = Array.from({ length: 14 }, (_, i) => `argument${i}: string`).join(", ");
+  fs.writeFileSync(path.join(DIRS.proj, LONG), `// 긴 줄\nexport function longSignature(${args}, last: string) {\n  return last;\n}\n`);
+  await cdp("Emulation.setDeviceMetricsOverride", { width: 900, height: 560, deviceScaleFactor: 0, mobile: false });
+  try {
+    await newTask();
+    mock.read = LONG;
+    mock.edit = LONG;
+    mock.old = "last: string) {";
+    mock.new = "last: string[]) {";
+    await run(ui.sendTask, "좁은 창 확인", "code", false);
+    await pendingCard();
+    await sleep(1500); // 영향 반경으로 카드가 커질 때까지
+    const m = await run(() => {
+      const c = document.querySelector(".task-log:not(.hidden) .approval:not(.resolved)");
+      const onTop = (el) => {
+        const b = el.getBoundingClientRect();
+        // 잠깐 뜨는 알림이 겹칠 수 있어 알림은 빼고 본다
+        const t = document.elementsFromPoint(b.left + b.width / 2, b.top + b.height / 2).find((e) => !e.closest(".toast"));
+        return !!t && (t === el || el.contains(t));
+      };
+      const chg = c.querySelector(".diff .add .chg");
+      return { width: innerWidth, chg: chg?.textContent ?? null, chgShown: !!chg && onTop(chg), apply: onTop(c.querySelector(".actions .btn-primary")), refuse: onTop(c.querySelector(".actions .btn-secondary")) };
+    });
+    if (m.width !== 900) throw new Error(`창 폭을 줄이지 못함: ${m.width}`);
+    if (m.chg !== "[]" || !m.chgShown) throw new Error(`줄 끝의 변경이 안 보임: ${JSON.stringify(m)}`);
+    if (!m.apply || !m.refuse) throw new Error(`버튼이 가려짐: ${JSON.stringify(m)}`);
+    await refuseAndFinish();
+  } finally {
+    await cdp("Emulation.clearDeviceMetricsOverride");
+    fs.rmSync(path.join(DIRS.proj, LONG), { force: true });
+  }
+});
+
 scenario("위험도: 테스트 호출자는 세지 않고, 주석만 바꾸면 그렇게 말한다", async () => {
   await newTask();
   useSig();
