@@ -247,8 +247,11 @@ scenario("기본 화면: 카드의 호출 수는 보이는 간선이 아니라 �
     filler.remove();
     return { shown, all: btns.length, over };
   });
+  // 좁은 창에서도 지금 보는 곳의 이름은 남는다 (전에는 0px로 사라졌다)
+  const curWidth = await run(() => document.querySelector("#map-crumb .cur").getBoundingClientRect().width);
   await cdp("Emulation.clearDeviceMetricsOverride");
   if (cut.over <= 0 || cut.shown !== cut.all) throw new Error(`좁은 창의 카드 버튼: ${JSON.stringify(cut)}`);
+  if (curWidth < 40) throw new Error(`좁은 창의 지도 제목이 사라짐: ${curWidth}px`);
   // 테스트 노드(testSign)는 물러나 있고, 범례가 그 뜻을 말한다
   if (!(await run(() => !!document.querySelector("#map-legend .sw.faded")))) throw new Error("테스트 범례가 없음");
   await run(() => {
