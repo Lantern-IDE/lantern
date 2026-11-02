@@ -8,6 +8,7 @@ import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation, f
 import { errorText } from "./api";
 import { $, basename, dirname, h } from "./dom";
 import { codicon } from "./icons";
+import { nodeKeys } from "./lib/nodeKeys";
 import * as prefs from "./prefs";
 import { t } from "./i18n";
 
@@ -151,15 +152,16 @@ function radius(n: GNode): number {
   return Math.min(14, 5 + Math.sqrt(n.weight) * 1.6);
 }
 
-/** 다시 그려도 같은 노드로 치는 열쇠. 심볼 id는 파일을 다시 인덱싱하면 바뀐다 */
-const nodeKey = (n: GNode) => `${n.kind}:${n.path ?? ""}:${n.label}`;
-
 function setGraph(g: Graph, keepPositions = false) {
   trace(`setGraph n=${g.nodes.length} e=${g.edges.length} keep=${keepPositions}`);
   statsCache = new Map();
-  const old = new Map<string, N>(keepPositions ? nodes.map((n) => [nodeKey(n), n]) : []);
-  nodes = g.nodes.map((n) => {
-    const prev = old.get(nodeKey(n));
+  const oldKeys = keepPositions ? nodeKeys(nodes) : [];
+  const old = new Map<string, N>(oldKeys.map((k, i) => [k, nodes[i]]));
+  // 노드 객체가 새로 만들어진다: 고른 노드도 새 것으로 잇는다 (아니면 고리와 이름표가 사라진다)
+  const was = selected ? oldKeys[nodes.indexOf(selected)] : undefined;
+  const keys = nodeKeys(g.nodes);
+  nodes = g.nodes.map((n, i) => {
+    const prev = old.get(keys[i]);
     return { ...n, r: radius(n), x: prev?.x, y: prev?.y };
   });
   byId = new Map(nodes.map((n) => [n.id, n]));
@@ -169,9 +171,7 @@ function setGraph(g: Graph, keepPositions = false) {
   for (const n of nodes) if (n.kind === "file" && sameName.get(n.label)! > 1) n.text = n.path?.split("/").slice(-2).join("/");
   links = g.edges.filter((e) => byId.has(e.source) && byId.has(e.target)).map((e) => ({ source: e.source, target: e.target, kind: e.kind, weight: e.weight, uncertain: e.uncertain }) as unknown as L);
   truncated = g.truncated;
-  // 노드 객체가 새로 만들어졌다: 고른 노드도 새 것으로 잇는다 (아니면 고리와 이름표가 사라진다)
-  const was = selected && nodeKey(selected);
-  selected = keepPositions && was ? nodes.find((n) => nodeKey(n) === was) ?? null : null;
+  selected = was ? nodes[keys.indexOf(was)] ?? null : null;
   hovered = null;
   applyMarks();
   trace("setGraph: layout");

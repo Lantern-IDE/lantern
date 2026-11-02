@@ -3,7 +3,25 @@ import { describe, expect, it } from "vitest";
 import { changedSpans, diffTarget } from "../../src/lib/diff";
 import { parseContext } from "../../src/lib/context";
 import { displayKey, fromEvent } from "../../src/lib/keys";
+import { nodeKeys } from "../../src/lib/nodeKeys";
 import { isTestPath, testPrompt } from "../../src/lib/testPrompt";
+
+describe("nodeKeys: 다시 그려도 같은 노드", () => {
+  const s = (label: string, path = "a.go") => ({ kind: "symbol", path, label });
+
+  it("한 파일의 같은 이름은 겹치지 않는다", () => {
+    const keys = nodeKeys([s("String"), s("Parse"), s("String")]);
+    expect(new Set(keys).size).toBe(3);
+  });
+
+  it("id가 바뀌어도 같은 순서면 같은 열쇠", () => {
+    expect(nodeKeys([{ ...s("String"), id: "s:1" }, s("String")] as never)).toEqual(nodeKeys([{ ...s("String"), id: "s:9" }, s("String")] as never));
+  });
+
+  it("다른 파일의 같은 이름은 다른 열쇠", () => {
+    expect(nodeKeys([s("String", "a.go")])[0]).not.toBe(nodeKeys([s("String", "b.go")])[0]);
+  });
+});
 
 describe("diffTarget: 바뀌는 원래 줄 범위", () => {
   it("가운데 한 줄 수정", () => {
