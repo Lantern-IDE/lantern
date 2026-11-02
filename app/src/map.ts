@@ -314,6 +314,8 @@ function restore(s: Saved) {
   loadSeq++;
   sim?.stop();
   ({ mode, focusLabel, impact, baseGraph, nodes, links, byId, sim, view, cameraMoved, selected, truncated, loaded } = s);
+  // 노드를 끄는 중에 미리 보기가 끼어들었으면 놓는 동작이 이 sim에 닿지 않았다: 끝없이 다시 그리지 않게
+  sim?.alphaTarget(0);
   hovered = null;
   applyMarks();
   renderChrome();
