@@ -113,6 +113,26 @@ function stick<T>(task: Task, fn: () => T): T {
   return r;
 }
 
+/** 승인 카드에서 달라진 곳을 스크롤 없이 보이게 한다. 좁은 창에서는 긴 줄이 여러 줄로 접혀 diff 머리만 보이고 끝난다 */
+function showChange(card: HTMLElement, box: HTMLElement) {
+  const diff = card.querySelector<HTMLElement>(".diff");
+  const bar = card.querySelector<HTMLElement>(".actions");
+  const first = diff?.querySelector<HTMLElement>(".add, .del");
+  if (!diff || !bar || !first) return;
+  // 덧붙이기만 했으면 지운 줄에는 표시가 없다: 새 줄의 달라진 곳을 본다
+  const paired = first.classList.contains("del") ? first.nextElementSibling?.querySelector<HTMLElement>(".chg") : null;
+  const mark = paired ?? first.querySelector<HTMLElement>(".chg") ?? first;
+  const m = mark.getBoundingClientRect();
+  const d = diff.getBoundingClientRect();
+  const top = Math.max(d.top, box.getBoundingClientRect().top);
+  const bottom = Math.min(d.bottom, bar.getBoundingClientRect().top);
+  if (m.top >= top && m.bottom <= bottom) return;
+  diff.scrollTop += m.top - top - Math.max(0, (bottom - top - m.height) / 2);
+  // diff를 끝까지 내려도 버튼 줄에 가리면 (파일 끝의 변경) 바깥도 내린다
+  const under = mark.getBoundingClientRect().bottom - bar.getBoundingClientRect().top;
+  if (under > 0) box.scrollTop += under;
+}
+
 function turn(task: Task, who: "user" | "bot"): HTMLElement {
   const b = h("div", { class: "turn-body" });
   let avatar: HTMLElement;
@@ -390,13 +410,19 @@ function handle(ev: AgentEvent) {
       const newPath = isEdit ? ev.detail.match(/^\+\+\+ (?:b\/)?(.+)$/m)?.[1]?.trim() : undefined;
       if (newPath) task.approvalPaths.set(ev.id, newPath);
       // 카드 전체가 보이게 맞춘다. 창보다 길면 제목과 diff 머리부터 (버튼 줄은 sticky로 늘 보인다).
-      // 영향 반경·번역·언어 서버 결과로 늦게 커져도 다시 맞춘다. 사용자가 스크롤했으면 건드리지 않는다
+      // 영향 반경·번역·언어 서버 결과로 늦게 커져도 다시 맞춘다. 사용자가 스크롤했으면 (diff 안쪽도) 건드리지 않는다
       let scrolledTo = -1;
+      let diffAt = -1;
       const reveal = () => {
         const box = messages();
         if (!el.isConnected || el.classList.contains("resolved")) return growth.disconnect();
         if (task !== active || (scrolledTo >= 0 && box.scrollTop !== scrolledTo)) return;
         el.scrollIntoView({ block: el.offsetHeight > box.clientHeight ? "start" : "nearest" });
+        const diff = el.querySelector<HTMLElement>(".diff");
+        if (isEdit && diff && (diffAt < 0 || diff.scrollTop === diffAt)) {
+          showChange(el, box);
+          diffAt = diff.scrollTop;
+        }
         scrolledTo = box.scrollTop;
       };
       const growth = new ResizeObserver(reveal);
