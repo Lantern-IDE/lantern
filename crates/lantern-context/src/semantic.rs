@@ -239,4 +239,64 @@ mod tests {
         assert_eq!(store.count_chunks("m").unwrap(), (3, 3));
         assert_eq!(store.chunks_without_vectors("other", 10).unwrap().len(), 3);
     }
+
+    /// 요청 하나를 받아 정해 둔 상태와 본문으로 답하는 서버. 받은 요청 머리를 돌려준다
+    fn serve_once(status: &str, body: &'static str) -> (String, std::thread::JoinHandle<String>) {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        let status = status.to_string();
+        let handle = std::thread::spawn(move || {
+            let (mut s, _) = listener.accept().unwrap();
+            let mut buf = Vec::new();
+            let mut chunk = [0u8; 4096];
+            // 머리와 Content-Length만큼의 본문을 다 읽은 뒤 답한다
+            loop {
+                let n = s.read(&mut chunk).unwrap();
+                buf.extend_from_slice(&chunk[..n]);
+                let text = String::from_utf8_lossy(&buf).to_string();
+                if let Some(end) = text.find("\r\n\r\n") {
+                    let len = text
+                        .lines()
+                        .find_map(|l| l.to_ascii_lowercase().strip_prefix("content-length:").map(|v| v.trim().parse::<usize>().unwrap()))
+                        .unwrap_or(0);
+                    if buf.len() >= end + 4 + len || n == 0 {
+                        break;
+                    }
+                }
+            }
+            let reply = format!("HTTP/1.1 {status}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
+            s.write_all(reply.as_bytes()).unwrap();
+            String::from_utf8_lossy(&buf).to_string()
+        });
+        (url, handle)
+    }
+
+    fn embedder(url: String) -> Embedder {
+        Embedder {
+            base_url: url,
+            model: "m".into(),
+            api_key: Some("k".into()),
+            query_template: "{query}".into(),
+            doc_template: "{path}\n{text}".into(),
+        }
+    }
+
+    #[test]
+    fn embed_reads_vectors_by_index() {
+        let (url, server) = serve_once("200 OK", r#"{"data":[{"index":1,"embedding":[0,2]},{"index":0,"embedding":[3,4]}]}"#);
+        let v = embedder(url).embed(&["a".into(), "b".into()]).unwrap();
+        assert_eq!(v, vec![vec![0.6, 0.8], vec![0.0, 1.0]], "순서는 index를 따르고 길이는 1로");
+        let req = server.join().unwrap();
+        assert!(req.starts_with("POST /embeddings "), "{req}");
+        assert!(req.to_ascii_lowercase().contains("authorization: bearer k"), "{req}");
+    }
+
+    #[test]
+    fn embed_error_shows_status_and_body() {
+        let (url, server) = serve_once("500 Internal Server Error", r#"{"error":"model not loaded"}"#);
+        let e = embedder(url).embed(&["a".into()]).unwrap_err().to_string();
+        assert!(e.contains("500") && e.contains("model not loaded"), "{e}");
+        server.join().unwrap();
+    }
 }
