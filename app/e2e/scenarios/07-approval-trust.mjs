@@ -331,6 +331,31 @@ scenario("완료 카드: 통과·실패·찾지 못함·명령 모름·거절이
   git("checkout", "-q", "--", ".");
 });
 
+scenario("승인 대기 중 중단: 카드가 닫히고, 남은 버튼을 눌러도 적용됨으로 바뀌지 않는다", async () => {
+  git("checkout", "-q", "--", ".");
+  await newTask();
+  useSig();
+  await run(ui.sendTask, "중단 확인", "code", false);
+  await pendingCard();
+  await run(() => {
+    window.__stopped = document.querySelector(".task-log:not(.hidden) .approval:not(.resolved)");
+    window.__apply = window.__stopped.querySelector(".actions .btn-primary");
+    document.querySelector("#btn-stop").click();
+    return true;
+  });
+  await idle();
+  await waitFor(() => window.__stopped.querySelector(".verdict").textContent === "중단됨", 5000, "중단됨 표시");
+  await run(() => {
+    window.__apply.click();
+    return true;
+  });
+  await sleep(600);
+  const m = await run(() => ({ verdict: window.__stopped.querySelector(".verdict").textContent, shown: !!window.__apply.offsetParent, meta: document.querySelector("#task-list .task.active .task-meta")?.textContent ?? "" }));
+  if (m.verdict !== "중단됨" || m.shown) throw new Error(`중단한 카드: ${JSON.stringify(m)}`);
+  if (m.meta.includes("수정")) throw new Error(`적용하지 않았는데 발자취에 수정: ${m.meta}`);
+  if (file(SESSION).includes(".typed")) throw new Error("중단했는데 파일이 바뀜");
+});
+
 /** 지도의 카메라 (--trace 없이 진단 기록을 켜서 읽는다) */
 async function camera() {
   const line = [...traceLog].reverse().find((l) => l.includes("draw k="));
