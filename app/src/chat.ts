@@ -18,7 +18,7 @@ import { mayTakeFocus, watchKeys } from "./lib/focusGuard";
 import { testPrompt, type TestTarget } from "./lib/testPrompt";
 import * as i18n from "./i18n";
 export { parseContext } from "./lib/context";
-import { impactRow } from "./impact";
+import { impactRow, riskChip } from "./impact";
 import * as impact from "./impact";
 import { approvalTitle, authCard, contextCard, testRow, toolLabel, toolSummary } from "./chatCards";
 export { impactRow } from "./impact";
@@ -436,8 +436,12 @@ function handle(ev: AgentEvent) {
           task.log.push({ t: "touched", id: ev.id, names });
           persist(task);
         }, (i) => {
+          if (el.classList.contains("resolved")) return;
+          // 창이 낮으면 영향 반경이 diff 아래로 밀린다: 위험도는 머리에서도 보이게 (CSS가 낮은 창에서만 켠다)
+          const chip = riskChip(i);
+          if (chip) el.querySelector(".ahead")!.insertBefore(chip, el.querySelector(".verdict"));
           // 결정하는 동안 지도는 이 수정이 닿는 곳을 보여 준다
-          if (el.classList.contains("resolved") || !i.supported || i.comment_only || i.graph.nodes.length < 2) return;
+          if (!i.supported || i.comment_only || i.graph.nodes.length < 2) return;
           task.waitingImpacts.set(ev.id, i);
           syncMapPreview();
         }) : null,

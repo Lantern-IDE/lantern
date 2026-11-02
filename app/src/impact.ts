@@ -61,6 +61,12 @@ async function lspCallers(i: Impact): Promise<{ callers: number; files: number; 
   return { callers: code.length, files: new Set(code.map((n) => n.path).filter((p) => p !== i.path)).size, lspOnly };
 }
 
+/** 위험도 표시. 주석·공백만 바뀌면 그렇게 말하고, 분석하지 않는 언어면 없다 */
+export function riskChip(i: Impact): HTMLElement | null {
+  if (i.comment_only) return h("span", { class: "risk risk-none" }, "코드 변경 없음");
+  return i.supported ? h("span", { class: `risk risk-${i.code_risk}` }, `위험도 ${RISK_LABEL[i.code_risk]}`) : null;
+}
+
 /** `onImpact`: 결과를 그린 뒤 */
 export function impactRow(diff: string, onTouched: (names: string[]) => void = () => {}, onImpact: (i: Impact) => void = () => {}): HTMLElement | null {
   const target = diffTarget(diff);
@@ -99,7 +105,7 @@ export function impactRow(diff: string, onTouched: (names: string[]) => void = (
         codicon("pulse"),
         h("span", { class: "ititle" }, "영향 반경"),
         basis,
-        quiet ? h("span", { class: "risk risk-none" }, "코드 변경 없음") : i.supported ? h("span", { class: `risk risk-${i.code_risk}` }, `위험도 ${RISK_LABEL[i.code_risk]}`) : null,
+        riskChip(i),
         i.graph.nodes.length > 1 ? view : null),
       quiet
         ? h("div", { class: "inote" }, "주석·공백만 바뀝니다. 실행되는 코드는 그대로입니다.")

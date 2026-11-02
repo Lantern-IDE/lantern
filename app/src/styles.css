@@ -451,6 +451,12 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
    sticky는 #messages의 아래 여백(20px) 안쪽을 기준으로 붙으므로 그만큼 내려야 창 끝에 닿고 위 줄을 덮지 않는다 */
 .approval .actions { position: sticky; bottom: -20px; z-index: 1; display: flex; flex-wrap: wrap; gap: 6px 8px; padding: 8px 10px; border-top: 1px solid var(--border); align-items: center; background: var(--elevated); }
 .approval .actions .hint { font-size: 11.5px; color: var(--muted); }
+.approval .ahead .risk { display: none; }
+@media (max-height: 760px) {
+  .approval:not(.resolved) .ahead { flex-wrap: wrap; }
+  .approval:not(.resolved) .ahead .atitle { flex-basis: 60%; }
+  .approval:not(.resolved) .ahead .risk { display: inline; }
+}
 .approval.resolved { border-color: var(--border); }
 .approval.resolved .ahead { background: none; }
 .approval.resolved .actions { display: none; }
