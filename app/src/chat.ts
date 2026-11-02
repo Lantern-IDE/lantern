@@ -60,8 +60,8 @@ interface Task {
   pendingApprovals: number;
   /** 끝났지만 테스트가 실패했거나 돌리지 않았다: 작업 목록에서 초록으로 보이지 않게 */
   unverified: boolean;
-  /** 승인을 기다리는 수정의 영향 반경 (지도가 보여 준다) */
-  waitingImpact: Impact | null;
+  /** 승인을 기다리는 수정의 영향 반경 (지도는 가장 나중 것을 보여 준다). 외부 에이전트는 승인을 동시에 받는다 */
+  waitingImpacts: Map<string, Impact>;
   /** 다시 켰을 때 되살리는 기록 */
   log: Entry[];
   isolated: Isolation | null;
@@ -199,7 +199,8 @@ function syncComposer() {
 /** 지금 작업이 승인을 기다리는 수정이 있으면 지도를 그 영향 반경으로, 없으면 보던 화면으로 */
 function syncMapPreview() {
   if (replaying) return;
-  if (active?.waitingImpact) hooks.previewImpact(active.waitingImpact);
+  const waiting = active ? [...active.waitingImpacts.values()].pop() : undefined;
+  if (waiting) hooks.previewImpact(waiting);
   else hooks.endImpactPreview();
 }
 
@@ -436,7 +437,7 @@ function handle(ev: AgentEvent) {
         }, (i) => {
           // 결정하는 동안 지도는 이 수정이 닿는 곳을 보여 준다
           if (el.classList.contains("resolved") || !i.supported || i.comment_only || i.graph.nodes.length < 2) return;
-          task.waitingImpact = i;
+          task.waitingImpacts.set(ev.id, i);
           syncMapPreview();
         }) : null,
         h("div", { class: "actions" },
@@ -467,7 +468,7 @@ function handle(ev: AgentEvent) {
         for (const name of task.approvalTouched.get(ev.id) ?? []) task.footprint.editedSymbols.add(`${p}#${name}`);
       }
       task.pendingApprovals = Math.max(0, task.pendingApprovals - 1);
-      task.waitingImpact = null;
+      task.waitingImpacts.delete(ev.id);
       syncMapPreview();
       if (task.status === "approval" && !task.pendingApprovals) setStatus(task, "running");
       else emitFootprint(task);
@@ -529,7 +530,7 @@ function handle(ev: AgentEvent) {
       task.body = null;
       closeOpenApprovals(task);
       task.pendingApprovals = 0;
-      task.waitingImpact = null;
+      task.waitingImpacts.clear();
       syncMapPreview();
       setStatus(task, "done");
       break;
@@ -538,7 +539,7 @@ function handle(ev: AgentEvent) {
       task.body = null;
       closeOpenApprovals(task);
       task.pendingApprovals = 0;
-      task.waitingImpact = null;
+      task.waitingImpacts.clear();
       syncMapPreview();
       setStatus(task, "error");
       break;
@@ -661,7 +662,7 @@ function newTask(): Task {
     el: h("div", { class: "task-log" }),
     body: null, botMark: null, current: null, pendingTool: null,
     toolEls: new Map(), approvalEls: new Map(), approvalPaths: new Map(), approvalTouched: new Map(), toolInputs: new Map(),
-    renderQueued: false, lastPrompt: "", pendingApprovals: 0, unverified: false, waitingImpact: null,
+    renderQueued: false, lastPrompt: "", pendingApprovals: 0, unverified: false, waitingImpacts: new Map(),
     log: [], isolated: null, updated: Date.now(),
   };
   task.el.append(emptyState());
