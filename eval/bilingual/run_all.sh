@@ -45,8 +45,8 @@ log "파일 규칙 점검: 엔진·비교 대상·키워드 검색이 같은 파
 python eval/bilingual/check_files.py --dir "$DIR" --lantern "$LANTERN"
 
 log "Lantern (en, en-para, $KO)"
-# Lantern은 점수가 같으면 심볼 id로 순서를 정하고, id는 색인해 온 순서에 따라 달라진다(#139).
-# 지난 측정이 남긴 인덱스에서 시작하면 결과가 조금 달라지므로 늘 빈 인덱스에서 시작한다
+# #139 전 엔진은 동점을 심볼 id로 갈라 색인해 온 순서에 따라 결과가 조금 달라졌다.
+# 지금은 색인 이력과 무관하지만, 동결 태그를 재현할 때도 같도록 늘 빈 인덱스에서 시작한다
 rm -rf "$RES"/index-*
 node eval/bench/run.mjs --dir "$DIR" --set eval/bilingual --langs en,en-para,$KO --lantern "$LANTERN"
 cp eval/bilingual/결과.md "$RES/결과-lantern.md"
