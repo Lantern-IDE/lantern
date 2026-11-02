@@ -12,7 +12,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - **Pretendard (글꼴)** — OFL-1.1 — https://github.com/orioncactus/pretendard
   Pretendard는 SIL Open Font License 1.1에 따라 배포됩니다.
 
-## Rust 크레이트 (375개)
+## Rust 크레이트 (360개)
 
 ### (MIT OR Apache-2.0) AND Unicode-3.0
 
@@ -24,9 +24,9 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 ### Apache-2.0
 
-- similar 3.2.0 — https://github.com/mitsuhiko/similar
+- similar 3.2.1 — https://github.com/mitsuhiko/similar
 - sync_wrapper 1.0.2 — https://github.com/Actyx/sync_wrapper
-- tao 0.35.3 — https://github.com/tauri-apps/tao
+- tao 0.37.2 — https://github.com/tauri-apps/tao
 
 ### Apache-2.0 / MIT
 
@@ -54,32 +54,29 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - atomic-waker 1.1.2 — https://github.com/smol-rs/atomic-waker
 - bit-set 0.8.0 — https://github.com/contain-rs/bit-set
 - bit-vec 0.8.0 — https://github.com/contain-rs/bit-vec
-- ctor 0.8.0 — https://github.com/mmastrac/rust-ctor
-- ctor-proc-macro 0.0.7 — https://github.com/mmastrac/rust-ctor
-- dtor 0.3.0 — https://github.com/mmastrac/rust-ctor
-- dtor-proc-macro 0.0.6 — https://github.com/mmastrac/rust-ctor
+- ctor 1.0.13 — https://github.com/mmastrac/linktime
 - equivalent 1.0.2 — https://github.com/indexmap-rs/equivalent
 - fastrand 2.5.0 — https://github.com/smol-rs/fastrand
 - idna_adapter 1.2.2 — https://github.com/hsivonen/idna_adapter
 - indexmap 1.9.3 — https://github.com/bluss/indexmap
 - indexmap 2.14.2 — https://github.com/indexmap-rs/indexmap
-- muda 0.19.3 — https://github.com/tauri-apps/muda
+- muda 0.20.0 — https://github.com/tauri-apps/muda
 - pin-project-lite 0.2.17 — https://github.com/taiki-e/pin-project-lite
 - rustc-hash 2.1.3 — https://github.com/rust-lang/rustc-hash
-- tauri 2.11.6 — https://github.com/tauri-apps/tauri
-- tauri-codegen 2.6.3 — https://github.com/tauri-apps/tauri
-- tauri-macros 2.6.3 — https://github.com/tauri-apps/tauri
-- tauri-plugin-dialog 2.7.3 — https://github.com/tauri-apps/plugins-workspace
-- tauri-plugin-fs 2.5.2 — https://github.com/tauri-apps/plugins-workspace
-- tauri-plugin-updater 2.12.0 — https://github.com/tauri-apps/plugins-workspace
-- tauri-runtime 2.11.3 — https://github.com/tauri-apps/tauri
-- tauri-runtime-wry 2.11.4 — https://github.com/tauri-apps/tauri
-- tauri-utils 2.9.3 — https://github.com/tauri-apps/tauri
+- tauri 2.12.5 — https://github.com/tauri-apps/tauri
+- tauri-codegen 2.7.4 — https://github.com/tauri-apps/tauri
+- tauri-macros 2.7.4 — https://github.com/tauri-apps/tauri
+- tauri-plugin-dialog 2.8.4 — https://github.com/tauri-apps/plugins-workspace
+- tauri-plugin-fs 2.7.1 — https://github.com/tauri-apps/plugins-workspace
+- tauri-plugin-updater 2.14.1 — https://github.com/tauri-apps/plugins-workspace
+- tauri-runtime 2.12.2 — https://github.com/tauri-apps/tauri
+- tauri-runtime-wry 2.12.3 — https://github.com/tauri-apps/tauri
+- tauri-utils 2.10.2 — https://github.com/tauri-apps/tauri
 - utf8_iter 1.0.4 — https://github.com/hsivonen/utf8_iter
 - utf8parse 0.2.2 — https://github.com/alacritty/vte
 - uuid 1.26.1 — https://github.com/uuid-rs/uuid
-- window-vibrancy 0.6.0 — https://github.com/tauri-apps/tauri-plugin-vibrancy
-- wry 0.55.1 — https://github.com/tauri-apps/wry
+- window-vibrancy 0.8.1 — https://github.com/tauri-apps/tauri-plugin-vibrancy
+- wry 0.57.1 — https://github.com/tauri-apps/wry
 - zeroize 1.9.0 — https://github.com/RustCrypto/utils
 
 ### Apache-2.0/MIT
@@ -92,21 +89,21 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 ### BSD-3-Clause
 
-- alloc-no-stdlib 2.0.4 — https://github.com/dropbox/rust-alloc-no-stdlib
-- alloc-stdlib 0.2.4 — https://github.com/dropbox/rust-alloc-no-stdlib
+- alloc-no-stdlib 3.0.0 — https://github.com/dropbox/rust-alloc-no-stdlib
+- alloc-stdlib 0.3.0 — https://github.com/dropbox/rust-alloc-no-stdlib
 - subtle 2.6.1 — https://github.com/dalek-cryptography/subtle
 
 ### BSD-3-Clause AND MIT
 
-- brotli 8.0.4 — https://github.com/dropbox/rust-brotli
+- brotli 9.1.1 — https://github.com/dropbox/rust-brotli
 
 ### BSD-3-Clause/MIT
 
-- brotli-decompressor 5.0.3 — https://github.com/dropbox/rust-brotli-decompressor
+- brotli-decompressor 6.2.0 — https://github.com/dropbox/rust-brotli-decompressor
 
 ### CC0-1.0
 
-- notify 8.2.0 — https://github.com/notify-rs/notify
+- notify 8.2.1 — https://github.com/notify-rs/notify
 
 ### CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception
 
@@ -131,36 +128,38 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 - bytes 1.12.1 — https://github.com/tokio-rs/bytes
 - cargo_metadata 0.19.2 — https://github.com/oli-obk/cargo_metadata
-- cfb 0.7.3 — https://github.com/mdsteele/rust-cfb
+- cfb 0.14.0 — https://github.com/mdsteele/rust-cfb
 - darling 0.24.1 — https://github.com/TedDriggs/darling
 - darling_core 0.24.1 — https://github.com/TedDriggs/darling
 - darling_macro 0.24.1 — https://github.com/TedDriggs/darling
 - derive_more 2.1.1 — https://github.com/JelteF/derive_more
 - derive_more-impl 2.1.1 — https://github.com/JelteF/derive_more
-- dom_query 0.27.0 — https://github.com/niklak/dom_query
+- dom_query 0.28.0 — https://github.com/niklak/dom_query
 - filedescriptor 0.8.3 — https://github.com/wezterm/wezterm
 - generic-array 0.14.7 — https://github.com/fizyk20/generic-array
-- html2text 0.17.1 — https://github.com/jugglerchris/rust-html2text/
+- html2text 0.17.4 — https://github.com/jugglerchris/rust-html2text/
 - http-body 1.1.0 — https://github.com/hyperium/http-body
 - http-body-util 0.1.5 — https://github.com/hyperium/http-body
 - hyper 1.11.1 — https://github.com/hyperium/hyper
 - hyper-util 0.1.20 — https://github.com/hyperium/hyper-util
-- ico 0.5.0 — https://github.com/mdsteele/rust-ico
-- infer 0.19.0 — https://github.com/bojand/infer
+- ico 0.6.0 — https://github.com/mdsteele/rust-ico
+- infer 0.22.0 — https://github.com/bojand/infer
 - libsqlite3-sys 0.38.2 — https://github.com/rusqlite/rusqlite
-- minisign-verify 0.2.5 — https://github.com/jedisct1/rust-minisign-verify
+- minisign-verify 0.3.0 — https://github.com/jedisct1/rust-minisign-verify
 - mio 1.2.3 — https://github.com/tokio-rs/mio
 - new_debug_unreachable 1.0.6 — https://github.com/mbrubeck/rust-debug-unreachable
 - nix 0.28.0 — https://github.com/nix-rust/nix
 - phf 0.13.1 — https://github.com/rust-phf/rust-phf
+- phf 0.14.0 — https://github.com/rust-phf/rust-phf
 - phf_generator 0.13.1 — https://github.com/rust-phf/rust-phf
 - phf_macros 0.13.1 — https://github.com/rust-phf/rust-phf
 - phf_shared 0.13.1 — https://github.com/rust-phf/rust-phf
+- phf_shared 0.14.0 — https://github.com/rust-phf/rust-phf
 - plist 1.10.1 — https://github.com/ebarnard/rust-plist/
 - portable-pty 0.9.0 — https://github.com/wezterm/wezterm
 - precomputed-hash 0.1.1 — https://github.com/emilio/precomputed-hash
 - quick-xml 0.42.0 — https://github.com/tafia/quick-xml
-- rfd 0.16.0 — https://github.com/PolyMeilex/rfd
+- rfd 0.17.2 — https://github.com/PolyMeilex/rfd
 - rusqlite 0.40.2 — https://github.com/rusqlite/rusqlite
 - ruzstd 0.9.1 — https://github.com/KillingSpark/zstd-rs
 - schemars 0.8.22 — https://github.com/GREsau/schemars
@@ -171,7 +170,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - slab 0.4.12 — https://github.com/tokio-rs/slab
 - strsim 0.11.1 — https://github.com/rapidfuzz/strsim-rs
 - synstructure 0.14.0 — https://github.com/mystor/synstructure
-- tokio 1.53.1 — https://github.com/tokio-rs/tokio
+- tokio 1.54.1 — https://github.com/tokio-rs/tokio
 - tokio-macros 2.7.2 — https://github.com/tokio-rs/tokio
 - tokio-util 0.7.19 — https://github.com/tokio-rs/tokio
 - tower 0.5.3 — https://github.com/tower-rs/tower
@@ -196,15 +195,15 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - tree-sitter-typescript 0.23.2 — https://github.com/tree-sitter/tree-sitter-typescript
 - try-lock 0.2.5 — https://github.com/seanmonstar/try-lock
 - twox-hash 2.1.5 — https://github.com/shepmaster/twox-hash
-- urlpattern 0.3.0 — https://github.com/denoland/rust-urlpattern
+- urlpattern 0.6.0 — https://github.com/denoland/rust-urlpattern
 - want 0.3.1 — https://github.com/seanmonstar/want
-- webview2-com 0.38.2 — https://github.com/wravery/webview2-rs
+- webview2-com 0.39.1 — https://github.com/wravery/webview2-rs
 - webview2-com-macros 0.8.1 — https://github.com/wravery/webview2-rs
-- webview2-com-sys 0.38.2 — https://github.com/wravery/webview2-rs
+- webview2-com-sys 0.39.1 — https://github.com/wravery/webview2-rs
 - which 8.0.6 — https://github.com/harryfei/which-rs
 - winnow 1.0.4 — https://github.com/winnow-rs/winnow
 - winreg 0.10.1 — https://github.com/gentoo90/winreg-rs
-- zip 4.6.1 — https://github.com/zip-rs/zip2
+- zip 9.2.1 — https://github.com/zip-rs/zip2
 - zmij 1.0.23 — https://github.com/dtolnay/zmij
 
 ### MIT OR Apache-2.0
@@ -245,7 +244,6 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - defmt-parser 1.0.0 — https://github.com/knurling-rs/defmt
 - deranged 0.5.8 — https://github.com/jhpratt/deranged
 - digest 0.10.7 — https://github.com/RustCrypto/traits
-- dirs 6.0.0 — https://github.com/soc/dirs-rs
 - dirs 7.0.0 — https://codeberg.org/dirs/dirs-rs
 - dirs-sys 0.5.0 — https://github.com/dirs-dev/dirs-sys-rs
 - displaydoc 0.2.7 — https://github.com/yaahc/displaydoc
@@ -271,23 +269,23 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - hashlink 0.12.2 — https://github.com/djc/hashlink
 - heck 0.5.0 — https://github.com/withoutboats/heck
 - hex 0.4.3 — https://github.com/KokaKiwi/rust-hex
-- html5ever 0.38.0 — https://github.com/servo/html5ever
 - html5ever 0.39.0 — https://github.com/servo/html5ever
+- html5ever 0.40.1 — https://github.com/servo/html5ever
 - http 1.5.0 — https://github.com/hyperium/http
 - httparse 1.10.1 — https://github.com/seanmonstar/httparse
 - idna 1.1.0 — https://github.com/servo/rust-url/
 - ipnet 2.12.2 — https://github.com/krisprice/ipnet
 - is_terminal_polyfill 1.70.2 — https://github.com/polyfill-rs/is_terminal_polyfill
 - itoa 1.0.18 — https://github.com/dtolnay/itoa
-- jsonptr 0.6.3 — https://github.com/chanced/jsonptr
-- keyboard-types 0.7.0 — https://github.com/pyfisch/keyboard-types
+- jsonptr 0.7.1 — https://github.com/chanced/jsonptr
+- keyboard-types 0.8.3 — https://github.com/rust-windowing/keyboard-types
 - keyring 3.6.3 — https://github.com/hwchen/keyring-rs
 - lazy_static 1.5.0 — https://github.com/rust-lang-nursery/lazy-static.rs
 - libc 0.2.189 — https://github.com/rust-lang/libc
 - lock_api 0.4.14 — https://github.com/Amanieu/parking_lot
 - log 0.4.34 — https://github.com/rust-lang/log
-- markup5ever 0.38.0 — https://github.com/servo/html5ever
 - markup5ever 0.39.0 — https://github.com/servo/html5ever
+- markup5ever 0.40.0 — https://github.com/servo/html5ever
 - mime 0.3.17 — https://github.com/hyperium/mime
 - notify-types 2.1.0 — https://github.com/notify-rs/notify
 - num-conv 0.2.2 — https://github.com/jhpratt/num-conv
@@ -297,7 +295,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - parking_lot 0.12.5 — https://github.com/Amanieu/parking_lot
 - parking_lot_core 0.9.12 — https://github.com/Amanieu/parking_lot
 - percent-encoding 2.3.2 — https://github.com/servo/rust-url/
-- png 0.17.16 — https://github.com/image-rs/image-png
+- png 0.18.1 — https://github.com/image-rs/image-png
 - powerfmt 0.2.0 — https://github.com/jhpratt/powerfmt
 - proc-macro2 1.0.107 — https://github.com/dtolnay/proc-macro2
 - quinn 0.11.12 — https://github.com/quinn-rs/quinn
@@ -323,7 +321,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - serde_core 1.0.229 — https://github.com/serde-rs/serde
 - serde_derive 1.0.229 — https://github.com/serde-rs/serde
 - serde_derive_internals 0.29.1 — https://github.com/serde-rs/serde
-- serde_json 1.0.151 — https://github.com/serde-rs/json
+- serde_json 1.0.154 — https://github.com/serde-rs/json
 - serde_repr 0.1.21 — https://github.com/dtolnay/serde-repr
 - serde_spanned 1.1.1 — https://github.com/toml-rs/toml
 - serde_with 3.23.0 — https://github.com/jonasbb/serde_with/
@@ -337,6 +335,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - softbuffer 0.4.8 — https://github.com/rust-windowing/softbuffer
 - stable_deref_trait 1.2.1 — https://github.com/storyyeller/stable_deref_trait
 - streaming-iterator 0.1.9 — https://github.com/sfackler/streaming-iterator
+- string_cache 0.11.0 — https://github.com/servo/string-cache
 - string_cache 0.9.0 — https://github.com/servo/string-cache
 - syn 2.0.119 — https://github.com/dtolnay/syn
 - syn 3.0.6 — https://github.com/dtolnay/syn
@@ -355,42 +354,33 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - toml_edit 0.25.15+spec-1.1.0 — https://github.com/toml-rs/toml
 - toml_parser 1.1.3+spec-1.1.0 — https://github.com/toml-rs/toml
 - toml_writer 1.1.2+spec-1.1.0 — https://github.com/toml-rs/toml
-- tray-icon 0.24.2 — https://github.com/tauri-apps/tray-icon
+- tray-icon 0.25.1 — https://github.com/tauri-apps/tray-icon
+- typed-path 0.13.0 — https://github.com/chipsenkbeil/typed-path
 - typeid 1.0.3 — https://github.com/dtolnay/typeid
 - typenum 1.20.1 — https://github.com/paholg/typenum
 - unicode-segmentation 1.13.3 — https://github.com/unicode-rs/unicode-segmentation
 - unicode-width 0.2.2 — https://github.com/unicode-rs/unicode-width
 - ureq 2.12.1 — https://github.com/algesten/ureq
 - url 2.5.8 — https://github.com/servo/rust-url
+- web-time 1.1.0 — https://github.com/daxpedda/web-time
 - web_atoms 0.2.6 — https://github.com/servo/html5ever
-- windows 0.61.3 — https://github.com/microsoft/windows-rs
+- web_atoms 0.3.0 — https://github.com/servo/html5ever
 - windows 0.62.2 — https://github.com/microsoft/windows-rs
-- windows-collections 0.2.0 — https://github.com/microsoft/windows-rs
 - windows-collections 0.3.2 — https://github.com/microsoft/windows-rs
-- windows-core 0.61.2 — https://github.com/microsoft/windows-rs
 - windows-core 0.62.2 — https://github.com/microsoft/windows-rs
-- windows-future 0.2.1 — https://github.com/microsoft/windows-rs
 - windows-future 0.3.2 — https://github.com/microsoft/windows-rs
 - windows-implement 0.60.2 — https://github.com/microsoft/windows-rs
 - windows-interface 0.59.3 — https://github.com/microsoft/windows-rs
-- windows-link 0.1.3 — https://github.com/microsoft/windows-rs
 - windows-link 0.2.1 — https://github.com/microsoft/windows-rs
-- windows-numerics 0.2.0 — https://github.com/microsoft/windows-rs
 - windows-numerics 0.3.1 — https://github.com/microsoft/windows-rs
 - windows-registry 0.6.1 — https://github.com/microsoft/windows-rs
-- windows-result 0.3.4 — https://github.com/microsoft/windows-rs
 - windows-result 0.4.1 — https://github.com/microsoft/windows-rs
-- windows-strings 0.4.2 — https://github.com/microsoft/windows-rs
 - windows-strings 0.5.1 — https://github.com/microsoft/windows-rs
-- windows-sys 0.59.0 — https://github.com/microsoft/windows-rs
 - windows-sys 0.60.2 — https://github.com/microsoft/windows-rs
 - windows-sys 0.61.2 — https://github.com/microsoft/windows-rs
-- windows-targets 0.52.6 — https://github.com/microsoft/windows-rs
 - windows-targets 0.53.5 — https://github.com/microsoft/windows-rs
-- windows-threading 0.1.0 — https://github.com/microsoft/windows-rs
 - windows-threading 0.2.1 — https://github.com/microsoft/windows-rs
 - windows-version 0.1.7 — https://github.com/microsoft/windows-rs
-- windows_x86_64_msvc 0.52.6 — https://github.com/microsoft/windows-rs
 - windows_x86_64_msvc 0.53.1 — https://github.com/microsoft/windows-rs
 
 ### MIT OR Apache-2.0 OR Zlib
@@ -412,24 +402,19 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - fallible-iterator 0.3.0 — https://github.com/sfackler/rust-fallible-iterator
 - fallible-streaming-iterator 0.1.9 — https://github.com/sfackler/fallible-streaming-iterator
 - ident_case 1.0.1 — https://github.com/TedDriggs/ident_case
-- json-patch 3.0.1 — https://github.com/idubrov/json-patch
+- json-patch 4.2.0 — https://github.com/idubrov/json-patch
 - serde_urlencoded 0.7.1 — https://github.com/nox/serde_urlencoded
 - shell-words 1.1.1 — https://github.com/tmiasko/shell-words
 - siphasher 1.0.3 — https://github.com/jedisct1/rust-siphash
-- unic-char-property 0.9.0 — https://github.com/open-i18n/rust-unic/
-- unic-char-range 0.9.0 — https://github.com/open-i18n/rust-unic/
-- unic-common 0.9.0 — https://github.com/open-i18n/rust-unic/
-- unic-ucd-ident 0.9.0 — https://github.com/open-i18n/rust-unic/
-- unic-ucd-version 0.9.0 — https://github.com/open-i18n/rust-unic/
 - winapi 0.3.9 — https://github.com/retep998/winapi-rs
 
 ### MPL-2.0
 
-- cssparser 0.36.0 — https://github.com/servo/rust-cssparser
-- cssparser-macros 0.6.1 — https://github.com/servo/rust-cssparser
+- cssparser 0.37.0 — https://github.com/servo/rust-cssparser
+- cssparser-macros 0.7.1 — https://github.com/servo/rust-cssparser
 - dtoa-short 0.3.5 — https://github.com/upsuper/dtoa-short
 - option-ext 0.2.0 — https://github.com/soc/option-ext
-- selectors 0.36.1 — https://github.com/servo/stylo
+- selectors 0.38.0 — https://github.com/servo/stylo
 
 ### Unicode-3.0
 
@@ -456,8 +441,8 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 - aho-corasick 1.1.5 — https://github.com/BurntSushi/aho-corasick
 - byteorder 1.5.0 — https://github.com/BurntSushi/byteorder
-- globset 0.4.20 — https://github.com/BurntSushi/ripgrep/tree/master/crates/globset
-- ignore 0.4.33 — https://github.com/BurntSushi/ripgrep/tree/master/crates/ignore
+- globset 0.4.21 — https://github.com/BurntSushi/ripgrep/tree/master/crates/globset
+- ignore 0.4.34 — https://github.com/BurntSushi/ripgrep/tree/master/crates/ignore
 - jiff 0.2.37 — https://github.com/BurntSushi/jiff
 - jiff-core 0.1.1 — https://github.com/BurntSushi/jiff
 - jiff-tzdb 0.1.8 — https://github.com/BurntSushi/jiff
@@ -479,15 +464,15 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 - tinyvec 1.13.3 — https://github.com/Lokathor/tinyvec
 
-## JavaScript 패키지 (58개)
+## JavaScript 패키지 (59개)
 
 ### (MPL-2.0 OR Apache-2.0)
 
-- dompurify 3.4.16 — git://github.com/cure53/DOMPurify
+- dompurify 3.4.17 — git://github.com/cure53/DOMPurify
 
 ### Apache-2.0 OR MIT
 
-- @tauri-apps/api 2.11.1 — https://github.com/tauri-apps/tauri
+- @tauri-apps/api 2.12.4 — https://github.com/tauri-apps/tauri
 
 ### CC-BY-4.0
 
@@ -502,7 +487,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 ### MIT
 
-- @codemirror/autocomplete 6.20.3 — https://code.haverbeke.berlin/codemirror/autocomplete
+- @codemirror/autocomplete 6.20.4 — https://code.haverbeke.berlin/codemirror/autocomplete
 - @codemirror/commands 6.11.1 — https://code.haverbeke.berlin/codemirror/commands
 - @codemirror/lang-cpp 6.0.3 — https://github.com/codemirror/lang-cpp
 - @codemirror/lang-css 6.3.1 — https://github.com/codemirror/lang-css
@@ -518,19 +503,20 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - @codemirror/lang-sql 6.10.0 — https://github.com/codemirror/lang-sql
 - @codemirror/lang-xml 6.1.0 — https://github.com/codemirror/lang-xml
 - @codemirror/lang-yaml 6.1.3 — https://github.com/codemirror/lang-yaml
-- @codemirror/language 6.12.4 — https://code.haverbeke.berlin/codemirror/language
-- @codemirror/legacy-modes 6.5.4 — https://code.haverbeke.berlin/codemirror/legacy-modes
+- @codemirror/language 6.13.1 — https://code.haverbeke.berlin/codemirror/language
+- @codemirror/legacy-modes 6.5.5 — https://code.haverbeke.berlin/codemirror/legacy-modes
 - @codemirror/lint 6.9.7 — https://code.haverbeke.berlin/codemirror/lint
 - @codemirror/lsp-client 6.3.0
 - @codemirror/search 6.7.2 — https://code.haverbeke.berlin/codemirror/search
 - @codemirror/state 6.7.6 — https://code.haverbeke.berlin/codemirror/state
+- @codemirror/streamparser 6.0.0 — https://code.haverbeke.berlin/codemirror/streamparser
 - @codemirror/theme-one-dark 6.1.3 — https://github.com/codemirror/theme-one-dark
-- @codemirror/view 6.43.13 — https://code.haverbeke.berlin/codemirror/view
+- @codemirror/view 6.43.15 — https://code.haverbeke.berlin/codemirror/view
 - @lezer/common 1.5.2 — https://github.com/lezer-parser/common
 - @lezer/cpp 1.1.6 — https://code.haverbeke.berlin/lezer/cpp
 - @lezer/css 1.3.8 — https://code.haverbeke.berlin/lezer/css
 - @lezer/go 1.0.1 — https://github.com/lezer-parser/go
-- @lezer/highlight 1.2.3 — https://github.com/lezer-parser/highlight
+- @lezer/highlight 1.2.5 — https://code.haverbeke.berlin/lezer/highlight
 - @lezer/html 1.3.13 — https://github.com/lezer-parser/html
 - @lezer/java 1.1.4 — https://code.haverbeke.berlin/lezer/java
 - @lezer/json 1.0.3 — https://github.com/lezer-parser/json
@@ -547,14 +533,14 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - codemirror 6.0.2 — https://github.com/codemirror/basic-setup
 - crelt 1.0.7 — https://code.haverbeke.berlin/marijn/crelt
 - marked 15.0.12 — https://github.com/markedjs/marked
-- marked 18.0.14 — https://github.com/markedjs/marked
+- marked 18.1.2 — https://github.com/markedjs/marked
 - vscode-jsonrpc 9.0.2 — https://github.com/Microsoft/vscode-languageserver-node
 - vscode-languageserver-protocol 3.18.3 — https://github.com/Microsoft/vscode-languageserver-node
 - vscode-languageserver-types 3.18.3 — https://github.com/Microsoft/vscode-languageserver-node
 
 ### MIT OR Apache-2.0
 
-- @tauri-apps/plugin-dialog 2.7.3 — https://github.com/tauri-apps/plugins-workspace
+- @tauri-apps/plugin-dialog 2.8.4 — https://github.com/tauri-apps/plugins-workspace
 
 ### OFL-1.1
 
