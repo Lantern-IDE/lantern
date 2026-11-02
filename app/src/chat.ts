@@ -448,7 +448,7 @@ function handle(ev: AgentEvent) {
         h("div", { class: "actions" },
           apply,
           h("button", { class: "btn btn-secondary", onclick: () => decide(false) }, "거절"),
-          h("span", { class: "hint" }, isEdit ? "적용하기 전에는 파일이 바뀌지 않습니다" : isMcp ? "외부 MCP 서버의 도구입니다. 설정에서 승인 없이 실행하게 할 수 있습니다" : isFetch ? "이 사이트는 이번 작업에서 처음 엽니다. 주소에 코드나 비밀이 들어 있지 않은지 확인하세요" : "허용 목록 밖의 명령입니다")));
+          h("span", { class: "hint" }, isEdit ? "거절하면 파일은 그대로이고 AI에게 알립니다" : isMcp ? "외부 MCP 서버의 도구입니다. 설정에서 승인 없이 실행하게 할 수 있습니다" : isFetch ? "이 사이트는 이번 작업에서 처음 엽니다. 주소에 코드나 비밀이 들어 있지 않은지 확인하세요" : "허용 목록 밖의 명령입니다")));
       task.approvalEls.set(ev.id, el);
       append(task, el);
       task.pendingApprovals++;
