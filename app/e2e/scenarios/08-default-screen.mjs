@@ -227,6 +227,28 @@ scenario("기본 화면: 카드의 호출 수는 보이는 간선이 아니라 �
   if (!(Number(up["부르는 곳"]) >= 1) || !(Number(up["부르는 것"]) >= 1)) throw new Error(`issueSession 카드: ${JSON.stringify(up)}`);
   const sig = await clickNode("signCookie");
   if (!(Number(sig["부르는 곳"]) >= 1) || !(Number(sig["테스트"]) >= 1)) throw new Error(`signCookie 카드: ${JSON.stringify(sig)}`);
+  // 카드가 지도의 절반으로 제한되는 좁은 창에서 내용이 넘쳐도 버튼은 잘리지 않는다
+  await cdp("Emulation.setDeviceMetricsOverride", { width: 900, height: 560, deviceScaleFactor: 0, mobile: false });
+  await sleep(200);
+  const cut = await run(() => {
+    const card = document.querySelector("#map-card");
+    const filler = document.createElement("div");
+    filler.style.height = "300px";
+    card.querySelector(".mc-actions").before(filler);
+    const box = card.getBoundingClientRect();
+    const btns = [...card.querySelectorAll(".mc-actions .btn")];
+    const shown = btns.filter((b) => {
+      const r = b.getBoundingClientRect();
+      // 잠깐 뜨는 알림이 겹칠 수 있어 카드 안에서 맨 위인 것만 본다
+      const top = document.elementsFromPoint(r.left + r.width / 2, r.bottom - 2).find((e) => card.contains(e));
+      return r.bottom <= box.bottom && !!top && (top === b || b.contains(top));
+    }).length;
+    const over = card.scrollHeight - card.clientHeight;
+    filler.remove();
+    return { shown, all: btns.length, over };
+  });
+  await cdp("Emulation.clearDeviceMetricsOverride");
+  if (cut.over <= 0 || cut.shown !== cut.all) throw new Error(`좁은 창의 카드 버튼: ${JSON.stringify(cut)}`);
   // 테스트 노드(testSign)는 물러나 있고, 범례가 그 뜻을 말한다
   if (!(await run(() => !!document.querySelector("#map-legend .sw.faded")))) throw new Error("테스트 범례가 없음");
   await run(() => {
@@ -253,6 +275,23 @@ scenario("기본 화면: 카드의 호출 수는 보이는 간선이 아니라 �
     return true;
   });
   await waitFor(() => document.querySelector("#map-crumb .cur")?.textContent.includes("전체 구조"), 8000, "전체 구조");
+});
+
+scenario("기본 화면: 지도가 숨은 동안 파일이 늘어도 돌아오면 새 노드가 보인다", async () => {
+  await toMap();
+  const count = await nodeCount();
+  await run(() => {
+    document.querySelector("#canvas-switch [data-canvas='editor']").click();
+    return true;
+  });
+  await waitFor(() => document.querySelector("#map-view").classList.contains("hidden"), 3000, "지도 숨김");
+  const extra = path.join(DIRS.proj, "src/hidden.ts");
+  fs.writeFileSync(extra, "import { route } from './api';\n\nexport function hiddenRoute() {\n  return route('/h');\n}\n");
+  await sleep(3500); // 파일 감시와 다시 그리기 대기가 지나도록
+  await toMap();
+  await waitFor((n) => Number(document.querySelector(".map-count")?.textContent?.replace(/\D/g, "") || 0) > n, 8000, "돌아온 지도의 새 노드", count);
+  fs.rmSync(extra);
+  await waitFor((n) => Number(document.querySelector(".map-count")?.textContent?.replace(/\D/g, "") || 0) === n, 10000, "노드 빠짐", count);
 });
 
 scenario("기본 화면: 움직임 줄이기를 켜면 지도 카메라가 바로 옮겨 간다", async () => {
