@@ -27,13 +27,16 @@ pub fn no_window(cmd: &mut Command) -> &mut Command {
 pub(crate) const NO_LAZY_FETCH: &str = "GIT_NO_LAZY_FETCH";
 
 pub(crate) fn git(root: &Path, args: &[&str]) -> Result<String> {
-    let out = no_window(&mut Command::new("git"))
-        .arg("-C")
-        .arg(root)
-        .args(["-c", "core.quotepath=off"])
-        .args(args)
-        .env(NO_LAZY_FETCH, "1")
-        .output()?;
+    run(root, args, true)
+}
+
+fn run(root: &Path, args: &[&str], offline: bool) -> Result<String> {
+    let mut cmd = Command::new("git");
+    no_window(&mut cmd).arg("-C").arg(root).args(["-c", "core.quotepath=off"]).args(args);
+    if offline {
+        cmd.env(NO_LAZY_FETCH, "1");
+    }
+    let out = cmd.output()?;
     if !out.status.success() {
         bail!("git {}: {}", args.join(" "), String::from_utf8_lossy(&out.stderr).trim());
     }
@@ -50,24 +53,19 @@ pub fn refresh_cochange(root: &Path, store: &Store) -> Result<Option<usize>> {
         return Ok(None);
     }
 
-    let log = git(
-        root,
-        &[
-            "log",
-            "--no-merges",
-            "--relative",
-            "--name-only",
-            "--format=%x00",
-            "-n",
-            &MAX_COMMITS.to_string(),
-        ],
-    )?;
-    let pairs = cochange_pairs(&log);
+    let pairs = cochange_pairs(&cochange_log(root)?);
     store.begin()?;
     store.replace_cochange(&pairs)?;
     store.set_meta("git_head", head)?;
     store.commit()?;
     Ok(Some(pairs.len()))
+}
+
+/// 이름 바뀜을 찾으려면 파일 내용이 필요하다. 일부만 받은 클론에서 받지 못하게 하면
+/// 그동안 체크아웃해 둔 내용에 따라 결과가 달라지므로 여기서는 받게 둔다
+fn cochange_log(root: &Path) -> Result<String> {
+    let n = MAX_COMMITS.to_string();
+    run(root, &["log", "--no-merges", "--relative", "--name-only", "--format=%x00", "-n", &n], false)
 }
 
 /// `git log --name-only --format=%x00` 출력에서 파일 쌍별 동시 변경 횟수를 센다.
@@ -104,5 +102,46 @@ mod tests {
         let log = "\0\n\nsrc/a.rs\nsrc/b.rs\n\0\n\nsrc/b.rs\nsrc/a.rs\nsrc/c.rs\n\0\n\nsrc/c.rs\n";
         let pairs = cochange_pairs(log);
         assert_eq!(pairs, vec![("src/a.rs".to_string(), "src/b.rs".to_string(), 2)]);
+    }
+
+    /// 내용 없이 받은 클론도 전체 저장소와 같은 쌍을 낸다 (#170)
+    #[test]
+    fn partial_clone_gives_same_pairs() {
+        let g = |dir: &Path, args: &[&str]| {
+            let out = Command::new("git")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
+        };
+        let src = tempfile::tempdir().unwrap();
+        let s = src.path();
+        g(s, &["init", "-q"]);
+        g(s, &["config", "uploadpack.allowfilter", "true"]);
+        let body: String = (0..40).map(|i| format!("line {i}\n")).collect();
+        std::fs::write(s.join("old.rs"), &body).unwrap();
+        std::fs::write(s.join("other.rs"), "a\n").unwrap();
+        g(s, &["add", "."]);
+        g(s, &["commit", "-q", "-m", "1"]);
+        // 내용을 조금 바꾸며 이름을 바꾼다. 이름 바뀜을 찾으려면 두 파일의 내용이 필요하다
+        std::fs::remove_file(s.join("old.rs")).unwrap();
+        std::fs::write(s.join("new.rs"), format!("{body}line 40\n")).unwrap();
+        std::fs::write(s.join("other.rs"), "b\n").unwrap();
+        g(s, &["add", "-A"]);
+        g(s, &["commit", "-q", "-m", "2"]);
+        std::fs::write(s.join("new.rs"), format!("{body}line 41\n")).unwrap();
+        std::fs::write(s.join("other.rs"), "c\n").unwrap();
+        g(s, &["commit", "-q", "-a", "-m", "3"]);
+
+        let url = format!("file:///{}", s.to_string_lossy().replace('\\', "/").trim_start_matches('/'));
+        let dst = tempfile::tempdir().unwrap();
+        g(dst.path(), &["clone", "-q", "--filter=blob:none", "--no-checkout", &url, "c"]);
+
+        let full = cochange_pairs(&cochange_log(s).unwrap());
+        assert_eq!(full, vec![("new.rs".to_string(), "other.rs".to_string(), 2)]);
+        assert_eq!(cochange_pairs(&cochange_log(&dst.path().join("c")).unwrap()), full);
     }
 }
