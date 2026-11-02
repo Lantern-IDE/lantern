@@ -795,7 +795,7 @@ export function renderTaskList() {
           t.isolated?.state === "active" ? h("span", { class: "iso", title: `격리된 작업 공간: ${t.isolated.branch}` }, codicon("git-branch")) : null,
           t.status === "approval" ? h("span", { class: "need" }, "승인 대기") : null,
           clash.length ? h("span", { class: "clash", title: `다른 작업도 고친 파일:\n${clash.join("\n")}` }, codicon("warning"), `겹침 ${clash.length}`) : null,
-          meta.join(" · ") || STATUS_TEXT[t.status], h("span", { class: "ago" }, ago(t.updated)))),
+          h("span", { class: "tm-text" }, meta.join(" · ") || STATUS_TEXT[t.status]), h("span", { class: "ago" }, ago(t.updated)))),
       h("span", { class: "task-actions" }, map, close));
     row.addEventListener("click", () => activate(t));
     row.addEventListener("keydown", (e) => (e.key === "Enter" || e.key === " ") && activate(t));
