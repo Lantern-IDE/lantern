@@ -1122,6 +1122,10 @@ export function show() {
   else if (!loaded || nodes.length === 0) void showOverview();
   else if (fitPending && !cameraMoved) fit(false);
   else kick();
+  if (staleWhileHidden) {
+    staleWhileHidden = false;
+    refreshSoon();
+  }
 }
 
 export function hide() {
@@ -1172,6 +1176,7 @@ export function refreshSoon() {
     statsCache = new Map();
     if (selected && visible) renderCard();
     const fetcher = mode === "overview" ? () => invoke<Graph>("graph_overview", { maxNodes: 400 }) : mode === "focus" && selected === null ? fetchFocus : null;
+    if (!visible) staleWhileHidden = true;
     if (!fetcher || !visible) return;
     const my = loadSeq;
     try {
@@ -1187,6 +1192,8 @@ export function refreshSoon() {
   }, 1200);
 }
 let refreshTimer = 0;
+/** 숨어 있는 동안 파일이 바뀌었다: 다시 띄울 때 새로 그린다 */
+let staleWhileHidden = false;
 
 export function init(opts: { openFile: (path: string, line?: number) => void; onVisibility: (v: boolean) => void }) {
   openFile = opts.openFile;
