@@ -106,7 +106,7 @@ export function impactRow(diff: string, onTouched: (names: string[]) => void = (
         h("span", { class: "ititle" }, "영향 반경"),
         basis,
         riskChip(i),
-        i.graph.nodes.length > 1 ? view : null),
+        !quiet && i.graph.nodes.length > 1 ? view : null),
       quiet
         ? h("div", { class: "inote" }, "주석·공백만 바뀝니다. 실행되는 코드는 그대로입니다.")
         : !i.supported
