@@ -30,6 +30,8 @@ export interface Impact {
   risk: "low" | "medium" | "high";
   /** 테스트 코드를 뺀 호출자·파일·위험도. 테스트는 tests로 따로 보인다 */
   code_callers: number; code_callers2: number; code_files: number; code_risk: "low" | "medium" | "high";
+  /** code_risk를 그렇게 매긴 까닭 (RISK_REASON). 낮으면 빈 글자 */
+  risk_reason: string;
   /** diff를 보면 주석·공백만 바뀜 (승인 카드에서 diff를 넘겼을 때만) */
   comment_only: boolean;
   graph: Graph;
@@ -798,6 +800,15 @@ function modeTitle(): string {
 }
 
 const RISK: Record<string, string> = { low: "낮음", medium: "보통", high: "높음" };
+/** 호출 0인데 '보통'이면 까닭을 말해야 믿는다. framework는 카드의 경고 줄이 따로 말한다 */
+export const RISK_REASON: Record<string, string> = {
+  callers: "호출하는 코드가 많습니다",
+  modules: "다른 모듈에서 부릅니다",
+  reach: "간접 호출까지 합치면 많습니다",
+  cochanged: "함께 바뀌던 파일이 많습니다",
+  untested: "호출하는 코드가 있는데 테스트가 없습니다",
+  framework: "프레임워크가 부르는 코드입니다",
+};
 
 function renderChrome() {
   $("#map-crumb").replaceChildren(
@@ -850,7 +861,7 @@ function renderLegend() {
     fp.classList.remove("hidden");
   } else if (mode === "impact" && impact) {
     fp.replaceChildren(
-      impact.comment_only ? h("span", { class: "risk risk-none" }, t("코드 변경 없음")) : h("span", { class: `risk risk-${impact.code_risk}` }, `${t("위험도")} ${t(RISK[impact.code_risk])}`),
+      impact.comment_only ? h("span", { class: "risk risk-none" }, t("코드 변경 없음")) : h("span", { class: `risk risk-${impact.code_risk}`, title: t(RISK_REASON[impact.risk_reason] ?? "") }, `${t("위험도")} ${t(RISK[impact.code_risk])}`),
       h("span", {}, h("b", {}, String(impact.code_callers)), t("직접 호출")),
       h("span", {}, h("b", {}, String(impact.code_callers2)), t("간접 호출")),
       h("span", {}, h("b", {}, String(impact.tests.length)), t("테스트 파일")));

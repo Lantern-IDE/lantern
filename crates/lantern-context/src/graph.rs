@@ -656,6 +656,8 @@ pub struct Impact {
     pub code_files: usize,
     /// low | medium | high. 테스트를 뺀 위험도: 테스트가 많다고 위험해지지 않는다. 앱은 이것을 보인다
     pub code_risk: String,
+    /// `code_risk`를 그렇게 매긴 까닭 (처음 걸린 규칙): callers | modules | reach | cochanged | untested | framework. 낮으면 빈 글자
+    pub risk_reason: String,
     /// diff를 보면 주석·공백만 바뀜. `impact`는 diff를 모르므로 false이고, 앱의 `graph_impact`가 채운다
     pub comment_only: bool,
     pub graph: Graph,
@@ -709,18 +711,25 @@ pub fn framework_marks(signature: &str) -> Vec<String> {
     out
 }
 
-fn risk_level(callers: usize, callers2: usize, modules: usize, cochanged: usize, untested: bool, framework: bool) -> &'static str {
-    if callers >= 10 || modules >= 2 || (callers + callers2) >= 25 {
-        "high"
-    } else if callers >= 3
-        || cochanged >= 3
-        || (callers > 0 && untested)
+/// 위험도와 그렇게 매긴 까닭
+fn risk_level(callers: usize, callers2: usize, modules: usize, cochanged: usize, untested: bool, framework: bool) -> (&'static str, &'static str) {
+    if callers >= 10 {
+        ("high", "callers")
+    } else if modules >= 2 {
+        ("high", "modules")
+    } else if (callers + callers2) >= 25 {
+        ("high", "reach")
+    } else if callers >= 3 {
+        ("medium", "callers")
+    } else if cochanged >= 3 {
+        ("medium", "cochanged")
+    } else if callers > 0 && untested {
+        ("medium", "untested")
+    } else if framework {
         // 밖에서 불리는 코드(엔드포인트, 이벤트 처리)는 호출자가 안 보여도 낮다고 하지 않는다
-        || framework
-    {
-        "medium"
+        ("medium", "framework")
     } else {
-        "low"
+        ("low", "")
     }
 }
 
@@ -809,13 +818,13 @@ pub fn impact(store: &Store, path: &str, ranges: &[(u32, u32)]) -> Result<Impact
         }
     }
     let callers = d1.len();
-    let risk = risk_level(callers, d2.len(), modules.len(), cochanged.len(), tests.is_empty(), !framework.is_empty());
+    let (risk, _) = risk_level(callers, d2.len(), modules.len(), cochanged.len(), tests.is_empty(), !framework.is_empty());
     let code = |list: &[SymbolRow]| list.iter().filter(|s| !is_test_path(&s.path)).count();
     let (code_callers, code_callers2) = (code(&d1), code(&d2));
     let code_paths = || affected.iter().filter(|p| !is_test_path(p));
     let code_modules: BTreeSet<String> = code_paths().map(|p| group_of(p)).filter(|g| *g != group_of(path)).collect();
     let code_cochanged = cochanged.iter().filter(|(p, _)| !is_test_path(p)).count();
-    let code_risk = risk_level(code_callers, code_callers2, code_modules.len(), code_cochanged, tests.is_empty(), !framework.is_empty());
+    let (code_risk, risk_reason) = risk_level(code_callers, code_callers2, code_modules.len(), code_cochanged, tests.is_empty(), !framework.is_empty());
     Ok(Impact {
         path: path.into(),
         touched: touched.iter().map(|s| s.name.clone()).collect(),
@@ -825,6 +834,7 @@ pub fn impact(store: &Store, path: &str, ranges: &[(u32, u32)]) -> Result<Impact
         code_callers2,
         code_files: code_paths().count(),
         code_risk: code_risk.into(),
+        risk_reason: risk_reason.into(),
         comment_only: false,
         files: affected.len(),
         modules: modules.len(),
@@ -1255,6 +1265,18 @@ mod tests {
         e.refresh().unwrap();
         let u = impact(&e.store, "src/core/other.ts", &[(2, 2)]).unwrap();
         assert_eq!((u.code_callers, u.code_risk.as_str(), u.risk.as_str()), (1, "medium", "medium"));
+        assert_eq!(u.risk_reason, "untested");
+        assert_eq!(i.risk_reason, "", "낮으면 까닭이 없다");
+    }
+
+    #[test]
+    fn risk_says_which_rule_raised_it() {
+        assert_eq!(risk_level(0, 0, 0, 8, false, false), ("medium", "cochanged"), "호출자 0인데 보통인 경우");
+        assert_eq!(risk_level(12, 0, 0, 8, false, false), ("high", "callers"), "먼저 걸린 규칙");
+        assert_eq!(risk_level(1, 0, 2, 0, false, false), ("high", "modules"));
+        assert_eq!(risk_level(2, 23, 1, 0, false, false), ("high", "reach"));
+        assert_eq!(risk_level(0, 0, 0, 0, true, true), ("medium", "framework"));
+        assert_eq!(risk_level(0, 0, 0, 2, true, false), ("low", ""));
     }
 
     #[test]
