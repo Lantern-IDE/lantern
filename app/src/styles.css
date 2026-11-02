@@ -463,7 +463,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 .approval.resolved .ahead .codicon { color: var(--muted); }
 .approval .verdict { font-size: 12px; color: var(--muted); font-weight: 400; }
 .approval .verdict.yes { color: var(--ok); }
-.diff { margin: 0; max-height: 320px; overflow: auto; font: 12px/18px var(--code-font); background: var(--editor-bg); }
+.diff { margin: 0; max-height: 320px; overflow: auto; font: 12px/18px var(--code-font); background: var(--editor-bg); tab-size: 4; font-variant-ligatures: none; }
 /* 줄 끝의 변경도 보이게 접는다. 이어진 줄은 +/- 칸만큼 들여 코드 첫 글자에 맞춘다 */
 .diff div { padding: 0 10px 0 calc(10px + 1ch); text-indent: -1ch; white-space: pre-wrap; overflow-wrap: anywhere; }
 .diff .add, .diff .add .chg { background: var(--add-bg); }
