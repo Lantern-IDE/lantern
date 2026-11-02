@@ -1172,10 +1172,11 @@ export function refreshSoon() {
   clearTimeout(refreshTimer);
   refreshTimer = window.setTimeout(async () => {
     if (held()) return;
-    // 그래프를 다시 받지 않더라도(노드를 고른 채 보는 중) 카드의 수는 새로 센다
+    // 심볼 id는 다시 인덱싱하면 바뀐다: 노드를 고른 채여도 그래프를 다시 받아 카드가 새 id로 센다
+    const fetcher = mode === "overview" ? () => invoke<Graph>("graph_overview", { maxNodes: 400 }) : mode === "focus" ? fetchFocus : null;
+    // 그래프를 다시 받지 않는 화면이어도 카드의 수는 새로 센다
     statsCache = new Map();
-    if (selected && visible) renderCard();
-    const fetcher = mode === "overview" ? () => invoke<Graph>("graph_overview", { maxNodes: 400 }) : mode === "focus" && selected === null ? fetchFocus : null;
+    if (selected && visible && !fetcher) renderCard();
     if (!visible) staleWhileHidden = true;
     if (!fetcher || !visible) return;
     const my = loadSeq;
