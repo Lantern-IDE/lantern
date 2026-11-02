@@ -12,7 +12,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - **Pretendard (글꼴)** — OFL-1.1 — https://github.com/orioncactus/pretendard
   Pretendard는 SIL Open Font License 1.1에 따라 배포됩니다.
 
-## Rust 크레이트 (360개)
+## Rust 크레이트 (364개)
 
 ### (MIT OR Apache-2.0) AND Unicode-3.0
 
@@ -116,7 +116,6 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 
 ### CDLA-Permissive-2.0
 
-- webpki-roots 0.26.11 — https://github.com/rustls/webpki-roots
 - webpki-roots 1.0.9 — https://github.com/rustls/webpki-roots
 
 ### ISC
@@ -144,7 +143,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - hyper-util 0.1.20 — https://github.com/hyperium/hyper-util
 - ico 0.6.0 — https://github.com/mdsteele/rust-ico
 - infer 0.22.0 — https://github.com/bojand/infer
-- libsqlite3-sys 0.38.2 — https://github.com/rusqlite/rusqlite
+- libsqlite3-sys 0.39.1 — https://github.com/rusqlite/rusqlite
 - minisign-verify 0.3.0 — https://github.com/jedisct1/rust-minisign-verify
 - mio 1.2.3 — https://github.com/tokio-rs/mio
 - new_debug_unreachable 1.0.6 — https://github.com/mbrubeck/rust-debug-unreachable
@@ -160,7 +159,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - precomputed-hash 0.1.1 — https://github.com/emilio/precomputed-hash
 - quick-xml 0.42.0 — https://github.com/tafia/quick-xml
 - rfd 0.17.2 — https://github.com/PolyMeilex/rfd
-- rusqlite 0.40.2 — https://github.com/rusqlite/rusqlite
+- rusqlite 0.41.1 — https://github.com/rusqlite/rusqlite
 - ruzstd 0.9.1 — https://github.com/KillingSpark/zstd-rs
 - schemars 0.8.22 — https://github.com/GREsau/schemars
 - schemars 0.9.0 — https://github.com/GREsau/schemars
@@ -231,6 +230,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - clap_lex 1.1.1 — https://github.com/clap-rs/clap
 - colorchoice 1.0.5 — https://github.com/rust-cli/anstyle
 - cookie 0.18.2 — https://github.com/SergioBenitez/cookie-rs
+- cookie_store 0.22.1 — https://github.com/pfernie/cookie_store
 - cpufeatures 0.2.17 — https://github.com/RustCrypto/utils
 - cpufeatures 0.3.1 — https://github.com/RustCrypto/utils
 - crc32fast 1.5.2 — https://github.com/srijs/rust-crc32fast
@@ -247,6 +247,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - dirs 7.0.0 — https://codeberg.org/dirs/dirs-rs
 - dirs-sys 0.5.0 — https://github.com/dirs-dev/dirs-sys-rs
 - displaydoc 0.2.7 — https://github.com/yaahc/displaydoc
+- document-features 0.2.12 — https://github.com/slint-ui/document-features
 - dtoa 1.0.11 — https://github.com/dtolnay/dtoa
 - dyn-clone 1.0.20 — https://github.com/dtolnay/dyn-clone
 - erased-serde 0.4.10 — https://github.com/dtolnay/erased-serde
@@ -282,6 +283,7 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - keyring 3.6.3 — https://github.com/hwchen/keyring-rs
 - lazy_static 1.5.0 — https://github.com/rust-lang-nursery/lazy-static.rs
 - libc 0.2.189 — https://github.com/rust-lang/libc
+- litrs 1.0.1 — https://github.com/LukasKalbertodt/litrs
 - lock_api 0.4.14 — https://github.com/Amanieu/parking_lot
 - log 0.4.34 — https://github.com/rust-lang/log
 - markup5ever 0.39.0 — https://github.com/servo/html5ever
@@ -360,8 +362,10 @@ Lantern에는 아래 오픈소스 소프트웨어와 자산이 포함되어 있�
 - typenum 1.20.1 — https://github.com/paholg/typenum
 - unicode-segmentation 1.13.3 — https://github.com/unicode-rs/unicode-segmentation
 - unicode-width 0.2.2 — https://github.com/unicode-rs/unicode-width
-- ureq 2.12.1 — https://github.com/algesten/ureq
+- ureq 3.4.2 — https://github.com/algesten/ureq
+- ureq-proto 0.6.5 — https://github.com/algesten/ureq-proto
 - url 2.5.8 — https://github.com/servo/rust-url
+- utf8-zero 0.8.1 — https://github.com/algesten/utf8-zero
 - web-time 1.1.0 — https://github.com/daxpedda/web-time
 - web_atoms 0.2.6 — https://github.com/servo/html5ever
 - web_atoms 0.3.0 — https://github.com/servo/html5ever
