@@ -43,18 +43,28 @@ impl Embedder {
 
     pub fn embed(&self, texts: &[String]) -> Result<Vec<Vec<f32>>> {
         let url = format!("{}/embeddings", self.base_url.trim_end_matches('/'));
-        let mut req = ureq::post(&url).timeout(Duration::from_secs(120));
+        // 오류 응답의 본문도 보여 주려고 상태 코드를 직접 본다
+        let agent: ureq::Agent = ureq::Agent::config_builder()
+            .timeout_global(Some(Duration::from_secs(120)))
+            .http_status_as_error(false)
+            .build()
+            .into();
+        let mut req = agent.post(&url);
         if let Some(k) = &self.api_key {
-            req = req.set("Authorization", &format!("Bearer {k}"));
+            req = req.header("Authorization", &format!("Bearer {k}"));
         }
-        let resp: serde_json::Value = req
+        let mut resp = req
             .send_json(serde_json::json!({ "model": self.model, "input": texts }))
-            .map_err(|e| match e {
-                ureq::Error::Status(code, r) => anyhow::anyhow!("임베딩 서버 오류 {code}: {}", r.into_string().unwrap_or_default().chars().take(300).collect::<String>()),
-                e => anyhow::anyhow!("임베딩 서버에 연결하지 못했습니다: {e}"),
-            })?
-            .into_json()
-            .context("임베딩 응답을 읽지 못했습니다")?;
+            .map_err(|e| anyhow::anyhow!("임베딩 서버에 연결하지 못했습니다: {e}"))?;
+        // 기본 한도 10 MiB는 큰 묶음의 벡터에 모자랄 수 있다
+        let body = resp.body_mut().with_config().limit(256 << 20).read_to_string();
+        let status = resp.status();
+        if !status.is_success() {
+            let text = body.unwrap_or_default();
+            bail!("임베딩 서버 오류 {}: {}", status.as_u16(), text.chars().take(300).collect::<String>());
+        }
+        let resp: serde_json::Value =
+            serde_json::from_str(&body.context("임베딩 응답을 읽지 못했습니다")?).context("임베딩 응답을 읽지 못했습니다")?;
         let data = resp["data"].as_array().context("임베딩 응답에 data가 없습니다")?;
         let mut out = vec![Vec::new(); texts.len()];
         for d in data {
