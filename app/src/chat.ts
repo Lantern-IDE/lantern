@@ -33,6 +33,7 @@ type Entry =
   | { t: "user"; text: string; images?: number; mentions?: { label: string; title: string }[] }
   | { t: "ev"; ev: AgentEvent }
   | { t: "touched"; id: string; names: string[] }
+  | { t: "reverted"; cp: string; n: number }
   | { t: "iso-done" };
 
 interface Isolation { path: string; branch: string; state: "active" | "discarded" }
@@ -491,6 +492,7 @@ function handle(ev: AgentEvent) {
         task.unverified = ev.tests === "failed" || ev.tests === "skipped";
         if (ev.checkpoint) {
           const cp = ev.checkpoint;
+          box.dataset.checkpoint = cp;
           const undo = h("button", { class: "btn btn-secondary ch-undo" }, codicon("discard"), "이 작업 되돌리기");
           undo.addEventListener("click", async () => {
             const ok = await ask(`이 작업으로 바뀐 파일 ${unique.length}개를 작업 전으로 되돌릴까요? 새로 만든 파일은 휴지통으로 옮깁니다.`, { title: "되돌리기", kind: "warning", okLabel: "되돌리기", cancelLabel: "취소" });
@@ -498,11 +500,9 @@ function handle(ev: AgentEvent) {
             try {
               const n = await revertSafely(cp);
               if (n === null) return;
-              undo.remove();
-              box.querySelector(".ch-test")?.remove();
-              task.unverified = false;
-              head.replaceChildren(codicon("discard"), `되돌렸습니다 (파일 ${n}개)`);
-              box.classList.add("reverted");
+              showReverted(task, box, n);
+              task.log.push({ t: "reverted", cp, n });
+              persist(task);
               hooks.onTasks();
               renderHead();
               if (!task.isolated || task.isolated.state !== "active") {
@@ -544,6 +544,14 @@ function handle(ev: AgentEvent) {
       setStatus(task, "error");
       break;
   }
+}
+
+/** 되돌린 완료 카드: 되돌리기 단추도 테스트 결과도 이제 뜻이 없다 */
+function showReverted(task: Task, box: HTMLElement, n: number) {
+  box.querySelector(".ch-test")?.remove();
+  task.unverified = false;
+  box.querySelector(".ch-head")!.replaceChildren(codicon("discard"), `되돌렸습니다 (파일 ${n}개)`);
+  box.classList.add("reverted");
 }
 
 /** 결정 없이 끝난 승인 카드: 이제 눌러도 아무 일도 일어나지 않으므로 닫는다 */
@@ -948,6 +956,9 @@ function restore(data: SavedTask) {
         task.body = turn(task, "bot");
       } else if (e.t === "touched") {
         task.approvalTouched.set(e.id, e.names);
+      } else if (e.t === "reverted") {
+        const box = [...task.el.querySelectorAll<HTMLElement>(".changed")].find((b) => b.dataset.checkpoint === e.cp);
+        if (box) showReverted(task, box, e.n);
       } else if (e.t === "ev") {
         handle({ ...e.ev, session: task.id } as AgentEvent);
         if (e.ev.kind === "approval_resolved") {
