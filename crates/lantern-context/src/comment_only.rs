@@ -7,13 +7,24 @@ use tree_sitter::Parser;
 
 /// 이보다 큰 파일은 따지지 않는다
 const MAX_BYTES: usize = 2_000_000;
-/// 도구가 읽는 주석 (빌드 제약, 타입 검사·린트 끄기). 주석이어도 동작을 바꾼다
-const DIRECTIVES: &[&str] = &["go:", "+build", "@ts-", "eslint", "noqa", "type:", "pragma", "#!", "rustfmt", "clippy", "nolint", "prettier", "@flow", "@jsx"];
+/// 도구가 읽는 주석 (빌드 제약, 타입 검사·린트 끄기, 번들러 지시, 파일 인코딩). 주석이어도 동작을 바꾼다
+const DIRECTIVES: &[&str] = &[
+    "go:", "+build", "@ts-", "eslint", "noqa", "type:", "pragma", "#!", "rustfmt", "clippy", "nolint", "prettier", "@flow", "@jsx",
+    "<reference", "__PURE__", "__NO_SIDE_EFFECTS__", "webpack", "@vite-ignore", "coding:", "coding=",
+];
+/// 이 노드 안에서는 공백도 값이다 (문자열·서식·JSX 글자)
+const VALUE_NODES: &[&str] = &["string", "char", "rune", "format", "regex", "jsx"];
+/// 노드 종류 대신 넣는 표시: 자식이 덮지 않는 글자, 또는 코틀린의 줄바꿈
+const GAP: u16 = u16::MAX;
 
 /// `old`(원문)에 `diff`를 적용해도 코드는 그대로인가
 pub fn only_comments(path: &str, old: &str, diff: &str) -> bool {
     let Some(lang) = Lang::from_path(Path::new(path)) else { return false };
     if old.len() > MAX_BYTES {
+        return false;
+    }
+    // cgo: `import "C"` 앞의 주석은 C 코드이고 `//export`도 주석으로 쓴다
+    if lang == Lang::Go && old.contains("\"C\"") {
         return false;
     }
     let changed = |l: &&str| (l.starts_with('+') && !l.starts_with("+++")) || (l.starts_with('-') && !l.starts_with("---"));
@@ -81,11 +92,22 @@ fn code_shape(lang: Lang, src: &str) -> Option<Vec<(usize, u16, &str)>> {
     let mut out = Vec::new();
     let mut c = tree.walk();
     let mut depth = 0usize;
+    let mut last_row = None;
     loop {
         let n = c.node();
         if !n.kind().contains("comment") {
             let leaf = n.child_count() == 0;
+            // 코틀린은 줄바꿈이 문장을 끝내는데 (`return a` 다음 줄 `- b`) 문법은 한 식으로 읽는다
+            if leaf && lang == Lang::Kotlin {
+                if last_row.is_some_and(|r| r != n.start_position().row) {
+                    out.push((depth, GAP, "\n"));
+                }
+                last_row = Some(n.end_position().row);
+            }
             out.push((depth, n.kind_id(), if leaf { n.utf8_text(src.as_bytes()).ok()? } else { "" }));
+            if !leaf {
+                push_gaps(n, src, depth, &mut out)?;
+            }
             if c.goto_first_child() {
                 depth += 1;
                 continue;
@@ -98,6 +120,23 @@ fn code_shape(lang: Lang, src: &str) -> Option<Vec<(usize, u16, &str)>> {
             depth -= 1;
         }
     }
+}
+
+/// 자식이 덮지 않는 글자: 문법이 이름 없이 삼킨 토큰 (`f"{x:>3}"`의 `>3`, 코틀린 `'a'`의 `a`)
+fn push_gaps<'a>(n: tree_sitter::Node, src: &'a str, depth: usize, out: &mut Vec<(usize, u16, &'a str)>) -> Option<()> {
+    let value = VALUE_NODES.iter().any(|k| n.kind().contains(k));
+    let mut w = n.walk();
+    let mut at = n.start_byte();
+    let spans = n.children(&mut w).map(|c| (c.start_byte(), c.end_byte()));
+    for (start, end) in spans.chain([(n.end_byte(), n.end_byte())]) {
+        let gap = src.get(at..start.max(at))?;
+        let gap = if value { gap } else { gap.trim() };
+        if !gap.is_empty() {
+            out.push((depth, GAP, gap));
+        }
+        at = end.max(at);
+    }
+    Some(())
 }
 
 #[cfg(test)]
@@ -147,6 +186,69 @@ mod tests {
         let py = "def f(x):\n    if x:\n        a()\n        b()\n";
         assert!(!only_comments("a.py", py, &replace_line(py, 4, "    b()")), "들여쓰기가 구조를 바꾼다");
         assert!(only_comments("a.py", py, "@@ -2,0 +3,1 @@\n+    # 켜졌을 때만\n"));
+    }
+
+    #[test]
+    fn tokens_the_grammar_swallows_are_code() {
+        let py = "x = 1\ns = f\"{x:>3}\"\n";
+        assert!(!only_comments("a.py", py, &replace_line(py, 2, "s = f\"{x:<3}\"")), "f-string 서식");
+        assert!(!only_comments("a.py", py, &replace_line(py, 2, "s = f\"{x: >3}\"")), "서식 안의 공백");
+        let py = "s = f\"{{a}}\"\n";
+        assert!(!only_comments("a.py", py, &replace_line(py, 1, "s = f\"{{b}}\"")), "f-string 이스케이프");
+        let kt = "val a = 'a'\n";
+        assert!(!only_comments("a.kt", kt, &replace_line(kt, 1, "val a = 'b'")), "코틀린 문자");
+        let cs = "class A {\n    string a = $\"{1:F2}\";\n}\n";
+        assert!(!only_comments("a.cs", cs, &replace_line(cs, 2, "    string a = $\"{1:F3}\";")), "C# 서식");
+        let go = "package a\n\nvar S = \"a b\"\n";
+        assert!(!only_comments("a.go", go, &replace_line(go, 3, "var S = \"a  b\"")), "문자열 안의 공백");
+        let tsx = "export const a = <div>x</div>;\n";
+        assert!(!only_comments("a.tsx", tsx, &replace_line(tsx, 1, "export const a = <div> x</div>;")), "JSX 글자 앞의 공백");
+    }
+
+    #[test]
+    fn whitespace_between_tokens_is_not_code() {
+        let go = "package a\n\nfunc f(a, b int) {\n}\n";
+        assert!(only_comments("a.go", go, &replace_line(go, 3, "func f(a,  b int) {")));
+        let ts = "export const a = f(1, 2);\n";
+        assert!(only_comments("a.ts", ts, &replace_line(ts, 1, "export const a = f(1,  2);")));
+        let kt = "fun f(a: Int, b: Int) = a\n";
+        assert!(only_comments("a.kt", kt, &replace_line(kt, 1, "fun f(a: Int,  b: Int) = a")));
+        let py = "x = f(1, 2)\n";
+        assert!(only_comments("a.py", py, &replace_line(py, 1, "x = f(1,  2)")));
+        // 틈을 비교해도 값이 아닌 곳의 주석은 그대로 주석이다
+        let lit = "package a\n\nvar T = S{\n\ta: 1,\n}\n";
+        assert!(only_comments("a.go", lit, "@@ -3,0 +4,1 @@\n+\t// 하나\n"), "복합 리터럴");
+        let cpp = "template <typename T>\nT f(T a) { return a; }\n";
+        assert!(only_comments("a.cpp", cpp, "@@ -1,0 +2,1 @@\n+// 그대로 돌려준다\n"), "템플릿");
+        let kt = "val g = { x: Int ->\n    x\n}\n";
+        assert!(only_comments("a.kt", kt, "@@ -1,0 +2,1 @@\n+    // 그대로\n"), "람다");
+        let py = "x = {\n    \"a\": 1,\n}\n";
+        assert!(only_comments("a.py", py, "@@ -1,0 +2,1 @@\n+    # 하나\n"), "사전");
+        let tsx = "export const a = (\n  <div>\n    <b />\n  </div>\n);\n";
+        assert!(only_comments("a.tsx", tsx, "@@ -0,0 +1,1 @@\n+// 굵게\n"), "JSX 바깥");
+    }
+
+    #[test]
+    fn kotlin_line_breaks_end_statements() {
+        let kt = "fun f(a: Int, b: Int): Int {\n    return a - b\n}\n";
+        let split = "@@ -2,1 +2,2 @@\n-    return a - b\n+    return a\n+        - b\n";
+        assert!(!only_comments("a.kt", kt, split), "- b가 따로 떨어진다");
+        assert!(only_comments("a.kt", kt, &replace_line(kt, 2, "    return a - b // 뺀다")), "줄 끝 주석");
+        assert!(only_comments("a.kt", kt, "@@ -1,0 +2,2 @@\n+    // 뺀다\n+\n"), "주석과 빈 줄");
+    }
+
+    #[test]
+    fn comments_that_tools_read_are_code() {
+        let go = "package a\n\nimport \"C\"\n\nfunc f() {}\n";
+        assert!(!only_comments("a.go", go, "@@ -1,0 +2,1 @@\n+// #include <stdio.h>\n"), "cgo 앞 주석");
+        assert!(!only_comments("a.go", go, "@@ -4,0 +5,1 @@\n+//export f\n"), "cgo 내보내기");
+        let ts = "export const a = 1;\n";
+        assert!(!only_comments("a.ts", ts, "@@ -0,0 +1,1 @@\n+/// <reference types=\"node\" />\n"));
+        let lazy = "export const a = f();\n";
+        assert!(!only_comments("a.ts", lazy, &replace_line(lazy, 1, "export const a = /*#__PURE__*/ f();")));
+        assert!(!only_comments("a.ts", lazy, &replace_line(lazy, 1, "export const a = /* webpackChunkName: \"b\" */ f();")));
+        let py = "x = 1\n";
+        assert!(!only_comments("a.py", py, "@@ -0,0 +1,1 @@\n+# -*- coding: latin-1 -*-\n"));
     }
 
     #[test]
