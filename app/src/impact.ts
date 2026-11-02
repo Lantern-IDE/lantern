@@ -5,7 +5,7 @@ import { api } from "./api";
 import { h } from "./dom";
 import { codicon } from "./icons";
 import * as editor from "./editor";
-import type { GNode, Impact } from "./map";
+import { RISK_REASON, type GNode, type Impact } from "./map";
 import { diffTarget } from "./lib/diff";
 import { isTestPath, type TestTarget } from "./lib/testPrompt";
 import * as lsp from "./lsp";
@@ -92,6 +92,8 @@ export function impactRow(diff: string, onTouched: (names: string[]) => void = (
     const basis = h("span", { class: "ibasis", title: "이름으로 찾은 호출 관계(정적 분석)입니다. 테스트 코드는 호출자로 세지 않고 따로 보입니다. DI·리플렉션·이벤트·라우팅처럼 실행 중에 정해지는 호출과, URL로 부르는 테스트는 세지 않습니다." }, codicon("info"));
     // 주석·공백만 바뀌면 호출자 수와 위험도는 뜻이 없다: 경고를 믿게 하려면 없을 때 울리지 않는다
     const quiet = i.comment_only;
+    // 프레임워크가 까닭이면 아래 경고 줄이 이미 말한다
+    const reason = !quiet && i.supported && i.risk_reason !== "framework" ? RISK_REASON[i.risk_reason] : "";
     row.replaceChildren(...([
       h("div", { class: "ihead" },
         codicon("pulse"),
@@ -106,6 +108,7 @@ export function impactRow(diff: string, onTouched: (names: string[]) => void = (
           : nothing
             ? h("div", { class: "inote" }, "이 변경을 호출하는 다른 코드를 찾지 못했습니다.")
             : h("div", { class: "istats" }, ...stats),
+      reason ? h("div", { class: "inote" }, `위험도 이유: ${reason}`) : null,
       !quiet && i.framework.length ? h("div", { class: "inote framework" }, codicon("warning"), `${i.framework.join(", ")}: 프레임워크가 부르는 코드라 호출자·테스트 수에 잡히지 않을 수 있습니다`) : null,
       !quiet && i.ambiguous.length ? h("div", { class: "inote ambiguous" }, `이름이 흔해 호출자를 셀 수 없음: ${i.ambiguous.join(", ")}`) : null,
     ].filter(Boolean) as Node[]));
