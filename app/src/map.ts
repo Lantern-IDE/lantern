@@ -145,6 +145,9 @@ function withAlpha(color: string, a: number): string {
 
 // ── 그래프 적재 ──────────────────────────────────────────
 
+/** 영향 지도에서 테스트 이름표의 글자 수 */
+const TEST_LABEL_MAX = 24;
+
 function radius(n: GNode): number {
   if (n.kind === "memory") return 7;
   if (n.kind === "dir") return Math.min(30, 9 + Math.sqrt(n.weight) * 2.2);
@@ -711,7 +714,10 @@ function draw() {
   const candidates = nodes.filter((n) => n.x !== undefined).sort((a, b) => rank(b) - rank(a));
   const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
   const pad = 2 / view.k;
-  const taken = (box: (typeof placed)[number]) => placed.some((b) => box.x0 < b.x1 && b.x0 < box.x1 && box.y0 < b.y1 && b.y0 < box.y1);
+  const hits = (list: typeof placed, box: (typeof placed)[number]) => list.some((b) => box.x0 < b.x1 && b.x0 < box.x1 && box.y0 < b.y1 && b.y0 < box.y1);
+  const taken = (box: (typeof placed)[number]) => hits(placed, box);
+  // 영향 지도: 테스트·파일 이름표가 바뀌는 곳과 호출자의 점을 덮지 않게 그 점들 자리는 비워 둔다
+  const dots = mode === "impact" ? candidates.filter((n) => n.mark && n.mark !== "test").map((n) => ({ x0: n.x! - n.r, y0: n.y! - n.r, x1: n.x! + n.r, y1: n.y! + n.r })) : [];
   // 덩어리 이름: 전체 구조에서만. 노드 이름표보다 먼저 자리를 잡는다
   if (mode === "overview") {
     const size = 12 / view.k;
@@ -737,20 +743,22 @@ function draw() {
   for (const n of candidates) {
     const must = n === selected || n === hovered;
     if (!must && n.kind !== "dir" && n.r * view.k < 6 && !n.mark && !focusSet?.has(n.id)) continue;
-    const text = n.kind === "memory" ? (n.detail ?? n.label).slice(0, 28) + ((n.detail?.length ?? 0) > 28 ? "…" : "") : n.text ?? n.label;
+    const full = n.kind === "memory" ? (n.detail ?? n.label).slice(0, 28) + ((n.detail?.length ?? 0) > 28 ? "…" : "") : n.text ?? n.label;
+    // 영향 지도의 긴 테스트 이름은 줄인다 (마우스를 올리거나 고르면 전부)
+    const text = n.mark === "test" && !must && full.length > TEST_LABEL_MAX ? `${full.slice(0, TEST_LABEL_MAX - 1)}…` : full;
+    const bold = n.kind === "dir" || n.mark === "impact0";
+    ctx.font = `${bold ? "600 " : ""}${fs}px Pretendard Variable, Pretendard, sans-serif`;
     const w = ctx.measureText(text).width;
     const y = n.y! + (n.kind === "dir" ? n.r * 0.8 : n.r) + 3 / view.k;
     const box = { x0: n.x! - w / 2 - pad, y0: y - pad, x1: n.x! + w / 2 + pad, y1: y + fs + pad };
-    if (!must && taken(box)) continue;
+    if (!must && (taken(box) || ((!n.mark || n.mark === "test") && hits(dots, box)))) continue;
     placed.push(box);
     ctx.globalAlpha = dimmed(n) && n !== hovered ? 0.45 : 1;
     ctx.lineWidth = 3 / view.k;
     ctx.strokeStyle = colors.bg;
     ctx.strokeText(text, n.x!, y);
-    ctx.fillStyle = n === selected ? colors.strong : n.kind === "dir" ? colors.strong : receded(n) ? colors.muted : colors.fg;
-    if (n.kind === "dir") ctx.font = `600 ${fs}px Pretendard Variable, Pretendard, sans-serif`;
+    ctx.fillStyle = n === selected || bold ? colors.strong : receded(n) ? colors.muted : colors.fg;
     ctx.fillText(text, n.x!, y);
-    if (n.kind === "dir") ctx.font = `${fs}px Pretendard Variable, Pretendard, sans-serif`;
   }
   ctx.globalAlpha = 1;
   trace("draw: end");
