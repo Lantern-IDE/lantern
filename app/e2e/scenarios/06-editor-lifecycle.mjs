@@ -93,6 +93,13 @@ scenario("다시 켜면 작업이 복원된다", async () => {
     return t.length >= 2 && t;
   }, 10000, "복원된 작업");
   if (!titles.includes("서명 접미사를 바꿔줘") || !titles.includes("격리해서 바꿔줘")) throw new Error(`작업 목록: ${titles.join(", ")}`);
+  // 되돌린 작업은 되돌린 채로: 되돌리기 단추가 다시 나오면 안 된다
+  const reverted = await run(() => {
+    [...document.querySelectorAll("#task-list .task")].find((t) => t.textContent.includes("서명 접미사를 바꿔줘")).click();
+    const box = document.querySelector(".task-log:not(.hidden) .changed");
+    return { reverted: box?.classList.contains("reverted"), undo: !!box?.querySelector(".ch-undo") };
+  });
+  if (!reverted.reverted || reverted.undo) throw new Error(`되돌린 작업의 완료 카드: ${JSON.stringify(reverted)}`);
 });
 
 scenario("외부 에이전트: 다시 켠 뒤에도 같은 대화를 이어간다 (session/load)", async () => {
