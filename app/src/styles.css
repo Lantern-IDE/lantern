@@ -458,6 +458,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
   .approval:not(.resolved) .ahead .risk { display: inline; }
 }
 .approval.resolved { border-color: var(--border); }
+.approval.resolved .impact { border-color: var(--border); }
 .approval.resolved .ahead { background: none; }
 .approval.resolved .actions { display: none; }
 .approval.resolved .ahead .codicon { color: var(--muted); }
