@@ -77,7 +77,7 @@ export function impactRow(diff: string, onTouched: (names: string[]) => void = (
     if (i.code_callers2) stat(i.code_callers2, "간접 호출");
     if (i.code_files) stat(i.code_files, "파일에 걸침");
     if (i.cochanged.length) stat(i.cochanged.length, "함께 바뀌던 파일");
-    stats.push(h("span", { class: `istat ${i.tests.length ? "tests" : "no-tests"}` }, codicon(i.tests.length ? "beaker" : "warning"), i.tests.length ? `테스트 ${i.tests.length}` : "테스트 없음"));
+    stats.push(h("span", { class: `istat ${i.tests.length ? "tests" : "no-tests"}` }, codicon(i.tests.length ? "beaker" : "warning"), i.tests.length ? `테스트 파일 ${i.tests.length}` : "테스트 없음"));
     if (!i.tests.length && i.touched.length && !isTestPath(target.path)) {
       const make = h("button", { class: "istat-action", title: "기존 테스트 형식을 따라 이 코드의 테스트를 새 작업으로 만듭니다" }, codicon("beaker"), "테스트 만들기");
       make.addEventListener("click", () => {

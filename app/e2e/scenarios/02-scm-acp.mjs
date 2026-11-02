@@ -126,7 +126,7 @@ scenario("커밋 전 영향 검토와 AI 커밋 메시지", async () => {
   }, 20000, "영향 검토 결과");
   const row = rv.rows.find((r) => r.includes("session.ts"));
   // signCookie를 부르는 곳: issueSession. 테스트의 testSign은 호출자로 세지 않고 따로 보인다
-  if (!row || !/직접 1/.test(row) || !/테스트 1/.test(row)) throw new Error(`영향 검토: ${JSON.stringify(rv)}`);
+  if (!row || !/직접 1/.test(row) || !/테스트 파일 1/.test(row)) throw new Error(`영향 검토: ${JSON.stringify(rv)}`);
   // 파일을 누르면 지도에서 영향 범위
   await run(() => {
     [...document.querySelectorAll("#scm-review .rv-file")].find((r) => r.innerText.includes("session.ts")).click();

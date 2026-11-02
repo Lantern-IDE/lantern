@@ -844,7 +844,7 @@ function renderLegend() {
       impact.comment_only ? h("span", { class: "risk risk-none" }, t("코드 변경 없음")) : h("span", { class: `risk risk-${impact.code_risk}` }, `${t("위험도")} ${t(RISK[impact.code_risk])}`),
       h("span", {}, h("b", {}, String(impact.code_callers)), t("직접 호출")),
       h("span", {}, h("b", {}, String(impact.code_callers2)), t("간접 호출")),
-      h("span", {}, h("b", {}, String(impact.tests.length)), t("테스트")));
+      h("span", {}, h("b", {}, String(impact.tests.length)), t("테스트 파일")));
     fp.classList.remove("hidden");
   } else fp.classList.add("hidden");
 }
