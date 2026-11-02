@@ -127,7 +127,9 @@ function showChange(card: HTMLElement, box: HTMLElement) {
   const d = diff.getBoundingClientRect();
   const top = Math.max(d.top, box.getBoundingClientRect().top);
   const bottom = Math.min(d.bottom, bar.getBoundingClientRect().top);
-  if (m.top >= top && m.bottom <= bottom) return;
+  // 버튼 줄이나 머리에 바짝 붙어 있어도 가운데로: 카드 머리가 커지면 그만큼 밀려 가려진다
+  const margin = Math.min(18, (bottom - top - m.height) / 2);
+  if (m.top >= top + margin && m.bottom <= bottom - margin) return;
   diff.scrollTop += m.top - top - Math.max(0, (bottom - top - m.height) / 2);
   // diff를 끝까지 내려도 버튼 줄에 가리면 (파일 끝의 변경) 바깥도 내린다
   const under = mark.getBoundingClientRect().bottom - bar.getBoundingClientRect().top;
