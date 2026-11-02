@@ -268,7 +268,7 @@ function applyImpact(i: Impact) {
   loadSeq++;
   impact = i;
   mode = "impact";
-  focusLabel = `${basename(i.path)}${i.touched.length ? ` · ${i.touched.join(", ")}` : ""}`;
+  focusLabel = `${i.touched.length ? `${i.touched.join(", ")} · ` : ""}${basename(i.path)}`;
   view = { x: 0, y: 0, k: 1 };
   cameraMoved = false;
   baseGraph = i.graph;
@@ -783,7 +783,8 @@ function modeTitle(): string {
   switch (mode) {
     case "overview": return t("전체 구조");
     case "focus": return focusLabel;
-    case "impact": return `${t("영향 반경")} · ${focusLabel}`;
+    // 좁은 창에서는 뒤가 잘린다: 무엇이 바뀌는지를 앞에 둔다
+    case "impact": return `${focusLabel} · ${t("영향 반경")}`;
     case "memory": return t("프로젝트 기억");
   }
 }
@@ -802,7 +803,7 @@ function renderChrome() {
         return b;
       })(),
       codicon("chevron-right"),
-      h("span", { class: "cur" }, modeTitle()),
+      h("span", { class: "cur", title: modeTitle() }, modeTitle()),
     ]),
     h("span", { class: "map-count" }, `${nodes.length}${truncated ? "+" : ""}`),
   );
