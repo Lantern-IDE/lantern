@@ -64,10 +64,11 @@ pub(crate) async fn agent_reset(state: State<'_, AppState>, session: String) -> 
 
 #[tauri::command]
 pub(crate) async fn resolve_approval(app: AppHandle, state: State<'_, AppState>, session: String, id: String, approved: bool) -> CmdResult<()> {
-    if let Some(tx) = state.approvals.lock().unwrap().remove(&id) {
-        let _ = tx.send(approved);
+    // 이미 끝난 승인(중단 등)이면 알리지 않는다: 적용되지 않았는데 '적용됨'으로 보이면 안 된다
+    let waiting = state.approvals.lock().unwrap().remove(&id);
+    if waiting.is_some_and(|tx| tx.send(approved).is_ok()) {
+        let _ = app.emit("agent", agent::AgentEvent::ApprovalResolved { session, id, approved });
     }
-    let _ = app.emit("agent", agent::AgentEvent::ApprovalResolved { session, id, approved });
     Ok(())
 }
 

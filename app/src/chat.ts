@@ -456,7 +456,7 @@ function handle(ev: AgentEvent) {
     }
     case "approval_resolved": {
       const el = task.approvalEls.get(ev.id);
-      if (!el) break;
+      if (!el || el.classList.contains("resolved")) break;
       el.classList.add("resolved");
       const v = el.querySelector(".verdict")!;
       v.textContent = !ev.approved ? "거절됨" : el.dataset.kind === "edit" ? "적용됨" : el.dataset.kind === "fetch" ? "가져옴" : "실행함";
@@ -527,6 +527,7 @@ function handle(ev: AgentEvent) {
         } else if (!replaying) hooks.onFilesChanged(ev.changed);
       }
       task.body = null;
+      closeOpenApprovals(task);
       task.pendingApprovals = 0;
       task.waitingImpact = null;
       syncMapPreview();
@@ -535,11 +536,21 @@ function handle(ev: AgentEvent) {
     case "error":
       showError(task, ev.message);
       task.body = null;
+      closeOpenApprovals(task);
       task.pendingApprovals = 0;
       task.waitingImpact = null;
       syncMapPreview();
       setStatus(task, "error");
       break;
+  }
+}
+
+/** 결정 없이 끝난 승인 카드: 이제 눌러도 아무 일도 일어나지 않으므로 닫는다 */
+function closeOpenApprovals(task: Task) {
+  for (const el of task.approvalEls.values()) {
+    if (el.classList.contains("resolved")) continue;
+    el.classList.add("resolved");
+    el.querySelector(".verdict")!.textContent = "중단됨";
   }
 }
 
@@ -945,12 +956,7 @@ function restore(data: SavedTask) {
       }
     }
     // 끝나지 않은 채 저장된 작업: 승인 카드는 중단으로
-    for (const [, el] of task.approvalEls) {
-      if (el.classList.contains("resolved")) continue;
-      el.classList.add("resolved");
-      el.querySelector(".verdict")!.textContent = "중단됨";
-      el.querySelector(".actions")?.remove();
-    }
+    closeOpenApprovals(task);
   } finally {
     replaying = false;
   }

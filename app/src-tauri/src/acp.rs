@@ -797,6 +797,8 @@ async fn run_inner(
         }
     };
     *conn.turn.lock().unwrap() = None;
+    // 턴이 끝나면 승인 카드도 닫힌다: 아직 답을 기다리는 쪽을 풀어 준다
+    cancel.store(true, Ordering::Relaxed);
     let changed = turn.changed.lock().unwrap().clone();
     let checkpoint = agent::save_checkpoint(&st, std::mem::take(&mut *turn.originals.lock().unwrap()));
     match result {
