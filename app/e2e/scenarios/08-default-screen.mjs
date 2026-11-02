@@ -85,6 +85,18 @@ function expectStill(a, b, what, only = (t) => t.includes(".")) {
   if (!common) throw new Error(`${what}: 비교할 이름표가 없음`);
 }
 const nodeCount = () => run(() => Number(document.querySelector(".map-count")?.textContent?.replace(/\D/g, "") || 0));
+/** 다른 화면에서 전체 구조로 돌아오는 중에는 제목이 먼저 바뀌고 수는 그래프를 받은 뒤 바뀐다: 1초 동안 그대로인 수 */
+const settledCount = async () => {
+  let last = -1;
+  let same = 0;
+  for (let i = 0; i < 50 && same < 5; i++) {
+    const n = await nodeCount();
+    same = n === last ? same + 1 : 0;
+    last = n;
+    await sleep(200);
+  }
+  return last;
+};
 
 /** 이름으로 노드를 찾아 누른다 (마우스를 격자로 움직여 제목을 읽는다) */
 const clickNode = async (name) => {
@@ -297,7 +309,7 @@ scenario("기본 화면: 카드의 호출 수는 보이는 간선이 아니라 �
 
 scenario("기본 화면: 지도가 숨은 동안 파일이 늘어도 돌아오면 새 노드가 보인다", async () => {
   await toMap();
-  const count = await nodeCount();
+  const count = await settledCount();
   await run(() => {
     document.querySelector("#canvas-switch [data-canvas='editor']").click();
     return true;
