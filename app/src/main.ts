@@ -390,9 +390,11 @@ on<IndexEvent>("index", (ev) => {
     renderContextStatus(`맥락 ${files}${lastContext}`, `맥락 엔진 인덱스: 파일 ${files}개 (${s.indexed}개 갱신, ${dur(s.elapsed_ms)}). 눌러서 맥락 미리보기`);
     // 인덱싱 중에 그린 지도는 비었거나 모자랄 수 있다
     if (s.indexed > 0 || map.isEmpty()) map.refreshSoon();
-    chat.setIndexInfo(s.indexed > 0
-      ? `이 프로젝트의 파일 ${files}개를 인덱싱했습니다 · ${dur(s.elapsed_ms)}`
-      : `이 프로젝트의 파일 ${files}개가 인덱스에 있습니다 · 최신 상태`);
+    chat.setIndexInfo(s.indexed + s.unchanged === 0
+      ? "이 폴더에는 Lantern이 읽을 코드 파일이 없습니다"
+      : s.indexed > 0
+        ? `이 프로젝트의 파일 ${files}개를 인덱싱했습니다 · ${dur(s.elapsed_ms)}`
+        : `이 프로젝트의 파일 ${files}개가 인덱스에 있습니다 · 최신 상태`);
     if (project && !indexedOnce.has(project.root)) {
       indexedOnce.add(project.root);
       if (s.indexed > 0) toast.info(`맥락 인덱스를 만들었습니다 · 파일 ${files}개`, `${dur(s.elapsed_ms)}. 이제 질문하면 관련 코드가 함께 전달됩니다.`);
