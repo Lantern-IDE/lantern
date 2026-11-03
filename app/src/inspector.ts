@@ -3,6 +3,7 @@
 import { api, errorText, on, type AgentEvent } from "./api";
 import { $, h } from "./dom";
 import * as editor from "./editor";
+import { lang } from "./i18n";
 
 const MAX_CARDS = 50;
 const cards = new Map<number, HTMLElement>();
@@ -24,7 +25,7 @@ function handle(ev: AgentEvent) {
         h("b", {}, `#${ev.request_id}`),
         h("span", {}, ev.agent),
         h("span", { class: "muted" }, `${ev.model_key} · ${ev.model}`),
-        h("span", { class: "muted" }, new Date().toLocaleTimeString())),
+        h("span", { class: "muted" }, new Date().toLocaleTimeString(lang === "ko" ? "ko-KR" : "en-US"))),
       h("div", { class: "usage" }, "응답 대기 중…"),
       ev.context ? section(`조립된 맥락 (약 ${fmt(ev.context_tokens)} 토큰)`, ev.context) : null,
       section("시스템 프롬프트", ev.system),
