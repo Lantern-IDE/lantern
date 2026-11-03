@@ -268,7 +268,8 @@ function showError(task: Task, message: string) {
   if (task.lastPrompt) {
     actions.append(h("button", { class: "btn btn-secondary", onclick: () => void send(task.lastPrompt) }, codicon("debug-restart"), "다시 시도"));
   }
-  if (/API 키|api key|401|403|설정/i.test(message)) {
+  // 키 오류와 연결 실패(주소, 로컬 모델 서버)는 모델 설정에서 고친다
+  if (/API 키|api key|401|403|설정|연결 실패|connect/i.test(message)) {
     actions.append(h("button", { class: "btn btn-secondary", onclick: () => hooks.openSettings("models") }, codicon("key"), "모델 설정 열기"));
   }
   append(task, h("div", { class: "err-box", role: "alert" },
@@ -286,7 +287,8 @@ function settleRetry(task: Task, failed: boolean) {
   if (!note) return;
   note.classList.remove("waiting");
   note.querySelector(".codicon")?.replaceWith(codicon(failed ? "warning" : "check"));
-  if (!failed) note.lastChild!.textContent = "서버 오류로 잠시 기다렸다가 다시 보냈습니다";
+  // 실패하면 원문 오류는 아래 오류 카드에 한 번만 남긴다
+  note.lastChild!.textContent = failed ? "다시 보냈지만 실패했습니다" : "서버 오류로 잠시 기다렸다가 다시 보냈습니다";
 }
 
 function record(task: Task, ev: AgentEvent) {
