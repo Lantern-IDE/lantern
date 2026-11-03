@@ -77,3 +77,12 @@ describe("t()", () => {
     expect(t("위험도 보통")).toBe("Risk Medium");
   });
 });
+
+describe("감사에서 찾은 영어 문구", () => {
+  it("맥락 카드의 메모리 수도 옮긴다", () => {
+    expect(t("파일 3 · 심볼 5 · 메모리 2")).toBe("File 3 · Symbol 5 · Memory 2");
+  });
+  it("모델 다시 찾기는 다음 찾기가 아니다", () => {
+    expect(t("다시 찾기")).toBe("Rescan");
+  });
+});
