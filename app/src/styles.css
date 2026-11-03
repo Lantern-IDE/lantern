@@ -350,7 +350,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 #terminal { padding: 0 0 0 18px; }
 #output { padding: 4px 18px; font: 12px/18px var(--code-font); white-space: pre-wrap; user-select: text; color: var(--fg); }
 #output .src { color: var(--context); }
-#output:empty::before { content: "아직 출력이 없습니다. 훅과 에이전트가 실행한 명령의 결과가 여기에 표시됩니다."; color: var(--dim); font-family: var(--ui-font); }
+#output:empty::before { content: attr(data-empty); color: var(--dim); font-family: var(--ui-font); }
 #problems { padding: 2px 0; }
 .pb-file { display: flex; align-items: center; gap: 4px; height: 22px; padding-left: 12px; white-space: nowrap; }
 .pb-file .dir { color: var(--muted); font-size: 12px; margin-left: 4px; }
@@ -569,7 +569,7 @@ kbd { font: 11px/1 var(--ui-font); display: inline-block; background: var(--sunk
 #inspector { padding: 10px 12px; gap: 12px; }
 .inspector-preview { display: flex; flex-direction: column; gap: 8px; }
 #requests { display: flex; flex-direction: column; gap: 8px; }
-#requests:empty::before { content: "AI에게 질문하면 요청마다 시스템 프롬프트, 붙인 맥락, 도구, 토큰과 비용이 여기에 기록됩니다."; color: var(--dim); font-size: 12px; line-height: 1.6; }
+#requests:empty::before { content: attr(data-empty); color: var(--dim); font-size: 12px; line-height: 1.6; }
 .req { border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; background: var(--elevated); overflow: hidden; }
 .req .rhead { padding: 6px 10px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--border); align-items: center; }
 .req .rhead b { color: var(--context); font-variant-numeric: tabular-nums; }

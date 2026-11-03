@@ -101,6 +101,8 @@ export function init() {
     const label = tree.getAttribute("aria-label");
     if (label) tree.setAttribute("aria-label", t(label));
   }
+  // 빈 칸 안내는 CSS content: attr(data-empty)로 보인다. 내용을 건너뛰는 <pre>에도 달려 있어 따로 바꾼다
+  for (const el of document.querySelectorAll("[data-empty]")) el.setAttribute("data-empty", t(el.getAttribute("data-empty") ?? ""));
   new MutationObserver((records) => {
     for (const r of records) {
       if (r.type === "childList") r.addedNodes.forEach(translateTree);
