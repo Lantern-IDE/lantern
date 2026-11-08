@@ -52,9 +52,9 @@
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
     "codemirror": "^6.0.2",
-    "d3-force": "^3.0.0",
+    "d3-force": "^3.0.1",
     "dompurify": "^3.4.17",
-    "marked": "^18.1.2",
+    "marked": "^18.1.3",
     "pretendard": "^1.3.9"
   },
   "devDependencies": {
@@ -62,7 +62,7 @@
     "@types/d3-force": "^3.0.10",
     "happy-dom": "^21.0.4",
     "typescript": "^7.0.2",
-    "vite": "^8.3.5",
-    "vitest": "^5.0.5"
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
   }
 }
